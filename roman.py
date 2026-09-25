@@ -35,10 +35,11 @@ _ROMAN_PAIRS: list[tuple[str, int]] = [
     ("I", 1),
 ]
 
-# Set of all valid Roman characters – used for quick validation.
-_VALID_CHARS = {sym for sym, _ in _ROMAN_PAIRS}
+# Set of all valid single‑character Roman symbols – used for quickly checking
+# that the input string contains only allowed characters.
+_VALID_CHARS = set("MDCLXVI")
 
-# Helper dictionary for parsing a single symbol (including subtractive pairs)
+# Helper dictionary for parsing a symbol (including subtractive pairs) to its value.
 _SINGLE_MAP: dict[str, int] = {sym: val for sym, val in _ROMAN_PAIRS}
 
 
@@ -53,9 +54,11 @@ def to_roman(n: int) -> str:
     Raises
     ------
     ValueError
-        If *n* is outside the supported range.
+        If *n* is outside the supported range or is not a plain ``int`` (bools
+        are rejected).
     """
-    if not isinstance(n, int):
+    # ``bool`` is a subclass of ``int``; explicitly reject it.
+    if not isinstance(n, int) or isinstance(n, bool):
         raise ValueError("Input must be an integer.")
     if not (1 <= n <= 3999):
         raise ValueError("Roman numerals support numbers from 1 to 3999 inclusive.")
@@ -104,7 +107,6 @@ def _parse_roman_without_canonical_check(s: str) -> int:
             total += _SINGLE_MAP[s[i : i + 2]]
             i += 2
         else:
-            # Single character must be in the map (previous validation guarantees it).
             total += _SINGLE_MAP[s[i]]
             i += 1
     return total
