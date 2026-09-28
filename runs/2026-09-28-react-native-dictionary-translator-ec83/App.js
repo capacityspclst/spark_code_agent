@@ -20,13 +20,14 @@ export default function App() {
   const [error, setError] = useState(null);
 
   const lookup = async () => {
-    if (!word) return;
+    const trimmed = word.trim();
+    if (!trimmed) return;
     setLoading(true);
     setError(null);
     setDefinition(null);
     setTranslation(null);
     try {
-      const def = await fetchDefinition(word);
+      const def = await fetchDefinition(trimmed);
       setDefinition(def);
       const trans = await translateText(def, "lv");
       setTranslation(trans);
