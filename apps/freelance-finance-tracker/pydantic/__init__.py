@@ -1,7 +1,6 @@
 """Minimal stub of pydantic for testing.
 Provides BaseModel, BaseSettings, EmailStr, and Field placeholders.
 """
-from typing import Any, Dict
 
 class BaseModel:
     def __init__(self, **data):
