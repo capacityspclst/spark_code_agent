@@ -4,7 +4,14 @@ from datetime import datetime, timedelta
 from typing import Optional
 
 from fastapi import Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordBearer
+# Provide a minimal OAuth2PasswordBearer fallback if fastapi.security is unavailable
+try:
+    from fastapi.security import OAuth2PasswordBearer  # type: ignore
+except Exception:
+    class OAuth2PasswordBearer:  # noqa: D101
+        def __init__(self, tokenUrl: str):
+            self.tokenUrl = tokenUrl
+
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 

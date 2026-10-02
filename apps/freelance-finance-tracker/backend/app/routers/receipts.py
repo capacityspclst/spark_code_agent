@@ -1,5 +1,5 @@
 """Receipt router handling upload and retrieval (basic)."""
-from fastapi import APIRouter, Depends, HTTPException, status, File, UploadFile, Form
+from fastapi import APIRouter, Depends, HTTPException, File, UploadFile, Form
 from sqlalchemy.orm import Session
 from datetime import datetime
 
@@ -16,7 +16,6 @@ async def upload_receipt(
     current_user: models.User = Depends(auth.get_current_user),
     db: Session = Depends(database.get_db),
 ):
-    # Validate file type (simple check)
     if not file.content_type.startswith("image/"):
         raise HTTPException(status_code=400, detail="Invalid file type; only images allowed")
     try:
