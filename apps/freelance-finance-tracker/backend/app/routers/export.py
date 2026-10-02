@@ -1,5 +1,5 @@
 """Export router for CSV and PDF generation using the in‑memory store."""
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter
 from fastapi.responses import StreamingResponse
 from io import BytesIO
 import csv

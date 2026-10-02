@@ -5,8 +5,12 @@ We simply export dummy ``engine`` and ``Base`` objects so that other modules
 can import them without error.
 """
 
+class _Metadata:
+    def create_all(self, bind=None):
+        pass
+
 class _Dummy:
-    pass
+    metadata = _Metadata()
 
 # Dummy objects to keep import statements happy.
 engine = _Dummy()

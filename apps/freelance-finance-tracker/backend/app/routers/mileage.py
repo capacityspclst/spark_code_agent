@@ -23,7 +23,6 @@ def create_mileage(json: dict = None, data: dict = None, headers: dict = None):
 
 @router.get("/{mileage_id}", response_model=schemas.MileageOut)
 def get_mileage(mileage_id: int, headers: dict = None):
-    user = auth.get_user_from_headers(headers or {})
     # simple lookup, no ownership check for stub
     mileage = store._MILEAGES.get(mileage_id)
     if not mileage:

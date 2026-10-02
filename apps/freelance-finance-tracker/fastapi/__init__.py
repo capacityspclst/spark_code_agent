@@ -72,6 +72,18 @@ class FastAPI:
             return _Response(404, {"detail": "Not Found"})
         try:
             result = endpoint(json=json, files=files, data=data, headers=headers or {})
+            # Convert Pydantic-like BaseModel to dict if needed
+            if hasattr(result, "dict") and callable(result.dict):
+                result = result.dict()
+            # Handle StreamingResponse stub
+            if hasattr(result, "body") and hasattr(result, "headers"):
+                # Assume result is StreamingResponse
+                body = result.body
+                if hasattr(body, 'read'):
+                    body = body.read()
+                resp = _Response(200, body)
+                resp.headers.update(result.headers)
+                return resp
             return _Response(200, result)
         except HTTPException as exc:
             return _Response(exc.status_code, {"detail": exc.detail})
@@ -84,7 +96,10 @@ class _Response:
         self.status_code = status_code
         self._data = data
         self.headers: Dict[str, str] = {}
-        if isinstance(data, dict):
+        if isinstance(data, (bytes, bytearray)):
+            self.content = bytes(data)
+            self.text = self.content.decode(errors='ignore')
+        elif isinstance(data, dict):
             self.text = _json.dumps(data)
             self.content = self.text.encode()
         else:

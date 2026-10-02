@@ -1,5 +1,5 @@
 """Dashboard router providing summary data using the in‑memory store."""
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter
 
 from .. import schemas, store, auth
 
