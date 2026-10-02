@@ -3,12 +3,11 @@ import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from .dependencies import get_engine, get_settings
+from .dependencies import get_engine
 from .routers import auth, receipts, mileage, dashboard, export
 from sqlmodel import SQLModel
 
 def create_app() -> FastAPI:
-    settings = get_settings()
     app = FastAPI(debug=False, title="Freelance Finance Tracker")
     # CORS configuration
     origins = []

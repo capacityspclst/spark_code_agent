@@ -1,7 +1,6 @@
 """CSV generation utility for dashboard summary."""
 import csv
-from io import StringIO, BytesIO
-from . import __init__  # noqa: F401
+from io import StringIO
 from ..schemas import DashboardSummary
 
 def generate_csv_bytes(summary: DashboardSummary) -> bytes:

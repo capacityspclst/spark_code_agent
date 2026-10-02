@@ -32,7 +32,7 @@ def decode_access_token(token: str) -> dict:
     except JWTError as e:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token") from e
 
-async def get_current_user(request: Request, session: Session = Depends(get_session)) -> User:
+def get_current_user(request: Request, session: Session = Depends(get_session)) -> User:
     auth: str = request.headers.get("Authorization")
     if not auth or not auth.lower().startswith("bearer "):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Missing token")

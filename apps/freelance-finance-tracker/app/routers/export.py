@@ -1,5 +1,5 @@
 """Router for exporting dashboard data as CSV or PDF."""
-from fastapi import APIRouter, Depends, HTTPException, Response, status
+from fastapi import APIRouter, Depends, Response
 from sqlmodel import Session
 
 from ..auth import get_current_user
@@ -11,14 +11,11 @@ from ..utils.pdf import generate_pdf_bytes
 router = APIRouter()
 
 def get_summary_data(current_user, session: Session):
-    # Reuse logic from dashboard router without duplication
     from ..models import Receipt, Mileage
     from sqlmodel import select, func
-    # Total receipts and amount
     receipt_stmt = select(func.count(Receipt.id), func.coalesce(func.sum(Receipt.amount), 0))\
         .where(Receipt.user_id == current_user.id)
     receipt_count, total_amount = session.exec(receipt_stmt).one()
-    # Total mileage
     mileage_stmt = select(func.coalesce(func.sum(Mileage.distance_km), 0))\
         .where(Mileage.user_id == current_user.id)
     total_mileage = session.exec(mileage_stmt).one()
