@@ -10,7 +10,7 @@ from passlib.context import CryptContext
 
 from sqlalchemy.orm import Session
 
-from . import schemas, models, database
+from . import models, database
 
 # Secret key and algorithm from environment (never hard‑code).
 SECRET_KEY = os.getenv("SECRET_KEY", "change-me")
@@ -18,6 +18,7 @@ ALGORITHM = os.getenv("ALGORITHM", "HS256")
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "60"))
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+# OAuth2 scheme for token extraction
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
