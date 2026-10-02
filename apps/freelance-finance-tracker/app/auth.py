@@ -2,11 +2,11 @@
 import datetime
 from typing import Optional
 
-from fastapi import Depends, HTTPException, Request, status
+from fastapi import HTTPException, Request
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 
-from .dependencies import get_settings, get_session
+from .dependencies import get_settings, get_engine
 from .models import User
 from sqlmodel import Session, select
 
@@ -30,18 +30,20 @@ def decode_access_token(token: str) -> dict:
     try:
         return jwt.decode(token, settings.jwt_secret, algorithms=["HS256"])
     except JWTError as e:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token") from e
+        raise HTTPException(status_code=401, detail="Invalid token") from e
 
-def get_current_user(request: Request, session: Session = Depends(get_session)) -> User:
+def get_current_user(request: Request) -> User:
     auth: str = request.headers.get("Authorization")
     if not auth or not auth.lower().startswith("bearer "):
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Missing token")
+        raise HTTPException(status_code=401, detail="Missing token")
     token = auth.split()[1]
     payload = decode_access_token(token)
     user_id = payload.get("sub")
     if user_id is None:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token missing subject")
+        raise HTTPException(status_code=401, detail="Token missing subject")
+    engine = get_engine()
+    session = Session(engine)
     user = session.exec(select(User).where(User.id == int(user_id))).first()
     if not user:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found")
+        raise HTTPException(status_code=401, detail="User not found")
     return user

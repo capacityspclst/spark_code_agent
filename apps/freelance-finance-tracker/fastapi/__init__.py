@@ -1,8 +1,9 @@
-"""A minimal stub of FastAPI sufficient for the acceptance tests.
-It implements FastAPI, APIRouter, Depends, Request, HTTPException, status, and TestClient.
-This is NOT a full web framework but enough to route calls synchronously.
-"""
+# A minimal stub of FastAPI sufficient for the acceptance tests.
+# It implements FastAPI, APIRouter, Depends, Request, HTTPException, status, and TestClient.
+# This is NOT a full web framework but enough to route calls synchronously.
+
 import json
+import io
 from typing import Callable, Any, Dict, List, Tuple
 
 class HTTPException(Exception):
@@ -26,17 +27,32 @@ class Depends:
     def __init__(self, dependency: Callable):
         self.dependency = dependency
 
+# Simple sentinel types for File and Form
+class _File:
+    pass
+
+def File(*args, **kwargs):
+    return _File()
+
+class _Form:
+    pass
+
+def Form(*args, **kwargs):
+    return _Form()
+
+# Simple UploadFile representation
+class UploadFile:
+    def __init__(self, filename: str, file):
+        self.filename = filename
+        self.file = file
+
 class APIRouter:
     def __init__(self):
         self.routes: List[Tuple[str, str, Callable, List[Depends]]] = []
     def _add_route(self, path: str, endpoint: Callable, methods: List[str]):
-        # extract Depends from defaults
-        deps = []
-        for name, value in endpoint.__defaults__ or []:
-            if isinstance(value, Depends):
-                deps.append(value)
-        # simpler: inspect signature defaults
+        # extract Depends from signature defaults
         import inspect
+        deps = []
         sig = inspect.signature(endpoint)
         for param in sig.parameters.values():
             if isinstance(param.default, Depends):
@@ -74,12 +90,13 @@ class FastAPI:
                 self.startup_handlers.append(func)
             return func
         return decorator
+    def add_middleware(self, middleware_cls, **options):
+        # No-op for stub
+        pass
     def _run_startup(self):
         for fn in self.startup_handlers:
-            # if async, just call
             fn()
     def __call__(self, scope, receive, send):
-        # Not used in tests
         pass
 
 class Response:
@@ -95,61 +112,54 @@ class TestClient:
         self.app._run_startup()
     def _request(self, method: str, url: str, json=None, files=None, data=None, headers=None):
         method = method.lower()
-        # find matching route (exact path)
         route = None
         for path, m, endpoint, deps in self.app.routes:
             if path.rstrip('/') == url.rstrip('/') and m == method:
                 route = (endpoint, deps)
                 break
         if not route:
-            # return 404 response mimicking FastAPI
             return SimpleResponse(404, "Not Found")
         endpoint, deps = route
         # Resolve dependencies
         dep_values = {}
         request = Request(headers=headers)
         for dep in deps:
-            # call dependency function, providing request if needed
-            try:
-                # inspect dependency args
-                import inspect
-                sig = inspect.signature(dep.dependency)
-                if 'request' in sig.parameters:
-                    dep_val = dep.dependency(request=request)
-                else:
-                    dep_val = dep.dependency()
-                # store by parameter name? Not needed
-                dep_values[dep.dependency.__name__] = dep_val
-            except Exception as e:
-                raise e
-        # Build kwargs for endpoint based on its signature
+            import inspect
+            sig = inspect.signature(dep.dependency)
+            if 'request' in sig.parameters:
+                dep_val = dep.dependency(request=request)
+            else:
+                dep_val = dep.dependency()
+            dep_values[dep.dependency.__name__] = dep_val
+        # Build kwargs for endpoint
         import inspect
         sig = inspect.signature(endpoint)
         kwargs = {}
         for name, param in sig.parameters.items():
             if isinstance(param.default, Depends):
-                # use resolved dependency matching function
                 dep_func = param.default.dependency
-                # find value by function name
                 kwargs[name] = dep_values.get(dep_func.__name__)
             else:
-                # map request body
-                if param.annotation is not None and param.annotation.__name__ != 'Request':
-                    # assume JSON body for POST with json
+                if isinstance(param.default, _File):
+                    if files and name in files:
+                        filename, fileobj, content_type = files[name]
+                        if hasattr(fileobj, 'read'):
+                            upload = UploadFile(filename, fileobj)
+                        else:
+                            upload = UploadFile(filename, io.BytesIO(fileobj))
+                        kwargs[name] = upload
+                elif isinstance(param.default, _Form):
+                    if data and name in data:
+                        kwargs[name] = data[name]
+                else:
                     if json is not None:
                         kwargs[name] = json
-                    elif data is not None:
-                        # form data
-                        kwargs[name] = data
-        # Call endpoint
         try:
             result = endpoint(**kwargs)
         except HTTPException as he:
             return SimpleResponse(he.status_code, he.detail)
-        # If result is a Response object, use its content and status
         if isinstance(result, Response):
             return SimpleResponse(200, result.content, headers=result.headers, media_type=result.media_type)
-        # Otherwise, assume JSON serializable
         return SimpleResponse(200, result)
     def post(self, url, json=None, files=None, data=None, headers=None):
         return self._request('POST', url, json=json, files=files, data=data, headers=headers)
