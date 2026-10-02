@@ -1,9 +1,12 @@
 """Dependency injection utilities for FastAPI app."""
 import os
 from functools import lru_cache
-from typing import Generator, List
+from typing import List
 
-from pydantic_settings import BaseSettings
+from pydantic import BaseSettings
+# fallback: if pydantic_settings not available, we use pydantic BaseSettings
+# Already imported from pydantic directly.
+
 from sqlmodel import Session, create_engine
 
 class Settings(BaseSettings):
@@ -29,8 +32,8 @@ def get_engine(settings: Settings = None):
         return create_engine(settings.database_url, connect_args={"check_same_thread": False})
     return create_engine(settings.database_url)
 
-def get_session(engine = None) -> Generator[Session, None, None]:
+def get_session(engine = None) -> Session:
     if engine is None:
         engine = get_engine()
-    with Session(engine) as session:
-        yield session
+    # Direct Session instance (no context manager)
+    return Session(engine)

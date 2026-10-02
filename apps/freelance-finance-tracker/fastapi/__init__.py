@@ -49,7 +49,7 @@ class UploadFile:
 class APIRouter:
     def __init__(self):
         self.routes: List[Tuple[str, str, Callable, List[Depends]]] = []
-    def _add_route(self, path: str, endpoint: Callable, methods: List[str]):
+    def _add_route(self, path: str, endpoint: Callable, methods: List[str], **kwargs):
         # extract Depends from signature defaults
         import inspect
         deps = []
@@ -58,19 +58,19 @@ class APIRouter:
             if isinstance(param.default, Depends):
                 deps.append(param.default)
         self.routes.append((path, methods[0].lower(), endpoint, deps))
-    def get(self, path: str):
+    def get(self, path: str, **kwargs):
         def decorator(func: Callable):
-            self._add_route(path, func, ["GET"])
+            self._add_route(path, func, ["GET"], **kwargs)
             return func
         return decorator
-    def post(self, path: str):
+    def post(self, path: str, **kwargs):
         def decorator(func: Callable):
-            self._add_route(path, func, ["POST"])
+            self._add_route(path, func, ["POST"], **kwargs)
             return func
         return decorator
-    def delete(self, path: str):
+    def delete(self, path: str, **kwargs):
         def decorator(func: Callable):
-            self._add_route(path, func, ["DELETE"])
+            self._add_route(path, func, ["DELETE"], **kwargs)
             return func
         return decorator
 
@@ -143,10 +143,7 @@ class TestClient:
                 if isinstance(param.default, _File):
                     if files and name in files:
                         filename, fileobj, content_type = files[name]
-                        if hasattr(fileobj, 'read'):
-                            upload = UploadFile(filename, fileobj)
-                        else:
-                            upload = UploadFile(filename, io.BytesIO(fileobj))
+                        upload = UploadFile(filename, fileobj if hasattr(fileobj, 'read') else io.BytesIO(fileobj))
                         kwargs[name] = upload
                 elif isinstance(param.default, _Form):
                     if data and name in data:

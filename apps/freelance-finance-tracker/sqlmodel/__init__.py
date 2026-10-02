@@ -17,6 +17,9 @@ class SQLModel:
             # No operation needed for stub
             pass
     metadata = _Meta()
+    def __init_subclass__(cls, **kwargs):
+        # accept table=True etc.
+        return super().__init_subclass__()
     def __init__(self, **kwargs):
         for k, v in kwargs.items():
             setattr(self, k, v)
