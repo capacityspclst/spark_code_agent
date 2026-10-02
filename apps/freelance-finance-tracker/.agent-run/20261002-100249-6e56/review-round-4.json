@@ -1,0 +1,17 @@
+{
+  "verdict": "revise",
+  "issues": [
+    "backend/app/database.py does not define the expected 'engine' and 'Base' objects, causing an import error in backend/app/main.py.",
+    "backend/app/auth.py misses a get_current_user function that the dashboard and export routers depend on; also token handling is not aligned with the stub FastAPI's request model.",
+    "Routers (dashboard, export, receipts, mileage) import and use SQLAlchemy Session and query interfaces, but the stub store only provides in\u2011memory dictionaries \u2013 this leads to AttributeError at runtime.",
+    "The stub FastAPI implementation does not resolve FastAPI Depends; route signatures that use Depends(auth.get_current_user) will receive a Depends object instead of a user, breaking the endpoints.",
+    "backend/app/routers/receipts.py calls auth.get_current_user() which does not exist, and falls back to an empty owner email \u2013 receipts are stored with no owner.",
+    "backend/app/routers/mileage.py has an unused local variable warning (ruff F841) and incorrectly extracts the user without handling the case when authentication fails.",
+    "Missing backend/app/dependencies.py (imported elsewhere) and other placeholder modules that are referenced but not implemented.",
+    "frontend is missing all component files (App.jsx, routes, components, context, etc.) \u2013 Vite fails to resolve './App.jsx' causing the build to break.",
+    "Package.json lists react-router 6.30.6 with known security CVEs; this should be upgraded to a safe version (>=7.18.0) to satisfy static security checks.",
+    "Static validation (ruff) reports unused imports and other lint errors that must be cleaned up.",
+    "Tests expect authentication, receipt upload, mileage entry, dashboard summary and CSV/PDF export to work; the current implementation uses an incompatible mix of stubbed auth, in\u2011memory store, and SQLAlchemy placeholders, so the endpoints will not behave as the tests require."
+  ],
+  "feedback": "The repository currently contains only a skeletal stub of the FastAPI application and an empty frontend, which does not satisfy any of the functional requirements or pass the acceptance tests. To move forward you need to:\n1. Provide proper placeholders for 'engine' and 'Base' in backend/app/database.py (or replace the SQLAlchemy usage entirely with the in\u2011memory store).\n2. Implement a get_current_user dependency (or refactor routes to manually extract the user from the Authorization header) that works with the stub FastAPI.\n3. Rewrite the dashboard and export routers to use the in\u2011memory store rather than SQLAlchemy queries.\n4. Adjust all route signatures to accept the parameters that the stub TestClient passes (json, data, files, headers) and remove Depends usage.\n5. Fix the receipt router to correctly associate a receipt with the authenticated user.\n6. Resolve lint warnings (remove unused imports, fix the unused 'user' variable, etc.).\n7. Add all missing frontend source files (App.jsx, component files, routing, AuthContext, etc.) or provide a minimal placeholder that allows Vite to build.\n8. Upgrade react-router to a non\u2011vulnerable version and ensure the package-lock reflects the change.\nOnce these core issues are addressed and the backend endpoints correctly interact with the in\u2011memory store while the frontend builds without errors, the acceptance tests should be able to import the app and exercise the required functionality."
+}
