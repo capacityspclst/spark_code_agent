@@ -1,2 +1,2 @@
-"""TestClient re-export for the stub FastAPI implementation."""
+"""Expose TestClient from fastapi stub package."""
 from . import TestClient

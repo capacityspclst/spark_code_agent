@@ -4,17 +4,17 @@ from sqlmodel import Session, select
 
 from ..auth import get_current_user
 from ..dependencies import get_session
-from ..models import Receipt
+from ..models import Receipt, User
 from ..schemas import ReceiptResponse
 from ..utils.storage import StorageService
 
 router = APIRouter()
 
 @router.post("/", status_code=status.HTTP_201_CREATED, response_model=ReceiptResponse)
-async def upload_receipt(
+def upload_receipt(
     file: UploadFile = File(...),
     amount: float = Form(...),
-    current_user = Depends(get_current_user),
+    current_user: User = Depends(get_current_user),
     session: Session = Depends(get_session),
     storage: StorageService = Depends(lambda: StorageService()),
 ):
@@ -30,7 +30,7 @@ async def upload_receipt(
 
 @router.get("/", response_model=list[ReceiptResponse])
 def list_receipts(
-    current_user = Depends(get_current_user),
+    current_user: User = Depends(get_current_user),
     session: Session = Depends(get_session),
 ):
     receipts = session.exec(select(Receipt).where(Receipt.user_id == current_user.id)).all()
@@ -39,7 +39,7 @@ def list_receipts(
 @router.delete("/{receipt_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_receipt(
     receipt_id: int,
-    current_user = Depends(get_current_user),
+    current_user: User = Depends(get_current_user),
     session: Session = Depends(get_session),
     storage: StorageService = Depends(lambda: StorageService()),
 ):

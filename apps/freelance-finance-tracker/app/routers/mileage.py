@@ -4,7 +4,7 @@ from sqlmodel import Session, select
 
 from ..auth import get_current_user
 from ..dependencies import get_session
-from ..models import Mileage
+from ..models import Mileage, User
 from ..schemas import MileageCreate, MileageResponse
 
 router = APIRouter()
@@ -12,7 +12,7 @@ router = APIRouter()
 @router.post("/", response_model=MileageResponse, status_code=status.HTTP_201_CREATED)
 def create_mileage(
     payload: MileageCreate,
-    current_user = Depends(get_current_user),
+    current_user: User = Depends(get_current_user),
     session: Session = Depends(get_session),
 ):
     mileage = Mileage(
@@ -28,7 +28,7 @@ def create_mileage(
 
 @router.get("/", response_model=list[MileageResponse])
 def list_mileage(
-    current_user = Depends(get_current_user),
+    current_user: User = Depends(get_current_user),
     session: Session = Depends(get_session),
 ):
     records = session.exec(select(Mileage).where(Mileage.user_id == current_user.id)).all()
@@ -37,7 +37,7 @@ def list_mileage(
 @router.delete("/{mileage_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_mileage(
     mileage_id: int,
-    current_user = Depends(get_current_user),
+    current_user: User = Depends(get_current_user),
     session: Session = Depends(get_session),
 ):
     record = session.get(Mileage, mileage_id)
