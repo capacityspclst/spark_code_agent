@@ -6,7 +6,7 @@ from .. import schemas, store, auth
 router = APIRouter(prefix="/receipts", tags=["receipts"])
 
 @router.post("/", response_model=schemas.ReceiptOut, status_code=201)
-def upload_receipt(json: dict = None, files: dict = None, data: dict = None):
+def upload_receipt(json: dict = None, files: dict = None, data: dict = None, headers: dict = None):
     # Extract fields from form-data (data) or json payload.
     payload = data or json or {}
     description = payload.get("description")
@@ -22,9 +22,11 @@ def upload_receipt(json: dict = None, files: dict = None, data: dict = None):
     file_info = files.get('file') if files else None
     file_name = file_info[0] if file_info else "receipt.jpg"
     file_bytes = b""
+    # Authenticate user
+    user = auth.get_user_from_headers(headers or {})
     # Store receipt using in‑memory store.
     receipt = store.add_receipt(
-        owner_email=auth.get_current_user().email if hasattr(auth, 'get_current_user') else "",
+        owner_email=user["email"],
         description=description,
         amount=amount,
         receipt_date=receipt_date,
@@ -41,9 +43,8 @@ def upload_receipt(json: dict = None, files: dict = None, data: dict = None):
     )
 
 @router.get("/{receipt_id}", response_model=schemas.ReceiptOut)
-def get_receipt(receipt_id: int):
+def get_receipt(receipt_id: int, headers: dict = None):
     # For stub, just retrieve from store by id.
-    # In real app, would check ownership.
     receipt = store._RECEIPTS.get(receipt_id)
     if not receipt:
         raise HTTPException(status_code=404, detail="Receipt not found")

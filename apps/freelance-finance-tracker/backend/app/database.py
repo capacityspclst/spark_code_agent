@@ -1,7 +1,20 @@
-"""Placeholder database module to satisfy imports. Not used in the stub implementation."""
+"""Placeholder database module used only to satisfy imports.
+The current implementation relies on an in‑memory store defined in ``store.py``
+and does not need a real SQLAlchemy engine or Base metadata.
+We simply export dummy ``engine`` and ``Base`` objects so that other modules
+can import them without error.
+"""
+
+class _Dummy:
+    pass
+
+# Dummy objects to keep import statements happy.
+engine = _Dummy()
+Base = _Dummy()
 
 def get_db():
-    # No real DB; placeholder generator that yields None.
-    def generator():
+    # The stub TestClient does not use dependency injection, but some routers
+    # still expect a callable. Returning a generator that yields ``None`` works.
+    def _gen():
         yield None
-    return generator()
+    return _gen()

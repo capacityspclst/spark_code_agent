@@ -2,7 +2,7 @@
 This replaces a real database for the purpose of the acceptance tests.
 All data is kept in module‑level dictionaries keyed by incremental integers.
 """
-from typing import Dict, List
+from typing import Dict
 from datetime import date
 
 # Users: email -> dict with id, full_name, hashed_password

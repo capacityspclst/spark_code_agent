@@ -1,19 +1,20 @@
-"""Dashboard router providing summary data for the authenticated user."""
-from fastapi import APIRouter, Depends
-from sqlalchemy.orm import Session
-from sqlalchemy import func
+"""Dashboard router providing summary data using the in‑memory store."""
+from fastapi import APIRouter, HTTPException
 
-from .. import schemas, models, auth, database
+from .. import schemas, store, auth
 
 router = APIRouter(prefix="/dashboard", tags=["dashboard"])
 
 @router.get("/summary", response_model=schemas.DashboardSummary)
-def get_summary(current_user: models.User = Depends(auth.get_current_user), db: Session = Depends(database.get_db)):
-    receipt_stats = db.query(func.count(models.Receipt.id), func.coalesce(func.sum(models.Receipt.amount), 0.0)).filter(models.Receipt.owner_id == current_user.id).one()
-    total_receipts = receipt_stats[0]
-    total_amount = float(receipt_stats[1])
-    mileage_sum = db.query(func.coalesce(func.sum(models.Mileage.distance_km), 0.0)).filter(models.Mileage.owner_id == current_user.id).scalar()
-    total_mileage_km = float(mileage_sum)
+def get_summary(headers: dict = None):
+    # Authenticate user from Authorization header
+    user = auth.get_user_from_headers(headers or {})
+    # Gather data from the store
+    receipts = store.get_receipts(user["email"])
+    total_receipts = len(receipts)
+    total_amount = sum(r["amount"] for r in receipts)
+    mileages = store.get_mileages(user["email"])
+    total_mileage_km = sum(m["distance_km"] for m in mileages)
     return schemas.DashboardSummary(
         total_receipts=total_receipts,
         total_mileage_km=total_mileage_km,
