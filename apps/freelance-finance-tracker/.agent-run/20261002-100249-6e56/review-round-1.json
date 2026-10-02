@@ -1,0 +1,15 @@
+{
+  "verdict": "revise",
+  "issues": [
+    "Missing FastAPI entry point \u2013 there is no `backend/app/main.py` exposing a FastAPI `app` object. The acceptance test cannot import `backend.app.main`, causing an import error.",
+    "Routers are not registered with a FastAPI app \u2013 even if `main.py` is added, you must `include_router` for auth, receipts, mileage, dashboard (and export if required) and ensure the database tables are created (e.g., `Base.metadata.create_all(bind=engine)`).",
+    "Ruff static\u2011analysis failures: several router modules import symbols they never use (`fastapi.status`, `fastapi.HTTPException`, `datetime.date`, etc.). These unused imports are flagged as blocking errors and must be removed or used.",
+    "Frontend build fails \u2013 Vite cannot find the entry `index.html`. Either move `frontend/index.html` to the project root or configure Vite (e.g., `vite.config.js` with `root: './frontend'` and proper `publicDir`) so that `npm run build` can locate the HTML file.",
+    "The `export` router referenced in the plan is missing from the repository, yet the frontend expects export endpoints and the backend tests likely import it. Provide an `export.py` router (PDF/CSV generation) or remove that functionality from the UI and tests.",
+    "Database initialization is not performed anywhere. Tests using an in\u2011memory SQLite DB need the tables created before queries; add a call to `Base.metadata.create_all(bind=engine)` in `main.py` (or in a test fixture).",
+    "Potential missing `backend/app/dependencies.py` and `backend/app/utils.py` referenced in the plan \u2013 if they are imported elsewhere they need to exist or be removed from imports.",
+    "The `Token` schema includes a `token_type` default, but the auth router returns only `access_token`. Ensure the response matches the schema (`token_type` will default to \"bearer\"), or adjust the schema accordingly.",
+    "Front\u2011end package includes `react-router-dom` version 6.14.0 with known medium\u2011severity CVEs. While not blocking, consider upgrading to a fixed version (\u22657.18.0) to avoid security warnings."
+  ],
+  "feedback": "The repository is incomplete: the FastAPI application entry point and router registration are missing, causing the import error in the acceptance test. Static validation also fails due to unused imports, and the Vite build cannot locate `index.html`. Implement a proper `backend/app/main.py` that creates the FastAPI `app`, includes all routers, and creates database tables. Clean up the unused imports to satisfy ruff. Adjust the Vite configuration or project layout so that `npm run build` succeeds. Add the missing export router (or adjust the UI/tests) and ensure any referenced modules exist. After these fixes the acceptance test should import the app, static checks will pass, and the frontend will build successfully."
+}
