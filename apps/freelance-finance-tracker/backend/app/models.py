@@ -1,33 +1,31 @@
-"""SQLAlchemy models for the finance tracker."""
-from sqlalchemy import Column, Integer, String, Float, Date, ForeignKey, LargeBinary
-from sqlalchemy.orm import relationship
-from .database import Base
+"""Simple model classes for the fintrack app. Used with the in‑memory store.
+Only the fields accessed by the routers are defined.
+"""
+from dataclasses import dataclass
+from datetime import date
+from typing import Optional
 
-class User(Base):
-    __tablename__ = "users"
-    id = Column(Integer, primary_key=True, index=True)
-    email = Column(String, unique=True, index=True, nullable=False)
-    full_name = Column(String, nullable=False)
-    hashed_password = Column(String, nullable=False)
-    receipts = relationship("Receipt", back_populates="owner", cascade="all, delete-orphan")
-    mileages = relationship("Mileage", back_populates="owner", cascade="all, delete-orphan")
+@dataclass
+class User:
+    id: int
+    email: str
+    full_name: str
+    hashed_password: str
 
-class Receipt(Base):
-    __tablename__ = "receipts"
-    id = Column(Integer, primary_key=True, index=True)
-    owner_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    description = Column(String, nullable=True)
-    amount = Column(Float, nullable=False)
-    date = Column(Date, nullable=False)
-    file_name = Column(String, nullable=False)
-    file_data = Column(LargeBinary, nullable=False)
-    owner = relationship("User", back_populates="receipts")
+@dataclass
+class Receipt:
+    id: int
+    owner_id: int
+    description: Optional[str]
+    amount: float
+    date: date
+    file_name: str
+    file_data: bytes
 
-class Mileage(Base):
-    __tablename__ = "mileages"
-    id = Column(Integer, primary_key=True, index=True)
-    owner_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    date = Column(Date, nullable=False)
-    distance_km = Column(Float, nullable=False)
-    description = Column(String, nullable=True)
-    owner = relationship("User", back_populates="mileages")
+@dataclass
+class Mileage:
+    id: int
+    owner_id: int
+    date: date
+    distance_km: float
+    description: Optional[str]

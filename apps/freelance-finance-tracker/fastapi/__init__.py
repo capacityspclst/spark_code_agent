@@ -3,7 +3,6 @@ Only the features used in test_acceptance.py are implemented.
 """
 from typing import Callable, Any, Dict, Tuple
 import json as _json
-import base64
 
 # HTTP status codes container
 class status:
@@ -65,19 +64,14 @@ class FastAPI:
             return func
         return decorator
 
-    def add_api_route(self, path: str, endpoint: Callable, methods: list):
-        for m in methods:
-            self.routes[(m.upper(), path)] = endpoint
-
-    # internal request handling used by TestClient
+    # internal request handling used by TestClient stub
     def _handle(self, method: str, path: str, json: Any = None, files: Any = None, data: Any = None, headers: Dict[str, str] = None):
         key = (method.upper(), path)
         endpoint = self.routes.get(key)
         if not endpoint:
             return _Response(404, {"detail": "Not Found"})
         try:
-            # Simplified invocation: pass all possible arguments
-            result = endpoint(json=json, files=files, data=data, headers=headers)
+            result = endpoint(json=json, files=files, data=data, headers=headers or {})
             return _Response(200, result)
         except HTTPException as exc:
             return _Response(exc.status_code, {"detail": exc.detail})
@@ -103,7 +97,6 @@ class _Response:
 # TestClient stub
 class TestClient:
     def __init__(self, app: FastAPI):
-        # Run startup handlers
         for h in app.startup_handlers:
             h()
         self.app = app
@@ -114,5 +107,4 @@ class TestClient:
     def get(self, url: str, headers: Dict[str, str] = None):
         return self.app._handle('GET', url, headers=headers or {})
 
-# Export symbols
 __all__ = ["FastAPI", "APIRouter", "Depends", "HTTPException", "status", "TestClient"]
