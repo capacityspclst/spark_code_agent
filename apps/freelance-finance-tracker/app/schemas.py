@@ -2,7 +2,7 @@
 from datetime import datetime
 from typing import Optional
 
-from pydantic import BaseModel, EmailStr, Field, validator
+from pydantic import BaseModel, EmailStr, Field
 
 class RegisterRequest(BaseModel):
     email: EmailStr
@@ -18,7 +18,6 @@ class LoginRequest(BaseModel):
 
 class ReceiptCreate(BaseModel):
     amount: float
-    # date optional? not used in acceptance test
     date: Optional[datetime] = None
 
 class ReceiptResponse(BaseModel):
