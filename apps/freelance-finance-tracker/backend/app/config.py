@@ -1,7 +1,6 @@
 """Application configuration using pydantic BaseSettings.
 Environment variables can be loaded from a .env file.
 """
-import os
 from pydantic_settings import BaseSettings
 from pydantic import Field
 

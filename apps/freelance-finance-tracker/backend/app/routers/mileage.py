@@ -1,5 +1,5 @@
 """Mileage routes: create and list mileage entries."""
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from .. import models, schemas, database, dependencies
 

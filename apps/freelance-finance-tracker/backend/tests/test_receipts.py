@@ -1,18 +1,17 @@
 """Integration tests for receipt routes."""
-import os, sys, datetime, base64, json
+import os, sys, datetime, base64
 from fastapi.testclient import TestClient
 
 backend_path = os.path.abspath(os.path.join(os.getcwd(), "backend"))
 sys.path.append(backend_path)
 
 from app.main import app
-from app.database import Base, engine, settings
+from app.database import Base, engine
 
 import pytest
 
 @pytest.fixture(scope="module", autouse=True)
 def setup_db(tmp_path_factory):
-    # Use a temporary SQLite DB per module
     db_file = tmp_path_factory.mktemp("db") / "test.db"
     os.environ["DATABASE_URL"] = f"sqlite:///{db_file}"
     Base.metadata.create_all(bind=engine)
@@ -33,7 +32,6 @@ def register_user(client, email, pwd):
 
 def test_receipt_crud(client):
     headers = register_user(client, "rcp@test.com", "Pwd12345")
-    # upload
     png = base64.b64decode(
         "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO7n4ScAAAAASUVORK5CYII="
     )
@@ -47,17 +45,13 @@ def test_receipt_crud(client):
     os.remove(file_path)
     assert resp.status_code == 200
     receipt_id = resp.json()["id"]
-    # get list
     resp = client.get("/receipts", headers=headers)
     assert resp.status_code == 200
     assert any(r["id"] == receipt_id for r in resp.json())
-    # get single
     resp = client.get(f"/receipts/{receipt_id}", headers=headers)
     assert resp.status_code == 200
-    # delete
     resp = client.delete(f"/receipts/{receipt_id}", headers=headers)
     assert resp.status_code == 200
-    # verify removed
     resp = client.get("/receipts", headers=headers)
     assert resp.status_code == 200
     assert all(r["id"] != receipt_id for r in resp.json())

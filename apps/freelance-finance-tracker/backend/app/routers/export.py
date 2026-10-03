@@ -1,8 +1,8 @@
 """Export routes: PDF and CSV generation."""
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
-from .. import models, schemas, database, dependencies, config
+from .. import models, database, dependencies
 from ..pdf_generator import generate_pdf
 from ..csv_generator import generate_csv
 import datetime
@@ -11,7 +11,6 @@ router = APIRouter(prefix="/export", tags=["export"])
 
 @router.get("/pdf")
 def export_pdf(current_user: models.User = Depends(dependencies.get_current_user), db: Session = Depends(database.get_db)):
-    # Generate summary
     from ..routers.dashboard import get_summary
     summary = get_summary(current_user=current_user, db=db)
     pdf_bytes = generate_pdf(summary)

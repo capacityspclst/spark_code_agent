@@ -23,6 +23,11 @@ app.include_router(mileage.router)
 app.include_router(dashboard.router)
 app.include_router(export.router)
 
+# Health check
+@app.get("/health")
+def health():
+    return {"status": "OK"}
+
 # Create DB tables on startup
 @app.on_event("startup")
 def on_startup():

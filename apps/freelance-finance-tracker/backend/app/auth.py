@@ -1,5 +1,4 @@
 """Authentication utilities: password hashing and JWT token creation/validation."""
-import secrets
 from datetime import datetime, timedelta
 from typing import Optional
 

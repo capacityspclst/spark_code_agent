@@ -2,8 +2,7 @@
 import os
 import shutil
 from datetime import datetime
-from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Form
-from fastapi.responses import JSONResponse
+from fastapi import APIRouter, Depends, UploadFile, File, Form
 from sqlalchemy.orm import Session
 from .. import models, schemas, database, dependencies, config
 
@@ -19,9 +18,7 @@ async def upload_receipt(
     current_user: models.User = Depends(dependencies.get_current_user),
     db: Session = Depends(database.get_db),
 ):
-    # Ensure upload directory exists
     os.makedirs(config.settings.UPLOAD_DIR, exist_ok=True)
-    # Simple filename safe handling
     filename = f"{int(datetime.utcnow().timestamp())}_{file.filename}"
     file_path = os.path.join(config.settings.UPLOAD_DIR, filename)
     with open(file_path, "wb") as buffer:
@@ -56,7 +53,6 @@ def delete_receipt(receipt_id: int, current_user: models.User = Depends(dependen
     receipt = db.query(models.Receipt).filter(models.Receipt.id == receipt_id, models.Receipt.user_id == current_user.id).first()
     if not receipt:
         raise HTTPException(status_code=404, detail="Receipt not found")
-    # Delete file if exists
     file_path = os.path.join(config.settings.UPLOAD_DIR, receipt.filename)
     if os.path.isfile(file_path):
         os.remove(file_path)

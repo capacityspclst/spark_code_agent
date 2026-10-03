@@ -1,14 +1,12 @@
 """Authentication routes: register and login."""
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from . import dependencies
 from .. import models, schemas, auth, database
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 @router.post("/register", status_code=201)
 def register(user: schemas.UserCreate, db: Session = Depends(database.get_db)):
-    # Check existing email
     existing = db.query(models.User).filter(models.User.email == user.email).first()
     if existing:
         raise HTTPException(status_code=400, detail="Email already registered")
@@ -24,5 +22,5 @@ def login(form: schemas.UserLogin, db: Session = Depends(database.get_db)):
     user = db.query(models.User).filter(models.User.email == form.email).first()
     if not user or not auth.verify_password(form.password, user.hashed_password):
         raise HTTPException(status_code=401, detail="Incorrect email or password")
-    access_token = auth.create_access_token(data={"sub": str(user.id)})
+    access_token = auth.create_access_token(data={"sub": user.id})
     return {"access_token": access_token, "token_type": "bearer"}
