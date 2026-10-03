@@ -58,7 +58,5 @@ def test_dashboard_summary(client):
     assert resp.status_code == 200
     data = resp.json()
     assert data["total_expenses"] == 100.0
-    # mileage deduction should be 10 * rate (default 0.58)
     expected = 10 * 0.58
     assert abs(data["total_mileage_deduction"] - expected) < 0.01
-"""

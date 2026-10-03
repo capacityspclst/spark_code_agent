@@ -2,7 +2,7 @@
 import os
 import shutil
 from datetime import datetime
-from fastapi import APIRouter, Depends, UploadFile, File, Form
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
 from sqlalchemy.orm import Session
 from .. import models, schemas, database, dependencies, config
 

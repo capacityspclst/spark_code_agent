@@ -11,7 +11,7 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = Field(default=60, env="ACCESS_TOKEN_EXPIRE_MINUTES")
     MILEAGE_RATE: float = Field(default=0.58, env="MILEAGE_RATE")
     UPLOAD_DIR: str = Field(default="uploads", env="UPLOAD_DIR")
-    CORS_ORIGINS: list[str] = Field(default=["*"], env="CORS_ORIGINS")
+    CORS_ORIGINS: str = Field(default="*", env="CORS_ORIGINS")
 
     class Config:
         env_file = ".env"

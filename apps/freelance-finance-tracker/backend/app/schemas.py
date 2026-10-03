@@ -1,7 +1,7 @@
 """Pydantic schemas for request/response models."""
 from datetime import date, datetime
 from typing import List, Optional
-from pydantic import BaseModel, EmailStr, Field, validator
+from pydantic import BaseModel, EmailStr, Field
 
 class UserCreate(BaseModel):
     email: EmailStr
