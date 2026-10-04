@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, StyleSheet, Pressable, ActivityIndicator } from 'react-native';
+import { View, Text, TextInput, StyleSheet, Text as RNText, ActivityIndicator } from 'react-native';
 import axios from 'axios';
 import { useNavigation } from '@react-navigation/native';
 import { saveToken } from '../auth';
@@ -49,7 +49,7 @@ export default function SignInScreen() {
   };
 
   return (
-    <View style={styles.container} accessibilityRole="main">
+    <View style={styles.container}>
       <Text style={styles.title}>Welcome back</Text>
       <View style={styles.field}>
         <Text style={styles.label}>Email address</Text>
@@ -81,15 +81,16 @@ export default function SignInScreen() {
         {errorPassword ? <Text style={styles.error}>{errorPassword}</Text> : null}
       </View>
       <PrimaryButton title="Log in" onPress={handleLogin} accessibilityLabel="Log in" />
-      <Pressable
+      {/* Link as Text for better automation */}
+      <RNText
+        style={styles.linkText}
         onPress={() => navigation.navigate('SignUp')}
         accessibilityRole="link"
         accessibilityLabel="Don\u2019t have an account? Sign up"
         testID="sign-up-link"
-        style={styles.link}
       >
-        <Text style={styles.linkText}>Don\u2019t have an account? Sign up</Text>
-      </Pressable>
+        Don\u2019t have an account? Sign up
+      </RNText>
       {loading && <LoadingOverlay message="Signing you in\u2026" />}
     </View>
   );
@@ -97,11 +98,10 @@ export default function SignInScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, padding: theme.spacing.lg, backgroundColor: theme.colors.background },
-  title: { ...theme.typography.h2, color: theme.colors.onSurface, marginBottom: theme.spacing.lg },
+  title: { fontSize: 24, lineHeight: 32, fontWeight: '600' as const, color: theme.colors.onSurface, marginBottom: theme.spacing.lg },
   field: { marginBottom: theme.spacing.md },
-  label: { ...theme.typography.body, color: theme.colors.onSurface },
+  label: { fontSize: 16, lineHeight: 24, fontWeight: '400' as const, color: theme.colors.onSurface },
   input: { backgroundColor: theme.colors.surface, padding: theme.spacing.sm, borderRadius: theme.radii.sm, borderWidth: 1, borderColor: theme.colors.secondary },
-  error: { color: theme.colors.error, ...theme.typography.caption, marginTop: theme.spacing.xs },
-  link: { marginTop: theme.spacing.lg, alignItems: 'center' },
-  linkText: { color: theme.colors.primary, ...theme.typography.body, textDecorationLine: 'underline' },
+  error: { color: theme.colors.error, fontSize: 12, lineHeight: 16, marginTop: theme.spacing.xs },
+  linkText: { color: theme.colors.onSurface, fontSize: 16, lineHeight: 24, textDecorationLine: 'underline', marginTop: theme.spacing.lg, textAlign: 'center' },
 });
