@@ -25,6 +25,7 @@ export default function PrimaryButton({ title, onPress, disabled = false, loadin
       disabled={isDisabled}
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel || title}
+      accessibilityState={isDisabled ? { disabled: true } : undefined}
       onFocus={() => setFocused(true)}
       onBlur={() => setFocused(false)}
     >
@@ -45,7 +46,7 @@ const styles = StyleSheet.create<{ button: ViewStyle; disabled: ViewStyle; focus
     borderRadius: theme.radii.md,
     justifyContent: 'center',
     alignItems: 'center',
-    marginVertical: theme.spacing.md, // 12px as spec
+    marginVertical: theme.spacing.md,
   },
   disabled: {
     backgroundColor: theme.colors.disabledBackground,

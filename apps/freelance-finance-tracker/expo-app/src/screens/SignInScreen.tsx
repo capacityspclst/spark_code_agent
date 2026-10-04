@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, ActivityIndicator, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, TextInput, StyleSheet, Pressable, ActivityIndicator } from 'react-native';
 import axios from 'axios';
 import { useNavigation } from '@react-navigation/native';
 import { saveToken } from '../auth';
@@ -60,6 +60,7 @@ export default function SignInScreen() {
           autoCapitalize="none"
           keyboardType="email-address"
           placeholder="Email address"
+          placeholderTextColor={theme.colors.placeholder}
           accessibilityLabel="Email address"
           editable={!loading}
         />
@@ -73,21 +74,22 @@ export default function SignInScreen() {
           onChangeText={setPassword}
           secureTextEntry
           placeholder="Password"
+          placeholderTextColor={theme.colors.placeholder}
           accessibilityLabel="Password"
           editable={!loading}
         />
         {errorPassword ? <Text style={styles.error}>{errorPassword}</Text> : null}
       </View>
       <PrimaryButton title="Log in" onPress={handleLogin} accessibilityLabel="Log in" />
-      <TouchableOpacity
+      <Pressable
         onPress={() => navigation.navigate('SignUp')}
-        style={styles.link}
         accessibilityRole="link"
         accessibilityLabel="Don\u2019t have an account? Sign up"
-        accessible={true}
+        testID="sign-up-link"
+        style={styles.link}
       >
         <Text style={styles.linkText}>Don\u2019t have an account? Sign up</Text>
-      </TouchableOpacity>
+      </Pressable>
       {loading && <LoadingOverlay message="Signing you in\u2026" />}
     </View>
   );
@@ -101,5 +103,5 @@ const styles = StyleSheet.create({
   input: { backgroundColor: theme.colors.surface, padding: theme.spacing.sm, borderRadius: theme.radii.sm, borderWidth: 1, borderColor: theme.colors.secondary },
   error: { color: theme.colors.error, ...theme.typography.caption, marginTop: theme.spacing.xs },
   link: { marginTop: theme.spacing.lg, alignItems: 'center' },
-  linkText: { color: theme.colors.primary, ...theme.typography.body },
+  linkText: { color: theme.colors.primary, ...theme.typography.body, textDecorationLine: 'underline' },
 });

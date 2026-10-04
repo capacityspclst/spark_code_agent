@@ -14,7 +14,7 @@ export const theme = {
     onPrimary: '#FFFFFF',        // text on primary
     onSurface: '#212121',        // body & heading text
     secondary: '#5F5F5F',        // secondary/caption
-    placeholder: '#212121',      // high contrast placeholder
+    placeholder: '#5F5F5F',      // increased contrast placeholder
     disabled: '#4D4D4D',
     // Status
     error: '#D32F2F',

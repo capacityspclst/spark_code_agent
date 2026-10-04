@@ -16,7 +16,7 @@ export default function LoadingOverlay({ message }: Props) {
 const styles = StyleSheet.create({
   overlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.3)',
+    backgroundColor: 'rgba(224,224,224,0.6)', // using disabledBackground with opacity
     justifyContent: 'center',
     alignItems: 'center',
     zIndex: 10,

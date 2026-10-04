@@ -63,6 +63,7 @@ export default function SignUpScreen() {
           autoCapitalize="none"
           keyboardType="email-address"
           placeholder="Email address"
+          placeholderTextColor={theme.colors.placeholder}
           accessibilityLabel="Email address"
           editable={!loading}
         />
@@ -77,6 +78,7 @@ export default function SignUpScreen() {
             onChangeText={setPassword}
             secureTextEntry={secureEntry}
             placeholder="Password"
+            placeholderTextColor={theme.colors.placeholder}
             accessibilityLabel="Password"
             editable={!loading}
           />
@@ -92,7 +94,13 @@ export default function SignUpScreen() {
       ) : (
         <PrimaryButton title="Create account" onPress={handleSignup} accessibilityLabel="Create account" />
       )}
-      <TouchableOpacity onPress={() => navigation.navigate('SignIn')} style={styles.link} accessibilityRole="link">
+      <TouchableOpacity
+        onPress={() => navigation.navigate('SignIn')}
+        style={styles.link}
+        accessibilityRole="link"
+        accessibilityLabel="Log in"
+        testID="back-to-signin"
+      >
         <Text style={styles.linkText}>Already have an account? Log in</Text>
       </TouchableOpacity>
       {loading && <LoadingOverlay message="Creating account…" />}
@@ -113,13 +121,13 @@ const styles = StyleSheet.create<{
   passwordRow: ViewStyle;
 }>({
   container: { flex: 1, padding: theme.spacing.lg, backgroundColor: theme.colors.background },
-  title: { ...theme.typography.h2, color: theme.colors.onSurface, marginBottom: theme.spacing.lg },
+  title: { fontSize: 24, lineHeight: 32, fontWeight: '600', color: theme.colors.onSurface, marginBottom: theme.spacing.lg },
   field: { marginBottom: theme.spacing.md },
-  label: { ...theme.typography.body, color: theme.colors.onSurface },
+  label: { fontSize: 16, lineHeight: 24, fontWeight: '400', color: theme.colors.onSurface },
   input: { backgroundColor: theme.colors.surface, padding: theme.spacing.sm, borderRadius: theme.radii.sm, borderWidth: 1, borderColor: theme.colors.secondary },
-  error: { color: theme.colors.error, ...theme.typography.small, marginTop: 4 },
-  helper: { color: theme.colors.placeholder, ...theme.typography.small, marginTop: 4 },
+  error: { color: theme.colors.error, fontSize: 12, lineHeight: 16, marginTop: 4 },
+  helper: { color: theme.colors.placeholder, fontSize: 14, lineHeight: 20, marginTop: 4 },
   link: { marginTop: theme.spacing.lg, alignItems: 'center' },
-  linkText: { color: theme.colors.primary },
+  linkText: { color: theme.colors.onSurface, textDecorationLine: 'underline' },
   passwordRow: { flexDirection: 'row', alignItems: 'center', marginTop: theme.spacing.sm },
 });
