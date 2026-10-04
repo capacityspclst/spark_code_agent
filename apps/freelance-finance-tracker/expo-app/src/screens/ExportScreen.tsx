@@ -21,7 +21,7 @@ export default function ExportScreen() {
         headers: { Authorization: `Bearer ${token}` },
       });
       const base64 = resp.data as string;
-      const uri = `${FileSystem.cacheDirectory}export.${type}`;
+      const uri = `${(FileSystem as any).cacheDirectory}export.${type}`;
       await FileSystem.writeAsStringAsync(uri, base64, { encoding: FileSystem.EncodingType.Base64 });
       await Sharing.shareAsync(uri);
       setMessage('Report ready to share.');

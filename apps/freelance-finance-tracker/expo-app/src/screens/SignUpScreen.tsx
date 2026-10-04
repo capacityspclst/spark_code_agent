@@ -65,7 +65,7 @@ export default function SignUpScreen() {
           placeholder="Email address"
           placeholderTextColor={theme.colors.placeholder}
           accessibilityLabel="Email address"
-          accessibilityRole="textbox"
+          autoComplete="email"
           testID="email-input"
           editable={!loading}
         />
@@ -82,11 +82,11 @@ export default function SignUpScreen() {
             placeholder="Password"
             placeholderTextColor={theme.colors.placeholder}
             accessibilityLabel="Password"
-            accessibilityRole="textbox"
+            autoComplete="new-password"
             testID="password-input"
             editable={!loading}
           />
-          <TouchableOpacity onPress={() => setSecureEntry(!secureEntry)} accessibilityLabel="Show password">
+          <TouchableOpacity onPress={() => setSecureEntry(!secureEntry)} accessibilityLabel={secureEntry ? "Show password" : "Hide password"}>
             <FontAwesome name={secureEntry ? 'eye-slash' : 'eye'} size={24} color={theme.colors.secondary} />
           </TouchableOpacity>
         </View>

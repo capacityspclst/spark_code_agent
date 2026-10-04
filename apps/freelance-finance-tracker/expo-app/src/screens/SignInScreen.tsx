@@ -62,7 +62,7 @@ export default function SignInScreen() {
           placeholder="Email address"
           placeholderTextColor={theme.colors.placeholder}
           accessibilityLabel="Email address"
-          accessibilityRole="textbox"
+          autoComplete="email"
           editable={!loading}
         />
         {errorEmail ? <Text style={styles.error}>{errorEmail}</Text> : null}
@@ -77,7 +77,7 @@ export default function SignInScreen() {
           placeholder="Password"
           placeholderTextColor={theme.colors.placeholder}
           accessibilityLabel="Password"
-          accessibilityRole="textbox"
+          autoComplete="current-password"
           editable={!loading}
         />
         {errorPassword ? <Text style={styles.error}>{errorPassword}</Text> : null}
@@ -89,6 +89,7 @@ export default function SignInScreen() {
         accessibilityLabel="Don’t have an account? Sign up"
         testID="sign-up-link"
         style={styles.link}
+        accessible={true}
       >
         <Text style={styles.linkText}>Don’t have an account? Sign up</Text>
       </TouchableOpacity>
@@ -101,7 +102,7 @@ const styles = StyleSheet.create({
   container: { flex: 1, padding: theme.spacing.lg, backgroundColor: theme.colors.background },
   title: { fontSize: 24, lineHeight: 32, fontWeight: '600' as const, color: theme.colors.onSurface, marginBottom: theme.spacing.lg },
   field: { marginBottom: theme.spacing.md },
-  label: { fontSize: 16, lineHeight: 24, fontWeight: '400' as const, color: theme.colors.onSurface },
+  label: { fontSize: 16, lineHeight: 24, fontWeight: '200' as const, color: theme.colors.onSurface },
   input: { backgroundColor: theme.colors.surface, padding: theme.spacing.sm, borderRadius: theme.radii.sm, borderWidth: 1, borderColor: theme.colors.secondary },
   error: { color: theme.colors.error, fontSize: 12, lineHeight: 16, marginTop: theme.spacing.xs },
   link: { marginTop: theme.spacing.lg, alignItems: 'center' },

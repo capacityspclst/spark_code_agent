@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { TouchableOpacity, Text, StyleSheet, ActivityIndicator, ViewStyle, TextStyle, GestureResponderEvent } from 'react-native';
+import { Pressable, Text, StyleSheet, ActivityIndicator } from 'react-native';
 import { theme } from '../theme';
 
 type Props = {
@@ -11,34 +11,34 @@ type Props = {
 };
 
 export default function PrimaryButton({ title, onPress, disabled = false, loading = false, accessibilityLabel }: Props) {
-  const [focused, setFocused] = useState(false);
   const isDisabled = disabled || loading;
 
-  const handlePress = (e: GestureResponderEvent) => {
-    if (!isDisabled) onPress();
-  };
-
   return (
-    <TouchableOpacity
-      style={[styles.button, isDisabled && styles.disabled, focused && styles.focused]}
-      onPress={handlePress}
+    <Pressable
+      style={({ pressed }) => [
+        styles.button,
+        isDisabled && styles.disabled,
+        pressed && !isDisabled && styles.pressed,
+      ]}
+      onPress={() => {
+        if (!isDisabled) onPress();
+      }}
       disabled={isDisabled}
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel || title}
       accessibilityState={isDisabled ? { disabled: true } : undefined}
-      onFocus={() => setFocused(true)}
-      onBlur={() => setFocused(false)}
+      tabIndex={0}
     >
       {loading ? (
         <ActivityIndicator size="small" color={theme.colors.onPrimary} />
       ) : (
         <Text style={[styles.text, isDisabled && styles.textDisabled]}>{title}</Text>
       )}
-    </TouchableOpacity>
+    </Pressable>
   );
 }
 
-const styles = StyleSheet.create<{ button: ViewStyle; disabled: ViewStyle; focused: ViewStyle; text: TextStyle; textDisabled: TextStyle }>({
+const styles = StyleSheet.create({
   button: {
     backgroundColor: theme.colors.primary,
     height: 48,
@@ -51,9 +51,8 @@ const styles = StyleSheet.create<{ button: ViewStyle; disabled: ViewStyle; focus
   disabled: {
     backgroundColor: theme.colors.disabledBackground,
   },
-  focused: {
-    borderWidth: 2,
-    borderColor: theme.colors.primary,
+  pressed: {
+    backgroundColor: theme.colors.primaryVariant,
   },
   text: {
     color: theme.colors.onPrimary,
