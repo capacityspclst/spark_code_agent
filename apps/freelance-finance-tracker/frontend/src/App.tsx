@@ -6,6 +6,7 @@ import { Dashboard } from './components/Dashboard';
 import { ReceiptUpload } from './components/ReceiptUpload';
 import { MileageForm } from './components/MileageForm';
 import { ExportButtons } from './components/ExportButtons';
+import { Layout } from './components/Layout';
 
 interface AuthContextProps {
   token: string | null;
@@ -24,13 +25,17 @@ function App() {
   return (
     <AuthContext.Provider value={{ token, setToken }}>
       <Routes>
+        <Route path="/" element={<Register />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        {/* Authenticated routes wrapped with Layout for persistent navigation */}
         <Route
           path="/dashboard"
           element={
             <RequireAuth>
-              <Dashboard />
+              <Layout>
+                <Dashboard />
+              </Layout>
             </RequireAuth>
           }
         />
@@ -38,7 +43,9 @@ function App() {
           path="/receipt-upload"
           element={
             <RequireAuth>
-              <ReceiptUpload />
+              <Layout>
+                <ReceiptUpload />
+              </Layout>
             </RequireAuth>
           }
         />
@@ -46,7 +53,9 @@ function App() {
           path="/mileage-form"
           element={
             <RequireAuth>
-              <MileageForm />
+              <Layout>
+                <MileageForm />
+              </Layout>
             </RequireAuth>
           }
         />
@@ -54,7 +63,9 @@ function App() {
           path="/export"
           element={
             <RequireAuth>
-              <ExportButtons />
+              <Layout>
+                <ExportButtons />
+              </Layout>
             </RequireAuth>
           }
         />
