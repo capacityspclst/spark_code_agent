@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, Button, ActivityIndicator, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, Button, ActivityIndicator, StyleSheet, ScrollView } from 'react-native';
 import axios from 'axios';
 import { useNavigation, useIsFocused } from '@react-navigation/native';
 import { getToken } from '../auth';
 import { API_URL } from '../config';
 import { theme } from '../theme';
+import PrimaryButton from '../components/PrimaryButton';
 
 export default function DashboardScreen() {
   const navigation = useNavigation<any>();
@@ -31,7 +32,7 @@ export default function DashboardScreen() {
 
   if (loading) {
     return (
-      <View style={styles.center} accessibilityRole="alert">
+      <View style={styles.center} accessibilityRole="none">
         <ActivityIndicator size="large" color={theme.colors.primary} />
         <Text style={styles.loadingText}>Loading summary…</Text>
       </View>
@@ -41,11 +42,11 @@ export default function DashboardScreen() {
   const empty = !summary || (summary.income === 0 && summary.expenses === 0 && summary.mileage_deduction === 0 && summary.estimated_tax === 0);
 
   return (
-    <ScrollView contentContainerStyle={styles.container} accessibilityRole="main">
+    <ScrollView contentContainerStyle={styles.container} accessibilityRole="none">
       {empty ? (
         <View style={styles.empty}>
           <Text style={styles.emptyText}>You haven’t added any receipts or mileage yet. Tap the + button to get started.</Text>
-          <Button title="Add first receipt" onPress={() => navigation.navigate('ReceiptCapture')} accessibilityLabel="Add first receipt" />
+          <PrimaryButton title="Add first receipt" onPress={() => navigation.navigate('ReceiptCapture')} accessibilityLabel="Add first receipt" />
         </View>
       ) : (
         <View style={styles.cards}>

@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, Button, ActivityIndicator, Alert, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, TextInput, ActivityIndicator, Alert, StyleSheet, TouchableOpacity } from 'react-native';
 import axios from 'axios';
 import { useNavigation } from '@react-navigation/native';
 import { saveToken } from '../auth';
 import { API_URL } from '../config';
 import { theme } from '../theme';
+import PrimaryButton from '../components/PrimaryButton';
 
 export default function SignInScreen() {
   const navigation = useNavigation<any>();
@@ -13,8 +14,12 @@ export default function SignInScreen() {
   const [loading, setLoading] = useState(false);
 
   const handleLogin = async () => {
-    if (!email || !password) {
+    if (!email) {
       Alert.alert('Error', 'Enter a valid email address.');
+      return;
+    }
+    if (!password) {
+      Alert.alert('Error', 'Enter your password.');
       return;
     }
     setLoading(true);
@@ -23,7 +28,7 @@ export default function SignInScreen() {
       const token = resp.data.access_token;
       await saveToken(token);
       navigation.reset({ index: 0, routes: [{ name: 'Main' }] });
-    } catch (e: any) {
+    } catch (e) {
       Alert.alert('Incorrect email or password.');
     } finally {
       setLoading(false);
@@ -41,6 +46,7 @@ export default function SignInScreen() {
           onChangeText={setEmail}
           autoCapitalize="none"
           keyboardType="email-address"
+          placeholder="Email address"
           accessibilityLabel="Email address"
         />
       </View>
@@ -51,16 +57,17 @@ export default function SignInScreen() {
           value={password}
           onChangeText={setPassword}
           secureTextEntry
+          placeholder="Password"
           accessibilityLabel="Password"
         />
       </View>
       {loading ? (
         <ActivityIndicator size="large" color={theme.colors.primary} />
       ) : (
-        <Button title="Log in" onPress={handleLogin} accessibilityLabel="Log in" />
+        <PrimaryButton title="Log in" onPress={handleLogin} accessibilityLabel="Log in" />
       )}
       <TouchableOpacity onPress={() => navigation.navigate('SignUp')} style={styles.link} accessibilityRole="link">
-        <Text>Don’t have an account? Sign up</Text>
+        <Text style={styles.linkText}>Don\u2019t have an account? Sign up</Text>
       </TouchableOpacity>
     </View>
   );
@@ -73,4 +80,5 @@ const styles = StyleSheet.create({
   label: { ...theme.typography.body, color: theme.colors.onSurface },
   input: { backgroundColor: theme.colors.surface, padding: theme.spacing.sm, borderRadius: theme.radii.sm, borderWidth: 1, borderColor: theme.colors.secondary },
   link: { marginTop: theme.spacing.lg, alignItems: 'center' },
+  linkText: { color: theme.colors.primary },
 });

@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, Button, ActivityIndicator, Alert, StyleSheet } from 'react-native';
+import { View, Text, TextInput, ActivityIndicator, StyleSheet, Alert } from 'react-native';
 import axios from 'axios';
-import { useNavigation, useIsFocused } from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 import { getToken } from '../auth';
 import { API_URL } from '../config';
 import { theme } from '../theme';
+import PrimaryButton from '../components/PrimaryButton';
 
 export default function MileageEntryScreen() {
   const navigation = useNavigation<any>();
@@ -25,7 +26,7 @@ export default function MileageEntryScreen() {
       const payload = { date, miles: parseInt(miles, 10), notes };
       await axios.post(`${API_URL}/mileage`, payload, { headers: { Authorization: `Bearer ${token}` } });
       setMessage('Mileage entry saved.');
-      // maybe navigate back
+      navigation.navigate('Dashboard');
     } catch (e) {
       setMessage('Failed to save mileage. Please try again.');
     } finally {
@@ -35,7 +36,7 @@ export default function MileageEntryScreen() {
   };
 
   return (
-    <View style={styles.container} accessibilityRole="main">
+    <View style={styles.container}>
       <Text style={styles.title}>New mileage entry</Text>
       <TextInput placeholder="Date" value={date} onChangeText={setDate} style={styles.input} accessibilityLabel="Date" />
       <TextInput placeholder="Miles driven" value={miles} onChangeText={setMiles} style={styles.input} keyboardType="numeric" accessibilityLabel="Miles driven" />
@@ -43,7 +44,7 @@ export default function MileageEntryScreen() {
       {loading ? (
         <ActivityIndicator size="large" color={theme.colors.primary} />
       ) : (
-        <Button title="Save mileage" onPress={handleSave} accessibilityLabel="Save mileage" />
+        <PrimaryButton title="Save mileage" onPress={handleSave} accessibilityLabel="Save mileage" />
       )}
       {message ? <Text style={styles.message}>{message}</Text> : null}
     </View>
