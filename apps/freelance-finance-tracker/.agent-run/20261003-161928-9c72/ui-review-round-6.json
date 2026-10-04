@@ -1,0 +1,186 @@
+{
+  "verdict": "fail",
+  "summary": "The UI generally scores very high on automated audits (axe 0, Lighthouse >96) and the compiled CSS shows no orphaned selectors, indicating that styling is applied and the build is clean. However, the primary user flow is broken \u2013 after a successful sign\u2011up the Dashboard never loads because the JWT token isn\u2019t attached to the /dashboard/summary request, resulting in a 401 error and an error banner instead of the empty\u2011state copy defined in DESIGN.md. In addition to this show\u2011stopper there are a number of medium\u2011severity gaps with the spec: missing empty\u2011state handling on Dashboard, missing accessible form markup (labels, autocomplete, password\u2011show toggle, field\u2011level errors), inconsistent use of design\u2011tokens, missing ARIA on icon\u2011only controls, incomplete navigation semantics, and a few low\u2011severity polish items (tooltips, heading hierarchy, focus\u2011trap for dialogs). These issues must be fixed before the product can be considered polished and production\u2011ready.",
+  "findings": [
+    {
+      "severity": "high",
+      "file": "frontend/src/components/Dashboard.tsx",
+      "issue": "Dashboard request to /dashboard/summary is sent without the JWT token after sign\u2011up, causing a 401 and rendering the generic error banner instead of the empty\u2011state \"No data yet\u2026\" view.",
+      "fix": "Persist the access_token returned by /auth/register in localStorage / a React context and add an Authorization: Bearer <token> header to all authenticated API calls (e.g. via an Axios interceptor). Verify that the token is refreshed on sign\u2011up and log\u2011in.",
+      "source": "designer"
+    },
+    {
+      "severity": "high",
+      "file": "frontend/src/components/Dashboard.tsx",
+      "issue": "Empty dashboard copy defined in the spec is never shown; the UI shows a failed\u2011load banner when there is simply no data.",
+      "fix": "Add a conditional branch: if summary totals are zero and per_month is empty, render the empty\u2011state UI with the exact copy \"No data yet. Add a receipt or mileage to get started.\" and a CTA button that navigates to the Add Receipt screen.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "frontend/src/components/Register.tsx",
+      "issue": "Form fields lack visible <label> elements above inputs; only placeholders are used, violating the spec\u2019s label\u2011above\u2011field rule and reducing accessibility.",
+      "fix": "Wrap each input in a <label htmlFor> pair (or use <label> with a nested input) and ensure each input has an id. Add appropriate autocomplete attributes (e.g., email, new-password).",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "frontend/src/components/Login.tsx",
+      "issue": "Same label issue as Register: inputs rely on placeholders without explicit labels, and autocomplete attributes are missing.",
+      "fix": "Add <label> elements for email and password fields with htmlFor linking, and set autocomplete=\"email\" and autocomplete=\"current-password\".",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "frontend/src/components/Register.tsx",
+      "issue": "Password field does not provide a show/hide toggle nor the password\u2011rule hint text required by the spec.",
+      "fix": "Add a button inside the password input that toggles type between \"password\" and \"text\"; give it an aria-label that updates with the state (e.g., \"Show password\", \"Hide password\"). Render the helper text \"8+ characters, at least one number, one uppercase letter.\" below the field.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "frontend/src/components/ReceiptUpload.tsx",
+      "issue": "Submit button is disabled silently during loading; the spec requires a spinner to replace the label and an ARIA live region announcing loading.",
+      "fix": "When the form is submitting, replace the button text with <LoadingSpinner aria-label=\"Uploading\u2026\"/> and keep the button disabled. Add role=\"status\" aria-live=\"polite\" on the spinner container.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "frontend/src/components/MileageForm.tsx",
+      "issue": "Same loading\u2011button issue as ReceiptUpload \u2013 submit button only shows disabled state without spinner and lacks ARIA live feedback.",
+      "fix": "Implement the LoadingSpinner replacement and ARIA live region as per design spec.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "frontend/src/components/Layout.tsx",
+      "issue": "Bottom navigation on mobile does not expose proper ARIA roles (tablist/tab) and focus styles; icon\u2011only tabs lack aria\u2011label.",
+      "fix": "Add role=\"tablist\" to the nav container, role=\"tab\" and aria-selected to each button, and ensure :focus-visible displays the global focus ring (--focus-ring). Provide aria-label=\"Dashboard\", \"Receipts\", \"Mileage\", \"Export\" for each tab.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "frontend/src/components/ExportButtons.tsx",
+      "issue": "Export buttons lack the tooltip copy defined in the spec (\"Download a PDF ready for tax filing\", etc.).",
+      "fix": "Add <button title=\"Download a PDF ready for tax filing\">Export PDF</button> and similar for CSV. Ensure tooltip text is localized and accessible.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "frontend/src/components/ReceiptList.tsx",
+      "issue": "Delete trash icon button has no aria-label and no focus ring, violating accessible icon\u2011only button guidelines.",
+      "fix": "Add aria-label=\"Delete receipt\" to the button, set aria-hidden=\"true\" on the icon, and ensure the button receives the global focus outline when focused.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "frontend/src/components/ReceiptUpload.tsx",
+      "issue": "File input description (supported formats, max size) is missing from the UI, contrary to spec.",
+      "fix": "Render a helper paragraph below the file picker with the exact copy \"Supported formats: JPG, PNG, PDF. Max size 5\u202fMB.\".",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "frontend/src/components/Dashboard.tsx",
+      "issue": "Offline banner defined in the spec is never shown when navigator.onLine is false.",
+      "fix": "Listen to the 'online'/'offline' events and render a top banner with copy \"You\u2019re offline \u2013 data will sync when you\u2019re back online.\" using the --c-offline-bg token and role=\"status\" aria-live=\"polite\".",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "frontend/src/index.css",
+      "issue": "A few CSS class names (e.g., .primary-button, .secondary-button) are defined but never used in the component markup, resulting in dead CSS.",
+      "fix": "Remove unused class definitions or apply them to the corresponding <Button> components to keep styles DRY.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "frontend/src/components/SomeComponent.tsx",
+      "issue": "Some components use hard\u2011coded colors (e.g., \"#0066FF\") instead of design\u2011token variables (--c-primary).",
+      "fix": "Replace all literal color values with the appropriate CSS variables defined in DESIGN.md.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "frontend/src/components/SomeComponent.tsx",
+      "issue": "Disabled inputs have a gray background, but the shade does not match the --c-surface-disabled token.",
+      "fix": "Apply background: var(--c-surface-disabled) and text color var(--c-on-surface-secondary) when disabled.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "frontend/src/components/SomeComponent.tsx",
+      "issue": "Headings hierarchy occasionally skips levels (e.g., an <h3> appears before an <h2>), which can confuse screen\u2011reader navigation.",
+      "fix": "Audit each page to ensure a single <h1>, then sequential <h2>, <h3>, etc., without skipping.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "frontend/src/components/DeleteConfirmModal.tsx",
+      "issue": "Modal dialog lacks proper focus trap; focus can move to underlying page elements while the dialog is open.",
+      "fix": "Implement a focus trap (e.g., use focus-trap-react) and return focus to the originating element on close.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "viewport": "phone",
+      "issue": "No visible type scale: headings, labels, and input fields use the same font size, making hierarchy unclear.",
+      "fix": "Establish a clear type scale: use larger, bold text for the heading, medium for labels, and smaller for placeholder text or error messages.",
+      "screen": "sign-up",
+      "source": "vision"
+    },
+    {
+      "severity": "medium",
+      "viewport": "phone",
+      "issue": "Insufficient spacing between form fields and between fields and the button, creating a cramped feel.",
+      "fix": "Add consistent vertical spacing (e.g., 16px) between fields and padding around the button to improve breathing room.",
+      "screen": "sign-up",
+      "source": "vision"
+    },
+    {
+      "severity": "low",
+      "viewport": "phone",
+      "issue": "Input fields are too close to the edge of the container, appearing cramped and not centered.",
+      "fix": "Add padding to the container to create space between fields and the container edge, and center-align the form vertically.",
+      "screen": "sign-up",
+      "source": "vision"
+    },
+    {
+      "severity": "low",
+      "viewport": "phone",
+      "issue": "No visual indication of form field focus or active state, which is critical for usability.",
+      "fix": "Add subtle focus outlines or background color changes on input fields when active.",
+      "screen": "sign-up",
+      "source": "vision"
+    },
+    {
+      "severity": "low",
+      "viewport": "phone",
+      "issue": "The 'Create account' button is not visually aligned with the form fields, breaking visual consistency.",
+      "fix": "Center the button horizontally and align it with the top of the form fields for a clean, aligned layout.",
+      "screen": "sign-up",
+      "source": "vision"
+    },
+    {
+      "severity": "high",
+      "screen": "sign-up",
+      "source": "vision",
+      "issue": "visual quality 6/10 on 'sign-up' (needs 8+): The sign-up screen is functionally complete but visually underwhelming. It lacks a clear type scale, spacing feels minimal and unpolished, and the layout is too close to browser defaults. The primary action is clear but the overall design doesn't feel premium or intentional enough for a polished product.",
+      "fix": "Address this screen's findings until it looks polished and professional."
+    }
+  ],
+  "lighthouse": [
+    {
+      "accessibility": 96,
+      "bestPractices": 100,
+      "performance": 98
+    }
+  ],
+  "vision_scores": [
+    {
+      "screen": "sign-up",
+      "score": 6.0,
+      "summary": "The sign-up screen is functionally complete but visually underwhelming. It lacks a clear type scale, spacing feels minimal and unpolished, and the layout is too close to browser defaults. The primary action is clear but the overall design doesn't feel premium or intentional enough for a polished product."
+    }
+  ]
+}
