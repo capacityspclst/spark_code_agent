@@ -1,0 +1,133 @@
+{
+  "verdict": "fail",
+  "summary": "The UI build is non\u2011functional: both mobile and desktop runtimes throw JavaScript errors, the primary sign\u2011up flow cannot locate the email field, and consequently the whole user journey is broken. In addition a number of spec\u2011driven requirements (design\u2011token usage, complete state handling, accessible markup, interaction states, and form best\u2011practices) are missing or only partially implemented. These issues will prevent a production\u2011grade release until they are addressed.",
+  "findings": [
+    {
+      "severity": "high",
+      "file": "frontend/src/components/Register.tsx",
+      "issue": "The sign\u2011up form does not expose a correctly labelled, focusable email `<input>` (no `id`, `name`, or `autocomplete`). Automation cannot locate the field, causing a timeout at step 3 of the primary flow.",
+      "fix": "Add a `<label htmlFor=\"email\">Email</label>` and `<input id=\"email\" name=\"email\" type=\"email\" autocomplete=\"email\" required>` with visible error messages. Ensure the input is inside a `<form>` element and that the button\u2019s loading state shows a spinner rather than merely disabling the button.",
+      "source": "designer"
+    },
+    {
+      "severity": "high",
+      "file": "frontend/dist/assets/index-BeemwhZl.js",
+      "issue": "Runtime console errors appear on both mobile and desktop builds (unhandled exception at line 41:659), preventing the React tree from rendering at all.",
+      "fix": "Open source maps to locate the originating TypeScript source, fix the offending import/value (e.g., mis\u2011named export, invalid hook usage, or missing dependency). Re\u2011run the build and verify that no uncaught errors appear in the console.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "frontend/src/components/ReceiptUpload.tsx",
+      "issue": "Missing UI states: the spec requires loading spinner, field\u2011level inline errors, server\u2011error banner, and permission\u2011denied dialog. The component only renders a static form.",
+      "fix": "Introduce component state (e.g., `status: 'idle'|'loading'|'error'|'success'`) and conditionally render the spinner in the submit button, inline `<p class=\"error\" aria-live=\"assertive\">` messages under each field, a banner for server errors, and a modal for camera permission denial.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "frontend/src/components/MileageForm.tsx",
+      "issue": "Similar to receipt upload, the mileage entry form lacks loading, error, and success UI states, and does not display validation messages inline.",
+      "fix": "Implement the same state machine as ReceiptUpload, with proper aria\u2011describedby linking for each input\u2019s error message and a toast on success.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "frontend/src/App.css (and component CSS files)",
+      "issue": "Hard\u2011coded colors, dimensions and shadows are used (e.g., `background:#0066ff; height:48px;`) instead of the design tokens (`var(--c-primary)`, `var(--size-16)`, etc.).",
+      "fix": "Replace all static values with the CSS variables defined in the design spec. Verify that the CSS file importing the tokens (`src/index.css`) is loaded globally.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "frontend/src/components/HeaderNav.tsx, BottomNav.tsx",
+      "issue": "Navigation components lack proper landmarks (`<header>`, `<nav aria-label=\"Primary navigation\">`) and focus\u2011visible outlines for keyboard users.",
+      "fix": "Wrap the top bar in `<header>` and the tab bar in `<nav aria-label=\"Primary navigation\">`. Add `:focus-visible { outline: var(--focus-ring); outline-offset: 2px; }` to all interactive elements.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "frontend/src/components/ExportButtons.tsx",
+      "issue": "Export buttons do not have `role=\"button\"` and missing `aria-live` for loading state. No loading spinner appears on click.",
+      "fix": "Add `role=\"button\"` (if using non\u2011button elements), a spinner component that replaces the label when loading, and `aria-live=\"polite\"` on a status container to announce success/error.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "frontend/src/components/Login.tsx",
+      "issue": "Login form lacks password visibility toggle, password rule hint, and does not prevent silent disable of submit; it only disables the button with no feedback.",
+      "fix": "Add a show/hide eye icon button with `aria-label=\"Show password\"`/`\"Hide password\"`. Render password rule text under the field. On submit, replace button label with spinner rather than merely disabling it.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "frontend/src/components/Dashboard.tsx",
+      "issue": "Dashboard does not render all required states (loading spinner with aria\u2011live, empty state CTA, offline banner). The per\u2011month bar chart is missing a fallback for zero data.",
+      "fix": "Implement conditional rendering for each state per spec, include `role=\"status\"` with live region for loading, and a top banner `<div role=\"alert\"` for offline notice.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "frontend/src/components/*.tsx (any file with img tags)",
+      "issue": "Images (e.g., receipt thumbnails, hero.png) are inserted without meaningful `alt` attributes.",
+      "fix": "Add descriptive `alt` text derived from receipt metadata, e.g., `alt=\"Receipt from Acme Corp \u2013 2023\u201109\u201115\"`.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "frontend/src/components/*.tsx (form inputs)",
+      "issue": "Form inputs miss `autocomplete` attributes (e.g., `autocomplete=\"off\"` on numeric fields, missing on email/password).",
+      "fix": "Add appropriate `autocomplete` values (`email`, `new-password`, `current-password`, `off` for numeric/date fields).",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "frontend/src/components/*.tsx (inputs)",
+      "issue": "Input fields are missing native `required` attributes, causing inconsistent native validation.",
+      "fix": "Add `required` attribute to all mandatory fields.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "frontend/src/components/*.tsx (buttons)",
+      "issue": "Some `<button>` elements are missing explicit `type=\"button\"` or `type=\"submit\"`, which can cause unexpected form submissions when nested.",
+      "fix": "Specify `type` on every button.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "frontend/src/components/*.tsx (modal dialogs)",
+      "issue": "Dialog components lack `role=\"dialog\"`, `aria-modal=\"true\"`, and focus\u2011trap logic.",
+      "fix": "Wrap modal markup with `role=\"dialog\" aria-modal=\"true\" aria-labelledby=\"dialog-title\"` and implement a focus trap (e.g., using `react-focus-lock`).",
+      "source": "designer"
+    },
+    {
+      "severity": "high",
+      "viewport": "both",
+      "issue": "The screen is entirely blank with no UI elements, text, or interactive components visible.",
+      "fix": "Implement the sign-up form with email, password, and 'Create account' button as specified in the design spec. Ensure proper spacing, typography, and visual hierarchy. Add error states and loading states as defined.",
+      "screen": "sign-up",
+      "source": "vision"
+    },
+    {
+      "severity": "high",
+      "screen": "sign-up",
+      "source": "vision",
+      "issue": "visual quality 1/10 on 'sign-up' (needs 8+): The screen is completely blank \u2014 no UI elements, no text, no form, no button, no placeholder, no error state, no empty state message. This is not a usable or even a previewable screen. It violates the core requirement of a sign-up screen to collect user credentials and create an account. A blank screen is a critical failure for any product, especially one that must be paid for and used by real users.",
+      "fix": "Address this screen's findings until it looks polished and professional."
+    }
+  ],
+  "lighthouse": [
+    {
+      "accessibility": null,
+      "bestPractices": null,
+      "performance": null
+    }
+  ],
+  "vision_scores": [
+    {
+      "screen": "sign-up",
+      "score": 1.0,
+      "summary": "The screen is completely blank \u2014 no UI elements, no text, no form, no button, no placeholder, no error state, no empty state message. This is not a usable or even a previewable screen. It violates the core requirement of a sign-up screen to collect user credentials and create an account. A blank screen is a critical failure for any product, especially one that must be paid for and used by real users."
+    }
+  ]
+}

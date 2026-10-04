@@ -1,0 +1,11 @@
+{
+  "verdict": "revise",
+  "issues": [
+    "UI fails to authenticate after sign\u2011up / login \u2013 protected endpoints (/dashboard/summary, /receipts, etc.) return 401. The backend works (the tests using TestClient pass), so the problem is in the frontend token handling.",
+    "The token returned by the backend is under the key `access_token` (and `token_type`). The frontend code that calls `/auth/register` and `/auth/login` likely reads a different field (e.g., `token` or `accessToken`) and therefore never stores the JWT.",
+    "Even if the token is stored, the Axios instance (or the helper functions in `src/api.ts`) does not attach an `Authorization: Bearer <token>` header to subsequent requests, so all protected routes are unauthenticated.",
+    "`AuthContext` (or whatever state is used to pass the token to components) probably never receives a valid token, causing `Dashboard`, `ReceiptUpload`, `MileageForm`, etc. to make unauthenticated calls.",
+    "Because of the missing auth header the UI primary flow test cannot load the dashboard summary and stalls at the \"No data yet\u2026\" step."
+  ],
+  "feedback": "Fix the frontend authentication flow:\n1. In `src/api.ts` (or equivalent) ensure that the `register` and `login` functions return the JWT from the `access_token` field of the response and store it (e.g., `localStorage.setItem('token', token)`).\n2. Create an Axios request interceptor (or add the header manually in every API call) that reads the stored token and adds `Authorization: Bearer <token>` to all requests to protected routes.\n3. Verify that `AuthContext` (or the context/provider you use) receives the token and passes it to components like `Dashboard`, `ReceiptUpload`, etc.\n4. After these changes, run the UI flow test again \u2013 the dashboard summary should load, the \"No data yet\u2026\" message should appear when there are no entries, and the export buttons should work.\n5. Optionally, clean up the `httpx2` entry in `backend/requirements.txt` (the correct package is `httpx`). This does not affect the current failure but is a harmless stray dependency.\nOnce the token is correctly propagated, the acceptance tests should pass."
+}

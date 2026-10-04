@@ -1,0 +1,137 @@
+{
+  "verdict": "fail",
+  "summary": "The UI base is solid with high Lighthouse scores, design tokens applied, and no axe violations, but the primary sign\u2011up flow crashes due to missing auth handling and a handful of missing spec\u2011level details. The dashboard never renders its empty state because the JWT token isn\u2019t attached to the request after auto\u2011login, causing a 401 and breaking the user journey (high severity). Secondary issues include missing copy for several error/empty states, incomplete accessibility markup, and a few UI interactions that don\u2019t fully match the design spec (medium/low severity).",
+  "findings": [
+    {
+      "severity": "high",
+      "file": "frontend/src/components/Layout.tsx",
+      "issue": "After sign\u2011up the app does not store the returned JWT or send it with the dashboard request, so /dashboard/summary returns 401. The empty\u2011state copy \"No data yet. Add a receipt or mileage to get started.\" never appears, breaking step\u202f7 of the primary flow.",
+      "fix": "Persist the access_token (e.g., in localStorage or HttpOnly cookie) and configure the Axios instance to include `Authorization: Bearer <token>` on every request. After registration automatically set the auth header and trigger a dashboard reload.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "frontend/src/components/Register.tsx",
+      "issue": "Form fields lack visible `<label>` elements (MUI TextField uses placeholder only) and autocomplete attributes, and there is no password\u2011rule helper or show/hide toggle. Inline validation errors are displayed but not linked via `aria-describedby`.",
+      "fix": "Wrap each TextField with a `<label>` element (or use MUI\u2019s `label` prop that renders a visible label), add `autoComplete` props (`email`, `new-password`), include a password\u2011rules hint, add a show/hide eye icon button with an accessible `aria-label`, and associate error messages via `aria-describedby` and `aria-invalid=\"true\"`.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "frontend/src/components/Login.tsx",
+      "issue": "Login form also uses placeholders without visible labels, missing autocomplete (`email`, `current-password`), and the submit button becomes disabled instead of showing a loading spinner. This violates the no\u2011silently\u2011disabled\u2011submit rule.",
+      "fix": "Add visible `<label>` elements, set appropriate `autoComplete` attributes, replace disabled state with a loading spinner inside the button while preserving its size, and ensure the button remains focusable.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "frontend/src/components/ReceiptUpload.tsx",
+      "issue": "Receipt upload form does not show the required field\u2011level hints (e.g., \"Supported formats: JPG, PNG, PDF. Max size 5\u202fMB.\") and the permission\u2011denied dialog is not wired to the native permission API, so the UI never displays the \"Open settings?\" flow.",
+      "fix": "Add a helper text component below the file input with the copy from the spec, detect `PermissionDeniedError` on mobile, and render a modal with the exact message and two buttons labeled \"Cancel\" and \"Open Settings\".",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "frontend/src/components/ExportButtons.tsx",
+      "issue": "Export buttons lack tooltips matching the spec and the loading state replaces the label with a spinner but does not disable the sibling button, allowing double clicks.",
+      "fix": "Add `title` attributes (or MUI Tooltip) with the specified copy, disable both export buttons while one is loading, and show the spinner in place of the label.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "frontend/src/components/Dashboard.tsx",
+      "issue": "The offline banner uses default MUI colors instead of the `--c-offline-bg` token, and the banner text does not match the exact spec copy (capitalization differs).",
+      "fix": "Apply `style={{ backgroundColor: 'var(--c-offline-bg)' }}` and update the text to \"You\u2019re offline \u2013 data will sync when you\u2019re back online.\"",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "frontend/src/components/Layout.tsx",
+      "issue": "Bottom navigation icons have a visual hit\u2011area of 40\u202f\u00d7\u202f40\u202fpx, which is below the required 44\u202f\u00d7\u202f44\u202fpx touch target.",
+      "fix": "Increase the button\u2019s padding or add an invisible `::before` hit\u2011area to meet the 44\u202fpx minimum.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "frontend/dist/assets/index-GNEO6xVf.css",
+      "issue": "Custom class names like `.fab` and `.card` exist but there are no corresponding BEM\u2011style component CSS files; they rely on global CSS which could lead to style leakage.",
+      "fix": "Modularise styles (e.g., CSS modules or styled\u2011components) and ensure each component only imports its own token\u2011based stylesheet.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "frontend/src/components/Dashboard.tsx",
+      "issue": "Missing ARIA live region for the summary loading spinner (`aria-live=\"polite\"`), which is required for screen\u2011reader users to hear \"Loading summary\u2026\".",
+      "fix": "Wrap the spinner in a `<div role=\"status\" aria-live=\"polite\">Loading summary\u2026</div>`.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "frontend/src/components/MileageForm.tsx",
+      "issue": "Date picker does not include a visible instruction \"Select the date the receipt was issued\" (copy mismatch) and lacks `aria-describedby` linking to that help text.",
+      "fix": "Add a help text component below the date picker with the specified copy and reference it via `aria-describedby` on the input.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "viewport": "phone",
+      "issue": "Typography lacks a real type scale: headline, field labels, and button text use the same font size and weight, creating visual hierarchy issues.",
+      "fix": "Apply a clear type scale: use a larger, bolder headline; medium size for field labels; smaller size for placeholder text or hints. Use bold for labels to improve scannability.",
+      "screen": "sign-up",
+      "source": "vision"
+    },
+    {
+      "severity": "medium",
+      "viewport": "phone",
+      "issue": "Field spacing is inconsistent: labels are too close to inputs, and vertical spacing between fields is minimal, making the form feel cramped.",
+      "fix": "Increase vertical spacing between fields to 16-24px. Add padding inside inputs for better touch targets and visual breathing room.",
+      "screen": "sign-up",
+      "source": "vision"
+    },
+    {
+      "severity": "medium",
+      "viewport": "phone",
+      "issue": "The 'Create account' button is too small for touch targets (under 44px width) and lacks visual feedback or loading states.",
+      "fix": "Increase button width to 100% of container or at least 44px. Add subtle hover/press states and spinner during loading.",
+      "screen": "sign-up",
+      "source": "vision"
+    },
+    {
+      "severity": "low",
+      "viewport": "phone",
+      "issue": "No error states or validation feedback shown \u2014 the design spec requires inline error messages under fields.",
+      "fix": "Implement inline error messages below fields when validation fails (e.g., 'Email format invalid').",
+      "screen": "sign-up",
+      "source": "vision"
+    },
+    {
+      "severity": "low",
+      "viewport": "phone",
+      "issue": "No visual grouping or sectioning of form fields \u2014 all fields appear as a flat list without visual hierarchy.",
+      "fix": "Use subtle dividers or spacing to group fields logically (e.g., email/password/confirm as one section).",
+      "screen": "sign-up",
+      "source": "vision"
+    },
+    {
+      "severity": "high",
+      "screen": "sign-up",
+      "source": "vision",
+      "issue": "visual quality 6/10 on 'sign-up' (needs 8+): The sign-up screen is functional but lacks polish. It uses a consistent grid and has a clear primary action, but typography is minimal and lacks scale, spacing is sparse, and the layout feels like a browser form without intentional design. No desktop version is provided, so desktop-specific issues can't be assessed.",
+      "fix": "Address this screen's findings until it looks polished and professional."
+    }
+  ],
+  "lighthouse": [
+    {
+      "accessibility": 96,
+      "bestPractices": 100,
+      "performance": 98
+    }
+  ],
+  "vision_scores": [
+    {
+      "screen": "sign-up",
+      "score": 6.0,
+      "summary": "The sign-up screen is functional but lacks polish. It uses a consistent grid and has a clear primary action, but typography is minimal and lacks scale, spacing is sparse, and the layout feels like a browser form without intentional design. No desktop version is provided, so desktop-specific issues can't be assessed."
+    }
+  ]
+}
