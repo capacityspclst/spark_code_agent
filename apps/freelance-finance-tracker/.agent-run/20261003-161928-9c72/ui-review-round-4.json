@@ -1,0 +1,158 @@
+{
+  "verdict": "fail",
+  "summary": "The current UI implementation does not fully satisfy the DESIGN.md specification. The most critical problem is that the sign\u2011up flow breaks because the required \"Confirm password\" field is missing, preventing users from completing registration. In addition, primary navigation is not consistently displayed on authenticated screens, which can leave users stranded. Several components also violate the design\u2011token system, lack required interaction states (focus rings, loading indicators), and miss accessibility details such as aria\u2011labels, autocomplete attributes, and proper error handling. Below is a prioritized list of concrete issues and the fixes needed to bring the product up to spec.",
+  "findings": [
+    {
+      "severity": "high",
+      "file": "frontend/src/components/Register.tsx",
+      "issue": "The sign\u2011up form does not render a \"Confirm password\" input. The automated primary\u2011flow test times out when trying to fill this field, and the UI cannot validate that the two passwords match.",
+      "fix": "Add a confirm\u2011password <input> with a visible <label> placed above the field. Use autocomplete=\"new-password\", set type=\"password\", and implement client\u2011side validation that compares it to the original password. Show an inline error (e.g., \"Passwords do not match.\") and link the error message via aria-describedby. Include the field in the payload sent to /auth/register.",
+      "source": "designer"
+    },
+    {
+      "severity": "high",
+      "file": "frontend/src/App.tsx (or the top\u2011level routing/layout component)",
+      "issue": "Primary navigation (BottomNav on mobile, HeaderNav on desktop) is not rendered on every signed\u2011in screen, violating the requirement that navigation must always be visible.",
+      "fix": "Create a Layout component that includes <HeaderNav/> for viewport \u22651280\u202fpx and <BottomNav/> for smaller viewports. Wrap all authenticated routes (Dashboard, Receipts, Mileage, Export) with this Layout so the navigation bar is present on every page.",
+      "source": "designer"
+    },
+    {
+      "severity": "high",
+      "file": "frontend/src/components/Register.tsx",
+      "issue": "The \"Create account\" button is disabled silently when validation errors exist, instead of remaining enabled and showing a loading spinner after submission. This departs from the sign\u2011up best\u2011practice described in the spec.",
+      "fix": "Keep the button enabled as long as the form fields are valid. When the user taps it, replace the label with a spinner (using the LoadingSpinner component) and disable further interaction until the request resolves.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "frontend/src/components/Button.tsx (and any component\u2011specific CSS files)",
+      "issue": "Hard\u2011coded color values (e.g., background:#0066FF) and size values are used instead of the design tokens defined in src/index.css (var(--c-primary), var(--size\u201116), var(--radius\u20118), etc.).",
+      "fix": "Replace all literal colors, font\u2011sizes, spacings, and radii with the corresponding CSS variables. Update the component styles to reference the token palette (e.g., background: var(--c-primary); font-size: var(--size-16); border-radius: var(--radius-8);).",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "frontend/src/components/* (all interactive elements)",
+      "issue": "Interactive elements lack a visible focus indicator. Some components set \"outline: none\" or do not inherit the global \":focus-visible\" rule, making keyboard navigation difficult.",
+      "fix": "Remove any custom outline overrides. Ensure that every focusable element shows the global focus ring defined by :focus-visible { outline: var(--focus-ring); outline-offset: 2px; } or explicitly add that rule to the component\u2019s :focus-visible state.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "frontend/src/components/* (icon\u2011only buttons such as delete, FAB, etc.)",
+      "issue": "Icon\u2011only buttons do not provide an accessible name (aria\u2011label) and decorative icons are not marked aria\u2011hidden, causing screen\u2011reader users to miss their purpose.",
+      "fix": "Add descriptive aria-label attributes to all icon\u2011only buttons (e.g., <button aria-label=\"Delete receipt\">) and set aria-hidden=\"true\" on purely decorative SVG icons.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "frontend/src/components/* (form inputs in Login, Register, ReceiptUpload, MileageForm)",
+      "issue": "Form controls lack appropriate autocomplete attributes and do not set aria\u2011invalid or aria\u2011describedby when validation fails.",
+      "fix": "Add autocomplete=\"email\" to email fields, autocomplete=\"current-password\" to login password fields, autocomplete=\"new-password\" to registration password fields, and autocomplete=\"off\" for numeric fields where needed. When a field is invalid, set aria-invalid=\"true\" and link the error message via aria-describedby.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "frontend/src/components/ReceiptUpload.tsx",
+      "issue": "The file picker does not display the required copy about supported formats or maximum file size, and the <input type=\"file\"> lacks an \"accept\" attribute to restrict file types.",
+      "fix": "Add a descriptive text element (e.g., <p class=\"help-text\">Supported formats: JPG, PNG, PDF. Max size 5\u202fMB.</p>) near the picker and set accept=\"image/jpeg,image/png,application/pdf\" on the input element.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "frontend/src/components/PasswordField.tsx (or Register.tsx if password field is inline)",
+      "issue": "Password inputs do not include a show/hide toggle, which reduces usability for users with visual impairments.",
+      "fix": "Add a button inside the password field that toggles the input type between \"password\" and \"text\". Provide an aria-label that switches between \"Show password\" and \"Hide password\".",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "frontend/src/components/Toast.tsx",
+      "issue": "Toast notifications are not marked with role=\"status\" (or role=\"alert\" for error toasts) and lack aria\u2011live attributes, so screen readers may not announce them.",
+      "fix": "Wrap toast content in an element with role=\"status\" and aria-live=\"polite\" for success/info toasts, and role=\"alert\" with aria-live=\"assertive\" for error toasts.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "frontend/src/components/ExportButtons.tsx",
+      "issue": "Export PDF/CSV buttons are missing tooltips that explain the action, which are required by the copy spec.",
+      "fix": "Add a title attribute or a custom tooltip component with the text from the spec (e.g., title=\"Download a PDF ready for tax filing\").",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "frontend/src/components/OfflineBanner.tsx (not currently present)",
+      "issue": "The UI does not display an offline banner when the network is unavailable, contrary to the design spec.",
+      "fix": "Implement a component that listens for the \"online\" and \"offline\" events and renders a banner using the '--c-offline-bg' background token with the copy \"You\u2019re offline \u2013 data will sync when you\u2019re back online.\".",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "frontend/src/components/Modal.tsx (if modal component exists)",
+      "issue": "Modal dialogs (e.g., delete confirmation) do not enforce focus trapping or return focus to the opener on close, which can break keyboard navigation.",
+      "fix": "Use a focus\u2011trap library or implement manual focus management: on open, move focus to the first focusable element; on close, return focus to the element that triggered the modal. Ensure the modal has role=\"dialog\" with aria-modal=\"true\".",
+      "source": "designer"
+    },
+    {
+      "severity": "high",
+      "viewport": "phone",
+      "issue": "Form fields are misaligned and cramped, with no consistent grid or spacing. The 'Password' label overlaps the input field, and the button is positioned awkwardly.",
+      "fix": "Use a consistent grid system. Align labels above fields with proper spacing. Ensure inputs and button are properly spaced and not overlapping.",
+      "screen": "sign-up",
+      "source": "vision"
+    },
+    {
+      "severity": "high",
+      "viewport": "phone",
+      "issue": "Typography lacks a real type scale. The heading 'Welcome back' is too large relative to the form fields, creating an unbalanced visual hierarchy.",
+      "fix": "Establish a proper type scale. Reduce the heading size or increase the field label and input sizes to create better visual hierarchy.",
+      "screen": "sign-up",
+      "source": "vision"
+    },
+    {
+      "severity": "high",
+      "viewport": "phone",
+      "issue": "The button is not touch-friendly. It's too small and positioned too close to the password field, making it hard to tap accurately.",
+      "fix": "Increase button size to at least 48px tall and ensure adequate padding. Add space around the button to prevent accidental taps.",
+      "screen": "sign-up",
+      "source": "vision"
+    },
+    {
+      "severity": "high",
+      "viewport": "both",
+      "issue": "No visual hierarchy or grouping. The form elements are presented as a flat list with no clear sectioning or emphasis on the primary action.",
+      "fix": "Group the form fields into a card or container with subtle borders. Use visual weight (size, color) to emphasize the 'Log in' button as the primary action.",
+      "screen": "sign-up",
+      "source": "vision"
+    },
+    {
+      "severity": "medium",
+      "viewport": "phone",
+      "issue": "The form fields are not properly aligned with the labels. The 'Password' label appears to be partially cut off or misaligned.",
+      "fix": "Ensure labels are fully visible and aligned above their respective inputs. Use consistent padding and spacing between fields.",
+      "screen": "sign-up",
+      "source": "vision"
+    },
+    {
+      "severity": "high",
+      "screen": "sign-up",
+      "source": "vision",
+      "issue": "visual quality 4/10 on 'sign-up' (needs 8+): Basic functionality is present but lacks polish. The layout is minimal and unstyled, resembling browser defaults with no visual hierarchy or consistent spacing. The form fields are misaligned and cramped, and the button placement is awkward. This would not be considered a polished product for paying users.",
+      "fix": "Address this screen's findings until it looks polished and professional."
+    }
+  ],
+  "lighthouse": [
+    {
+      "accessibility": 96,
+      "bestPractices": 100,
+      "performance": 98
+    }
+  ],
+  "vision_scores": [
+    {
+      "screen": "sign-up",
+      "score": 4.0,
+      "summary": "Basic functionality is present but lacks polish. The layout is minimal and unstyled, resembling browser defaults with no visual hierarchy or consistent spacing. The form fields are misaligned and cramped, and the button placement is awkward. This would not be considered a polished product for paying users."
+    }
+  ]
+}
