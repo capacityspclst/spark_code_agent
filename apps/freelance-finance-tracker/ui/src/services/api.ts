@@ -1,6 +1,7 @@
+/// <reference types="vite/client" />
 import axios, { AxiosInstance } from 'axios';
 
-// Determine API base URL. Prefer env var, else fallback to UI backend config.
+// Determine API base URL. Prefer env var, else fallback to empty (same origin)
 const apiBase = import.meta.env.VITE_API_URL || '';
 
 const instance: AxiosInstance = axios.create({

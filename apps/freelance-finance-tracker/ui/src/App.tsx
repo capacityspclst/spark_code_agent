@@ -1,9 +1,9 @@
-import React, { useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
-import Register from './components/Register';
-import Login from './components/Login';
-import Dashboard from './components/Dashboard';
-import Profile from './components/Profile';
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import Register from './components/Register.js';
+import Login from './components/Login.js';
+import Dashboard from './components/Dashboard.js';
+import Profile from './components/Profile.js';
 
 const App: React.FC = () => {
   const token = localStorage.getItem('access_token');
