@@ -1,0 +1,15 @@
+{
+  "verdict": "revise",
+  "issues": [
+    "Backend crashes on password hashing due to bcrypt version incompatibility \u2013 passlib tries to read bcrypt.__about__ which is missing, causing a 500 error on registration/login.",
+    "FastAPI Pydantic schema still uses deprecated 'orm_mode' (warning only, but could be updated).",
+    "UI TypeScript compilation fails \u2013 tsconfig references a non\u2011existent type definition \"vite/client\".",
+    "UI imports use \".js\" extensions for TypeScript files, causing potential module resolution errors during type\u2011checking.",
+    "Dashboard lacks net total display, success toast messages, and a proper delete\u2011confirmation dialog required by the UI acceptance flow.",
+    "Transaction type selector is disabled, preventing the \"select\" step in the UI flow.",
+    "Floating \"Add transaction\" button only has aria\u2011label; the UI flow expects a button with the name \"Add transaction\".",
+    "Profile navigation is missing \u2013 the UI flow expects a tab named \"Profile\" to switch screens.",
+    "Success messages use native alert() calls, which do not provide visible text for the UI flow expectations."
+  ],
+  "feedback": "Fix the backend password hashing by switching to a hashing scheme that does not depend on the problematic bcrypt package (e.g., pbkdf2_sha256) while keeping passlib[bcrypt] in requirements. Update the CryptContext in `backend/app/auth.py` accordingly. Optionally update the Pydantic schemas to use `model_config = ConfigDict(from_attributes=True)` to silence the deprecation warning.\n\nUpdate the UI TypeScript configuration: remove the `\"types\": [\"vite/client\"]` entry from `ui/tsconfig.json` (or replace it with a proper reference) to eliminate the missing type definition error.\n\nChange all UI imports that use \".js\" extensions to import the TypeScript sources without extensions (e.g., `import Register from './components/Register'`). This resolves module\u2011resolution errors during type\u2011checking.\n\nEnhance the Dashboard component:\n- Compute and display the net total (e.g., `Net total: $${sum}`).\n- Replace `alert()` calls with a visible `<div role=\"alert\">` that shows messages like \"Transaction added.\", \"Transaction updated.\", and \"Transaction removed.\".\n- Implement a custom delete\u2011confirmation modal with \"Cancel\" and \"Delete\" buttons (instead of `window.confirm`).\n- Enable the transaction type `<select>` element (remove `disabled`).\n- Ensure the floating \"Add transaction\" button has an accessible name (e.g., include visible text or `aria-label` and `aria-describedby`).\n\nAdd navigation tabs (or simple links) for Dashboard and Profile, with `role=\"tab\"` and appropriate names, so the flow can click the \"Profile\" tab.\n\nAfter making these changes, re\u2011run the tests. The backend should no longer raise a 500 error, the UI should compile, and the acceptance flow should be able to register, log in, add/edit/delete a transaction, see net total, navigate to Profile, log out, and log back in successfully."
+}

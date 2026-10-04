@@ -1,0 +1,251 @@
+{
+  "verdict": "fail",
+  "summary": "The UI diverges substantially from the DESIGN.md specifications. Critical user\u2011flows break (sign\u2011up returns a 500 error and the dashboard lacks navigation to the Profile screen). Many required states (loading spinners, error retries, empty\u2011state subtitles, skeletons, offline banner) are missing. The implementation uses ad\u2011hoc inline styles instead of the prescribed design tokens, and accessibility best\u2011practices (autocomplete, aria\u2011describedby, focus\u2011visible rings, proper dialog roles) are not followed. These gaps affect both functional correctness and the polished product experience.",
+  "findings": [
+    {
+      "severity": "high",
+      "file": "backend/app/main.py",
+      "issue": "POST /register triggers a 500 Internal Server Error, breaking the primary sign\u2011up flow and preventing the expected \"Account created! Welcome.\" toast.",
+      "fix": "Add proper error handling around user creation (e.g., catch hashing errors, validate payload before DB ops) and ensure the endpoint returns a 201 response with the created user. Verify bcrypt is installed and working, and confirm the request payload matches the Pydantic schema.",
+      "source": "designer"
+    },
+    {
+      "severity": "high",
+      "file": "ui/src/components/Dashboard.tsx",
+      "issue": "No navigation to the Profile screen \u2013 the spec requires a persistent bottom\u2011nav (Dashboard\u202f|\u202fProfile) on mobile and a top\u2011nav on desktop.",
+      "fix": "Implement a <nav> component with tabs linking to \"/dashboard\" and \"/profile\". Use react\u2011router <Link> for SPA navigation and style it with the design tokens.",
+      "source": "designer"
+    },
+    {
+      "severity": "high",
+      "file": "ui/src/components/Dashboard.tsx",
+      "issue": "Dashboard header does not display the app name and net\u2011total badge, and layout does not switch to a two\u2011column view on desktop as required.",
+      "fix": "Add a <header> containing the app title and a net\u2011total element styled with var(--c-primary). Apply a CSS grid that collapses to one column on mobile and expands to 70%/30% columns on screens \u22651280\u202fpx.",
+      "source": "designer"
+    },
+    {
+      "severity": "high",
+      "file": "ui/src/components/Login.tsx",
+      "issue": "Login missing a loading state; no spinner overlay, button label does not change to \"Signing in\u2026\" and the button remains enabled during the request.",
+      "fix": "Introduce a loading flag, disable the submit button while loading, replace the label with \"Signing in\u2026\" and render a spinner overlay using the token\u2011based Spinner component.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "ui/src/components/Login.tsx",
+      "issue": "Email and password inputs lack autocomplete attributes and placeholder text required by the spec.",
+      "fix": "Add autocomplete=\"email\" to the email field, autocomplete=\"current-password\" to the password field, and placeholders \"you@example.com\" and \"********\" respectively.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "ui/src/components/Login.tsx",
+      "issue": "The \"Create account\" link is a plain <a> tag, causing a full page reload.",
+      "fix": "Replace with react\u2011router <Link to=\"/register\"> to preserve SPA navigation.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "ui/src/components/Register.tsx",
+      "issue": "Sign\u2011up button is only disabled when fields are empty, not when validation fails. No password\u2011strength hint or field\u2011level error messages are shown.",
+      "fix": "Validate on each input change, disable the button until all criteria pass, display the helper text \"Password must be \u226512 characters, include upper\u2011case, lower\u2011case, number & symbol.\" under the password field, and show per\u2011field error messages linked via aria-describedby.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "ui/src/components/Register.tsx",
+      "issue": "Inputs lack autocomplete attributes and a show/hide password toggle.",
+      "fix": "Add autocomplete=\"email\" to email, autocomplete=\"new-password\" to password and confirm fields, and implement an eye\u2011icon button that toggles the input type between \"password\" and \"text\".",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "ui/src/components/Dashboard.tsx",
+      "issue": "Error state for transaction fetch shows only a message without a retry button; loading state shows plain text instead of skeleton cards; offline banner is missing.",
+      "fix": "Render an inline alert with a \"Retry\" button that re\u2011calls fetchTxns. Replace the \"Loading...\" text with three skeleton <Card> components using var(--c-surface) and var(--shadow-card). Detect offline status (navigator.onLine) and display a top banner \"You\u2019re offline \u2013 showing cached data\".",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "ui/src/components/Dashboard.tsx",
+      "issue": "Delete transaction uses native window.confirm and lacks a styled confirmation dialog with title, message, and Cancel/Delete buttons.",
+      "fix": "Implement a custom modal dialog matching the design token styles, include proper ARIA roles, title \"Delete transaction?\", message \"This cannot be undone.\", and two buttons with appropriate actions.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "ui/src/components/Dashboard.tsx",
+      "issue": "Transaction form modal lacks ARIA role=\"dialog\", focus trap, Escape\u2011key handling, and does not show a loading spinner when saving.",
+      "fix": "Wrap the modal content in <div role=\"dialog\" aria-modal=\"true\">, trap focus within the modal, close on Escape, disable inputs and replace the Save button label with a spinner while awaiting the API, dim the backdrop.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "ui/src/components/Dashboard.tsx",
+      "issue": "Success and error feedback uses native alert() dialogs instead of toast components with design\u2011token colors and auto\u2011dismiss.",
+      "fix": "Create a Toast component using var(--c-success), var(--c-error), and var(--c-warning) backgrounds, announce via role=\"alert\", and auto\u2011dismiss after 4\u202fs. Use it for \"Transaction added\", \"Transaction updated\", \"Transaction removed\", and error cases.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "ui/src/components/Dashboard.tsx",
+      "issue": "Transaction type selector is disabled and always set to Income, contrary to the spec's Income/Expense segmented control.",
+      "fix": "Enable the <select> (or preferably a segmented control component) to allow users to choose Income or Expense, store the value in the payload, and style it with design tokens.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "ui/src/components/Dashboard.tsx",
+      "issue": "Amount field lacks validation for a positive number and does not display a field\u2011level error.",
+      "fix": "Add client\u2011side validation (value > 0) before submitting; if invalid, display an error message under the field and set aria-describedby on the input.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "ui/src/components/Profile.tsx",
+      "issue": "Logout action clears the token without any loading state, confirmation dialog, or error toast; spec requires a loading overlay and error handling.",
+      "fix": "When the logout button is clicked, show a loading overlay, optionally confirm \"Log out?\" with a dialog, call an API logout endpoint (or simply clear token), and on failure show an error toast \"Logout failed. Please retry.\".",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "ui/src/components/Dashboard.tsx",
+      "issue": "All styling is applied via inline style objects and hard\u2011coded colors/sizes, ignoring the required CSS custom properties (design tokens).",
+      "fix": "Create a global tokens.css defining --c-primary, --c-primary-hover, --space-1, etc. Replace inline styles with classNames that reference these tokens. Remove unused classNames that have no associated CSS.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "ui/src/components/Dashboard.tsx",
+      "issue": "Interactive elements (buttons, FAB) have no visible focus\u2011visible ring (custom focus style required).",
+      "fix": "Add CSS :focus-visible rules that apply a 2\u202fpx solid var(--c-primary) outline to all focusable controls.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "ui/src/components/Dashboard.tsx",
+      "issue": "Empty\u2011state subtitle \"Start tracking your income or expenses.\" is missing.",
+      "fix": "Add a <p> element under the empty\u2011state title with the exact subtitle text.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "ui/src/components/Dashboard.tsx",
+      "issue": "Net\u2011total badge is not displayed on the dashboard header.",
+      "fix": "Calculate the net total from transactions and render it in the header using a styled badge.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "ui/src/components/Dashboard.tsx",
+      "issue": "Skeleton cards, offline banner, and retry button are not implemented for their respective states.",
+      "fix": "Add these UI elements using the token\u2011based components as described in the spec.",
+      "source": "designer"
+    },
+    {
+      "severity": "high",
+      "viewport": "phone",
+      "issue": "Unstyled browser default inputs and button with no visual hierarchy, spacing, or alignment. Text is left-aligned with no consistent grid or typography scale.",
+      "fix": "Apply a modern design system: use a type scale (h1, h2, body, label, input, button), consistent spacing (padding, margins), and alignment on a grid. Style inputs and button with appropriate borders, shadows, and states.",
+      "screen": "sign in",
+      "source": "vision"
+    },
+    {
+      "severity": "high",
+      "viewport": "phone",
+      "issue": "The 'Log in' button is disabled by default and has no visual indication of state (e.g., opacity, border, disabled styling).",
+      "fix": "Style the button to visually indicate it\u2019s disabled (e.g., grayed out, dimmed, or with a disabled state). Enable it only when both fields are filled.",
+      "screen": "sign in",
+      "source": "vision"
+    },
+    {
+      "severity": "high",
+      "viewport": "phone",
+      "issue": "No visual feedback or affordance for the 'Create account' link; it appears as plain text with no styling or hover state.",
+      "fix": "Style the link with appropriate color, underline, and hover state to make it visually distinct and interactive.",
+      "screen": "sign in",
+      "source": "vision"
+    },
+    {
+      "severity": "high",
+      "viewport": "phone",
+      "issue": "The screen is a stretched, unstyled browser default with no layout or spacing. The form elements are left-aligned with no padding or margins.",
+      "fix": "Apply a consistent grid and spacing. Add padding around the form, and align elements vertically with appropriate spacing between fields.",
+      "screen": "sign in",
+      "source": "vision"
+    },
+    {
+      "severity": "high",
+      "screen": "sign in",
+      "source": "vision",
+      "issue": "visual quality 3/10 on 'sign in' (needs 8+): The screen is unstyled browser defaults with no visual hierarchy, spacing, or alignment. It looks broken and unprofessional, failing to meet the standard of a polished, modern product.",
+      "fix": "Address this screen's findings until it looks polished and professional."
+    },
+    {
+      "severity": "high",
+      "viewport": "phone",
+      "issue": "Fields and button are styled like browser defaults with no consistent type scale, spacing, or alignment. Text is not properly aligned under inputs, and the button is misaligned and too small for touch.",
+      "fix": "Apply a consistent type scale, align labels to the left of inputs, use proper padding and spacing around fields, and ensure the button is large enough for touch (minimum 48px).",
+      "screen": "sign up",
+      "source": "vision"
+    },
+    {
+      "severity": "high",
+      "viewport": "phone",
+      "issue": "No visual hierarchy: all elements are the same weight, no emphasis on primary action (Sign up).",
+      "fix": "Make the 'Sign up' button visually distinct with bold weight, contrasting color, and padding. Add subtle visual separation between fields.",
+      "screen": "sign up",
+      "source": "vision"
+    },
+    {
+      "severity": "high",
+      "viewport": "phone",
+      "issue": "Fields are too close together, no consistent grid or spacing, making the form feel cramped and unorganized.",
+      "fix": "Apply consistent vertical spacing between fields and use a grid system to align elements. Increase spacing around inputs to improve readability.",
+      "screen": "sign up",
+      "source": "vision"
+    },
+    {
+      "severity": "high",
+      "viewport": "phone",
+      "issue": "No error states or validation feedback shown, which is critical for a polished user experience.",
+      "fix": "Add inline validation messages under fields for password strength and matching. Show error states with clear, actionable feedback.",
+      "screen": "sign up",
+      "source": "vision"
+    },
+    {
+      "severity": "high",
+      "viewport": "phone",
+      "issue": "No indication of required fields or form state (e.g., button disabled when fields are empty).",
+      "fix": "Use visual cues (e.g., asterisks, placeholder text, or validation icons) to indicate required fields. Disable the 'Sign up' button until all fields are valid.",
+      "screen": "sign up",
+      "source": "vision"
+    },
+    {
+      "severity": "high",
+      "screen": "sign up",
+      "source": "vision",
+      "issue": "visual quality 3/10 on 'sign up' (needs 8+): The screen is unstyled browser defaults with no visual hierarchy, spacing, or alignment. It looks broken and unprofessional, failing basic design principles for a polished product.",
+      "fix": "Address this screen's findings until it looks polished and professional."
+    }
+  ],
+  "lighthouse": [
+    {
+      "accessibility": 100,
+      "bestPractices": 100,
+      "performance": 98
+    }
+  ],
+  "vision_scores": [
+    {
+      "screen": "sign in",
+      "score": 3.0,
+      "summary": "The screen is unstyled browser defaults with no visual hierarchy, spacing, or alignment. It looks broken and unprofessional, failing to meet the standard of a polished, modern product."
+    },
+    {
+      "screen": "sign up",
+      "score": 3.0,
+      "summary": "The screen is unstyled browser defaults with no visual hierarchy, spacing, or alignment. It looks broken and unprofessional, failing basic design principles for a polished product."
+    }
+  ]
+}
