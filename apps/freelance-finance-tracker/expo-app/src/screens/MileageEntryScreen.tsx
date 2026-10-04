@@ -1,0 +1,58 @@
+import React, { useState } from 'react';
+import { View, Text, TextInput, Button, ActivityIndicator, Alert, StyleSheet } from 'react-native';
+import axios from 'axios';
+import { useNavigation, useIsFocused } from '@react-navigation/native';
+import { getToken } from '../auth';
+import { API_URL } from '../config';
+import { theme } from '../theme';
+
+export default function MileageEntryScreen() {
+  const navigation = useNavigation<any>();
+  const [date, setDate] = useState('');
+  const [miles, setMiles] = useState('');
+  const [notes, setNotes] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState('');
+
+  const handleSave = async () => {
+    if (!date || !miles) {
+      Alert.alert('Error', 'Please fill all required fields.');
+      return;
+    }
+    setLoading(true);
+    try {
+      const token = await getToken();
+      const payload = { date, miles: parseInt(miles, 10), notes };
+      await axios.post(`${API_URL}/mileage`, payload, { headers: { Authorization: `Bearer ${token}` } });
+      setMessage('Mileage entry saved.');
+      // maybe navigate back
+    } catch (e) {
+      setMessage('Failed to save mileage. Please try again.');
+    } finally {
+      setLoading(false);
+      setTimeout(() => setMessage(''), 3000);
+    }
+  };
+
+  return (
+    <View style={styles.container} accessibilityRole="main">
+      <Text style={styles.title}>New mileage entry</Text>
+      <TextInput placeholder="Date" value={date} onChangeText={setDate} style={styles.input} accessibilityLabel="Date" />
+      <TextInput placeholder="Miles driven" value={miles} onChangeText={setMiles} style={styles.input} keyboardType="numeric" accessibilityLabel="Miles driven" />
+      <TextInput placeholder="Notes (optional)" value={notes} onChangeText={setNotes} style={styles.input} accessibilityLabel="Notes (optional)" />
+      {loading ? (
+        <ActivityIndicator size="large" color={theme.colors.primary} />
+      ) : (
+        <Button title="Save mileage" onPress={handleSave} accessibilityLabel="Save mileage" />
+      )}
+      {message ? <Text style={styles.message}>{message}</Text> : null}
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: { flex: 1, padding: theme.spacing.lg, backgroundColor: theme.colors.background },
+  title: { ...theme.typography.h2, color: theme.colors.onSurface, marginBottom: theme.spacing.lg },
+  input: { backgroundColor: theme.colors.surface, padding: theme.spacing.sm, borderRadius: theme.radii.sm, borderWidth: 1, borderColor: theme.colors.secondary, marginBottom: theme.spacing.sm },
+  message: { marginTop: theme.spacing.md, color: theme.colors.success, ...theme.typography.body },
+});

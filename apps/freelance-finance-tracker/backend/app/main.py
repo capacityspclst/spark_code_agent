@@ -1,15 +1,14 @@
 import os
-from fastapi import FastAPI, Depends, HTTPException, status, File, UploadFile, Form
+from fastapi import FastAPI, Depends, HTTPException, File, UploadFile, Form
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, StreamingResponse
 from sqlalchemy.orm import Session
 import shutil
 from . import models, schemas, crud
-from .database import engine, Base, SessionLocal
+from .database import engine, Base
 from .dependencies import get_current_user, get_db
 from .auth import create_access_token
 from datetime import datetime
-from typing import List
 import csv
 import io
 from reportlab.lib.pagesizes import letter
@@ -32,6 +31,10 @@ app.add_middleware(
 MEDIA_ROOT = os.getenv("MEDIA_ROOT", "./media")
 os.makedirs(MEDIA_ROOT, exist_ok=True)
 
+@app.get("/health")
+def health():
+    return {"status": "ok"}
+
 @app.post("/auth/signup", response_model=schemas.Token)
 def signup(user_in: schemas.UserCreate, db: Session = Depends(get_db)):
     if crud.get_user_by_email(db, user_in.email):
@@ -41,10 +44,10 @@ def signup(user_in: schemas.UserCreate, db: Session = Depends(get_db)):
     return {"access_token": access_token, "token_type": "bearer"}
 
 @app.post("/auth/login", response_model=schemas.Token)
-def login(email: str = Form(...), password: str = Form(...), db: Session = Depends(get_db)):
-    user = crud.authenticate_user(db, email, password)
+def login(user_in: schemas.UserCreate, db: Session = Depends(get_db)):
+    user = crud.authenticate_user(db, user_in.email, user_in.password)
     if not user:
-        raise HTTPException(status_code=400, detail="Incorrect email or password")
+        raise HTTPException(status_code=401, detail="Incorrect email or password")
     access_token = create_access_token(user.id)
     return {"access_token": access_token, "token_type": "bearer"}
 
@@ -71,7 +74,6 @@ def create_receipt(
         notes=notes,
     )
     db_receipt = crud.create_receipt(db, current_user, receipt_in, file_path)
-    # Build image URL (for simplicity, serve via /media/<filename>)
     image_url = f"/media/{filename}"
     return schemas.ReceiptRead(
         id=db_receipt.id,
@@ -82,7 +84,7 @@ def create_receipt(
         image_url=image_url,
     )
 
-@app.get("/receipts", response_model=List[schemas.ReceiptRead])
+@app.get("/receipts", response_model=list[schemas.ReceiptRead])
 def list_receipts(current_user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
     receipts = crud.get_receipts(db, current_user)
     result = []
@@ -110,7 +112,7 @@ def create_mileage(
     db_mileage = crud.create_mileage(db, current_user, mileage_in)
     return db_mileage
 
-@app.get("/mileage", response_model=List[schemas.MileageRead])
+@app.get("/mileage", response_model=list[schemas.MileageRead])
 def list_mileage(current_user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
     return crud.get_mileages(db, current_user)
 

@@ -3,7 +3,6 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { View, ActivityIndicator } from 'react-native';
-import * as SecureStore from 'expo-secure-store';
 import { FontAwesome } from '@expo/vector-icons';
 import SignInScreen from './src/screens/SignInScreen';
 import SignUpScreen from './src/screens/SignUpScreen';
@@ -12,6 +11,7 @@ import ReceiptCaptureScreen from './src/screens/ReceiptCaptureScreen';
 import MileageEntryScreen from './src/screens/MileageEntryScreen';
 import ExportScreen from './src/screens/ExportScreen';
 import { theme } from './src/theme';
+import { getToken } from './src/auth';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -31,7 +31,7 @@ function MainTabs() {
         name="Dashboard"
         component={DashboardScreen}
         options={{
-          tabBarIcon: ({ color, size }) => (<FontAwesome name="home" size={24} color={color} />),
+          tabBarIcon: ({ color }) => (<FontAwesome name="home" size={24} color={color} />),
         }}
       />
       <Tab.Screen
@@ -43,7 +43,7 @@ function MainTabs() {
         }}
       />
       <Tab.Screen
-        name="MileageEntry"
+        name="Mileage"
         component={MileageEntryScreen}
         options={{
           title: 'Mileage',
@@ -67,7 +67,7 @@ export default function App() {
 
   useEffect(() => {
     async function checkToken() {
-      const token = await SecureStore.getItemAsync('jwt');
+      const token = await getToken();
       setInitialRoute(token ? 'Main' : 'Auth');
       setLoading(false);
     }
