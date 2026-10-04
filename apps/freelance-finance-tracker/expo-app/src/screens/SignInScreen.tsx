@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, StyleSheet, Text as RNText, ActivityIndicator } from 'react-native';
+import { SafeAreaView, View, Text, TextInput, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
 import axios from 'axios';
 import { useNavigation } from '@react-navigation/native';
 import { saveToken } from '../auth';
@@ -49,7 +49,7 @@ export default function SignInScreen() {
   };
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <Text style={styles.title}>Welcome back</Text>
       <View style={styles.field}>
         <Text style={styles.label}>Email address</Text>
@@ -81,18 +81,17 @@ export default function SignInScreen() {
         {errorPassword ? <Text style={styles.error}>{errorPassword}</Text> : null}
       </View>
       <PrimaryButton title="Log in" onPress={handleLogin} accessibilityLabel="Log in" />
-      {/* Link as Text for better automation */}
-      <RNText
-        style={styles.linkText}
+      <TouchableOpacity
         onPress={() => navigation.navigate('SignUp')}
         accessibilityRole="link"
         accessibilityLabel="Don\u2019t have an account? Sign up"
         testID="sign-up-link"
+        style={styles.link}
       >
-        Don\u2019t have an account? Sign up
-      </RNText>
+        <Text style={styles.linkText}>Don\u2019t have an account? Sign up</Text>
+      </TouchableOpacity>
       {loading && <LoadingOverlay message="Signing you in\u2026" />}
-    </View>
+    </SafeAreaView>
   );
 }
 
@@ -103,5 +102,6 @@ const styles = StyleSheet.create({
   label: { fontSize: 16, lineHeight: 24, fontWeight: '400' as const, color: theme.colors.onSurface },
   input: { backgroundColor: theme.colors.surface, padding: theme.spacing.sm, borderRadius: theme.radii.sm, borderWidth: 1, borderColor: theme.colors.secondary },
   error: { color: theme.colors.error, fontSize: 12, lineHeight: 16, marginTop: theme.spacing.xs },
-  linkText: { color: theme.colors.onSurface, fontSize: 16, lineHeight: 24, textDecorationLine: 'underline', marginTop: theme.spacing.lg, textAlign: 'center' },
+  link: { marginTop: theme.spacing.lg, alignItems: 'center' },
+  linkText: { color: theme.colors.primary, fontSize: 16, lineHeight: 24, textDecorationLine: 'underline' },
 });

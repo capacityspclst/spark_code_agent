@@ -34,7 +34,8 @@ export default function ReceiptCaptureScreen() {
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       quality: 1,
     });
-    if (!result.cancelled) {
+    // ImagePicker returns 'canceled' flag
+    if (!result.canceled) {
       setImage(result);
     }
   };
@@ -56,12 +57,12 @@ export default function ReceiptCaptureScreen() {
       form.append('date', date);
       form.append('category', category);
       form.append('notes', notes);
-      // @ts-ignore
-      form.append('image', {
-        uri: image.uri,
+      // Append image as required by React Native FormData
+      (form as any).append('image', {
+        uri: image.assets[0].uri,
         name: 'receipt.jpg',
         type: 'image/jpeg',
-      });
+      } as any);
       await axios.post(`${API_URL}/receipts`, form, {
         headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'multipart/form-data' },
       });
@@ -99,7 +100,7 @@ export default function ReceiptCaptureScreen() {
   function renderForm() {
     return (
       <View style={styles.form}>
-        {image && <Image source={{ uri: image.uri }} style={styles.image} />}
+        {image && <Image source={{ uri: image.assets[0].uri }} style={styles.image} />}
         <PrimaryButton title="Tap to take a photo or choose from library" onPress={pickImage} accessibilityLabel="Tap to take a photo or choose from library" />
         <TextInput placeholder="Amount (USD)" value={amount} onChangeText={setAmount} style={styles.input} accessibilityLabel="Amount (USD)" />
         <TextInput placeholder="Date" value={date} onChangeText={setDate} style={styles.input} accessibilityLabel="Date" />

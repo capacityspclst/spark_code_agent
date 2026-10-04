@@ -6,8 +6,17 @@ type Props = { message: string };
 
 export default function LoadingOverlay({ message }: Props) {
   return (
-    <View style={styles.overlay} accessibilityRole="alert" accessible={true}>
-      <ActivityIndicator size="large" color={theme.colors.primary} />
+    <View
+      style={styles.overlay}
+      accessibilityRole="alert"
+      accessible={true}
+    >
+      <ActivityIndicator
+        size="large"
+        color={theme.colors.primary}
+        accessibilityLabel={message}
+        accessibilityRole="progressbar"
+      />
       <Text style={styles.message}>{message}</Text>
     </View>
   );
@@ -15,7 +24,7 @@ export default function LoadingOverlay({ message }: Props) {
 
 const styles = StyleSheet.create({
   overlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: theme.colors.disabledBackground,
     justifyContent: 'center',
     alignItems: 'center',

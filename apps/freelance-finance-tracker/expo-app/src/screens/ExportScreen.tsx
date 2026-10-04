@@ -17,11 +17,11 @@ export default function ExportScreen() {
     try {
       const token = await getToken();
       const resp = await axios.get(`${API_URL}/export/${type}`, {
-        responseType: 'blob',
+        responseType: 'text', // assume backend returns base64 string
         headers: { Authorization: `Bearer ${token}` },
       });
-      const base64 = await resp.data.text(); // get base64 string
-      const uri = `${FileSystem.documentDirectory}export.${type}`;
+      const base64 = resp.data as string;
+      const uri = `${FileSystem.cacheDirectory}export.${type}`;
       await FileSystem.writeAsStringAsync(uri, base64, { encoding: FileSystem.EncodingType.Base64 });
       await Sharing.shareAsync(uri);
       setMessage('Report ready to share.');

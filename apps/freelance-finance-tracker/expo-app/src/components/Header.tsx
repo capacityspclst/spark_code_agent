@@ -11,7 +11,7 @@ export default function Header() {
     // navigation.navigate('Settings');
   };
   return (
-    <View style={styles.header} accessibilityRole="banner">
+    <View style={styles.header} accessibilityRole="header">
       <Text style={styles.title}>FinanceMate</Text>
       <TouchableOpacity
         onPress={handleSettings}
