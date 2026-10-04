@@ -1,0 +1,223 @@
+{
+  "verdict": "fail",
+  "summary": "The built UI falls short of the DESIGN.md specification in several critical areas. The sign\u2011up/sign\u2011in forms lack visible, linked labels and required accessibility attributes, which caused the automated flow test to time\u2011out on the \"Email address\" field and makes the primary authentication flow unusable. Many required states (loading spinners with exact copy, API\u2011error and offline banners, permission prompts in receipt capture, success/error toasts for receipt, mileage and export) are missing or unimplemented, leaving those states unhandled. Accessibility gaps (missing ARIA roles for tabs, focus rings, proper heading hierarchy) and the absence of the desktop navigation drawer also deviate from the spec. These issues are high\u2011severity and must be addressed before the product can be considered polished.",
+  "findings": [
+    {
+      "severity": "high",
+      "file": "expo-app/src/screens/SignUpScreen.tsx",
+      "issue": "Email and Password inputs have no visible <Text> label above them and are not linked via nativeID/accessibilityLabel; the fields are identified only by placeholder text, which the automation script cannot target and breaks accessibility.",
+      "fix": "Add a <Text> component for each field (e.g., <Text style={styles.label}>Email address</Text>) placed above the TextInput, assign a nativeID to the TextInput (e.g., nativeID=\"emailInput\") and set accessibilityLabel=\"Email address\". Link the label using the 'htmlFor' prop (web) or by matching nativeID.",
+      "source": "designer"
+    },
+    {
+      "severity": "high",
+      "file": "expo-app/src/screens/SignInScreen.tsx",
+      "issue": "Same as SignUpScreen: missing explicit labels and accessibility linkage for Email and Password fields, causing test failures and non\u2011compliant screen reader experience.",
+      "fix": "Mirror the fix applied to SignUpScreen: add visible labels, nativeID, and proper accessibilityLabel / autoComplete props.",
+      "source": "designer"
+    },
+    {
+      "severity": "high",
+      "file": "expo-app/src/screens/SignUpScreen.tsx",
+      "issue": "Password field does not show a trailing eye\u2011icon to toggle visibility and does not display the live password\u2011rule helper list required by the spec.",
+      "fix": "Add an IconButton (FontAwesome \"eye\"/\"eye-slash\") that toggles the TextInput's secureTextEntry prop. Render a list below the password input that updates live with the rule status (uppercase, lowercase, number, symbol, length).",
+      "source": "designer"
+    },
+    {
+      "severity": "high",
+      "file": "expo-app/src/screens/SignUpScreen.tsx",
+      "issue": "Loading state after tapping \"Create account\" is not implemented; the UI does not disable fields nor display the overlay spinner with the exact copy \"Creating account\u2026\".",
+      "fix": "Introduce a loading boolean state. When true, render the <LoadingOverlay message=\"Creating account\u2026\" /> component, disable the inputs and button, and hide the button label with a spinner.",
+      "source": "designer"
+    },
+    {
+      "severity": "high",
+      "file": "expo-app/src/screens/SignInScreen.tsx",
+      "issue": "Loading state after tapping \"Log in\" is missing; no overlay spinner with copy \"Signing you in\u2026\" and fields are not disabled.",
+      "fix": "Same as SignUpScreen: add loading state, overlay spinner, and disable inputs while auth request is pending.",
+      "source": "designer"
+    },
+    {
+      "severity": "high",
+      "file": "expo-app/src/screens/DashboardScreen.tsx",
+      "issue": "API\u2011error and offline states defined in the spec are not handled \u2013 the catch block swallows errors and no banner is displayed. No offline detection/banner is present.",
+      "fix": "Add state variables for apiError and isOffline (use NetInfo). When apiError is true, render a banner with text \"Failed to load data. Pull down to retry.\" and enable pull\u2011to\u2011refresh. When offline, render a banner \"You\u2019re offline \u2014 data may be outdated.\".",
+      "source": "designer"
+    },
+    {
+      "severity": "high",
+      "file": "expo-app/src/screens/ReceiptCaptureScreen.tsx",
+      "issue": "The screen does not implement the required permission\u2011prompt modal (Allow/Deny), fallback UI when permission is denied, placeholder illustration with \"Tap to take a photo or choose from library\", loading overlay with \"Uploading receipt\u2026\", success/error toasts, nor ellipsis truncation with tooltip for long categories.",
+      "fix": "Create a state machine (permission, denied, default, loading, success, error). Use React Native Modal for the permission prompt with the exact copy. Show a fallback view with a button labelled \"Choose from library\" when denied. When no image is selected, render the placeholder illustration and caption. During upload, display <LoadingOverlay message=\"Uploading receipt\u2026\" />. After upload, trigger a toast with \"Receipt saved.\" or \"Upload failed. Check your connection and try again.\". For long category text, apply numberOfLines={1} ellipsisMode=\"tail\" and on web add a tooltip showing the full text.",
+      "source": "designer"
+    },
+    {
+      "severity": "high",
+      "file": "expo-app/src/screens/MileageEntryScreen.tsx",
+      "issue": "Missing loading overlay with copy \"Saving mileage\u2026\", success toast \"Mileage entry saved.\", and error toast \"Failed to save mileage. Please try again.\" as specified.",
+      "fix": "Add a loading boolean. When true, render <LoadingOverlay message=\"Saving mileage\u2026\" /> and disable inputs. On success/failure, use a toast component to display the exact messages.",
+      "source": "designer"
+    },
+    {
+      "severity": "high",
+      "file": "expo-app/src/screens/ExportScreen.tsx",
+      "issue": "Export screen does not show disabled state with spinners and copy text during CSV/PDF generation, nor does it display offline banner \"Cannot export while offline.\" or error toast on failure.",
+      "fix": "Add separate loading states for CSV and PDF. When a button is pressed, disable both buttons, show an activity indicator inside them, and change the label to the appropriate copy (\"Generating CSV\u2026\" / \"Generating PDF\u2026\"). Detect offline (NetInfo) and, if offline, render a banner with the specified message and keep buttons disabled. On error, show toast \"Export failed. Please try again.\".",
+      "source": "designer"
+    },
+    {
+      "severity": "high",
+      "file": "expo-app/src/components/PrimaryButton.tsx",
+      "issue": "Pressable does not expose a visible focus ring for keyboard navigation (web). This violates the spec\u2019s requirement for a 2\u202fpx solid primary focus outline.",
+      "fix": "Add an onFocus style that applies borderWidth: 2, borderColor: theme.colors.primary. Ensure the style merges with existing pressed/disabled styles. Also set 'focusVisible' prop for web if using @react-native-community/focus-visible.",
+      "source": "designer"
+    },
+    {
+      "severity": "high",
+      "file": "expo-app/src/navigation/index.tsx",
+      "issue": "Desktop layout does not include the navigation drawer described in the spec; the app always shows the bottom tab bar even on large viewports.",
+      "fix": "Detect screen width (useWindowDimensions or a responsive library). When width >= 1280\u202fpx, render a left side DrawerNavigator (or a custom <Drawer> component) with width 240\u202fpx, icons+labels, and hide the bottom TabNavigator. Ensure the main pane respects the 720\u202fpx max\u2011width and 24\u202fpx gutter.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "expo-app/src/components/Header.tsx",
+      "issue": "Settings button has a placeholder navigation call (commented out), so the Settings screen is unreachable.",
+      "fix": "Uncomment and implement navigation.navigate('Settings') (or appropriate route). Ensure the Settings screen exists in the navigation hierarchy.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "expo-app/App.tsx",
+      "issue": "Loading screen for token check uses accessibilityRole=\"alert\"; an \"status\" role would be more appropriate for a non\u2011error loading indicator.",
+      "fix": "Change accessibilityRole to \"status\" and ensure the spinner is announced politely.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "expo-app/src/screens/DashboardScreen.tsx",
+      "issue": "The ScrollView does not set a proper accessibilityRole; the spec expects a main landmark for the content area.",
+      "fix": "Add accessibilityRole=\"main\" to the outermost container, or wrap content in a <SafeAreaView accessibilityRole=\"main\">.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "expo-app/src/components/LoadingOverlay.tsx",
+      "issue": "Overlay background color uses the disabledBackground token, which may have insufficient contrast against white text in high\u2011contrast mode.",
+      "fix": "Consider using a semi\u2011transparent dark overlay (e.g., rgba(0,0,0,0.3)) to ensure the spinner and message are clearly visible on all backgrounds.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "expo-app/src/components/PrimaryButton.tsx",
+      "issue": "The button sets tabIndex={0} which is unnecessary in React Native; on web it may interfere with proper focus order.",
+      "fix": "Remove tabIndex; rely on native focus handling. If custom focus management is needed, use the 'accessibilityState' prop.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "viewport": "phone",
+      "issue": "No visual hierarchy: title, fields, and button are all similar in weight and scale, making the primary action feel less prominent.",
+      "fix": "Use a larger, bolder font for the primary button. Add subtle visual weight to the title (e.g., slightly larger or bolder) to establish hierarchy.",
+      "screen": "sign in",
+      "source": "vision"
+    },
+    {
+      "severity": "medium",
+      "viewport": "phone",
+      "issue": "Typography lacks a real type scale: title, labels, and button text are all similar in size and weight, making the interface feel flat.",
+      "fix": "Use a larger, bolder font for the title. Use a smaller, lighter font for labels and button text. Ensure consistent spacing between text elements.",
+      "screen": "sign in",
+      "source": "vision"
+    },
+    {
+      "severity": "low",
+      "viewport": "phone",
+      "issue": "Form fields are too close to the top and bottom of the screen, creating a cramped feel.",
+      "fix": "Add padding above the first field and below the button to create breathing room and improve visual balance.",
+      "screen": "sign in",
+      "source": "vision"
+    },
+    {
+      "severity": "low",
+      "viewport": "phone",
+      "issue": "The 'Sign up' link is centered but lacks visual emphasis, making it feel like an afterthought.",
+      "fix": "Style the link with a subtle underline and slightly different color to make it more noticeable without being distracting.",
+      "screen": "sign in",
+      "source": "vision"
+    },
+    {
+      "severity": "high",
+      "screen": "sign in",
+      "source": "vision",
+      "issue": "visual quality 6/10 on 'sign in' (needs 8+): The sign-in screen is functional and clean but lacks polish. It uses a basic type scale, has adequate spacing, and includes a clear primary action. However, it feels like a generic form with no visual hierarchy or brand personality, and the typography and spacing feel under-designed for a premium product.",
+      "fix": "Address this screen's findings until it looks polished and professional."
+    },
+    {
+      "severity": "medium",
+      "viewport": "phone",
+      "issue": "Password field lacks a visible character count indicator or password strength meter, which is common for security-conscious forms.",
+      "fix": "Add a small indicator showing password strength or a character counter to improve user confidence and reduce errors.",
+      "screen": "sign up",
+      "source": "vision"
+    },
+    {
+      "severity": "medium",
+      "viewport": "phone",
+      "issue": "The 'Create account' button is too wide and doesn't visually align with the form fields above it, creating a slight visual imbalance.",
+      "fix": "Adjust button width to match the field width or add padding to align the button with the form's vertical rhythm.",
+      "screen": "sign up",
+      "source": "vision"
+    },
+    {
+      "severity": "medium",
+      "viewport": "phone",
+      "issue": "The 'Already have an account? Log in' link is centered but not visually anchored to the form's structure, making it feel like an afterthought.",
+      "fix": "Place the link at the bottom of the form, aligned with the button's bottom edge, to create a consistent visual flow.",
+      "screen": "sign up",
+      "source": "vision"
+    },
+    {
+      "severity": "medium",
+      "viewport": "desktop",
+      "issue": "Desktop version is a stretched phone layout with no responsive design or optimized spacing for larger screens.",
+      "fix": "Re-layout for desktop: increase spacing, add padding, and possibly stack fields vertically or use a grid to utilize the full width without stretching.",
+      "screen": "sign up",
+      "source": "vision"
+    },
+    {
+      "severity": "low",
+      "viewport": "both",
+      "issue": "The password field's hint text is positioned below the field rather than inline with the field, which is less common and can feel inconsistent.",
+      "fix": "Move the password hint text inline with the field, either above or below the input, to match common form patterns.",
+      "screen": "sign up",
+      "source": "vision"
+    },
+    {
+      "severity": "high",
+      "screen": "sign up",
+      "source": "vision",
+      "issue": "visual quality 7/10 on 'sign up' (needs 8+): The sign-up screen is clean and functional with clear visual hierarchy and a strong primary action. Typography is readable, spacing is generous, and the layout is well-aligned. However, it lacks polish in form design and visual depth, and the desktop version is not optimized for its larger canvas.",
+      "fix": "Address this screen's findings until it looks polished and professional."
+    }
+  ],
+  "lighthouse": [
+    {
+      "accessibility": 100,
+      "bestPractices": 100,
+      "performance": 73
+    }
+  ],
+  "vision_scores": [
+    {
+      "screen": "sign in",
+      "score": 6.0,
+      "summary": "The sign-in screen is functional and clean but lacks polish. It uses a basic type scale, has adequate spacing, and includes a clear primary action. However, it feels like a generic form with no visual hierarchy or brand personality, and the typography and spacing feel under-designed for a premium product."
+    },
+    {
+      "screen": "sign up",
+      "score": 7.0,
+      "summary": "The sign-up screen is clean and functional with clear visual hierarchy and a strong primary action. Typography is readable, spacing is generous, and the layout is well-aligned. However, it lacks polish in form design and visual depth, and the desktop version is not optimized for its larger canvas."
+    }
+  ]
+}
