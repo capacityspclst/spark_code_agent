@@ -62,6 +62,7 @@ export default function SignInScreen() {
           placeholder="Email address"
           placeholderTextColor={theme.colors.placeholder}
           accessibilityLabel="Email address"
+          accessibilityRole="textbox"
           editable={!loading}
         />
         {errorEmail ? <Text style={styles.error}>{errorEmail}</Text> : null}
@@ -76,6 +77,7 @@ export default function SignInScreen() {
           placeholder="Password"
           placeholderTextColor={theme.colors.placeholder}
           accessibilityLabel="Password"
+          accessibilityRole="textbox"
           editable={!loading}
         />
         {errorPassword ? <Text style={styles.error}>{errorPassword}</Text> : null}
@@ -84,13 +86,13 @@ export default function SignInScreen() {
       <TouchableOpacity
         onPress={() => navigation.navigate('SignUp')}
         accessibilityRole="link"
-        accessibilityLabel="Don\u2019t have an account? Sign up"
+        accessibilityLabel="Don’t have an account? Sign up"
         testID="sign-up-link"
         style={styles.link}
       >
-        <Text style={styles.linkText}>Don\u2019t have an account? Sign up</Text>
+        <Text style={styles.linkText}>Don’t have an account? Sign up</Text>
       </TouchableOpacity>
-      {loading && <LoadingOverlay message="Signing you in\u2026" />}
+      {loading && <LoadingOverlay message="Signing you in…" />}
     </SafeAreaView>
   );
 }
@@ -103,5 +105,5 @@ const styles = StyleSheet.create({
   input: { backgroundColor: theme.colors.surface, padding: theme.spacing.sm, borderRadius: theme.radii.sm, borderWidth: 1, borderColor: theme.colors.secondary },
   error: { color: theme.colors.error, fontSize: 12, lineHeight: 16, marginTop: theme.spacing.xs },
   link: { marginTop: theme.spacing.lg, alignItems: 'center' },
-  linkText: { color: theme.colors.primary, fontSize: 16, lineHeight: 24, textDecorationLine: 'underline' },
+  linkText: { color: theme.colors.secondary, fontSize: 16, lineHeight: 24, textDecorationLine: 'underline' },
 });

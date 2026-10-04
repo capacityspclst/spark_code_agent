@@ -45,7 +45,7 @@ export default function SignUpScreen() {
       await saveToken(token);
       navigation.reset({ index: 0, routes: [{ name: 'Main' }] });
     } catch (e) {
-      alert('We couldn\u2019t create your account. Please check the fields and try again.');
+      alert('We couldn\'t create your account. Please check the fields and try again.');
     } finally {
       setLoading(false);
     }
@@ -65,6 +65,8 @@ export default function SignUpScreen() {
           placeholder="Email address"
           placeholderTextColor={theme.colors.placeholder}
           accessibilityLabel="Email address"
+          accessibilityRole="textbox"
+          testID="email-input"
           editable={!loading}
         />
         {errorEmail ? <Text style={styles.error}>{errorEmail}</Text> : null}
@@ -80,6 +82,8 @@ export default function SignUpScreen() {
             placeholder="Password"
             placeholderTextColor={theme.colors.placeholder}
             accessibilityLabel="Password"
+            accessibilityRole="textbox"
+            testID="password-input"
             editable={!loading}
           />
           <TouchableOpacity onPress={() => setSecureEntry(!secureEntry)} accessibilityLabel="Show password">

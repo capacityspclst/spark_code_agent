@@ -17,7 +17,7 @@ export default function ExportScreen() {
     try {
       const token = await getToken();
       const resp = await axios.get(`${API_URL}/export/${type}`, {
-        responseType: 'text', // assume backend returns base64 string
+        responseType: 'text',
         headers: { Authorization: `Bearer ${token}` },
       });
       const base64 = resp.data as string;
