@@ -1,0 +1,151 @@
+{
+  "verdict": "fail",
+  "summary": "The FinanceMate UI meets many visual style guidelines, but several critical gaps break the primary user flow and accessibility compliance. The sign\u2011in screen does not expose the required \"Don\u2019t have an account? Sign up\" link, preventing new users from reaching the sign\u2011up screen. All loading spinners (ActivityIndicator) lack an accessible name, triggering an axe \"ARIA progressbar name\" violation. Core screens (Dashboard, and likely others) omit a main landmark (`accessibilityRole=\"main\"`) and do not render the API\u2011error/offline banners defined in the spec. Additional issues include a mismatch in the placeholder colour token, missing SafeAreaView usage, and incomplete form accessibility (labels, show/hide password, live validation) on the authentication screens. The bottom\u2011tab icons also diverge from the spec\u2019s \u201cplus\u201d concept. These problems range from high\u2011severity flow blockers to medium\u2011severity design and accessibility gaps that must be addressed before the product can be considered polished.",
+  "findings": [
+    {
+      "severity": "high",
+      "file": "expo-app/src/screens/SignInScreen.tsx",
+      "issue": "The \"Don\u2019t have an account? Sign up\" link is missing or not rendered as an accessible touchable element, causing the primary flow to stall at step 3.",
+      "fix": "Add a `Pressable` or `TouchableOpacity` containing the exact link text, set `accessibilityRole=\"link\"` and `accessibilityLabel=\"Don\u2019t have an account? Sign up\"`, and navigate to the `SignUp` screen on press.",
+      "source": "designer"
+    },
+    {
+      "severity": "high",
+      "file": "expo-app/src/components/LoadingOverlay.tsx",
+      "issue": "ActivityIndicator is used without an accessible label, leading to axe error \"ARIA progressbar nodes must have an accessible name\".",
+      "fix": "Pass an `accessibilityLabel` prop (e.g., `accessibilityLabel=\"Creating account\u2026\"` for the overlay) and set `accessibilityRole=\"progressbar\"` on the `ActivityIndicator` wrapper.",
+      "source": "designer"
+    },
+    {
+      "severity": "high",
+      "file": "expo-app/src/screens/DashboardScreen.tsx",
+      "issue": "The root scroll view uses `accessibilityRole=\"none\"` and does not define a main landmark, breaking screen\u2011reader navigation.",
+      "fix": "Wrap the content in a `<View accessibilityRole=\"main\">` or change the `ScrollView` to `accessibilityRole=\"main\"`. Ensure other top\u2011level screens follow the same pattern.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "expo-app/src/screens/DashboardScreen.tsx",
+      "issue": "Dashboard does not render the error banner (\"Failed to load data\u2026\") or offline banner (\"You\u2019re offline\u2026\") required by the spec.",
+      "fix": "Add conditional UI that displays a banner component with the exact copy when the API request fails or when NetInfo reports offline status, and provide a pull\u2011to\u2011refresh or retry action.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "expo-app/src/theme.ts",
+      "issue": "The design token `placeholder` is set to `#5F5F5F` instead of the spec\u2019s `#707070`.",
+      "fix": "Update `theme.colors.placeholder` to `#707070` (or use the CSS variable `--color-placeholder`) and ensure all `TextInput` components reference this token for placeholder text.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "expo-app/App.tsx",
+      "issue": "The app layout does not use `SafeAreaView`, so content (header, tab bar) may be obscured by device notches or status bars.",
+      "fix": "Wrap the top\u2011level view hierarchy (including Header and TabNavigator) in `<SafeAreaView style={{ flex: 1 }}>` and adjust padding/margins accordingly.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "expo-app/src/components/Header.tsx",
+      "issue": "Header is a plain `View` without safe\u2011area handling and lacks `accessibilityRole=\"banner\"` on the container (present) but does not account for height adjustments on iOS notch devices.",
+      "fix": "Replace the outer `View` with `SafeAreaView` and keep `accessibilityRole=\"banner\"`; ensure the height respects the safe area inset.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "expo-app/src/screens/SignInScreen.tsx",
+      "issue": "Authentication forms lack visible `<Text>` labels linked via `nativeID`, no password\u2011visibility toggle, and no live validation feedback, violating the accessibility guidelines.",
+      "fix": "Add a `<Text>` label above each `<TextInput>` with `htmlFor`/`nativeID` linking, implement an eye\u2011icon button with `accessibilityLabel=\"Show password\"` that toggles secure entry, and display inline validation messages per spec. Disable the submit button until the form is valid.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "expo-app/src/screens/SignUpScreen.tsx",
+      "issue": "Same accessibility and validation issues as SignInScreen: missing labels, password rules live list, disabled submit handling, and missing field\u2011level error messages.",
+      "fix": "Mirror the fixes applied to SignInScreen: visible labels, nativeID linking, password show/hide toggle, live rule list under password, inline error messages, and enable the \"Create account\" button only when inputs pass validation.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "expo-app/App.tsx",
+      "issue": "Bottom\u2011tab icons use a camera icon for the receipt capture tab; the spec calls for a generic \"+\" (plus) tab to represent adding a receipt.",
+      "fix": "Replace the `FontAwesome` camera icon with a plus icon (e.g., `FontAwesome name=\"plus\"`) or add a label/icon pair that matches the spec\u2019s intent.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "expo-app/src/components/LoadingOverlay.tsx",
+      "issue": "The overlay background uses `theme.colors.disabledBackground` (#E0E0E0) which provides low contrast against the white spinner and may hinder readability for users with visual impairments.",
+      "fix": "Use a semi\u2011transparent dark overlay (e.g., `rgba(0,0,0,0.3)`) or a higher\u2011contrast colour that meets WCAG AA for text and spinner contrast.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "expo-app/src/screens/ExportScreen.tsx",
+      "issue": "Export screen likely does not include offline handling banner as defined in the spec (\"Cannot export while offline.\")",
+      "fix": "Add NetInfo detection and conditionally render a banner with the exact copy when `isConnected` is false; disable the export buttons in that state.",
+      "source": "designer"
+    },
+    {
+      "severity": "high",
+      "viewport": "phone",
+      "issue": "Screen is completely blank except for a centered loading spinner with no context, labels, or primary action.",
+      "fix": "Display a meaningful loading state with a clear message like 'Signing you in...' or 'Loading your dashboard...' and ensure it\u2019s not the only visual element. Add a skeleton layout or placeholder to guide the user during loading.",
+      "screen": "sign in",
+      "source": "vision"
+    },
+    {
+      "severity": "high",
+      "viewport": "phone",
+      "issue": "No form fields, buttons, or any UI elements are visible \u2014 the screen appears broken or unstyled.",
+      "fix": "Implement the full sign-in form with email and password fields, a 'Log in' button, and a 'Sign up' link as specified in the design spec. Ensure all fields are styled with proper typography, spacing, and error states.",
+      "screen": "sign in",
+      "source": "vision"
+    },
+    {
+      "severity": "high",
+      "viewport": "phone",
+      "issue": "No visual hierarchy or primary action is defined \u2014 the user has no clear next step.",
+      "fix": "Establish a clear visual hierarchy with a prominent primary action (e.g., 'Log in' button) and secondary actions (e.g., 'Sign up' link) that are easily distinguishable and accessible.",
+      "screen": "sign in",
+      "source": "vision"
+    },
+    {
+      "severity": "high",
+      "viewport": "phone",
+      "issue": "No typography, spacing, alignment, or grid structure is visible \u2014 the screen is unstyled and unprofessional.",
+      "fix": "Apply a consistent type scale, use readable font sizes, ensure proper line length, and align elements on a grid. Avoid browser defaults and ensure all UI components are styled.",
+      "screen": "sign in",
+      "source": "vision"
+    },
+    {
+      "severity": "high",
+      "viewport": "phone",
+      "issue": "No error states, empty states, or navigation context are present \u2014 the screen is not usable.",
+      "fix": "Implement error states for invalid email/password, submission errors, and empty states to guide the user. Ensure navigation is clear and all main actions are reachable from this screen.",
+      "screen": "sign in",
+      "source": "vision"
+    },
+    {
+      "severity": "high",
+      "screen": "sign in",
+      "source": "vision",
+      "issue": "visual quality 1/10 on 'sign in' (needs 8+): The screen is completely blank except for a centered loading spinner. No form, no buttons, no text, no visual hierarchy, no error states, no empty state guidance, no navigation context \u2014 it\u2019s a broken, unstyled placeholder. This violates every design principle for a polished product and would not be acceptable for release.",
+      "fix": "Address this screen's findings until it looks polished and professional."
+    }
+  ],
+  "lighthouse": [
+    {
+      "accessibility": 91,
+      "bestPractices": 96,
+      "performance": 72
+    }
+  ],
+  "vision_scores": [
+    {
+      "screen": "sign in",
+      "score": 1.0,
+      "summary": "The screen is completely blank except for a centered loading spinner. No form, no buttons, no text, no visual hierarchy, no error states, no empty state guidance, no navigation context \u2014 it\u2019s a broken, unstyled placeholder. This violates every design principle for a polished product and would not be acceptable for release."
+    }
+  ]
+}
