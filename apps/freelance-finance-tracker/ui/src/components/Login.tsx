@@ -30,11 +30,11 @@ const Login: React.FC = () => {
       <form onSubmit={handleSubmit}>
         <div>
           <label htmlFor="email">Email address</label>
-          <input id="email" type="email" value={email} onChange={e => setEmail(e.target.value)} required autocomplete="email" placeholder="you@example.com" />
+          <input id="email" type="email" value={email} onChange={e => setEmail(e.target.value)} required autoComplete="email" placeholder="you@example.com" />
         </div>
         <div>
           <label htmlFor="password">Password</label>
-          <input id="password" type="password" value={password} onChange={e => setPassword(e.target.value)} required autocomplete="current-password" placeholder="••••••••" />
+          <input id="password" type="password" value={password} onChange={e => setPassword(e.target.value)} required autoComplete="current-password" placeholder="********" />
         </div>
         <button type="submit" disabled={!email || !password || loading}>
           {loading ? 'Signing in…' : 'Log in'}

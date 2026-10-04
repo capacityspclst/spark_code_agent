@@ -14,8 +14,8 @@ const Register: React.FC = () => {
   const validate = () => {
     if (password !== confirmPassword) return 'Passwords do not match.';
     if (password.length < 12) return 'Password must be at least 12 characters.';
-    if (!/[a-z]/.test(password)) return 'Password must include a lower‑case letter.';
-    if (!/[A-Z]/.test(password)) return 'Password must include an upper‑case letter.';
+    if (!/[a-z]/.test(password)) return 'Password must include a lower\u2011case letter.';
+    if (!/[A-Z]/.test(password)) return 'Password must include an upper\u2011case letter.';
     if (!/[0-9]/.test(password)) return 'Password must include a digit.';
     if (!/[^a-zA-Z0-9]/.test(password)) return 'Password must include a symbol.';
     return '';
@@ -46,15 +46,15 @@ const Register: React.FC = () => {
       <form onSubmit={handleSubmit}>
         <div>
           <label htmlFor="email">Email address</label>
-          <input id="email" type="email" value={email} onChange={e => setEmail(e.target.value)} required autocomplete="email" placeholder="you@example.com" />
+          <input id="email" type="email" value={email} onChange={e => setEmail(e.target.value)} required autoComplete="email" placeholder="you@example.com" />
         </div>
         <div>
           <label htmlFor="password">Password</label>
-          <input id="password" type="password" value={password} onChange={e => setPassword(e.target.value)} required autocomplete="new-password" placeholder="********" />
+          <input id="password" type="password" value={password} onChange={e => setPassword(e.target.value)} required autoComplete="new-password" placeholder="********" />
         </div>
         <div>
           <label htmlFor="confirmPassword">Confirm password</label>
-          <input id="confirmPassword" type="password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} required autocomplete="new-password" placeholder="********" />
+          <input id="confirmPassword" type="password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} required autoComplete="new-password" placeholder="********" />
         </div>
         <button type="submit" disabled={!email || !password || !confirmPassword}>Sign up</button>
       </form>

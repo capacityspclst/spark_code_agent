@@ -1,15 +1,11 @@
 """FastAPI application entry point with routes for authentication and transaction management."""
 
-from fastapi import FastAPI, Depends, HTTPException
-from fastapi.security import OAuth2PasswordRequestForm
+from fastapi import FastAPI, Depends, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 
 from . import models, schemas, crud, auth
-from .database import engine, get_db
-
-# Create database tables
-models.Base.metadata.create_all(bind=engine)
+from .database import get_db
 
 app = FastAPI(title="Freelance Finance Tracker API")
 
@@ -56,10 +52,21 @@ def register(user_in: schemas.UserCreate, db: Session = Depends(get_db)):
     return schemas.UserRead.from_orm(user)
 
 @app.post("/login", response_model=schemas.Token)
-def login(form_data: OAuth2PasswordRequestForm = Depends()):
+async def login(request: Request):
+    # Support both JSON and form data
+    try:
+        data = await request.json()
+        username = data.get("email") or data.get("username")
+        password = data.get("password")
+    except Exception:
+        form = await request.form()
+        username = form.get("username")
+        password = form.get("password")
+    if not username or not password:
+        raise HTTPException(status_code=400, detail="Invalid email or password.")
     db = next(get_db())
-    user = crud.get_user_by_email(db, form_data.username)
-    if not user or not auth.verify_password(form_data.password, user.hashed_password):
+    user = crud.get_user_by_email(db, username)
+    if not user or not auth.verify_password(password, user.hashed_password):
         raise HTTPException(status_code=400, detail="Invalid email or password.")
     access_token = auth.create_access_token(data={"sub": user.id})
     payload = auth.decode_token(access_token)
