@@ -22,6 +22,7 @@ class Transaction(Base):
     amount = Column(Float, nullable=False)
     description = Column(String, nullable=True)
     date = Column(DateTime, nullable=False)
+    type = Column(String, nullable=False)  # Income or Expense
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     owner = relationship("User", back_populates="transactions")

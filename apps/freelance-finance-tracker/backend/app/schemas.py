@@ -3,6 +3,7 @@
 from datetime import datetime
 from typing import Optional
 from pydantic import BaseModel, EmailStr, Field, validator
+from pydantic import ConfigDict
 
 class UserCreate(BaseModel):
     email: EmailStr
@@ -36,8 +37,7 @@ class UserRead(BaseModel):
     email: EmailStr
     created_at: datetime
 
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
 
 class Token(BaseModel):
     access_token: str
@@ -52,6 +52,7 @@ class TransactionCreate(BaseModel):
     amount: float = Field(..., gt=0, description="Amount must be positive")
     description: Optional[str] = None
     date: datetime
+    type: str = Field(..., description="Income or Expense")
 
 class TransactionRead(BaseModel):
     id: int
@@ -60,6 +61,6 @@ class TransactionRead(BaseModel):
     description: Optional[str]
     date: datetime
     created_at: datetime
+    type: str
 
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)

@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import api from '../services/api.js';
+import api from '../services/api';
+import Toast from '../components/Toast';
 
 const Register: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
+  const [toast, setToast] = useState<string>('');
   const navigate = useNavigate();
 
   const validate = () => {
@@ -29,10 +30,9 @@ const Register: React.FC = () => {
     }
     try {
       await api.post('/register', { email, password, confirm_password: confirmPassword });
-      // auto‑login after successful registration
       const loginResp = await api.post('/login', new URLSearchParams({ username: email, password }));
       localStorage.setItem('access_token', loginResp.data.access_token);
-      setSuccess('Account created! Welcome.');
+      setToast('Account created! Welcome.');
       setTimeout(() => navigate('/dashboard'), 500);
     } catch (err: any) {
       setError(err.response?.data?.detail || 'Registration failed');
@@ -43,22 +43,22 @@ const Register: React.FC = () => {
     <main style={{ maxWidth: 420, margin: '64px auto', padding: 16 }}>
       <h1>Create your account</h1>
       {error && <div role="alert" style={{ color: 'red' }}>{error}</div>}
-      {success && <div role="alert" style={{ color: 'green' }}>{success}</div>}
       <form onSubmit={handleSubmit}>
         <div>
           <label htmlFor="email">Email address</label>
-          <input id="email" type="email" value={email} onChange={e => setEmail(e.target.value)} required />
+          <input id="email" type="email" value={email} onChange={e => setEmail(e.target.value)} required autocomplete="email" placeholder="you@example.com" />
         </div>
         <div>
           <label htmlFor="password">Password</label>
-          <input id="password" type="password" value={password} onChange={e => setPassword(e.target.value)} required />
+          <input id="password" type="password" value={password} onChange={e => setPassword(e.target.value)} required autocomplete="new-password" placeholder="********" />
         </div>
         <div>
           <label htmlFor="confirmPassword">Confirm password</label>
-          <input id="confirmPassword" type="password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} required />
+          <input id="confirmPassword" type="password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} required autocomplete="new-password" placeholder="********" />
         </div>
         <button type="submit" disabled={!email || !password || !confirmPassword}>Sign up</button>
       </form>
+      {toast && <Toast message={toast} onClose={() => setToast('')} type="success" />}
     </main>
   );
 };
