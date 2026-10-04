@@ -1,7 +1,6 @@
 import React, { useState, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../App';
-import { uploadReceipt } from '../api'; // placeholder, will use mileage API
 
 export const MileageForm: React.FC = () => {
   const { token } = useContext(AuthContext);
@@ -21,7 +20,6 @@ export const MileageForm: React.FC = () => {
       distance_miles: parseFloat(distance),
       purpose,
     };
-    // call mileage endpoint directly via fetch
     const res = await fetch('/mileage', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },

@@ -1,6 +1,6 @@
 import React, { useState, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { register, login } from '../api';
+import { register } from '../api';
 import { AuthContext } from '../App';
 
 export const Register: React.FC = () => {
@@ -17,19 +17,13 @@ export const Register: React.FC = () => {
       setError('Passwords do not match');
       return;
     }
-    // Register the user
-    const regRes = await register(email, password);
-    if (regRes.id) {
-      // Auto‑login after successful registration
-      const loginRes = await login(email, password);
-      if (loginRes.access_token) {
-        setToken(loginRes.access_token);
-        navigate('/dashboard');
-        return;
-      }
-      setError('Login after registration failed');
+    // Register the user (backend now returns JWT token)
+    const res = await register(email, password);
+    if (res.access_token) {
+      setToken(res.access_token);
+      navigate('/dashboard');
     } else {
-      setError(regRes.detail || 'Registration failed');
+      setError(res.detail || 'Registration failed');
     }
   };
 

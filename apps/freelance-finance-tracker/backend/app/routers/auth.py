@@ -5,7 +5,7 @@ from .. import models, schemas, auth, database
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
-@router.post("/register", status_code=201)
+@router.post("/register", response_model=schemas.Token, status_code=201)
 def register(user: schemas.UserCreate, db: Session = Depends(database.get_db)):
     existing = db.query(models.User).filter(models.User.email == user.email).first()
     if existing:
@@ -15,7 +15,9 @@ def register(user: schemas.UserCreate, db: Session = Depends(database.get_db)):
     db.add(db_user)
     db.commit()
     db.refresh(db_user)
-    return {"id": db_user.id, "email": db_user.email}
+    # Create JWT token for auto-login
+    access_token = auth.create_access_token(data={"sub": db_user.id})
+    return {"access_token": access_token, "token_type": "bearer"}
 
 @router.post("/login", response_model=schemas.Token)
 def login(form: schemas.UserLogin, db: Session = Depends(database.get_db)):

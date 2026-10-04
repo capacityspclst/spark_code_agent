@@ -1,4 +1,4 @@
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { uploadReceipt } from '../api';
 import { AuthContext } from '../App';
@@ -11,6 +11,16 @@ export const ReceiptUpload: React.FC = () => {
   const [date, setDate] = useState('');
   const [vendor, setVendor] = useState('');
   const [category, setCategory] = useState('');
+  const [success, setSuccess] = useState('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFile(e.target.files?.[0] || null);
+  };
+
+  const openFileChooser = () => {
+    fileInputRef.current?.click();
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -23,8 +33,8 @@ export const ReceiptUpload: React.FC = () => {
     formData.append('category', category);
     const res = await uploadReceipt(formData, token!);
     if (res.id) {
-      alert('Receipt added successfully!');
-      navigate('/dashboard');
+      setSuccess('Receipt added successfully!');
+      setTimeout(() => navigate('/dashboard'), 500);
     } else {
       alert('Upload failed');
     }
@@ -34,8 +44,22 @@ export const ReceiptUpload: React.FC = () => {
     <div className="card">
       <h1>Add Receipt</h1>
       <form onSubmit={handleSubmit}>
-        <label htmlFor="file">Image</label>
-        <input id="file" type="file" accept="image/*" onChange={e => setFile(e.target.files?.[0] || null)} required />
+        {/* Hidden file input for accessibility */}
+        <input
+          id="file"
+          type="file"
+          accept="image/jpeg,image/png,application/pdf"
+          ref={fileInputRef}
+          onChange={handleFileChange}
+          required
+          style={{ position: 'absolute', left: '-9999px' }}
+        />
+        {/* Button to trigger file chooser */}
+        <button type="button" className="secondary" onClick={openFileChooser} aria-label="Take photo">
+          Take photo
+        </button>
+        {file && <p>{file.name}</p>}
+        <p className="help-text">Supported formats: JPG, PNG, PDF. Max size 5 MB.</p>
         <label htmlFor="amount">Amount (USD)</label>
         <input id="amount" type="number" step="0.01" value={amount} onChange={e => setAmount(e.target.value)} required />
         <label htmlFor="date">Date</label>
@@ -43,8 +67,14 @@ export const ReceiptUpload: React.FC = () => {
         <label htmlFor="vendor">Vendor</label>
         <input id="vendor" type="text" value={vendor} onChange={e => setVendor(e.target.value)} required />
         <label htmlFor="category">Category</label>
-        <input id="category" type="text" value={category} onChange={e => setCategory(e.target.value)} required />
+        <select id="category" value={category} onChange={e => setCategory(e.target.value)} required>
+          <option value="">Select category</option>
+          <option value="Office">Office</option>
+          <option value="Travel">Travel</option>
+          <option value="Supplies">Supplies</option>
+        </select>
         <button type="submit" className="primary">Upload receipt</button>
+        {success && <p className="toast success" role="status">{success}</p>}
       </form>
     </div>
   );

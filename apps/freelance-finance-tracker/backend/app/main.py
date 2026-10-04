@@ -8,11 +8,7 @@ from .routers import auth, receipts, mileage, dashboard, export
 app = FastAPI(title="Freelance Finance Tracker API")
 
 # CORS origins handling: config.settings.CORS_ORIGINS may be a comma‑separated string
-origins = (
-    ["*"]
-    if config.settings.CORS_ORIGINS == "*"
-    else [origin.strip() for origin in config.settings.CORS_ORIGINS.split(",")]
-)
+origins = [origin.strip() for origin in config.settings.CORS_ORIGINS.split(",") if origin.strip()]
 
 app.add_middleware(
     CORSMiddleware,
