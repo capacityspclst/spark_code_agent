@@ -31,7 +31,7 @@ export const ReceiptUpload: React.FC = () => {
     formData.append('date', date);
     formData.append('vendor', vendor);
     formData.append('category', category);
-    const res = await uploadReceipt(formData, token!);
+    const res = await uploadReceipt(formData);
     if (res.id) {
       setSuccess('Receipt added successfully!');
       setTimeout(() => navigate('/dashboard'), 500);

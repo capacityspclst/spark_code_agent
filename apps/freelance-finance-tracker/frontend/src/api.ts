@@ -1,11 +1,16 @@
 // Simple API wrapper using fetch. Provides functions for backend endpoints.
 
+function getToken(): string | null {
+  return localStorage.getItem('token');
+}
+
 function getHeaders(token?: string, isJson: boolean = true): HeadersInit {
   const headers: HeadersInit = {};
   if (isJson) {
     headers['Content-Type'] = 'application/json';
   }
-  if (token) headers['Authorization'] = `Bearer ${token}`;
+  const t = token ?? getToken();
+  if (t) headers['Authorization'] = `Bearer ${t}`;
   return headers;
 }
 
@@ -15,7 +20,11 @@ export async function register(email: string, password: string) {
     headers: getHeaders(undefined, true),
     body: JSON.stringify({ email, password }),
   });
-  return res.json();
+  const data = await res.json();
+  if (data.access_token) {
+    localStorage.setItem('token', data.access_token);
+  }
+  return data;
 }
 
 export async function login(email: string, password: string) {
@@ -24,21 +33,25 @@ export async function login(email: string, password: string) {
     headers: getHeaders(undefined, true),
     body: JSON.stringify({ email, password }),
   });
-  return res.json();
+  const data = await res.json();
+  if (data.access_token) {
+    localStorage.setItem('token', data.access_token);
+  }
+  return data;
 }
 
-export async function uploadReceipt(data: FormData, token: string) {
+export async function uploadReceipt(data: FormData) {
   const res = await fetch('/receipts', {
     method: 'POST',
-    headers: { Authorization: `Bearer ${token}` },
+    headers: { Authorization: `Bearer ${getToken()}` },
     body: data,
   });
   return res.json();
 }
 
-export async function getDashboard(token: string) {
+export async function getDashboard() {
   const res = await fetch('/dashboard/summary', {
-    headers: getHeaders(token, false),
+    headers: getHeaders(undefined, false),
   });
   if (!res.ok) {
     const err = await res.json();
@@ -47,14 +60,14 @@ export async function getDashboard(token: string) {
   return res.json();
 }
 
-export async function exportPdf(token: string) {
-  const res = await fetch('/export/pdf', { headers: getHeaders(token, false) });
+export async function exportPdf() {
+  const res = await fetch('/export/pdf', { headers: getHeaders(undefined, false) });
   if (!res.ok) throw new Error('Export PDF failed');
   return res.blob();
 }
 
-export async function exportCsv(token: string) {
-  const res = await fetch('/export/csv', { headers: getHeaders(token, false) });
+export async function exportCsv() {
+  const res = await fetch('/export/csv', { headers: getHeaders(undefined, false) });
   if (!res.ok) throw new Error('Export CSV failed');
   return res.blob();
 }

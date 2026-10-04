@@ -6,7 +6,7 @@ export const ExportButtons: React.FC = () => {
   const { token } = useContext(AuthContext);
 
   const handleExportPdf = async () => {
-    const blob = await exportPdf(token!);
+    const blob = await exportPdf();
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
@@ -17,7 +17,7 @@ export const ExportButtons: React.FC = () => {
   };
 
   const handleExportCsv = async () => {
-    const blob = await exportCsv(token!);
+    const blob = await exportCsv();
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
@@ -30,8 +30,8 @@ export const ExportButtons: React.FC = () => {
   return (
     <div className="card">
       <h2>Export Data</h2>
-      <button className="primary" onClick={handleExportPdf}>Export PDF</button>
-      <button className="secondary" onClick={handleExportCsv}>Export CSV</button>
+      <button className="primary" onClick={handleExportPdf} title="Download a PDF ready for tax filing">Export PDF</button>
+      <button className="secondary" onClick={handleExportCsv} title="Download CSV for accounting software">Export CSV</button>
     </div>
   );
 };

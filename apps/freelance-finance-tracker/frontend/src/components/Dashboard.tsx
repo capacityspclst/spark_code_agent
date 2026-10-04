@@ -3,17 +3,20 @@ import { getDashboard } from '../api';
 import { AuthContext } from '../App';
 
 export const Dashboard: React.FC = () => {
-  const { token } = useContext(AuthContext);
+  const { token: ctxToken } = useContext(AuthContext);
+  const token = ctxToken || localStorage.getItem('token');
   const [summary, setSummary] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>('');
 
   useEffect(() => {
     if (token) {
-      getDashboard(token)
+      getDashboard()
         .then(data => setSummary(data))
         .catch(err => setError(err.message))
         .finally(() => setLoading(false));
+    } else {
+      setLoading(false);
     }
   }, [token]);
 

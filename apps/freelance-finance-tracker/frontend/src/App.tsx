@@ -1,4 +1,4 @@
-import React, { createContext, useState, ReactNode } from 'react';
+import React, { createContext, useState, useEffect, ReactNode } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { Login } from './components/Login';
 import { Register } from './components/Register';
@@ -20,7 +20,23 @@ const RequireAuth: React.FC<{ children: ReactNode }> = ({ children }) => {
 };
 
 function App() {
-  const [token, setToken] = useState<string | null>(null);
+  const [token, setTokenState] = useState<string | null>(null);
+
+  // Load token from localStorage on mount
+  useEffect(() => {
+    const stored = localStorage.getItem('token');
+    if (stored) setTokenState(stored);
+  }, []);
+
+  // Persist token changes
+  const setToken = (t: string | null) => {
+    if (t) {
+      localStorage.setItem('token', t);
+    } else {
+      localStorage.removeItem('token');
+    }
+    setTokenState(t);
+  };
 
   return (
     <AuthContext.Provider value={{ token, setToken }}>
