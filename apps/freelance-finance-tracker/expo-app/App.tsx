@@ -12,6 +12,7 @@ import MileageEntryScreen from './src/screens/MileageEntryScreen';
 import ExportScreen from './src/screens/ExportScreen';
 import { theme } from './src/theme';
 import { getToken } from './src/auth';
+import Header from './src/components/Header';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -61,6 +62,15 @@ function MainTabs() {
   );
 }
 
+function MainWithHeader() {
+  return (
+    <View style={{ flex: 1 }}>
+      <Header />
+      <MainTabs />
+    </View>
+  );
+}
+
 export default function App() {
   const [loading, setLoading] = useState(true);
   const [initialRoute, setInitialRoute] = useState<'Auth' | 'Main'>('Auth');
@@ -86,7 +96,7 @@ export default function App() {
     <NavigationContainer>
       <Stack.Navigator screenOptions={{ headerShown: false }} initialRouteName={initialRoute === 'Main' ? 'Main' : 'Auth'}>
         <Stack.Screen name="Auth" component={AuthStack} />
-        <Stack.Screen name="Main" component={MainTabs} />
+        <Stack.Screen name="Main" component={MainWithHeader} />
       </Stack.Navigator>
     </NavigationContainer>
   );

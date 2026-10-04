@@ -1,27 +1,40 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, ActivityIndicator, Alert, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, TextInput, ActivityIndicator, StyleSheet, TouchableOpacity } from 'react-native';
 import axios from 'axios';
 import { useNavigation } from '@react-navigation/native';
 import { saveToken } from '../auth';
 import { API_URL } from '../config';
 import { theme } from '../theme';
 import PrimaryButton from '../components/PrimaryButton';
+import LoadingOverlay from '../components/LoadingOverlay';
 
 export default function SignInScreen() {
   const navigation = useNavigation<any>();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [errorEmail, setErrorEmail] = useState('');
+  const [errorPassword, setErrorPassword] = useState('');
+
+  const validate = () => {
+    let valid = true;
+    if (!email || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
+      setErrorEmail('Enter a valid email address.');
+      valid = false;
+    } else {
+      setErrorEmail('');
+    }
+    if (!password || password.length < 12) {
+      setErrorPassword('Password must be at least 12 characters, include uppercase, lowercase, number, and symbol.');
+      valid = false;
+    } else {
+      setErrorPassword('');
+    }
+    return valid;
+  };
 
   const handleLogin = async () => {
-    if (!email) {
-      Alert.alert('Error', 'Enter a valid email address.');
-      return;
-    }
-    if (!password) {
-      Alert.alert('Error', 'Enter your password.');
-      return;
-    }
+    if (!validate()) return;
     setLoading(true);
     try {
       const resp = await axios.post(`${API_URL}/auth/login`, { email, password });
@@ -29,14 +42,14 @@ export default function SignInScreen() {
       await saveToken(token);
       navigation.reset({ index: 0, routes: [{ name: 'Main' }] });
     } catch (e) {
-      Alert.alert('Incorrect email or password.');
+      // TODO: replace with toast per design system
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <View style={styles.container}>
+    <View style={styles.container} accessibilityRole="main">
       <Text style={styles.title}>Welcome back</Text>
       <View style={styles.field}>
         <Text style={styles.label}>Email address</Text>
@@ -48,7 +61,9 @@ export default function SignInScreen() {
           keyboardType="email-address"
           placeholder="Email address"
           accessibilityLabel="Email address"
+          editable={!loading}
         />
+        {errorEmail ? <Text style={styles.error}>{errorEmail}</Text> : null}
       </View>
       <View style={styles.field}>
         <Text style={styles.label}>Password</Text>
@@ -59,13 +74,11 @@ export default function SignInScreen() {
           secureTextEntry
           placeholder="Password"
           accessibilityLabel="Password"
+          editable={!loading}
         />
+        {errorPassword ? <Text style={styles.error}>{errorPassword}</Text> : null}
       </View>
-      {loading ? (
-        <ActivityIndicator size="large" color={theme.colors.primary} />
-      ) : (
-        <PrimaryButton title="Log in" onPress={handleLogin} accessibilityLabel="Log in" />
-      )}
+      <PrimaryButton title="Log in" onPress={handleLogin} accessibilityLabel="Log in" />
       <TouchableOpacity
         onPress={() => navigation.navigate('SignUp')}
         style={styles.link}
@@ -75,6 +88,7 @@ export default function SignInScreen() {
       >
         <Text style={styles.linkText}>Don\u2019t have an account? Sign up</Text>
       </TouchableOpacity>
+      {loading && <LoadingOverlay message="Signing you in\u2026" />}
     </View>
   );
 }
@@ -85,6 +99,7 @@ const styles = StyleSheet.create({
   field: { marginBottom: theme.spacing.md },
   label: { ...theme.typography.body, color: theme.colors.onSurface },
   input: { backgroundColor: theme.colors.surface, padding: theme.spacing.sm, borderRadius: theme.radii.sm, borderWidth: 1, borderColor: theme.colors.secondary },
+  error: { color: theme.colors.error, ...theme.typography.caption, marginTop: theme.spacing.xs },
   link: { marginTop: theme.spacing.lg, alignItems: 'center' },
-  linkText: { color: theme.colors.onSurface },
+  linkText: { color: theme.colors.primary, ...theme.typography.body },
 });

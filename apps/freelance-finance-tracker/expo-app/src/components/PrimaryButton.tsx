@@ -1,5 +1,5 @@
-import React from 'react';
-import { TouchableOpacity, Text, StyleSheet, ActivityIndicator, ViewStyle, TextStyle } from 'react-native';
+import React, { useState } from 'react';
+import { TouchableOpacity, Text, StyleSheet, ActivityIndicator, ViewStyle, TextStyle, GestureResponderEvent } from 'react-native';
 import { theme } from '../theme';
 
 type Props = {
@@ -11,14 +11,22 @@ type Props = {
 };
 
 export default function PrimaryButton({ title, onPress, disabled = false, loading = false, accessibilityLabel }: Props) {
+  const [focused, setFocused] = useState(false);
   const isDisabled = disabled || loading;
+
+  const handlePress = (e: GestureResponderEvent) => {
+    if (!isDisabled) onPress();
+  };
+
   return (
     <TouchableOpacity
-      style={[styles.button, isDisabled && styles.disabled]}
-      onPress={onPress}
+      style={[styles.button, isDisabled && styles.disabled, focused && styles.focused]}
+      onPress={handlePress}
       disabled={isDisabled}
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel || title}
+      onFocus={() => setFocused(true)}
+      onBlur={() => setFocused(false)}
     >
       {loading ? (
         <ActivityIndicator size="small" color={theme.colors.onPrimary} />
@@ -29,7 +37,7 @@ export default function PrimaryButton({ title, onPress, disabled = false, loadin
   );
 }
 
-const styles = StyleSheet.create<{ button: ViewStyle; disabled: ViewStyle; text: TextStyle; textDisabled: TextStyle }>({
+const styles = StyleSheet.create<{ button: ViewStyle; disabled: ViewStyle; focused: ViewStyle; text: TextStyle; textDisabled: TextStyle }>({
   button: {
     backgroundColor: theme.colors.primary,
     height: 48,
@@ -37,17 +45,20 @@ const styles = StyleSheet.create<{ button: ViewStyle; disabled: ViewStyle; text:
     borderRadius: theme.radii.md,
     justifyContent: 'center',
     alignItems: 'center',
-    marginVertical: theme.spacing.sm,
+    marginVertical: theme.spacing.md, // 12px as spec
   },
   disabled: {
     backgroundColor: theme.colors.disabledBackground,
-    opacity: 0.6,
+  },
+  focused: {
+    borderWidth: 2,
+    borderColor: theme.colors.primary,
   },
   text: {
     color: theme.colors.onPrimary,
     ...theme.typography.button,
   },
   textDisabled: {
-    color: theme.colors.onSurface,
+    color: theme.colors.disabled,
   },
 });

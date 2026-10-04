@@ -7,6 +7,7 @@ import { saveToken } from '../auth';
 import { API_URL } from '../config';
 import { theme } from '../theme';
 import { FontAwesome } from '@expo/vector-icons';
+import LoadingOverlay from '../components/LoadingOverlay';
 
 export default function SignUpScreen() {
   const navigation = useNavigation<any>();
@@ -44,8 +45,7 @@ export default function SignUpScreen() {
       await saveToken(token);
       navigation.reset({ index: 0, routes: [{ name: 'Main' }] });
     } catch (e) {
-      // Show generic submission error toast
-      alert('We couldn’t create your account. Please check the fields and try again.');
+      alert('We couldn\u2019t create your account. Please check the fields and try again.');
     } finally {
       setLoading(false);
     }
@@ -64,6 +64,7 @@ export default function SignUpScreen() {
           keyboardType="email-address"
           placeholder="Email address"
           accessibilityLabel="Email address"
+          editable={!loading}
         />
         {errorEmail ? <Text style={styles.error}>{errorEmail}</Text> : null}
       </View>
@@ -77,13 +78,14 @@ export default function SignUpScreen() {
             secureTextEntry={secureEntry}
             placeholder="Password"
             accessibilityLabel="Password"
+            editable={!loading}
           />
           <TouchableOpacity onPress={() => setSecureEntry(!secureEntry)} accessibilityLabel="Show password">
             <FontAwesome name={secureEntry ? 'eye-slash' : 'eye'} size={24} color={theme.colors.secondary} />
           </TouchableOpacity>
         </View>
         {errorPassword ? <Text style={styles.error}>{errorPassword}</Text> : null}
-        <Text style={styles.helper}>12 + characters, upper‑case, lower‑case, number, symbol</Text>
+        <Text style={styles.helper}>12 + characters, uppercase, lowercase, number, symbol</Text>
       </View>
       {loading ? (
         <ActivityIndicator size="large" color={theme.colors.primary} />
@@ -93,6 +95,7 @@ export default function SignUpScreen() {
       <TouchableOpacity onPress={() => navigation.navigate('SignIn')} style={styles.link} accessibilityRole="link">
         <Text style={styles.linkText}>Already have an account? Log in</Text>
       </TouchableOpacity>
+      {loading && <LoadingOverlay message="Creating account…" />}
     </View>
   );
 }
