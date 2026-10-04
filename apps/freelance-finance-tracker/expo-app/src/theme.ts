@@ -1,0 +1,52 @@
+// Theme tokens as defined in DESIGN.md
+export const theme = {
+  colors: {
+    primary: "#0066FF",
+    primaryVariant: "#004C99",
+    accent: "#FF9500",
+    accentPressed: "#E68A00",
+    onAccent: "#212121",
+    background: "#F5F6FA",
+    surface: "#FFFFFF",
+    onPrimary: "#FFFFFF",
+    onSurface: "#212121",
+    secondary: "#5F5F5F",
+    placeholder: "#707070",
+    disabled: "#4D4D4D",
+    error: "#D32F2F",
+    success: "#2E7D32",
+    disabledBackground: "#E0E0E0",
+  },
+  spacing: {
+    xs: 4,
+    sm: 8,
+    md: 12,
+    lg: 16,
+    xl: 24,
+    xxl: 32,
+    xxxl: 40,
+  },
+  radii: {
+    sm: 4,
+    md: 8,
+    lg: 12,
+  },
+  elevation: {
+    card: {
+      shadowColor: "#000",
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.1,
+      shadowRadius: 4,
+      elevation: 2,
+    },
+  },
+  typography: {
+    h1: { fontSize: 32, lineHeight: 40, fontWeight: "700" as const },
+    h2: { fontSize: 24, lineHeight: 32, fontWeight: "600" as const },
+    h3: { fontSize: 20, lineHeight: 28, fontWeight: "600" as const },
+    body: { fontSize: 16, lineHeight: 24, fontWeight: "400" as const },
+    small: { fontSize: 14, lineHeight: 20, fontWeight: "400" as const },
+    caption: { fontSize: 12, lineHeight: 16, fontWeight: "400" as const },
+    button: { fontSize: 16, lineHeight: 24, fontWeight: "600" as const },
+  },
+};
