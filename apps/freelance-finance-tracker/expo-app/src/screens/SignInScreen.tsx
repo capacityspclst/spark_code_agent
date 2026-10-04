@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { SafeAreaView, View, Text, TextInput, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { SafeAreaView, View, Text, TextInput, StyleSheet, TouchableOpacity, ActivityIndicator, Platform } from 'react-native';
 import axios from 'axios';
 import { useNavigation } from '@react-navigation/native';
 import { saveToken } from '../auth';
@@ -48,11 +48,17 @@ export default function SignInScreen() {
     }
   };
 
+  const webLabelStyle: any = { marginBottom: 4, fontSize: 16, color: theme.colors.onSurface };
+
   return (
     <SafeAreaView style={styles.container}>
       <Text style={styles.title}>Welcome back</Text>
       <View style={styles.field}>
-        <Text style={styles.label}>Email address</Text>
+        {Platform.OS === 'web' ? (
+          <label htmlFor="emailInput" style={webLabelStyle}>Email address</label>
+        ) : (
+          <Text style={styles.label}>Email address</Text>
+        )}
         <TextInput
           style={styles.input}
           value={email}
@@ -64,11 +70,17 @@ export default function SignInScreen() {
           accessibilityLabel="Email address"
           autoComplete="email"
           editable={!loading}
+          nativeID="emailInput"
+          {...(Platform.OS === 'web' ? { id: 'emailInput' } : {})}
         />
         {errorEmail ? <Text style={styles.error}>{errorEmail}</Text> : null}
       </View>
       <View style={styles.field}>
-        <Text style={styles.label}>Password</Text>
+        {Platform.OS === 'web' ? (
+          <label htmlFor="passwordInput" style={webLabelStyle}>Password</label>
+        ) : (
+          <Text style={styles.label}>Password</Text>
+        )}
         <TextInput
           style={styles.input}
           value={password}
@@ -79,10 +91,16 @@ export default function SignInScreen() {
           accessibilityLabel="Password"
           autoComplete="current-password"
           editable={!loading}
+          nativeID="passwordInput"
+          {...(Platform.OS === 'web' ? { id: 'passwordInput' } : {})}
         />
         {errorPassword ? <Text style={styles.error}>{errorPassword}</Text> : null}
       </View>
-      <PrimaryButton title="Log in" onPress={handleLogin} accessibilityLabel="Log in" />
+      {loading ? (
+        <ActivityIndicator size="large" color={theme.colors.primary} />
+      ) : (
+        <PrimaryButton title="Log in" onPress={handleLogin} accessibilityLabel="Log in" />
+      )}
       <TouchableOpacity
         onPress={() => navigation.navigate('SignUp')}
         accessibilityRole="link"

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, ActivityIndicator, StyleSheet, TouchableOpacity, TextStyle, ViewStyle } from 'react-native';
+import { View, Text, TextInput, ActivityIndicator, StyleSheet, TouchableOpacity, TextStyle, ViewStyle, Platform } from 'react-native';
 import axios from 'axios';
 import { useNavigation } from '@react-navigation/native';
 import PrimaryButton from '../components/PrimaryButton';
@@ -45,17 +45,23 @@ export default function SignUpScreen() {
       await saveToken(token);
       navigation.reset({ index: 0, routes: [{ name: 'Main' }] });
     } catch (e) {
-      alert('We couldn\'t create your account. Please check the fields and try again.');
+      alert("We couldn't create your account. Please check the fields and try again.");
     } finally {
       setLoading(false);
     }
   };
 
+  const webLabelStyle: any = { marginBottom: 4, fontSize: 16, color: theme.colors.onSurface };
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Create your account</Text>
       <View style={styles.field}>
-        <Text style={styles.label}>Email address</Text>
+        {Platform.OS === 'web' ? (
+          <label htmlFor="emailInput" style={webLabelStyle}>Email address</label>
+        ) : (
+          <Text style={styles.label}>Email address</Text>
+        )}
         <TextInput
           style={styles.input}
           value={email}
@@ -68,11 +74,16 @@ export default function SignUpScreen() {
           autoComplete="email"
           testID="email-input"
           editable={!loading}
+          nativeID="emailInput"
         />
         {errorEmail ? <Text style={styles.error}>{errorEmail}</Text> : null}
       </View>
       <View style={styles.field}>
-        <Text style={styles.label}>Password</Text>
+        {Platform.OS === 'web' ? (
+          <label htmlFor="passwordInput" style={webLabelStyle}>Password</label>
+        ) : (
+          <Text style={styles.label}>Password</Text>
+        )}
         <View style={styles.passwordRow}>
           <TextInput
             style={[styles.input, { flex: 1 }]}
@@ -85,12 +96,14 @@ export default function SignUpScreen() {
             autoComplete="new-password"
             testID="password-input"
             editable={!loading}
+            nativeID="passwordInput"
           />
           <TouchableOpacity onPress={() => setSecureEntry(!secureEntry)} accessibilityLabel={secureEntry ? "Show password" : "Hide password"}>
             <FontAwesome name={secureEntry ? 'eye-slash' : 'eye'} size={24} color={theme.colors.secondary} />
           </TouchableOpacity>
         </View>
         {errorPassword ? <Text style={styles.error}>{errorPassword}</Text> : null}
+        {/* Helper text with actual typographic spaces */}
         <Text style={styles.helper}>12 + characters, uppercase, lowercase, number, symbol</Text>
       </View>
       {loading ? (
