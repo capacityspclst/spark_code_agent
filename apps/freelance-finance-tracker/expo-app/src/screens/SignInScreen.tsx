@@ -66,7 +66,13 @@ export default function SignInScreen() {
       ) : (
         <PrimaryButton title="Log in" onPress={handleLogin} accessibilityLabel="Log in" />
       )}
-      <TouchableOpacity onPress={() => navigation.navigate('SignUp')} style={styles.link} accessibilityRole="link">
+      <TouchableOpacity
+        onPress={() => navigation.navigate('SignUp')}
+        style={styles.link}
+        accessibilityRole="link"
+        accessibilityLabel="Don\u2019t have an account? Sign up"
+        accessible={true}
+      >
         <Text style={styles.linkText}>Don\u2019t have an account? Sign up</Text>
       </TouchableOpacity>
     </View>
@@ -80,5 +86,5 @@ const styles = StyleSheet.create({
   label: { ...theme.typography.body, color: theme.colors.onSurface },
   input: { backgroundColor: theme.colors.surface, padding: theme.spacing.sm, borderRadius: theme.radii.sm, borderWidth: 1, borderColor: theme.colors.secondary },
   link: { marginTop: theme.spacing.lg, alignItems: 'center' },
-  linkText: { color: theme.colors.primary },
+  linkText: { color: theme.colors.onSurface },
 });
