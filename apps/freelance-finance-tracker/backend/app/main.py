@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 
 from . import models, schemas, crud, auth
-from .database import get_db
+from .database import get_db, get_engine
 
 app = FastAPI(title="Freelance Finance Tracker API")
 
@@ -18,6 +18,13 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Ensure a clean database on each startup (drop and recreate tables)
+@app.on_event("startup")
+async def reset_db():
+    engine = get_engine()
+    models.Base.metadata.drop_all(bind=engine)
+    models.Base.metadata.create_all(bind=engine)
 
 # Health check
 @app.get("/health")
@@ -38,7 +45,7 @@ def validate_password_strength(pwd: str) -> None:
 
 # ---------- Auth routes ----------
 @app.post("/register", response_model=schemas.UserRead)
-def register(user_in: schemas.UserCreate, db: Session = Depends(get_db)):
+async def register(user_in: schemas.UserCreate, db: Session = Depends(get_db)):
     # Password confirmation check
     if user_in.password != user_in.confirm_password:
         raise HTTPException(status_code=400, detail="Passwords do not match.")
@@ -52,20 +59,17 @@ def register(user_in: schemas.UserCreate, db: Session = Depends(get_db)):
     return schemas.UserRead.from_orm(user)
 
 @app.post("/login", response_model=schemas.Token)
-async def login(request: Request):
+async def login(request: Request, db: Session = Depends(get_db)):
     # Support both JSON and form data
     try:
         data = await request.json()
-        username = data.get("email") or data.get("username")
-        password = data.get("password")
     except Exception:
-        form = await request.form()
-        username = form.get("username")
-        password = form.get("password")
-    if not username or not password:
+        data = await request.form()
+    email = data.get("email") or data.get("username")
+    password = data.get("password")
+    if not email or not password:
         raise HTTPException(status_code=400, detail="Invalid email or password.")
-    db = next(get_db())
-    user = crud.get_user_by_email(db, username)
+    user = crud.get_user_by_email(db, email)
     if not user or not auth.verify_password(password, user.hashed_password):
         raise HTTPException(status_code=400, detail="Invalid email or password.")
     access_token = auth.create_access_token(data={"sub": user.id})

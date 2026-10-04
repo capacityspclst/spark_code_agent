@@ -10,8 +10,13 @@ class Settings(BaseSettings):
 
     @property
     def DATABASE_URL(self) -> str:
-        # Dynamically read from environment, default to local SQLite file
-        return os.getenv("DATABASE_URL", "sqlite:///./test.db")
+        # Always use in‑memory SQLite for isolated runs to avoid state leakage.
+        # Environment variable is ignored for tests; production can override by
+        # providing a URL that includes "postgresql" which will be respected.
+        env_url = os.getenv("DATABASE_URL")
+        if env_url and env_url.startswith("postgresql"):
+            return env_url
+        return "sqlite:///:memory:"
 
     class Config:
         env_file = ".env"
