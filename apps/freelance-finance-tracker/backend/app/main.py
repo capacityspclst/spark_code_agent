@@ -28,9 +28,27 @@ app.add_middleware(
 def health() -> dict:
     return {"status": "ok"}
 
+def validate_password_strength(pwd: str) -> None:
+    if len(pwd) < 12:
+        raise HTTPException(status_code=400, detail="Password must be at least 12 characters.")
+    if not any(c.islower() for c in pwd):
+        raise HTTPException(status_code=400, detail="Password must include a lower‑case letter.")
+    if not any(c.isupper() for c in pwd):
+        raise HTTPException(status_code=400, detail="Password must include an upper‑case letter.")
+    if not any(c.isdigit() for c in pwd):
+        raise HTTPException(status_code=400, detail="Password must include a digit.")
+    if not any(not c.isalnum() for c in pwd):
+        raise HTTPException(status_code=400, detail="Password must include a symbol.")
+
 # ---------- Auth routes ----------
 @app.post("/register", response_model=schemas.UserRead)
 def register(user_in: schemas.UserCreate, db: Session = Depends(get_db)):
+    # Password confirmation check
+    if user_in.password != user_in.confirm_password:
+        raise HTTPException(status_code=400, detail="Passwords do not match.")
+    # Password strength validation
+    validate_password_strength(user_in.password)
+    # Check if email already exists
     existing = crud.get_user_by_email(db, user_in.email)
     if existing:
         raise HTTPException(status_code=400, detail="An account with this email already exists.")
