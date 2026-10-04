@@ -1,0 +1,136 @@
+{
+  "verdict": "fail",
+  "summary": "The FinanceMate UI is largely on\u2011track with the design tokens and component structure, but several critical gaps break the primary user flow and leave required states unimplemented. The sign\u2011in screen\u2019s sign\u2011up link is missing, causing the flow to stall. Dashboard does not handle API\u2011error or offline states, and the export, receipt\u2011capture, and mileage screens lack many of the prescribed loading, error, and success UI states. A serious color\u2011contrast violation (placeholder text) makes the app inaccessible. Minor accessibility and styling oversights (disabled button semantics, loading role, missing focus handling on tabs) also need attention.",
+  "findings": [
+    {
+      "severity": "high",
+      "file": "expo-app/src/screens/SignInScreen.tsx",
+      "issue": "The \"Don\u2019t have an account? Sign up\" link is missing or not interactive, causing the primary flow step to timeout and preventing users from reaching the Sign\u2011Up screen.",
+      "fix": "Add a Pressable/Text link styled as a primary text link, give it an accessibilityLabel (e.g., \"Sign up\"), set accessibilityRole=\"link\", and onPress navigate to the \"SignUp\" screen. Ensure it is focusable on web.",
+      "source": "designer"
+    },
+    {
+      "severity": "high",
+      "file": "expo-app/src/screens/SignUpScreen.tsx",
+      "issue": "The reciprocal \"Already have an account? Log in\" link is absent or not focusable, breaking navigation back to Sign\u2011In.",
+      "fix": "Add a Pressable/Text link with accessibilityLabel=\"Log in\", accessibilityRole=\"link\", and onPress navigation.navigate('SignIn'). Apply the primary color token for the link and ensure focus outline appears.",
+      "source": "designer"
+    },
+    {
+      "severity": "high",
+      "file": "expo-app/src/screens/DashboardScreen.tsx",
+      "issue": "API\u2011error and offline states defined in the spec are not implemented; when the dashboard request fails or the device is offline the UI shows nothing and offers no retry mechanism.",
+      "fix": "Add error handling UI: a banner with message \"Failed to load data. Pull down to retry.\" and implement pull\u2011to\u2011refresh. Detect network status (e.g., via NetInfo) and show an offline banner \"You\u2019re offline \u2013 data may be outdated.\".",
+      "source": "designer"
+    },
+    {
+      "severity": "high",
+      "file": "expo-app/src/components/LoadingOverlay.tsx",
+      "issue": "The overlay background color uses a hard\u2011coded rgba value instead of a design token, and the component is not used consistently for the loading states required on several screens (Sign\u2011Up, Sign\u2011In, Receipt upload, Export).",
+      "fix": "Replace the background with a tokenized color (e.g., theme.colors.disabledBackground with appropriate opacity) and reuse LoadingOverlay for every loading state across the app, passing the exact spec messages.",
+      "source": "designer"
+    },
+    {
+      "severity": "high",
+      "file": "expo-app/src/components/* (TextInput placeholder styling)",
+      "issue": "Placeholder text color #707070 on a white surface fails WCAG 2.0 contrast (ratio ~3.9:1), flagged by axe as a serious accessibility issue.",
+      "fix": "Increase placeholder contrast by using a darker shade (e.g., #5F5F5F) or a lighter background, and ensure the color comes from the design token (theme.colors.placeholder) adjusted to meet \u22654.5:1 for normal text.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "expo-app/src/components/PrimaryButton.tsx",
+      "issue": "Disabled buttons lack proper accessibilityState and visual opacity cues; only background colour changes, which may not be sufficient for all users.",
+      "fix": "Add accessibilityState={{ disabled: true }} to the TouchableOpacity, apply an opacity style (e.g., 0.6) when disabled, and ensure the focus ring is not shown on a disabled button.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "expo-app/src/screens/ExportScreen.tsx",
+      "issue": "Export screen does not implement the loading, disabled, and error states described in the spec (e.g., spinner overlay while generating CSV/PDF, toast on success/error, offline handling).",
+      "fix": "Add ActivityIndicator overlay with the appropriate message (e.g., \"Generating CSV\u2026\"), disable both export buttons during generation, display toasts per spec, and show an offline banner if the device is offline.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "expo-app/src/screens/ReceiptCaptureScreen.tsx",
+      "issue": "Missing permission prompt modal, fallback UI for denied camera access, loading overlay during upload, success/error toasts, and tooltip for long category text on web.",
+      "fix": "Implement a modal using theme colors and radii for the permission request, provide a \"Choose from library\" fallback button, show LoadingOverlay while uploading, display toast messages for success/failure, and add ellipsis with a tooltip component for long category names.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "expo-app/src/screens/MileageEntryScreen.tsx",
+      "issue": "Loading state, success/error toasts, and inline validation messages are not present; visible labels are not linked to inputs via nativeID, breaking accessibility guidelines.",
+      "fix": "Add LoadingOverlay with \"Saving mileage\u2026\" message, show toasts per spec, render inline error text under invalid fields, and associate each Text component label with its TextInput via nativeID/accessibilityLabel.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "expo-app/App.tsx",
+      "issue": "The initial loading view uses accessibilityRole=\"alert\", which is intended for urgent messages, not for progress indication.",
+      "fix": "Change the role to \"progressbar\" or \"status\" and set aria-live=\"polite\" to convey a loading state appropriately.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "expo-app/src/theme.ts",
+      "issue": "Design tokens are defined for React Native but not exported as CSS custom properties for the web fallback, risking mismatched styles on the web build.",
+      "fix": "Generate a CSS file that defines the same variables (e.g., --color-primary, --space-md) from the theme object and import it in the web entry point.",
+      "source": "designer"
+    },
+    {
+      "severity": "high",
+      "viewport": "phone",
+      "issue": "The 'Sign up' link text is corrupted: 'Don\\u2019t have an account? Sign up' (with a backslash and incorrect apostrophe). This is a critical typo that breaks the user experience and suggests poor attention to detail.",
+      "fix": "Fix the text to read 'Don\u2019t have an account? Sign up' using proper apostrophe and remove the backslash.",
+      "screen": "sign in",
+      "source": "vision"
+    },
+    {
+      "severity": "medium",
+      "viewport": "phone",
+      "issue": "No visual hierarchy or spacing guidance. Elements are stacked without clear grouping or breathing room, making the screen feel cramped and unpolished.",
+      "fix": "Add consistent spacing between fields and the button. Use subtle visual cues (like padding or subtle dividers) to group the form elements and create a more structured layout.",
+      "screen": "sign in",
+      "source": "vision"
+    },
+    {
+      "severity": "medium",
+      "viewport": "phone",
+      "issue": "The 'Log in' button is large and prominent, but the form lacks a clear visual hierarchy. The heading 'Welcome back' is too small and doesn't establish dominance over the form.",
+      "fix": "Increase the font size of the heading to establish hierarchy. Consider adding subtle visual emphasis to the primary action (button) to guide the user\u2019s eye.",
+      "screen": "sign in",
+      "source": "vision"
+    },
+    {
+      "severity": "low",
+      "viewport": "phone",
+      "issue": "The form fields lack helpful hints or labels above the fields (though they are labeled below). This is acceptable for a simple form but could be improved for clarity.",
+      "fix": "Add labels above the fields (e.g., 'Email address', 'Password') to improve clarity and accessibility, especially for users who may not be familiar with the form structure.",
+      "screen": "sign in",
+      "source": "vision"
+    },
+    {
+      "severity": "high",
+      "screen": "sign in",
+      "source": "vision",
+      "issue": "visual quality 4/10 on 'sign in' (needs 8+): The sign-in screen is functional but lacks polish. It uses a basic layout with no visual hierarchy or spacing guidance, and the 'Sign up' link has a critical typo. While the primary action is clear, the design feels like a placeholder and doesn't meet the standards of a polished, commercial product.",
+      "fix": "Address this screen's findings until it looks polished and professional."
+    }
+  ],
+  "lighthouse": [
+    {
+      "accessibility": 96,
+      "bestPractices": 100,
+      "performance": 76
+    }
+  ],
+  "vision_scores": [
+    {
+      "screen": "sign in",
+      "score": 4.0,
+      "summary": "The sign-in screen is functional but lacks polish. It uses a basic layout with no visual hierarchy or spacing guidance, and the 'Sign up' link has a critical typo. While the primary action is clear, the design feels like a placeholder and doesn't meet the standards of a polished, commercial product."
+    }
+  ]
+}
