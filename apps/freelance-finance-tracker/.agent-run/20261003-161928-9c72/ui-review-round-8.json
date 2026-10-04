@@ -1,0 +1,152 @@
+{
+  "verdict": "fail",
+  "summary": "The UI largely respects the design tokens and passes automated accessibility (axe) checks, but critical user\u2011experience gaps break the primary flow. The Dashboard does not handle a 401 response correctly \u2013 it shows an error banner instead of the expected empty\u2011state copy and prevents auto\u2011login after registration. Authentication tokens are not reliably persisted or attached to API calls, causing repeated unauthorized errors. Several spec\u2011defined states (loading spinners, empty/ error messages, success toasts) are missing or mis\u2011implemented in forms and export actions. Form accessibility is incomplete: labels are omitted or placed incorrectly, autocomplete attributes and password visibility toggles are absent, and field\u2011level validation feedback is not shown. Navigation is generally present but not guaranteed on every signed\u2011in screen (e.g., Export screen). Overall the code uses the design tokens correctly (no ad\u2011hoc colors), focus styling is applied globally, and there are no obvious unused class names, but the functional and usability deficiencies are high\u2011severity and must be addressed before the product can be considered polished.",
+  "findings": [
+    {
+      "severity": "high",
+      "file": "frontend/src/components/Dashboard.tsx",
+      "issue": "Dashboard does not handle a 401 Unauthorized response; it displays an error banner \"Failed to load data. Retry.\" instead of auto\u2011redirecting to login or showing the empty\u2011state copy \"No data yet. Add a receipt or mileage to get started.\" causing the primary flow to break.",
+      "fix": "Add error handling for 401: clear stored token, redirect to the sign\u2011in page, and on a successful fetch with no data render the empty state UI with the exact copy and a CTA button. Ensure the empty state is also shown when the API returns an empty list.",
+      "source": "designer"
+    },
+    {
+      "severity": "high",
+      "file": "frontend/src/api.ts",
+      "issue": "Authentication token from /auth/register (auto\u2011login) is not stored or attached to subsequent requests, leading to 401 errors on the dashboard summary call.",
+      "fix": "Persist the access_token (e.g., in localStorage or a secure http\u2011only cookie) after registration/login, and include it in the Authorization header for all API calls. Implement a token refresh or graceful fallback to the login screen on token expiry.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "frontend/src/components/Login.tsx",
+      "issue": "Login form lacks visible <label> elements above inputs, missing autocomplete attributes (email, current\u2011password), and does not provide a password show/hide toggle or password\u2011rules hint. Inline field error messages are not rendered.",
+      "fix": "Add <label htmlFor=\"email\">Email</label> and <label htmlFor=\"password\">Password</label> above the inputs, set autocomplete=\"email\" and autocomplete=\"current-password\", include a button to toggle password visibility, display password requirements under the field, and render field\u2011level error messages from API validation.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "frontend/src/components/Register.tsx",
+      "issue": "Register form does not show labels above the password and confirm\u2011password fields, lacks autocomplete=\"new-password\", and does not display password\u2011rule guidance or inline validation errors for email, password mismatch, etc.",
+      "fix": "Add visible labels for Email, Password, Confirm password, set appropriate autocomplete attributes, show the password rule hint (\"8+ characters, at least one number, one uppercase letter\"), and render inline error messages under each field when validation fails.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "frontend/src/components/ReceiptUpload.tsx",
+      "issue": "Submit button is disabled silently during upload and does not replace its label with a loading spinner. Inline field errors are not displayed; error banners are used instead of field\u2011level feedback.",
+      "fix": "When the form is submitting, set aria\u2011disabled=\"true\" on the button, replace its label with the <LoadingSpinner/> component, and keep the button size unchanged. Show inline validation messages beneath each offending input using the .error class and ARIA attributes (aria-invalid, aria-describedby).",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "frontend/src/components/MileageForm.tsx",
+      "issue": "Similar to receipt upload: loading state hides the button label without a spinner, and field\u2011level validation messages are missing.",
+      "fix": "Implement the same loading spinner replacement and inline error display logic as described for the receipt form.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "frontend/src/components/ExportButtons.tsx",
+      "issue": "Export PDF/CSV buttons lack tooltips/aria\u2011labels describing their purpose, and when an export is in progress the button does not show a spinner or become disabled.",
+      "fix": "Add aria\u2011label or native tooltip with the copy from the spec (e.g., \"Download a PDF ready for tax filing\"), disable the button during the request, and replace its text with a <LoadingSpinner/> while showing a success toast on completion.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "frontend/src/components/Layout.tsx",
+      "issue": "Primary navigation (HeaderNav on desktop, BottomNav on mobile) is not rendered on the Export screen, leaving the user without a persistent navigation element.",
+      "fix": "Wrap the Export component with the Layout component that includes the navigation bar, ensuring consistent navigation across all signed\u2011in screens.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "frontend/src/components/Modal.tsx",
+      "issue": "Custom modal dialogs do not have explicit focus\u2011trap implementation; while :focus-visible outlines appear, keyboard users may tab out of the dialog.",
+      "fix": "Implement a focus\u2011trap (e.g., using a library like focus-trap-react) so that focus stays within the modal until it is closed, and return focus to the triggering element on close.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "frontend/src/components/ReceiptUpload.tsx",
+      "issue": "File input does not have an accessible description (e.g., supported formats, max size) linked via aria-describedby.",
+      "fix": "Add a <p id=\"file-help\" class=\"help-text\">Supported formats: JPG, PNG, PDF. Max size 5\u202fMB.</p> and associate it with the <input type=\"file\" aria-describedby=\"file-help\">.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "frontend/dist/assets/index-GNEO6xVf.css",
+      "issue": "No unused CSS classes detected (styles.rules=15, classes=2, unmatchedCount=0), but the .error class is defined and may not be used in some forms.",
+      "fix": "Audit the usage of .error; if unused, remove it to keep CSS lean.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "viewport": "both",
+      "issue": "Form fields and labels are aligned vertically without a consistent grid system, leading to inconsistent spacing and alignment.",
+      "fix": "Implement a grid-based layout with consistent vertical and horizontal spacing for all form elements.",
+      "screen": "sign-up",
+      "source": "vision"
+    },
+    {
+      "severity": "medium",
+      "viewport": "both",
+      "issue": "Typography lacks a type scale; all text appears to use the same font size and weight, with no visual hierarchy.",
+      "fix": "Apply a type scale: use larger, bold font for the heading; medium weight for labels; smaller size for placeholder text or error messages.",
+      "screen": "sign-up",
+      "source": "vision"
+    },
+    {
+      "severity": "medium",
+      "viewport": "both",
+      "issue": "No error states or validation feedback shown \u2014 the design spec requires inline error messages for invalid inputs.",
+      "fix": "Add inline error messages below each field when validation fails, using consistent styling and color.",
+      "screen": "sign-up",
+      "source": "vision"
+    },
+    {
+      "severity": "medium",
+      "viewport": "both",
+      "issue": "The 'Create account' button is visually distinct but lacks subtle affordance or feedback (e.g., hover state, loading indicator) that would indicate it's the primary action.",
+      "fix": "Add hover state, loading spinner, and disabled state to the button to reinforce its primary action status.",
+      "screen": "sign-up",
+      "source": "vision"
+    },
+    {
+      "severity": "low",
+      "viewport": "phone",
+      "issue": "The form fields are not touch-friendly \u2014 they are too close to the edges and lack sufficient padding for finger taps.",
+      "fix": "Increase padding around input fields and ensure they are spaced adequately for finger interaction.",
+      "screen": "sign-up",
+      "source": "vision"
+    },
+    {
+      "severity": "low",
+      "viewport": "both",
+      "issue": "The layout is not optimized for desktop \u2014 fields are stacked vertically and hug the left edge, lacking the spacious, columnar layout expected for desktop.",
+      "fix": "Reorganize form into a responsive grid on desktop, with fields arranged in columns and appropriate spacing.",
+      "screen": "sign-up",
+      "source": "vision"
+    },
+    {
+      "severity": "high",
+      "screen": "sign-up",
+      "source": "vision",
+      "issue": "visual quality 5/10 on 'sign-up' (needs 8+): The sign-up screen is functionally complete but lacks visual polish and design sophistication. It uses browser-default styling with no custom type scale or spacing, and the layout feels like a placeholder. The form is vertically aligned but not grid-based, and the button is touch-friendly but the overall presentation is unremarkable and uninspired for a polished product.",
+      "fix": "Address this screen's findings until it looks polished and professional."
+    }
+  ],
+  "lighthouse": [
+    {
+      "accessibility": 96,
+      "bestPractices": 100,
+      "performance": 98
+    }
+  ],
+  "vision_scores": [
+    {
+      "screen": "sign-up",
+      "score": 5.0,
+      "summary": "The sign-up screen is functionally complete but lacks visual polish and design sophistication. It uses browser-default styling with no custom type scale or spacing, and the layout feels like a placeholder. The form is vertically aligned but not grid-based, and the button is touch-friendly but the overall presentation is unremarkable and uninspired for a polished product."
+    }
+  ]
+}
