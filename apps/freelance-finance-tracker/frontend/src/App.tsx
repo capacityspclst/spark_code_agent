@@ -1,5 +1,5 @@
 import React, { createContext, useState, ReactNode } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import { Login } from './components/Login';
 import { Register } from './components/Register';
 import { Dashboard } from './components/Dashboard';
@@ -13,7 +13,7 @@ interface AuthContextProps {
 }
 export const AuthContext = createContext<AuthContextProps>({ token: null, setToken: () => {} });
 
-const RequireAuth = ({ children }: { children: ReactNode }) => {
+const RequireAuth: React.FC<{ children: ReactNode }> = ({ children }) => {
   const { token } = React.useContext(AuthContext);
   return token ? <>{children}</> : <Navigate to="/login" replace />;
 };
@@ -23,45 +23,43 @@ function App() {
 
   return (
     <AuthContext.Provider value={{ token, setToken }}>
-      <Router>
-        <Routes>
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <Route
-            path="/dashboard"
-            element={
-              <RequireAuth>
-                <Dashboard />
-              </RequireAuth>
-            }
-          />
-          <Route
-            path="/receipt-upload"
-            element={
-              <RequireAuth>
-                <ReceiptUpload />
-              </RequireAuth>
-            }
-          />
-          <Route
-            path="/mileage-form"
-            element={
-              <RequireAuth>
-                <MileageForm />
-              </RequireAuth>
-            }
-          />
-          <Route
-            path="/export"
-            element={
-              <RequireAuth>
-                <ExportButtons />
-              </RequireAuth>
-            }
-          />
-          <Route path="*" element={<Navigate to="/login" replace />} />
-        </Routes>
-      </Router>
+      <Routes>
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+        <Route
+          path="/dashboard"
+          element={
+            <RequireAuth>
+              <Dashboard />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/receipt-upload"
+          element={
+            <RequireAuth>
+              <ReceiptUpload />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/mileage-form"
+          element={
+            <RequireAuth>
+              <MileageForm />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/export"
+          element={
+            <RequireAuth>
+              <ExportButtons />
+            </RequireAuth>
+          }
+        />
+        <Route path="*" element={<Navigate to="/login" replace />} />
+      </Routes>
     </AuthContext.Provider>
   );
 }

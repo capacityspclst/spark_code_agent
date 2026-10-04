@@ -1,7 +1,7 @@
 """Pydantic schemas for request/response models."""
 from datetime import date, datetime
 from typing import List, Optional
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field, ConfigDict
 
 class UserCreate(BaseModel):
     email: EmailStr
@@ -29,8 +29,7 @@ class ReceiptOut(ReceiptBase):
     filename: str
     created_at: datetime
 
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
 
 class MileageBase(BaseModel):
     date: date
@@ -46,8 +45,7 @@ class MileageOut(MileageBase):
     id: int
     created_at: datetime
 
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
 
 class MonthlySummary(BaseModel):
     month: str  # YYYY-MM
@@ -60,5 +58,4 @@ class DashboardSummary(BaseModel):
     total_mileage_deduction: float
     per_month: List[MonthlySummary]
 
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)

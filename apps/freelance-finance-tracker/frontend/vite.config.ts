@@ -1,4 +1,6 @@
+import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
 
-// Minimal Vite config without React plugin (esbuild handles JSX)
-export default defineConfig({});
+export default defineConfig({
+  plugins: [react()],
+});
