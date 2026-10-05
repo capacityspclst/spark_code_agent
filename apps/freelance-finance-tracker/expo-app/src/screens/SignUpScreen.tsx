@@ -57,11 +57,8 @@ export default function SignUpScreen() {
     <View style={styles.container}>
       <Text style={styles.title}>Create your account</Text>
       <View style={styles.field}>
-        {Platform.OS === 'web' ? (
-          <label htmlFor="emailInput" style={webLabelStyle}>Email address</label>
-        ) : (
-          <Text style={styles.label}>Email address</Text>
-        )}
+        {/* Visible label for accessibility */}
+        <Text style={styles.label}>Email address</Text>
         <TextInput
           style={styles.input}
           value={email}
@@ -71,6 +68,8 @@ export default function SignUpScreen() {
           placeholder="Email address"
           placeholderTextColor={theme.colors.placeholder}
           accessibilityLabel="Email address"
+          accessibilityRole="textbox"
+          accessible={true}
           autoComplete="email"
           testID="email-input"
           editable={!loading}
@@ -79,11 +78,7 @@ export default function SignUpScreen() {
         {errorEmail ? <Text style={styles.error}>{errorEmail}</Text> : null}
       </View>
       <View style={styles.field}>
-        {Platform.OS === 'web' ? (
-          <label htmlFor="passwordInput" style={webLabelStyle}>Password</label>
-        ) : (
-          <Text style={styles.label}>Password</Text>
-        )}
+        <Text style={styles.label}>Password</Text>
         <View style={styles.passwordRow}>
           <TextInput
             style={[styles.input, { flex: 1 }]}
@@ -93,6 +88,8 @@ export default function SignUpScreen() {
             placeholder="Password"
             placeholderTextColor={theme.colors.placeholder}
             accessibilityLabel="Password"
+            accessibilityRole="textbox"
+            accessible={true}
             autoComplete="new-password"
             testID="password-input"
             editable={!loading}
