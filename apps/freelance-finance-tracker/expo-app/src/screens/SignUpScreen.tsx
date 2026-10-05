@@ -58,7 +58,7 @@ export default function SignUpScreen() {
       <Text style={styles.title}>Create your account</Text>
       <View style={styles.field}>
         {Platform.OS === 'web' ? (
-          <label htmlFor="emailInput" id="email-label" style={webLabelStyle}>Email address</label>
+          <label htmlFor="emailInput" style={webLabelStyle}>Email address</label>
         ) : (
           <Text style={styles.label}>Email address</Text>
         )}
@@ -71,8 +71,6 @@ export default function SignUpScreen() {
           placeholder="Email address"
           placeholderTextColor={theme.colors.placeholder}
           accessibilityLabel="Email address"
-          aria-label="Email address"
-          aria-labelledby={Platform.OS === 'web' ? 'email-label' : undefined}
           autoComplete="email"
           testID="email-input"
           editable={!loading}
@@ -83,7 +81,7 @@ export default function SignUpScreen() {
       </View>
       <View style={styles.field}>
         {Platform.OS === 'web' ? (
-          <label htmlFor="passwordInput" id="password-label" style={webLabelStyle}>Password</label>
+          <label htmlFor="passwordInput" style={webLabelStyle}>Password</label>
         ) : (
           <Text style={styles.label}>Password</Text>
         )}
@@ -96,8 +94,6 @@ export default function SignUpScreen() {
             placeholder="Password"
             placeholderTextColor={theme.colors.placeholder}
             accessibilityLabel="Password"
-            aria-label="Password"
-            aria-labelledby={Platform.OS === 'web' ? 'password-label' : undefined}
             autoComplete="new-password"
             testID="password-input"
             editable={!loading}
