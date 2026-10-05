@@ -8,15 +8,14 @@ export default function LoadingOverlay({ message }: Props) {
   return (
     <View
       style={styles.overlay}
-      // Using live region for screen readers
-      accessibilityLiveRegion="polite"
+      accessibilityRole="alert"
+      accessibilityLiveRegion="assertive"
       accessible={true}
     >
       <ActivityIndicator
         size="large"
         color={theme.colors.primary}
         accessibilityLabel={message}
-        // omit role for compatibility
       />
       <Text style={styles.message}>{message}</Text>
     </View>

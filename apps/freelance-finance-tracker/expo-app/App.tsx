@@ -17,32 +17,32 @@ import Header from './src/components/Header';
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 
-// Cast Tab.Navigator to any to bypass TypeScript prop validation for lazy props
 const AnyTabNavigator = Tab.Navigator as any;
 
 function MainTabs() {
   return (
-    // @ts-ignore: using AnyTabNavigator to allow lazy loading props
+    // @ts-ignore
     <AnyTabNavigator
       lazy={true}
       detachInactiveScreens={true}
       screenOptions={{
         headerShown: false,
-        tabBarStyle: { backgroundColor: theme.colors.surface, height: 56 },
-        tabBarActiveTintColor: theme.colors.primary,
+        tabBarStyle: { backgroundColor: theme.colors.surface, height: 56 }, // use surface for contrast
+        tabBarActiveTintColor: theme.colors.primaryVariant,
         tabBarInactiveTintColor: theme.colors.secondary,
+        tabBarShowLabel: false,
         tabBarLabelStyle: { fontSize: 12 },
         tabBarButton: (props: BottomTabBarButtonProps) => {
           const { onPress, accessibilityState, accessibilityLabel, style, children } = props as any;
           const focused = accessibilityState?.selected;
-          const outlineStyle = focused ? { outlineWidth: 2, outlineColor: theme.colors.primary } : {};
+          const focusStyle = focused ? { borderWidth: 2, borderColor: theme.colors.primary } : {};
           return (
             <Pressable
               onPress={onPress}
               accessibilityRole="tab"
               accessibilityState={{ selected: accessibilityState?.selected }}
               accessibilityLabel={accessibilityLabel}
-              style={[style, outlineStyle]}
+              style={[style, focusStyle]}
             >
               {children}
             </Pressable>
@@ -59,7 +59,6 @@ function MainTabs() {
           title: 'Dashboard',
           tabBarIcon: ({ color }) => <FontAwesome name="home" size={24} color={color} />, 
           tabBarAccessibilityLabel: 'Dashboard',
-          unmountOnBlur: true,
         }}
       />
       <Tab.Screen
@@ -69,7 +68,6 @@ function MainTabs() {
           title: 'Add Receipt',
           tabBarIcon: ({ color }) => <FontAwesome name="camera" size={24} color={color} />, 
           tabBarAccessibilityLabel: 'Add Receipt',
-          unmountOnBlur: true,
         }}
       />
       <Tab.Screen
@@ -79,7 +77,6 @@ function MainTabs() {
           title: 'Mileage',
           tabBarIcon: ({ color }) => <FontAwesome name="car" size={24} color={color} />, 
           tabBarAccessibilityLabel: 'Mileage',
-          unmountOnBlur: true,
         }}
       />
       <Tab.Screen
@@ -89,7 +86,6 @@ function MainTabs() {
           title: 'Export',
           tabBarIcon: ({ color }) => <FontAwesome name="download" size={24} color={color} />, 
           tabBarAccessibilityLabel: 'Export',
-          unmountOnBlur: true,
         }}
       />
     </AnyTabNavigator>
@@ -120,7 +116,7 @@ export default function App() {
 
   if (loading) {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }} accessibilityRole="alert">
+      <View style={{ flex:1, justifyContent:'center', alignItems:'center' }} accessibilityRole="alert">
         <ActivityIndicator size="large" color={theme.colors.primary} />
       </View>
     );
@@ -128,7 +124,7 @@ export default function App() {
 
   return (
     <NavigationContainer>
-      <Stack.Navigator screenOptions={{ headerShown: false }} initialRouteName={initialRoute === 'Main' ? 'Main' : 'Auth'}>
+      <Stack.Navigator screenOptions={{ headerShown:false }} initialRouteName={initialRoute === 'Main' ? 'Main' : 'Auth'}>
         <Stack.Screen name="Auth" component={AuthStack} />
         <Stack.Screen name="Main" component={MainWithHeader} />
       </Stack.Navigator>
@@ -138,7 +134,7 @@ export default function App() {
 
 function AuthStack() {
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
+    <Stack.Navigator screenOptions={{ headerShown:false }}>
       <Stack.Screen name="SignIn" component={SignInScreen} />
       <Stack.Screen name="SignUp" component={SignUpScreen} />
     </Stack.Navigator>

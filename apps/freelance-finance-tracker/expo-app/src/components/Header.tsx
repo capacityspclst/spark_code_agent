@@ -9,7 +9,6 @@ export default function Header() {
   const navigation = useNavigation<any>();
   const handleSettings = () => {
     // Placeholder: navigate to Settings if exists
-    // navigation.navigate('Settings');
   };
   return (
     <SafeAreaView edges={["top"]} style={styles.safeArea} accessibilityRole="header">
@@ -29,7 +28,7 @@ export default function Header() {
 
 const styles = StyleSheet.create({
   safeArea: {
-    backgroundColor: theme.colors.surface,
+    backgroundColor: theme.colors.background, // use background token
   },
   header: {
     height: 56,

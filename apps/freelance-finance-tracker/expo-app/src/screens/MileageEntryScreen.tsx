@@ -26,11 +26,15 @@ export default function MileageEntryScreen() {
       const payload = { date, miles: parseInt(miles, 10), notes };
       await axios.post(`${API_URL}/mileage`, payload, { headers: { Authorization: `Bearer ${token}` } });
       setMessage('Mileage entry saved.');
-      navigation.navigate('Dashboard');
+      // Keep toast visible for 3 s, then navigate back to Dashboard
+      setTimeout(() => {
+        navigation.navigate('Dashboard');
+      }, 3000);
     } catch (e) {
       setMessage('Failed to save mileage. Please try again.');
     } finally {
       setLoading(false);
+      // Clear message after 3 s (same as navigation delay)
       setTimeout(() => setMessage(''), 3000);
     }
   };
@@ -83,7 +87,7 @@ export default function MileageEntryScreen() {
       ) : (
         <PrimaryButton title="Save mileage" onPress={handleSave} accessibilityLabel="Save mileage" />
       )}
-      {message ? <Text style={styles.message}>{message}</Text> : null}
+      {message ? <Text style={styles.message} accessibilityRole="alert">{message}</Text> : null}
     </ScrollView>
   );
 }
