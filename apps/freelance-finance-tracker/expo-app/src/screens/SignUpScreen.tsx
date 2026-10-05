@@ -51,17 +51,11 @@ export default function SignUpScreen() {
     }
   };
 
-  const webLabelStyle: any = { marginBottom: 4, fontSize: 16, color: theme.colors.onSurface };
-
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Create your account</Text>
       <View style={styles.field}>
-        {Platform.OS === 'web' ? (
-          <label htmlFor="emailInput" style={webLabelStyle}>Email address</label>
-        ) : (
-          <Text style={styles.label}>Email address</Text>
-        )}
+        <Text style={styles.label}>Email address</Text>
         <TextInput
           style={styles.input}
           value={email}
@@ -74,17 +68,11 @@ export default function SignUpScreen() {
           autoComplete="email"
           testID="email-input"
           editable={!loading}
-          nativeID="emailInput"
-          {...(Platform.OS === 'web' ? { id: 'emailInput' } : {})}
         />
         {errorEmail ? <Text style={styles.error}>{errorEmail}</Text> : null}
       </View>
       <View style={styles.field}>
-        {Platform.OS === 'web' ? (
-          <label htmlFor="passwordInput" style={webLabelStyle}>Password</label>
-        ) : (
-          <Text style={styles.label}>Password</Text>
-        )}
+        <Text style={styles.label}>Password</Text>
         <View style={styles.passwordRow}>
           <TextInput
             style={[styles.input, { flex: 1 }]}
@@ -97,8 +85,6 @@ export default function SignUpScreen() {
             autoComplete="new-password"
             testID="password-input"
             editable={!loading}
-            nativeID="passwordInput"
-            {...(Platform.OS === 'web' ? { id: 'passwordInput' } : {})}
           />
           <TouchableOpacity onPress={() => setSecureEntry(!secureEntry)} accessibilityLabel={secureEntry ? "Show password" : "Hide password"}>
             <FontAwesome name={secureEntry ? 'eye-slash' : 'eye'} size={24} color={theme.colors.secondary} />

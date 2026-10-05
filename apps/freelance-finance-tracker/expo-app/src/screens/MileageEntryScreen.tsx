@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, ActivityIndicator, StyleSheet, Alert } from 'react-native';
+import { View, Text, TextInput, ActivityIndicator, StyleSheet, Alert, ScrollView } from 'react-native';
 import axios from 'axios';
 import { useNavigation } from '@react-navigation/native';
 import { getToken } from '../auth';
@@ -36,23 +36,42 @@ export default function MileageEntryScreen() {
   };
 
   return (
-    <View style={styles.container}>
+    <ScrollView contentContainerStyle={styles.container}>
       <Text style={styles.title}>New mileage entry</Text>
-      <TextInput placeholder="Date" value={date} onChangeText={setDate} style={styles.input} accessibilityLabel="Date" />
-      <TextInput placeholder="Miles driven" value={miles} onChangeText={setMiles} style={styles.input} keyboardType="numeric" accessibilityLabel="Miles driven" />
-      <TextInput placeholder="Notes (optional)" value={notes} onChangeText={setNotes} style={styles.input} accessibilityLabel="Notes (optional)" />
+      <TextInput
+        placeholder="Date"
+        value={date}
+        onChangeText={setDate}
+        style={styles.input}
+        accessibilityLabel="Date"
+      />
+      <TextInput
+        placeholder="Miles driven"
+        value={miles}
+        onChangeText={setMiles}
+        style={styles.input}
+        keyboardType="numeric"
+        accessibilityLabel="Miles driven"
+      />
+      <TextInput
+        placeholder="Notes (optional)"
+        value={notes}
+        onChangeText={setNotes}
+        style={styles.input}
+        accessibilityLabel="Notes (optional)"
+      />
       {loading ? (
         <ActivityIndicator size="large" color={theme.colors.primary} />
       ) : (
         <PrimaryButton title="Save mileage" onPress={handleSave} accessibilityLabel="Save mileage" />
       )}
       {message ? <Text style={styles.message}>{message}</Text> : null}
-    </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: theme.spacing.lg, backgroundColor: theme.colors.background },
+  container: { flexGrow: 1, padding: theme.spacing.lg, backgroundColor: theme.colors.background },
   title: { ...theme.typography.h2, color: theme.colors.onSurface, marginBottom: theme.spacing.lg },
   input: { backgroundColor: theme.colors.surface, padding: theme.spacing.sm, borderRadius: theme.radii.sm, borderWidth: 1, borderColor: theme.colors.secondary, marginBottom: theme.spacing.sm },
   message: { marginTop: theme.spacing.md, color: theme.colors.success, ...theme.typography.body },

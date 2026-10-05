@@ -48,17 +48,11 @@ export default function SignInScreen() {
     }
   };
 
-  const webLabelStyle: any = { marginBottom: 4, fontSize: 16, color: theme.colors.onSurface };
-
   return (
     <SafeAreaView style={styles.container}>
       <Text style={styles.title}>Welcome back</Text>
       <View style={styles.field}>
-        {Platform.OS === 'web' ? (
-          <label htmlFor="emailInput" style={webLabelStyle}>Email address</label>
-        ) : (
-          <Text style={styles.label}>Email address</Text>
-        )}
+        <Text style={styles.label}>Email address</Text>
         <TextInput
           style={styles.input}
           value={email}
@@ -70,17 +64,11 @@ export default function SignInScreen() {
           accessibilityLabel="Email address"
           autoComplete="email"
           editable={!loading}
-          nativeID="emailInput"
-          {...(Platform.OS === 'web' ? { id: 'emailInput' } : {})}
         />
         {errorEmail ? <Text style={styles.error}>{errorEmail}</Text> : null}
       </View>
       <View style={styles.field}>
-        {Platform.OS === 'web' ? (
-          <label htmlFor="passwordInput" style={webLabelStyle}>Password</label>
-        ) : (
-          <Text style={styles.label}>Password</Text>
-        )}
+        <Text style={styles.label}>Password</Text>
         <TextInput
           style={styles.input}
           value={password}
@@ -91,8 +79,6 @@ export default function SignInScreen() {
           accessibilityLabel="Password"
           autoComplete="current-password"
           editable={!loading}
-          nativeID="passwordInput"
-          {...(Platform.OS === 'web' ? { id: 'passwordInput' } : {})}
         />
         {errorPassword ? <Text style={styles.error}>{errorPassword}</Text> : null}
       </View>
@@ -105,7 +91,6 @@ export default function SignInScreen() {
         onPress={() => navigation.navigate('SignUp')}
         accessibilityRole="link"
         accessibilityLabel="Don’t have an account? Sign up"
-        testID="sign-up-link"
         style={styles.link}
         accessible={true}
       >

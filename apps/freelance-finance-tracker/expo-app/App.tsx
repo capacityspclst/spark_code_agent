@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { View, ActivityIndicator } from 'react-native';
+import { View, ActivityIndicator, Pressable, Text } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import SignInScreen from './src/screens/SignInScreen';
 import SignUpScreen from './src/screens/SignUpScreen';
@@ -23,16 +23,35 @@ function MainTabs() {
       screenOptions={{
         headerShown: false,
         tabBarStyle: { backgroundColor: theme.colors.background, height: 56 },
-        tabBarActiveTintColor: theme.colors.primary,
+        tabBarActiveTintColor: theme.colors.primaryVariant,
         tabBarInactiveTintColor: theme.colors.secondary,
         tabBarLabelStyle: { fontSize: 12 },
+        tabBarButton: (props) => {
+          const { onPress, accessibilityState, style, children } = props as any;
+          // Determine label from the child Text if present, else fallback to empty
+          const label = children?.props?.children?.[1]?.props?.children || '';
+          return (
+            <Pressable
+              onPress={onPress}
+              accessibilityRole="tab"
+              accessibilityState={{ selected: accessibilityState?.selected }}
+              accessibilityLabel={label}
+              style={style}
+            >
+              {children}
+            </Pressable>
+          );
+        },
+        // Use default label rendering (React Navigation handles it)
+        tabBarLabel: undefined,
       }}
     >
       <Tab.Screen
         name="Dashboard"
         component={DashboardScreen}
         options={{
-          tabBarIcon: ({ color }) => (<FontAwesome name="home" size={24} color={color} />),
+          title: 'Dashboard',
+          tabBarIcon: ({ color }) => <FontAwesome name="home" size={24} color={color} />,\n          tabBarAccessibilityLabel: 'Dashboard',
         }}
       />
       <Tab.Screen
@@ -40,7 +59,7 @@ function MainTabs() {
         component={ReceiptCaptureScreen}
         options={{
           title: 'Add Receipt',
-          tabBarIcon: ({ color }) => (<FontAwesome name="camera" size={24} color={color} />),
+          tabBarIcon: ({ color }) => <FontAwesome name="camera" size={24} color={color} />,\n          tabBarAccessibilityLabel: 'Add Receipt',
         }}
       />
       <Tab.Screen
@@ -48,14 +67,15 @@ function MainTabs() {
         component={MileageEntryScreen}
         options={{
           title: 'Mileage',
-          tabBarIcon: ({ color }) => (<FontAwesome name="car" size={24} color={color} />),
+          tabBarIcon: ({ color }) => <FontAwesome name="car" size={24} color={color} />,\n          tabBarAccessibilityLabel: 'Mileage',
         }}
       />
       <Tab.Screen
         name="Export"
         component={ExportScreen}
         options={{
-          tabBarIcon: ({ color }) => (<FontAwesome name="download" size={24} color={color} />),
+          title: 'Export',
+          tabBarIcon: ({ color }) => <FontAwesome name="download" size={24} color={color} />,\n          tabBarAccessibilityLabel: 'Export',
         }}
       />
     </Tab.Navigator>
