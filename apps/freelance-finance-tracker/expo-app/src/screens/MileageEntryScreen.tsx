@@ -46,7 +46,7 @@ export default function MileageEntryScreen() {
           onChangeText={setDate}
           style={styles.input}
           accessibilityLabel="Date"
-          autoFocus={true}
+          testID="date-input"
         />
       </View>
       <View style={styles.field}>
@@ -58,6 +58,7 @@ export default function MileageEntryScreen() {
           style={styles.input}
           keyboardType="numeric"
           accessibilityLabel="Miles driven"
+          testID="miles-input"
         />
       </View>
       <View style={styles.field}>
@@ -68,6 +69,7 @@ export default function MileageEntryScreen() {
           onChangeText={setNotes}
           style={styles.input}
           accessibilityLabel="Notes (optional)"
+          testID="notes-input"
         />
       </View>
       {loading ? (

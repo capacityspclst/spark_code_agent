@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { createBottomTabNavigator, BottomTabBarButtonProps } from '@react-navigation/bottom-tabs';
 import { View, ActivityIndicator, Pressable } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import SignInScreen from './src/screens/SignInScreen';
@@ -17,7 +17,7 @@ import Header from './src/components/Header';
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 
-// Cast Tab.Navigator to any to bypass TypeScript prop validation (lazy, detachInactiveScreens)
+// Cast Tab.Navigator to any to bypass TypeScript prop validation for lazy props
 const AnyTabNavigator = Tab.Navigator as any;
 
 function MainTabs() {
@@ -29,18 +29,20 @@ function MainTabs() {
       screenOptions={{
         headerShown: false,
         tabBarStyle: { backgroundColor: theme.colors.surface, height: 56 },
-        tabBarActiveTintColor: theme.colors.primaryVariant,
+        tabBarActiveTintColor: theme.colors.primary,
         tabBarInactiveTintColor: theme.colors.secondary,
         tabBarLabelStyle: { fontSize: 12 },
-        tabBarButton: (props) => {
+        tabBarButton: (props: BottomTabBarButtonProps) => {
           const { onPress, accessibilityState, accessibilityLabel, style, children } = props as any;
+          const focused = accessibilityState?.selected;
+          const outlineStyle = focused ? { outlineWidth: 2, outlineColor: theme.colors.primary } : {};
           return (
             <Pressable
               onPress={onPress}
               accessibilityRole="tab"
               accessibilityState={{ selected: accessibilityState?.selected }}
               accessibilityLabel={accessibilityLabel}
-              style={style}
+              style={[style, outlineStyle]}
             >
               {children}
             </Pressable>
@@ -57,6 +59,7 @@ function MainTabs() {
           title: 'Dashboard',
           tabBarIcon: ({ color }) => <FontAwesome name="home" size={24} color={color} />, 
           tabBarAccessibilityLabel: 'Dashboard',
+          unmountOnBlur: true,
         }}
       />
       <Tab.Screen
@@ -66,6 +69,7 @@ function MainTabs() {
           title: 'Add Receipt',
           tabBarIcon: ({ color }) => <FontAwesome name="camera" size={24} color={color} />, 
           tabBarAccessibilityLabel: 'Add Receipt',
+          unmountOnBlur: true,
         }}
       />
       <Tab.Screen
@@ -75,6 +79,7 @@ function MainTabs() {
           title: 'Mileage',
           tabBarIcon: ({ color }) => <FontAwesome name="car" size={24} color={color} />, 
           tabBarAccessibilityLabel: 'Mileage',
+          unmountOnBlur: true,
         }}
       />
       <Tab.Screen
@@ -84,6 +89,7 @@ function MainTabs() {
           title: 'Export',
           tabBarIcon: ({ color }) => <FontAwesome name="download" size={24} color={color} />, 
           tabBarAccessibilityLabel: 'Export',
+          unmountOnBlur: true,
         }}
       />
     </AnyTabNavigator>
