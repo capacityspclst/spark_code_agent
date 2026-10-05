@@ -1,0 +1,437 @@
+{
+  "verdict": "fail",
+  "summary": "Overall the app follows the visual language of the design system, but several critical mismatches prevent the primary user flow from completing and violate core design specifications. Automated accessibility (axe & Lighthouse) reports are clean, yet the UI lacks key states, proper token usage, and desktop\u2011specific layout. The most blocking defect is the Date field on the receipt and mileage screens \u2013 it is not a standard, focusable TextInput and the test script cannot fill it, halting the flow at step\u202f25. Additional high\u2011severity gaps include missing label\u2011above\u2011field patterns, live password\u2011rule helper, field\u2011level error feedback on the Sign\u2011Up/Sign\u2011In screens, and the absence of a navigation drawer on Desktop (the bottom tab bar remains visible). Medium\u2011severity issues involve hard\u2011coded colors/dimensions (e.g., tab bar background, header height) that bypass the design tokens, and missing focus\u2011ring styling on generic buttons. Low\u2011severity concerns cover ARIA roles for modals/banners, missing live\u2011region attributes on toasts, and incomplete safe\u2011area handling. Addressing the high\u2011severity items is required before the product can be considered production\u2011ready.",
+  "findings": [
+    {
+      "severity": "high",
+      "file": "expo-app/src/screens/ReceiptCaptureScreen.tsx",
+      "issue": "The Date field is implemented as a native date picker modal which is not a focusable TextInput; test automation cannot locate or fill it, breaking the primary receipt\u2011creation flow.",
+      "fix": "Replace the date picker with a labeled TextInput (e.g., using @react-native-community/datetimepicker in \"spinner\" mode triggered by a button) that has an accessible `accessibilityLabel` and `nativeID`, and provide a visible fallback text input for manual entry. Ensure the label is placed above the input and that the component updates the form state on change.",
+      "source": "designer"
+    },
+    {
+      "severity": "high",
+      "file": "expo-app/src/screens/MileageEntryScreen.tsx",
+      "issue": "The mileage date entry suffers the same non\u2011focusable picker issue, causing the automation step to time\u2011out when attempting to fill the \u2018Date\u2019 field.",
+      "fix": "Implement the mileage date entry using the same accessible TextInput pattern as the receipt screen, with a linked label and appropriate `accessibilityLabel`. Provide a platform\u2011specific date picker that is triggered only after the TextInput receives focus, not replacing the input element.",
+      "source": "designer"
+    },
+    {
+      "severity": "high",
+      "file": "expo-app/src/screens/SignUpScreen.tsx",
+      "issue": "Sign\u2011Up screen lacks visible labels above the email and password fields, does not display the live password\u2011rule helper, and does not show field\u2011level inline error messages; the submit button can be silently disabled when validation fails.",
+      "fix": "Add `<Text>` labels above each `<TextInput>` and link them via `nativeID`. Implement the live password\u2011rule list that updates as the user types. Show inline error `<Text>` directly under each field when validation fails. Ensure the \u201cCreate account\u201d button remains enabled but shows an error toast if submission fails; avoid disabling it without a visible reason.",
+      "source": "designer"
+    },
+    {
+      "severity": "high",
+      "file": "expo-app/src/screens/SignInScreen.tsx",
+      "issue": "Sign\u2011In screen suffers from missing labels above inputs, missing field\u2011level error text, and lacks autocomplete hints for email/password fields; password visibility toggle is not provided.",
+      "fix": "Add visible labels linked to inputs, enable `autoComplete` props (`email` for email, `password` for password), display inline error messages, and add a trailing eye\u2011icon button with `accessibilityLabel=\"Show password\"` that toggles the secureTextEntry prop.",
+      "source": "designer"
+    },
+    {
+      "severity": "high",
+      "file": "expo-app/App.tsx",
+      "issue": "Desktop layout does not hide the bottom tab bar nor provide a navigation drawer as specified; the app always shows the tab bar on web, violating the desktop design spec.",
+      "fix": "Detect platform (`Platform.OS === 'web'`) and screen width; render a left\u2011side navigation drawer (e.g., using `createDrawerNavigator`) on desktop and hide the bottom tab bar. Ensure the drawer contains icons\u202f+\u202flabels and matches the 240\u202fpx width spec.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "expo-app/App.tsx",
+      "issue": "Tab bar background uses `theme.colors.surface` (#FFFFFF) instead of the required `background` token (#F5F6FA), diverging from the design system.",
+      "fix": "Change `tabBarStyle: { backgroundColor: theme.colors.surface, height: 56 }` to `tabBarStyle: { backgroundColor: theme.colors.background, height: theme.spacing.xl }` (or use the appropriate token) and ensure the height respects the 56\u202fpx spec via token if available.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "expo-app/src/components/Header.tsx",
+      "issue": "Header uses hard\u2011coded dimensions (height\u00a056) and hard\u2011coded background colors instead of referencing design tokens for spacing and surface colors.",
+      "fix": "Replace `height: 56` with `height: theme.spacing.xl` (or a token representing 56\u202fpx) and use `backgroundColor: theme.colors.surface` (already correct) but reference the token values for borders (`theme.colors.secondary`). Also use token spacing for `paddingHorizontal` already done, keep consistency.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "expo-app/src/components/PrimaryButton.tsx",
+      "issue": "PrimaryButton component (not shown) likely uses custom class names or inline styles without tying to the `theme` tokens for background, text color, border radius, and pressed state.",
+      "fix": "Refactor PrimaryButton to consume `theme.colors.primary`, `theme.colors.onPrimary`, `theme.radii.md`, and `theme.spacing` for padding. Use the `Pressable` component's `pressed` state to swap to `theme.colors.primaryVariant`. Add a focus style: `outlineWidth: 2, outlineColor: theme.colors.primary` for keyboard navigation.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "expo-app/src/components/LoadingOverlay.tsx",
+      "issue": "Overlay background color is hard\u2011coded as `'rgba(0,0,0,0.3)'` rather than using a design token for overlay surfaces; also the message text does not include a design\u2011system typography style for caption.",
+      "fix": "Replace the hard\u2011coded background with a token such as `backgroundColor: `${theme.colors.background}80`` (80\u202f% opacity) or a dedicated overlay token. Apply `theme.typography.caption` to the message text.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "expo-app/src/components/Header.tsx",
+      "issue": "Header `SafeAreaView` uses `accessibilityRole=\"header\"` but does not set `accessibilityLabel` describing the app name; screen readers may not announce the title clearly.",
+      "fix": "Add `accessibilityLabel=\"FinanceMate header\"` to the SafeAreaView or to the containing View, and ensure the app title `<Text>` has `accessibilityRole=\"heading\"` with `accessibilityLevel={2}`.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "expo-app/src/components/PermissionModal.tsx",
+      "issue": "Permission modal component (not shown) lacks explicit ARIA roles (`alertdialog`) and does not trap focus, which could cause keyboard users to navigate outside the modal.",
+      "fix": "Wrap the modal content in a `<Modal>` component with `accessibilityViewIsModal={true}` and `accessibilityRole=\"alertdialog\"`. Ensure focus is set to the first actionable element when the modal opens and returned to the trigger when closed.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "expo-app/src/components/Toast.tsx",
+      "issue": "Toast component does not specify `accessibilityLiveRegion=\"assertive\"` or use `announceForAccessibility` consistently, which may delay screen\u2011reader announcements.",
+      "fix": "Add `accessibilityLiveRegion=\"assertive\"` to the toast container and call `announceForAccessibility(message)` when the toast is shown.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "viewport": "phone",
+      "issue": "No visual hierarchy or emphasis on primary action beyond color \u2014 the button is blue but lacks scale or spacing to dominate the screen.",
+      "fix": "Increase button size, add padding, and use a larger font weight to make it the clear focal point. Add subtle spacing above/below to separate it from fields.",
+      "screen": "sign in",
+      "source": "vision"
+    },
+    {
+      "severity": "medium",
+      "viewport": "phone",
+      "issue": "Typography lacks a real type scale \u2014 heading, labels, and input placeholder text are all similar in weight and size, making it feel flat.",
+      "fix": "Use a bold, larger font for the heading. Use a smaller, lighter font for labels. Use a medium font for placeholders. Ensure consistent spacing between these sizes.",
+      "screen": "sign in",
+      "source": "vision"
+    },
+    {
+      "severity": "medium",
+      "viewport": "phone",
+      "issue": "Form fields are too close to each other vertically \u2014 no breathing room \u2014 and lack visual grouping.",
+      "fix": "Add padding above and below the input fields. Use subtle dividers or background color variations to visually group the email and password sections.",
+      "screen": "sign in",
+      "source": "vision"
+    },
+    {
+      "severity": "low",
+      "viewport": "phone",
+      "issue": "The 'Don\u2019t have an account? Sign up' link is centered and uses a small, unstyled font \u2014 it doesn\u2019t feel like a primary alternative action.",
+      "fix": "Align it to the left or right. Use a slightly larger font or bold weight. Consider adding a subtle underline or hover effect for better affordance.",
+      "screen": "sign in",
+      "source": "vision"
+    },
+    {
+      "severity": "low",
+      "viewport": "phone",
+      "issue": "The background is a flat, neutral gray \u2014 no brand identity or visual interest.",
+      "fix": "Add subtle texture or a branded background color that complements the blue button. Use a gradient or pattern that doesn\u2019t distract from the form.",
+      "screen": "sign in",
+      "source": "vision"
+    },
+    {
+      "severity": "high",
+      "screen": "sign in",
+      "source": "vision",
+      "issue": "visual quality 6/10 on 'sign in' (needs 8+): The sign-in screen is functional and clean but lacks polish. It uses a basic type scale and spacing, has no visual hierarchy beyond the button, and the layout is minimalistic without any branding or design language. It\u2019s acceptable but not yet a polished product.",
+      "fix": "Address this screen's findings until it looks polished and professional."
+    },
+    {
+      "severity": "medium",
+      "viewport": "phone",
+      "issue": "Typography scale is inconsistent: the heading is large, but the password hint text is too small and cramped under the field, making it hard to read.",
+      "fix": "Increase the size of the password hint text to match the scale of the heading and input fields, ensuring it's readable without requiring zoom.",
+      "screen": "sign up",
+      "source": "vision"
+    },
+    {
+      "severity": "medium",
+      "viewport": "phone",
+      "issue": "Password field lacks visual separation from the hint text; the hint text is positioned directly under the field, which can cause confusion about where the hint belongs.",
+      "fix": "Add a small gap or visual separator (like a thin line or margin) between the password field and the hint text to improve clarity.",
+      "screen": "sign up",
+      "source": "vision"
+    },
+    {
+      "severity": "medium",
+      "viewport": "phone",
+      "issue": "The 'Already have an account? Log in' link is centered and underlined, but lacks visual hierarchy to distinguish it from the primary CTA.",
+      "fix": "Use a lighter weight or smaller size for the link text, or add a subtle visual indicator (like a different color or icon) to differentiate it from the main action.",
+      "screen": "sign up",
+      "source": "vision"
+    },
+    {
+      "severity": "medium",
+      "viewport": "desktop",
+      "issue": "The layout on desktop is stretched and doesn't use the available space effectively; elements are left-aligned and lack padding on the sides, making it feel narrow and unbalanced.",
+      "fix": "Apply a consistent grid system to the desktop layout with generous side padding and spacing between elements to utilize the full width and create a more balanced, professional appearance.",
+      "screen": "sign up",
+      "source": "vision"
+    },
+    {
+      "severity": "high",
+      "screen": "sign up",
+      "source": "vision",
+      "issue": "visual quality 7/10 on 'sign up' (needs 8+): The sign-up screen is clean and functional, with clear visual hierarchy and a strong primary action. Typography is readable and consistent, spacing is generous, and the layout is well-aligned. However, it lacks polish in key areas like typography scale, form field styling, and desktop layout, which prevent it from being truly exceptional.",
+      "fix": "Address this screen's findings until it looks polished and professional."
+    },
+    {
+      "severity": "medium",
+      "viewport": "phone",
+      "issue": "The password hint text is placed directly below the password field, which is visually inconsistent with the email field's hint placement (which is below the field). This creates an asymmetrical layout.",
+      "fix": "Align the password hint text to be positioned consistently below the password field, matching the email field's hint placement for visual harmony.",
+      "screen": "sign up ready",
+      "source": "vision"
+    },
+    {
+      "severity": "medium",
+      "viewport": "phone",
+      "issue": "The 'Create account' button is centered horizontally, but the 'Already have an account? Log in' link is centered as well, creating an unbalanced visual weight. The link should be left-aligned or right-aligned to create a more natural flow.",
+      "fix": "Left-align the 'Already have an account? Log in' link to create a more natural visual flow, aligning it with the left edge of the button or the form container.",
+      "screen": "sign up ready",
+      "source": "vision"
+    },
+    {
+      "severity": "medium",
+      "viewport": "desktop",
+      "issue": "The desktop version doesn't utilize the full width of the screen. The form elements are centered and left-aligned, leaving large empty spaces on the left and right, which is inefficient for desktop usage.",
+      "fix": "Expand the form container to fill the available width, or use a grid layout to distribute elements more efficiently across the desktop viewport.",
+      "screen": "sign up ready",
+      "source": "vision"
+    },
+    {
+      "severity": "low",
+      "viewport": "phone",
+      "issue": "The password field's eye icon is slightly misaligned with the right edge of the field, appearing to be inset.",
+      "fix": "Ensure the eye icon is perfectly aligned with the right edge of the password field for a clean, polished look.",
+      "screen": "sign up ready",
+      "source": "vision"
+    },
+    {
+      "severity": "high",
+      "screen": "sign up ready",
+      "source": "vision",
+      "issue": "visual quality 7/10 on 'sign up ready' (needs 8+): The sign-up screen is clean and functional with clear visual hierarchy and a prominent primary action. Typography is readable and consistent, spacing is generous, and form elements are well-aligned. However, it lacks polish in subtle areas like spacing between fields and the password hint's placement, and the desktop version doesn't leverage available space effectively.",
+      "fix": "Address this screen's findings until it looks polished and professional."
+    },
+    {
+      "severity": "medium",
+      "viewport": "both",
+      "issue": "The primary CTA button 'Add first receipt' is centered but lacks visual hierarchy cues (like weight, size, or shadow) to clearly distinguish it as the primary action.",
+      "fix": "Increase button size slightly, add a subtle drop shadow, and use a bolder font weight to make it stand out as the primary action.",
+      "screen": "empty dashboard",
+      "source": "vision"
+    },
+    {
+      "severity": "medium",
+      "viewport": "both",
+      "issue": "The empty state text is centered but lacks visual grouping or visual hierarchy to guide the user\u2019s eye to the CTA.",
+      "fix": "Use a subtle visual hierarchy: slightly larger font for the first line, smaller for the second, and position the CTA directly below with more spacing to create a clear visual path.",
+      "screen": "empty dashboard",
+      "source": "vision"
+    },
+    {
+      "severity": "low",
+      "viewport": "phone",
+      "issue": "The button is touch-friendly (size > 44px), but the text is not fully centered vertically within the button, which can look misaligned on smaller screens.",
+      "fix": "Center the button text vertically to ensure it looks balanced on all devices.",
+      "screen": "empty dashboard",
+      "source": "vision"
+    },
+    {
+      "severity": "low",
+      "viewport": "desktop",
+      "issue": "The layout is not optimized for desktop; the content is centered and lacks padding on the sides, making it feel cramped and not utilizing the full width of the viewport.",
+      "fix": "Add horizontal padding to the content container to utilize the desktop space more effectively, and ensure the button is not centered but aligned to the left or right with appropriate spacing.",
+      "screen": "empty dashboard",
+      "source": "vision"
+    },
+    {
+      "severity": "high",
+      "screen": "empty dashboard",
+      "source": "vision",
+      "issue": "visual quality 7/10 on 'empty dashboard' (needs 8+): The dashboard empty state is clean and functional, with a clear primary CTA. It uses a consistent grid, readable typography, and appropriate spacing. However, it lacks visual hierarchy and branding polish that would elevate it to 8 or 9.",
+      "fix": "Address this screen's findings until it looks polished and professional."
+    },
+    {
+      "severity": "low",
+      "viewport": "both",
+      "issue": "The 'Allow' button is visually dominant but not significantly larger or more emphasized than 'Deny' \u2014 both have identical height and weight, which is acceptable for permission modals but could be subtly enhanced for stronger hierarchy.",
+      "fix": "Slightly increase the height or padding of the 'Allow' button, or use a slightly bolder font weight to subtly guide the user toward the primary action.",
+      "screen": "receipt permission modal",
+      "source": "vision"
+    },
+    {
+      "severity": "medium",
+      "viewport": "both",
+      "issue": "Form fields are styled as browser defaults (plain text inputs, no placeholder styling, no validation indicators), lacking visual distinction from the system UI.",
+      "fix": "Apply consistent, branded input styling: rounded corners, subtle borders, placeholder text, and visual feedback on focus/validity.",
+      "screen": "receipt capture",
+      "source": "vision"
+    },
+    {
+      "severity": "medium",
+      "viewport": "both",
+      "issue": "Typography is minimal and unstyled: no type scale, no hierarchy, all labels and text are identical weight and size. Line length is acceptable but lacks visual breathing room.",
+      "fix": "Implement a type scale: use bold for labels, lighter for hints, larger for primary actions. Adjust line height and padding to improve readability and visual rhythm.",
+      "screen": "receipt capture",
+      "source": "vision"
+    },
+    {
+      "severity": "medium",
+      "viewport": "both",
+      "issue": "Form fields lack helpful hints or error states. The 'Notes (optional)' label doesn't indicate what to enter, and no validation feedback is shown.",
+      "fix": "Add inline hints or icons to guide users (e.g., 'e.g., coffee shop, gas station'). Implement real-time validation with inline error messages for required fields.",
+      "screen": "receipt capture",
+      "source": "vision"
+    },
+    {
+      "severity": "medium",
+      "viewport": "desktop",
+      "issue": "Desktop layout is a stretched phone version, not a true desktop adaptation. All content is left-aligned and cramped, lacking proper desktop spacing or columnar layout.",
+      "fix": "Redesign for desktop: use a grid with columns, increase spacing, and allow for larger input fields. Avoid stretching the phone layout.",
+      "screen": "receipt capture",
+      "source": "vision"
+    },
+    {
+      "severity": "low",
+      "viewport": "phone",
+      "issue": "The 'Save receipt' button is touch-friendly (large, clear), but the overall form lacks visual grouping or sectioning, making it feel flat.",
+      "fix": "Group related fields with subtle dividers or background colors. Add subtle visual hierarchy to indicate which fields are required.",
+      "screen": "receipt capture",
+      "source": "vision"
+    },
+    {
+      "severity": "low",
+      "viewport": "both",
+      "issue": "The 'Tap to take a photo or choose from library' button is prominent, but its styling (blue bar) doesn't match the rest of the UI, which is minimal gray and white.",
+      "fix": "Apply consistent styling to all primary actions: use the same color and padding as the 'Save receipt' button for visual harmony.",
+      "screen": "receipt capture",
+      "source": "vision"
+    },
+    {
+      "severity": "high",
+      "screen": "receipt capture",
+      "source": "vision",
+      "issue": "visual quality 6/10 on 'receipt capture' (needs 8+): The receipt capture screen is functional and meets basic usability needs, but lacks polish. It uses a consistent grid and clear hierarchy, with a prominent primary action. However, typography is minimal and unstyled, spacing is tight, and form fields are basic browser defaults without helpful hints or error states. The desktop version is a stretched phone layout, not a true desktop adaptation. It's acceptable but not yet a polished product people would pay for.",
+      "fix": "Address this screen's findings until it looks polished and professional."
+    },
+    {
+      "severity": "medium",
+      "viewport": "phone",
+      "issue": "Input fields use browser-default styling (thin borders, no placeholder text, no clear visual hierarchy).",
+      "fix": "Apply custom styling: add subtle inner shadows or rounded corners, use consistent border weights, add placeholder text, and ensure field labels are clearly associated with their inputs.",
+      "screen": "dashboard after receipt",
+      "source": "vision"
+    },
+    {
+      "severity": "medium",
+      "viewport": "phone",
+      "issue": "Spacing between fields is inconsistent. The gap between 'Notes (optional)' and 'Save receipt' is much larger than between other fields.",
+      "fix": "Standardize vertical spacing between form elements using a consistent spacing scale (e.g., 16px between fields).",
+      "screen": "dashboard after receipt",
+      "source": "vision"
+    },
+    {
+      "severity": "medium",
+      "viewport": "phone",
+      "issue": "The 'Save receipt' button is not visually distinct from the input fields in terms of padding or spacing, making it feel less like the primary action.",
+      "fix": "Increase padding on the button, add a subtle drop shadow, and ensure it has sufficient vertical spacing above and below.",
+      "screen": "dashboard after receipt",
+      "source": "vision"
+    },
+    {
+      "severity": "medium",
+      "viewport": "desktop",
+      "issue": "The form elements are stretched horizontally to fill the desktop width, making them look cramped and unbalanced. The layout doesn't respect the natural width of the form fields.",
+      "fix": "Use a responsive grid or column layout that respects the form's natural width. Avoid stretching elements to fill the entire viewport.",
+      "screen": "dashboard after receipt",
+      "source": "vision"
+    },
+    {
+      "severity": "medium",
+      "viewport": "desktop",
+      "issue": "The 'Save receipt' button is centered horizontally, but the form fields are not aligned to the same left margin, creating visual misalignment.",
+      "fix": "Align all form elements to the left edge of the container, and center the button within its own container for visual balance.",
+      "screen": "dashboard after receipt",
+      "source": "vision"
+    },
+    {
+      "severity": "low",
+      "viewport": "both",
+      "issue": "The 'Receipt saved.' toast is positioned at the bottom of the screen, which is fine, but it doesn't have a clear visual separation from the form.",
+      "fix": "Add a subtle background or border to the toast to make it stand out, and consider using a modal or dismissible notification for better UX.",
+      "screen": "dashboard after receipt",
+      "source": "vision"
+    },
+    {
+      "severity": "high",
+      "screen": "dashboard after receipt",
+      "source": "vision",
+      "issue": "visual quality 6/10 on 'dashboard after receipt' (needs 8+): The screen is functional and follows the design spec, but lacks polish. It uses browser-default inputs, has inconsistent spacing and alignment, and the visual hierarchy is weak. The primary action is clear, but the overall design feels unstyled and unrefined, especially on desktop where elements are stretched and lack proper grouping. It\u2019s acceptable but not yet polished enough for a commercial product.",
+      "fix": "Address this screen's findings until it looks polished and professional."
+    },
+    {
+      "severity": "low",
+      "viewport": "desktop",
+      "issue": "The primary CTA 'Add first receipt' is centered with generous padding, but the surrounding text is slightly misaligned vertically relative to the button, creating a subtle visual imbalance.",
+      "fix": "Adjust the text block's vertical alignment to center with the button for perfect symmetry.",
+      "screen": "mileage entry",
+      "source": "vision"
+    },
+    {
+      "severity": "low",
+      "viewport": "phone",
+      "issue": "The four summary cards have consistent spacing between them, but the vertical spacing from the top of the screen to the first card is slightly larger than from the last card to the bottom, creating a slight visual asymmetry.",
+      "fix": "Adjust the top and bottom padding of the cards to ensure equal spacing from screen edges.",
+      "screen": "mileage entry",
+      "source": "vision"
+    }
+  ],
+  "lighthouse": [
+    {
+      "accessibility": 100,
+      "bestPractices": 100,
+      "performance": 74
+    }
+  ],
+  "vision_scores": [
+    {
+      "screen": "sign in",
+      "score": 6.0,
+      "summary": "The sign-in screen is functional and clean but lacks polish. It uses a basic type scale and spacing, has no visual hierarchy beyond the button, and the layout is minimalistic without any branding or design language. It\u2019s acceptable but not yet a polished product."
+    },
+    {
+      "screen": "sign up",
+      "score": 7.0,
+      "summary": "The sign-up screen is clean and functional, with clear visual hierarchy and a strong primary action. Typography is readable and consistent, spacing is generous, and the layout is well-aligned. However, it lacks polish in key areas like typography scale, form field styling, and desktop layout, which prevent it from being truly exceptional."
+    },
+    {
+      "screen": "sign up ready",
+      "score": 7.0,
+      "summary": "The sign-up screen is clean and functional with clear visual hierarchy and a prominent primary action. Typography is readable and consistent, spacing is generous, and form elements are well-aligned. However, it lacks polish in subtle areas like spacing between fields and the password hint's placement, and the desktop version doesn't leverage available space effectively."
+    },
+    {
+      "screen": "empty dashboard",
+      "score": 7.0,
+      "summary": "The dashboard empty state is clean and functional, with a clear primary CTA. It uses a consistent grid, readable typography, and appropriate spacing. However, it lacks visual hierarchy and branding polish that would elevate it to 8 or 9."
+    },
+    {
+      "screen": "receipt permission modal",
+      "score": 8.0,
+      "summary": "Polished, modern permission modal with clear hierarchy and touch-friendly controls. Strong visual contrast, consistent spacing, and a clean, uncluttered layout. The primary action ('Allow') is visually dominant. No critical usability issues."
+    },
+    {
+      "screen": "receipt capture",
+      "score": 6.0,
+      "summary": "The receipt capture screen is functional and meets basic usability needs, but lacks polish. It uses a consistent grid and clear hierarchy, with a prominent primary action. However, typography is minimal and unstyled, spacing is tight, and form fields are basic browser defaults without helpful hints or error states. The desktop version is a stretched phone layout, not a true desktop adaptation. It's acceptable but not yet a polished product people would pay for."
+    },
+    {
+      "screen": "dashboard after receipt",
+      "score": 6.0,
+      "summary": "The screen is functional and follows the design spec, but lacks polish. It uses browser-default inputs, has inconsistent spacing and alignment, and the visual hierarchy is weak. The primary action is clear, but the overall design feels unstyled and unrefined, especially on desktop where elements are stretched and lack proper grouping. It\u2019s acceptable but not yet polished enough for a commercial product."
+    },
+    {
+      "screen": "mileage entry",
+      "score": 9.0,
+      "summary": "Polished, clean, and well-structured UI with strong visual hierarchy and clear primary actions. Desktop layout is spacious and intentional. Minor spacing and alignment tweaks could elevate it to 10."
+    }
+  ]
+}
