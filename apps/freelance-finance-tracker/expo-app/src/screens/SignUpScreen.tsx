@@ -57,8 +57,11 @@ export default function SignUpScreen() {
     <View style={styles.container}>
       <Text style={styles.title}>Create your account</Text>
       <View style={styles.field}>
-        {/* Visible label for accessibility */}
-        <Text style={styles.label}>Email address</Text>
+        {Platform.OS === 'web' ? (
+          <label htmlFor="emailInput" id="email-label" style={webLabelStyle}>Email address</label>
+        ) : (
+          <Text style={styles.label}>Email address</Text>
+        )}
         <TextInput
           style={styles.input}
           value={email}
@@ -68,17 +71,22 @@ export default function SignUpScreen() {
           placeholder="Email address"
           placeholderTextColor={theme.colors.placeholder}
           accessibilityLabel="Email address"
-          accessibilityRole="textbox"
-          accessible={true}
+          aria-label="Email address"
+          aria-labelledby={Platform.OS === 'web' ? 'email-label' : undefined}
           autoComplete="email"
           testID="email-input"
           editable={!loading}
           nativeID="emailInput"
+          {...(Platform.OS === 'web' ? { id: 'emailInput' } : {})}
         />
         {errorEmail ? <Text style={styles.error}>{errorEmail}</Text> : null}
       </View>
       <View style={styles.field}>
-        <Text style={styles.label}>Password</Text>
+        {Platform.OS === 'web' ? (
+          <label htmlFor="passwordInput" id="password-label" style={webLabelStyle}>Password</label>
+        ) : (
+          <Text style={styles.label}>Password</Text>
+        )}
         <View style={styles.passwordRow}>
           <TextInput
             style={[styles.input, { flex: 1 }]}
@@ -88,19 +96,19 @@ export default function SignUpScreen() {
             placeholder="Password"
             placeholderTextColor={theme.colors.placeholder}
             accessibilityLabel="Password"
-            accessibilityRole="textbox"
-            accessible={true}
+            aria-label="Password"
+            aria-labelledby={Platform.OS === 'web' ? 'password-label' : undefined}
             autoComplete="new-password"
             testID="password-input"
             editable={!loading}
             nativeID="passwordInput"
+            {...(Platform.OS === 'web' ? { id: 'passwordInput' } : {})}
           />
           <TouchableOpacity onPress={() => setSecureEntry(!secureEntry)} accessibilityLabel={secureEntry ? "Show password" : "Hide password"}>
             <FontAwesome name={secureEntry ? 'eye-slash' : 'eye'} size={24} color={theme.colors.secondary} />
           </TouchableOpacity>
         </View>
         {errorPassword ? <Text style={styles.error}>{errorPassword}</Text> : null}
-        {/* Helper text with actual typographic spaces */}
         <Text style={styles.helper}>12 + characters, uppercase, lowercase, number, symbol</Text>
       </View>
       {loading ? (
