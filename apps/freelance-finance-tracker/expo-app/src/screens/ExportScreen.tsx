@@ -1,8 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, ActivityIndicator, StyleSheet, Alert } from 'react-native';
 import axios from 'axios';
-import * as FileSystem from 'expo-file-system';
-import * as Sharing from 'expo-sharing';
 import { getToken } from '../auth';
 import { API_URL } from '../config';
 import { theme } from '../theme';
@@ -16,13 +14,38 @@ export default function ExportScreen() {
     setLoadingType(type);
     try {
       const token = await getToken();
-      const resp = await axios.get(`${API_URL}/export/${type}`, {
-        responseType: 'text',
+      const response = await axios.get(`${API_URL}/export/${type}`, {
+        responseType: type === 'csv' ? 'text' : 'arraybuffer',
         headers: { Authorization: `Bearer ${token}` },
       });
-      const base64 = resp.data as string;
-      const uri = `${(FileSystem as any).cacheDirectory}export.${type}`;
-      await FileSystem.writeAsStringAsync(uri, base64, { encoding: FileSystem.EncodingType.Base64 });
+
+      // Lazy import default exports to avoid web build issues
+      const { default: FileSystem } = await import('expo-file-system');
+      const { default: Sharing } = await import('expo-sharing');
+
+      const cacheDir = FileSystem.cacheDirectory as string;
+      const fileName = `export.${type}`;
+      const uri = `${cacheDir}${fileName}`;
+
+      if (type === 'csv') {
+        // Write CSV as UTF-8 text
+        await FileSystem.writeAsStringAsync(uri, response.data as string, {
+          encoding: FileSystem.EncodingType.UTF8,
+        });
+      } else {
+        // Write PDF binary as Base64 using btoa
+        const arrayBuffer = response.data as ArrayBuffer;
+        const uint8 = new Uint8Array(arrayBuffer);
+        let binary = '';
+        for (let i = 0; i < uint8.length; i++) {
+          binary += String.fromCharCode(uint8[i]);
+        }
+        const base64 = btoa(binary);
+        await FileSystem.writeAsStringAsync(uri, base64, {
+          encoding: FileSystem.EncodingType.Base64,
+        });
+      }
+
       await Sharing.shareAsync(uri);
       setMessage('Report ready to share.');
     } catch (e) {
@@ -39,17 +62,17 @@ export default function ExportScreen() {
         title="Export CSV"
         onPress={() => handleExport('csv')}
         disabled={!!loadingType}
-        loading={loadingType === 'csv'}
         accessibilityLabel="Export CSV"
       />
       <PrimaryButton
         title="Export PDF"
         onPress={() => handleExport('pdf')}
         disabled={!!loadingType}
-        loading={loadingType === 'pdf'}
         accessibilityLabel="Export PDF"
       />
-      {loadingType && <ActivityIndicator size="large" color={theme.colors.primary} style={{ marginTop: theme.spacing.md }} />}
+      {loadingType && (
+        <ActivityIndicator size="large" color={theme.colors.primary} style={{ marginTop: theme.spacing.md }} />
+      )}
       {message ? <Text style={styles.message}>{message}</Text> : null}
     </View>
   );

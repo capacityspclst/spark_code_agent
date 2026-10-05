@@ -27,6 +27,7 @@ export default function PrimaryButton({ title, onPress, disabled = false, loadin
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel || title}
       accessibilityState={isDisabled ? { disabled: true } : undefined}
+      accessible={true}
       tabIndex={0}
     >
       {loading ? (

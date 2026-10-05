@@ -28,7 +28,7 @@ export default function Header() {
 
 const styles = StyleSheet.create({
   safeArea: {
-    backgroundColor: theme.colors.background, // use background token
+    backgroundColor: theme.colors.surface, // use surface for header background
   },
   header: {
     height: 56,

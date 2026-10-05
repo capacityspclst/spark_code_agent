@@ -4,6 +4,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator, BottomTabBarButtonProps } from '@react-navigation/bottom-tabs';
 import { View, ActivityIndicator, Pressable } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import SignInScreen from './src/screens/SignInScreen';
 import SignUpScreen from './src/screens/SignUpScreen';
 import DashboardScreen from './src/screens/DashboardScreen';
@@ -27,8 +28,8 @@ function MainTabs() {
       detachInactiveScreens={true}
       screenOptions={{
         headerShown: false,
-        tabBarStyle: { backgroundColor: theme.colors.surface, height: 56 }, // use surface for contrast
-        tabBarActiveTintColor: theme.colors.primaryVariant,
+        tabBarStyle: { backgroundColor: theme.colors.background, height: 56 }, // use background token
+        tabBarActiveTintColor: theme.colors.primary, // primary for contrast
         tabBarInactiveTintColor: theme.colors.secondary,
         tabBarShowLabel: false,
         tabBarLabelStyle: { fontSize: 12 },

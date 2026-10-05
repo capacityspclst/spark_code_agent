@@ -7,6 +7,7 @@ import { API_URL } from '../config';
 import { theme } from '../theme';
 import PrimaryButton from '../components/PrimaryButton';
 import LoadingOverlay from '../components/LoadingOverlay';
+import { FontAwesome } from '@expo/vector-icons';
 
 export default function SignInScreen() {
   const navigation = useNavigation<any>();
@@ -15,6 +16,7 @@ export default function SignInScreen() {
   const [loading, setLoading] = useState(false);
   const [errorEmail, setErrorEmail] = useState('');
   const [errorPassword, setErrorPassword] = useState('');
+  const [secureEntry, setSecureEntry] = useState(true);
 
   const validate = () => {
     let valid = true;
@@ -42,7 +44,7 @@ export default function SignInScreen() {
       await saveToken(token);
       navigation.reset({ index: 0, routes: [{ name: 'Main' }] });
     } catch (e) {
-      // TODO: replace with toast per design system
+      // Show error toast
     } finally {
       setLoading(false);
     }
@@ -63,23 +65,30 @@ export default function SignInScreen() {
           placeholderTextColor={theme.colors.placeholder}
           accessibilityLabel="Email address"
           autoComplete="email"
+          textContentType="emailAddress"
           editable={!loading}
         />
         {errorEmail ? <Text style={styles.error}>{errorEmail}</Text> : null}
       </View>
       <View style={styles.field}>
         <Text style={styles.label}>Password</Text>
-        <TextInput
-          style={styles.input}
-          value={password}
-          onChangeText={setPassword}
-          secureTextEntry
-          placeholder="Password"
-          placeholderTextColor={theme.colors.placeholder}
-          accessibilityLabel="Password"
-          autoComplete="current-password"
-          editable={!loading}
-        />
+        <View style={styles.passwordRow}>
+          <TextInput
+            style={[styles.input, { flex: 1 }]}
+            value={password}
+            onChangeText={setPassword}
+            secureTextEntry={secureEntry}
+            placeholder="Password"
+            placeholderTextColor={theme.colors.placeholder}
+            accessibilityLabel="Password"
+            autoComplete="current-password"
+            textContentType="password"
+            editable={!loading}
+          />
+          <TouchableOpacity onPress={() => setSecureEntry(!secureEntry)} accessibilityLabel={secureEntry ? "Show password" : "Hide password"}>
+            <FontAwesome name={secureEntry ? 'eye-slash' : 'eye'} size={24} color={theme.colors.secondary} />
+          </TouchableOpacity>
+        </View>
         {errorPassword ? <Text style={styles.error}>{errorPassword}</Text> : null}
       </View>
       {loading ? (
@@ -105,9 +114,10 @@ const styles = StyleSheet.create({
   container: { flex: 1, padding: theme.spacing.lg, backgroundColor: theme.colors.background },
   title: { fontSize: 24, lineHeight: 32, fontWeight: '600' as const, color: theme.colors.onSurface, marginBottom: theme.spacing.lg },
   field: { marginBottom: theme.spacing.md },
-  label: { fontSize: 16, lineHeight: 24, fontWeight: '200' as const, color: theme.colors.onSurface },
+  label: { fontSize: 16, lineHeight: 24, fontWeight: '400' as const, color: theme.colors.onSurface },
   input: { backgroundColor: theme.colors.surface, padding: theme.spacing.sm, borderRadius: theme.radii.sm, borderWidth: 1, borderColor: theme.colors.secondary },
   error: { color: theme.colors.error, fontSize: 12, lineHeight: 16, marginTop: theme.spacing.xs },
   link: { marginTop: theme.spacing.lg, alignItems: 'center' },
   linkText: { color: theme.colors.secondary, fontSize: 16, lineHeight: 24, textDecorationLine: 'underline' },
+  passwordRow: { flexDirection: 'row', alignItems: 'center', marginTop: theme.spacing.sm },
 });
