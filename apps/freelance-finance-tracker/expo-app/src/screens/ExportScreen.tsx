@@ -19,21 +19,19 @@ export default function ExportScreen() {
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      // Lazy import default exports to avoid web build issues
-      const { default: FileSystem } = await import('expo-file-system');
-      const { default: Sharing } = await import('expo-sharing');
+      // Lazy import with any casting to avoid TS errors
+      const FileSystem: any = (await import('expo-file-system')).default;
+      const Sharing: any = (await import('expo-sharing')).default;
 
-      const cacheDir = FileSystem.cacheDirectory as string;
+      const cacheDir: string = FileSystem.cacheDirectory as string;
       const fileName = `export.${type}`;
       const uri = `${cacheDir}${fileName}`;
 
       if (type === 'csv') {
-        // Write CSV as UTF-8 text
         await FileSystem.writeAsStringAsync(uri, response.data as string, {
           encoding: FileSystem.EncodingType.UTF8,
         });
       } else {
-        // Write PDF binary as Base64 using btoa
         const arrayBuffer = response.data as ArrayBuffer;
         const uint8 = new Uint8Array(arrayBuffer);
         let binary = '';
@@ -62,12 +60,14 @@ export default function ExportScreen() {
         title="Export CSV"
         onPress={() => handleExport('csv')}
         disabled={!!loadingType}
+        loading={loadingType === 'csv'}
         accessibilityLabel="Export CSV"
       />
       <PrimaryButton
         title="Export PDF"
         onPress={() => handleExport('pdf')}
         disabled={!!loadingType}
+        loading={loadingType === 'pdf'}
         accessibilityLabel="Export PDF"
       />
       {loadingType && (
