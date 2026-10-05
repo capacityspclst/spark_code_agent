@@ -17,16 +17,21 @@ import Header from './src/components/Header';
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 
+// Cast Tab.Navigator to any to bypass TypeScript prop validation (lazy, detachInactiveScreens)
+const AnyTabNavigator = Tab.Navigator as any;
+
 function MainTabs() {
   return (
-    <Tab.Navigator
+    // @ts-ignore: using AnyTabNavigator to allow lazy loading props
+    <AnyTabNavigator
+      lazy={true}
+      detachInactiveScreens={true}
       screenOptions={{
         headerShown: false,
-        tabBarStyle: { backgroundColor: theme.colors.background, height: 56 },
+        tabBarStyle: { backgroundColor: theme.colors.surface, height: 56 },
         tabBarActiveTintColor: theme.colors.primaryVariant,
         tabBarInactiveTintColor: theme.colors.secondary,
         tabBarLabelStyle: { fontSize: 12 },
-        // Custom tab button for proper accessibility role and label
         tabBarButton: (props) => {
           const { onPress, accessibilityState, accessibilityLabel, style, children } = props as any;
           return (
@@ -43,7 +48,6 @@ function MainTabs() {
         },
         tabBarLabel: undefined,
         unmountOnBlur: true,
-        lazy: false,
       }}
     >
       <Tab.Screen
@@ -82,7 +86,7 @@ function MainTabs() {
           tabBarAccessibilityLabel: 'Export',
         }}
       />
-    </Tab.Navigator>
+    </AnyTabNavigator>
   );
 }
 

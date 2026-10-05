@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, ActivityIndicator, StyleSheet, TouchableOpacity, TextStyle, ViewStyle, Platform } from 'react-native';
+import { View, Text, TextInput, ActivityIndicator, StyleSheet, TouchableOpacity, Platform } from 'react-native';
 import axios from 'axios';
 import { useNavigation } from '@react-navigation/native';
 import PrimaryButton from '../components/PrimaryButton';
@@ -17,6 +17,7 @@ export default function SignUpScreen() {
   const [errorEmail, setErrorEmail] = useState('');
   const [errorPassword, setErrorPassword] = useState('');
   const [secureEntry, setSecureEntry] = useState(true);
+  const [submissionError, setSubmissionError] = useState('');
 
   const validate = () => {
     let valid = true;
@@ -45,7 +46,7 @@ export default function SignUpScreen() {
       await saveToken(token);
       navigation.reset({ index: 0, routes: [{ name: 'Main' }] });
     } catch (e) {
-      alert("We couldn't create your account. Please check the fields and try again.");
+      setSubmissionError("We couldn't create your account. Please check the fields and try again.");
     } finally {
       setLoading(false);
     }
@@ -53,6 +54,7 @@ export default function SignUpScreen() {
 
   return (
     <View style={styles.container}>
+      {submissionError ? <Text style={styles.submissionError} accessibilityRole="alert">{submissionError}</Text> : null}
       <Text style={styles.title}>Create your account</Text>
       <View style={styles.field}>
         <Text style={styles.label}>Email address</Text>
@@ -112,18 +114,7 @@ export default function SignUpScreen() {
   );
 }
 
-const styles = StyleSheet.create<{
-  container: ViewStyle;
-  title: TextStyle;
-  field: ViewStyle;
-  label: TextStyle;
-  input: ViewStyle;
-  error: TextStyle;
-  helper: TextStyle;
-  link: ViewStyle;
-  linkText: TextStyle;
-  passwordRow: ViewStyle;
-}>({
+const styles = StyleSheet.create({
   container: { flex: 1, padding: theme.spacing.lg, backgroundColor: theme.colors.background },
   title: { fontSize: 24, lineHeight: 32, fontWeight: '600', color: theme.colors.onSurface, marginBottom: theme.spacing.lg },
   field: { marginBottom: theme.spacing.md },
@@ -134,4 +125,5 @@ const styles = StyleSheet.create<{
   link: { marginTop: theme.spacing.lg, alignItems: 'center' },
   linkText: { color: theme.colors.onSurface, textDecorationLine: 'underline' },
   passwordRow: { flexDirection: 'row', alignItems: 'center', marginTop: theme.spacing.sm },
+  submissionError: { color: theme.colors.error, fontSize: 14, lineHeight: 20, marginBottom: theme.spacing.sm },
 });
