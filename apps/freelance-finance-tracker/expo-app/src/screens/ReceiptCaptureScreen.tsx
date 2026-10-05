@@ -115,8 +115,23 @@ export default function ReceiptCaptureScreen() {
       <View style={styles.form}>
         {image && <Image source={{ uri: image.assets[0].uri }} style={styles.image} />}
         <PrimaryButton title="Tap to take a photo or choose from library" onPress={pickImage} accessibilityLabel="Tap to take a photo or choose from library" />
-        <TextInput placeholder="Amount (USD)" value={amount} onChangeText={setAmount} style={styles.input} accessibilityLabel="Amount (USD)" />
-        <TextInput placeholder="Date" value={date} onChangeText={setDate} style={styles.input} accessibilityLabel="Date" />
+        <Text style={styles.fieldLabel}>Amount (USD)</Text>
+        <TextInput
+          placeholder="Amount (USD)"
+          value={amount}
+          onChangeText={setAmount}
+          style={styles.input}
+          accessibilityLabel="Amount (USD)"
+        />
+        <Text style={styles.fieldLabel}>Date</Text>
+        <TextInput
+          placeholder="Date"
+          value={date}
+          onChangeText={setDate}
+          style={styles.input}
+          accessibilityLabel="Date"
+        />
+        <Text style={styles.fieldLabel}>Category</Text>
         <Picker
           selectedValue={category}
           onValueChange={(itemValue) => setCategory(itemValue)}
@@ -128,7 +143,14 @@ export default function ReceiptCaptureScreen() {
           <Picker.Item label="Travel" value="Travel" />
           <Picker.Item label="Meals" value="Meals" />
         </Picker>
-        <TextInput placeholder="Notes (optional)" value={notes} onChangeText={setNotes} style={styles.input} accessibilityLabel="Notes (optional)" />
+        <Text style={styles.fieldLabel}>Notes (optional)</Text>
+        <TextInput
+          placeholder="Notes (optional)"
+          value={notes}
+          onChangeText={setNotes}
+          style={styles.input}
+          accessibilityLabel="Notes (optional)"
+        />
         {loading ? (
           <ActivityIndicator size="large" color={theme.colors.primary} />
         ) : (
@@ -150,6 +172,7 @@ const styles = StyleSheet.create({
   container: { flexGrow: 1, padding: theme.spacing.lg, backgroundColor: theme.colors.background },
   text: { ...theme.typography.body, marginBottom: theme.spacing.md },
   form: { marginTop: theme.spacing.md },
+  fieldLabel: { ...theme.typography.body, color: theme.colors.onSurface, marginBottom: theme.spacing.xs, marginTop: theme.spacing.sm },
   input: { backgroundColor: theme.colors.surface, padding: theme.spacing.sm, borderRadius: theme.radii.sm, borderWidth: 1, borderColor: theme.colors.secondary, marginBottom: theme.spacing.sm },
   picker: { backgroundColor: theme.colors.surface, marginBottom: theme.spacing.sm },
   image: { width: 200, height: 200, marginBottom: theme.spacing.sm },

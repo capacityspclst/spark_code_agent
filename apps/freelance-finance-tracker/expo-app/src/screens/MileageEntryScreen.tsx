@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, ActivityIndicator, StyleSheet, Alert, ScrollView } from 'react-native';
+import { ScrollView, View, Text, TextInput, ActivityIndicator, StyleSheet, Alert } from 'react-native';
 import axios from 'axios';
 import { useNavigation } from '@react-navigation/native';
 import { getToken } from '../auth';
@@ -38,28 +38,43 @@ export default function MileageEntryScreen() {
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <Text style={styles.title}>New mileage entry</Text>
-      <TextInput
-        placeholder="Date"
-        value={date}
-        onChangeText={setDate}
-        style={styles.input}
-        accessibilityLabel="Date"
-      />
-      <TextInput
-        placeholder="Miles driven"
-        value={miles}
-        onChangeText={setMiles}
-        style={styles.input}
-        keyboardType="numeric"
-        accessibilityLabel="Miles driven"
-      />
-      <TextInput
-        placeholder="Notes (optional)"
-        value={notes}
-        onChangeText={setNotes}
-        style={styles.input}
-        accessibilityLabel="Notes (optional)"
-      />
+      <View style={styles.field}>
+        <Text style={styles.label}>Date</Text>
+        <TextInput
+          placeholder="Date"
+          value={date}
+          onChangeText={setDate}
+          style={styles.input}
+          accessibilityLabel="Date"
+          testID="date-input"
+          nativeID="date-input"
+        />
+      </View>
+      <View style={styles.field}>
+        <Text style={styles.label}>Miles driven</Text>
+        <TextInput
+          placeholder="Miles driven"
+          value={miles}
+          onChangeText={setMiles}
+          style={styles.input}
+          keyboardType="numeric"
+          accessibilityLabel="Miles driven"
+          testID="miles-input"
+          nativeID="miles-input"
+        />
+      </View>
+      <View style={styles.field}>
+        <Text style={styles.label}>Notes (optional)</Text>
+        <TextInput
+          placeholder="Notes (optional)"
+          value={notes}
+          onChangeText={setNotes}
+          style={styles.input}
+          accessibilityLabel="Notes (optional)"
+          testID="notes-input"
+          nativeID="notes-input"
+        />
+      </View>
       {loading ? (
         <ActivityIndicator size="large" color={theme.colors.primary} />
       ) : (
@@ -73,6 +88,8 @@ export default function MileageEntryScreen() {
 const styles = StyleSheet.create({
   container: { flexGrow: 1, padding: theme.spacing.lg, backgroundColor: theme.colors.background },
   title: { ...theme.typography.h2, color: theme.colors.onSurface, marginBottom: theme.spacing.lg },
-  input: { backgroundColor: theme.colors.surface, padding: theme.spacing.sm, borderRadius: theme.radii.sm, borderWidth: 1, borderColor: theme.colors.secondary, marginBottom: theme.spacing.sm },
+  field: { marginBottom: theme.spacing.md },
+  label: { ...theme.typography.body, color: theme.colors.onSurface, marginBottom: theme.spacing.xs },
+  input: { backgroundColor: theme.colors.surface, padding: theme.spacing.sm, borderRadius: theme.radii.sm, borderWidth: 1, borderColor: theme.colors.secondary },
   message: { marginTop: theme.spacing.md, color: theme.colors.success, ...theme.typography.body },
 });
