@@ -1,0 +1,249 @@
+{
+  "verdict": "fail",
+  "summary": "Overall the UI follows the visual language of the design tokens and the primary navigation (bottom tab bar) works, but the implementation falls short of the detailed design spec. The most critical blocker is that the sign\u2011up flow cannot locate the \"Email address\" field, which breaks the primary user journey. Many screens omit required states (API error/offline banners, permission prompts, loading overlays, success/error toasts) and the sign\u2011in/sign\u2011up forms lack accessible, visible labels, autocomplete hints and a password show/hide toggle. Interaction feedback and keyboard focus indicators are missing on pressable components. Minor issues include hard\u2011coded colours, lack of a max\u2011width container, and missing typographic token usage for tab labels. These gaps must be addressed before the product can be considered polished and production\u2011ready.",
+  "findings": [
+    {
+      "severity": "high",
+      "file": "expo-app/src/screens/SignUpScreen.tsx",
+      "issue": "The email TextInput cannot be located by the automated flow (no visible \"Email address\" label, missing nativeID/accessible label, and no autocomplete hint). This breaks the sign\u2011up step and the primary user flow.",
+      "fix": "Add a visible <Text> label \"Email address\" above the TextInput, assign a nativeID to the input, set accessibilityLabel to the same text, and use autoCompleteType=\"email\" / textContentType=\"emailAddress\". Ensure the test can query the label or input by its accessible name.",
+      "source": "designer"
+    },
+    {
+      "severity": "high",
+      "file": "expo-app/src/screens/SignInScreen.tsx",
+      "issue": "Same accessibility issue as SignUpScreen \u2013 email and password fields lack visible labels and proper accessibility props, causing the flow to fail when trying to fill \"Email address\".",
+      "fix": "Mirror the fixes from SignUpScreen: add visible labels, nativeID linking, autoCompleteType/textContentType for email and password, and set accessibilityLabel on inputs.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "expo-app/src/screens/SignUpScreen.tsx",
+      "issue": "Form does not display live password rule helper, password show/hide toggle, or inline field\u2011level error messages.",
+      "fix": "Render a helper text beneath the password field with the rule list, add an eye\u2011icon button to toggle secureTextEntry with appropriate accessibilityLabel \"Show password\"/\"Hide password\", and display inline validation messages under each field when the user submits invalid data.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "expo-app/src/screens/SignInScreen.tsx",
+      "issue": "Missing inline field error display and password show/hide toggle; also missing autocomplete attributes for email/password.",
+      "fix": "Add inline error <Text> under fields when validation fails, include a password eye\u2011icon toggle, and set autoCompleteType/textContentType for email and password.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "expo-app/src/screens/DashboardScreen.tsx",
+      "issue": "No UI for API error banner (\"Failed to load data. Pull down to retry.\") or offline banner (\"You\u2019re offline \u2013 data may be outdated.\") as defined in the spec.",
+      "fix": "Add a top banner component that appears when the API request fails or when NetInfo reports offline, using the exact copy and styling from the design tokens.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "expo-app/src/screens/ReceiptCaptureScreen.tsx",
+      "issue": "Missing several required states: permission prompt modal, permission denied fallback UI, default placeholder illustration, upload loading overlay, success and error toasts, and edge\u2011case truncation tooltip.",
+      "fix": "Implement a modal that asks for camera permission with the exact copy, a fallback UI with \"Choose from library\" button, a placeholder view with the prompt text, a full\u2011screen loading overlay when uploading, toast notifications on success/error, and a tooltip for long category text on web.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "expo-app/src/screens/MileageEntryScreen.tsx",
+      "issue": "Only default UI is present; loading state (spinner overlay) and error toast (\"Failed to save mileage\u2026\") are not implemented.",
+      "fix": "Wrap the save action with a loading overlay (disable inputs, show spinner, overlay with message \"Saving mileage\u2026\"), and display a toast on error with the exact copy.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "expo-app/src/screens/ExportScreen.tsx",
+      "issue": "Missing loading states for CSV and PDF generation (buttons disabled, spinner, copy \"Generating CSV\u2026\" / \"Generating PDF\u2026\"), success share sheet handling, error toast, and offline banner.",
+      "fix": "When a user taps Export CSV or PDF, disable both buttons, show a spinner with the appropriate copy, trigger the native share sheet on success and show a toast \"Report ready to share.\", display an error toast on failure, and prevent exporting when offline with a banner \"Cannot export while offline.\"",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "expo-app/src/components/PrimaryButton.tsx",
+      "issue": "No visible focus indicator for keyboard navigation (web) \u2013 design requires a 2\u202fpx solid primary outline on focus.",
+      "fix": "Add a style rule for the pressed/focused state using Pressable's onFocus/onBlur (or the style function that receives hovered/focused) to apply borderWidth: 2, borderColor: theme.colors.primary, and outline offset.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "expo-app/src/components/LoadingOverlay.tsx",
+      "issue": "Overlay background uses hard\u2011coded rgba value instead of a token from the design system.",
+      "fix": "Replace 'rgba(0,0,0,0.3)' with a semi\u2011transparent variant derived from a design token (e.g., theme.colors.disabledBackground with opacity) or add a new token for overlay background.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "expo-app/src/screens/DashboardScreen.tsx",
+      "issue": "Content width is not constrained to the 360\u202fpx max\u2011width defined in the mobile layout spec; screens may stretch on larger devices.",
+      "fix": "Wrap the ScrollView content in a View with style { maxWidth: 360, alignSelf: 'center', width: '100%' } to enforce the max\u2011width and centered layout.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "expo-app/src/navigation/index.tsx",
+      "issue": "Tab bar label text uses default font size instead of the caption token from the design system.",
+      "fix": "Set tabBarLabelStyle to theme.typography.caption (or a custom style that applies fontSize: theme.typography.caption.fontSize, lineHeight, etc.).",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "expo-app/src/components/Header.tsx",
+      "issue": "Settings TouchableOpacity lacks a visible focus ring for keyboard users and the placeholder navigation is not implemented.",
+      "fix": "Add focus styling identical to PrimaryButton and implement navigation to a Settings screen or remove the button if not available.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "expo-app/src/screens/ExportScreen.tsx",
+      "issue": "Export screen does not enforce a minimum touch target of 44\u00d744\u202fpx on the large buttons (height set to 48\u202fpx but width may be smaller).",
+      "fix": "Ensure button styles include minWidth: 120\u202fpx (as in PrimaryButton) and padding that guarantees the required hit area.",
+      "source": "designer"
+    },
+    {
+      "severity": "high",
+      "viewport": "phone",
+      "issue": "Form fields and button use browser-default styling (thin borders, no padding, no visual hierarchy).",
+      "fix": "Apply consistent design tokens: rounded corners, subtle shadows, padding, and a branded color palette. Add visual hierarchy with bold/italic typography for labels and button states.",
+      "screen": "sign in",
+      "source": "vision"
+    },
+    {
+      "severity": "high",
+      "viewport": "phone",
+      "issue": "No type scale \u2014 all text (title, labels, placeholder, button) is the same size and weight. No contrast between label and placeholder text.",
+      "fix": "Use a type scale: H1 for title, H3 for labels, body for placeholders. Ensure label text is bold or contrasted against placeholder. Use a consistent font family.",
+      "screen": "sign in",
+      "source": "vision"
+    },
+    {
+      "severity": "high",
+      "viewport": "phone",
+      "issue": "No spacing or alignment grid \u2014 elements are stacked with inconsistent vertical spacing. The 'Sign up' link is centered with no alignment or spacing context.",
+      "fix": "Apply a consistent grid system. Use 8px or 16px vertical spacing between elements. Align all elements to the left or center with consistent margins.",
+      "screen": "sign in",
+      "source": "vision"
+    },
+    {
+      "severity": "high",
+      "viewport": "phone",
+      "issue": "No error states or helpful hints. No indication of required fields or validation rules.",
+      "fix": "Add inline error messages under fields. Add placeholder text or icons to indicate field requirements. Use visual cues for active/invalid states.",
+      "screen": "sign in",
+      "source": "vision"
+    },
+    {
+      "severity": "high",
+      "viewport": "phone",
+      "issue": "Button is not touch-friendly \u2014 no padding or safe zone for thumbs on a 390px width. Button width is 390px, which is acceptable, but height is too low for thumb targeting.",
+      "fix": "Increase button height to at least 56px. Add padding inside the button. Use rounded corners for better touch target.",
+      "screen": "sign in",
+      "source": "vision"
+    },
+    {
+      "severity": "high",
+      "viewport": "desktop",
+      "issue": "Screen is stretched vertically and horizontally \u2014 no responsive design. Elements are centered with no grid alignment. Text is too small for desktop.",
+      "fix": "Implement responsive layout. Use grid or flexbox to align elements. Scale font sizes and spacing for desktop. Avoid stretching \u2014 use padding and margins to define layout.",
+      "screen": "sign in",
+      "source": "vision"
+    },
+    {
+      "severity": "medium",
+      "viewport": "phone",
+      "issue": "No visual feedback for loading state \u2014 fields are disabled but no spinner or loading indicator is shown.",
+      "fix": "Add a loading spinner or skeleton state. Disable fields and show a subtle loading indicator (e.g., spinner or animation) during submission.",
+      "screen": "sign in",
+      "source": "vision"
+    },
+    {
+      "severity": "medium",
+      "viewport": "phone",
+      "issue": "No empty state or success state \u2014 only shows 'Welcome back' title and fields. No guidance for new users.",
+      "fix": "Add an empty state with a brief message or illustration to guide new users. Add a 'Try it' or 'Get started' CTA if needed.",
+      "screen": "sign in",
+      "source": "vision"
+    },
+    {
+      "severity": "high",
+      "screen": "sign in",
+      "source": "vision",
+      "issue": "visual quality 5/10 on 'sign in' (needs 8+): The sign-in screen is functional but lacks polish. It uses browser-default styling, has no visual hierarchy beyond the primary button, and appears unstyled and unbranded. The layout is minimal but not designed \u2014 fields and button are centered with no consistent grid or spacing. The typography is basic and lacks a type scale. On desktop, it's stretched and unoptimized. This is a working prototype, not a polished product.",
+      "fix": "Address this screen's findings until it looks polished and professional."
+    },
+    {
+      "severity": "medium",
+      "viewport": "phone",
+      "issue": "The form fields are not aligned to a consistent grid; spacing between the password field and its error text is inconsistent with spacing above and below the fields.",
+      "fix": "Apply a consistent vertical rhythm (e.g., 16px between fields, 24px above/below) and align all fields to the same left edge with equal padding.",
+      "screen": "sign up",
+      "source": "vision"
+    },
+    {
+      "severity": "medium",
+      "viewport": "phone",
+      "issue": "The password field's error text is positioned directly below the field, but the error text is not visually grouped with the field (no border or background color).",
+      "fix": "Wrap the error text in a subtle border or background highlight to visually group it with the field, or use a consistent error state design pattern (e.g., red border, icon).",
+      "screen": "sign up",
+      "source": "vision"
+    },
+    {
+      "severity": "medium",
+      "viewport": "phone",
+      "issue": "The 'Create account' button is centered horizontally but not aligned to the left edge of the form, creating visual imbalance.",
+      "fix": "Align the button to the left edge of the form to maintain visual consistency with the fields above it.",
+      "screen": "sign up",
+      "source": "vision"
+    },
+    {
+      "severity": "high",
+      "viewport": "desktop",
+      "issue": "The desktop version is a stretched, unstyled phone layout with no responsive design or layout adjustments. All elements are left-aligned and lack any spacing or grid structure, making it look like a browser default.",
+      "fix": "Redesign the desktop layout with proper spacing, alignment, and typography scaling. Use a grid system and avoid stretching the phone layout. Consider using a card-based layout or columnar structure for desktop.",
+      "screen": "sign up",
+      "source": "vision"
+    },
+    {
+      "severity": "medium",
+      "viewport": "both",
+      "issue": "The typography lacks a real type scale; the heading, field labels, and button text use similar weights and sizes, reducing visual hierarchy.",
+      "fix": "Establish a type scale: use a larger, bold heading (e.g., 28pt), medium labels (e.g., 16pt), and smaller body text (e.g., 14pt) for the error message. Use consistent font weights (e.g., 600 for headings, 400 for body).",
+      "screen": "sign up",
+      "source": "vision"
+    },
+    {
+      "severity": "low",
+      "viewport": "phone",
+      "issue": "The 'Log in' link is centered horizontally but not aligned with the button above it, creating a visual disconnect.",
+      "fix": "Align the 'Log in' link to the left edge, matching the alignment of the button and form fields above it.",
+      "screen": "sign up",
+      "source": "vision"
+    },
+    {
+      "severity": "high",
+      "screen": "sign up",
+      "source": "vision",
+      "issue": "visual quality 7/10 on 'sign up' (needs 8+): The sign-up screen is clean and functional, with a clear primary action and readable typography. It follows basic design principles but lacks polish in spacing, alignment, and visual hierarchy that would elevate it to a premium product. The desktop version is notably unstyled and unoptimized, which undermines the product's perceived quality.",
+      "fix": "Address this screen's findings until it looks polished and professional."
+    }
+  ],
+  "lighthouse": [
+    {
+      "accessibility": 100,
+      "bestPractices": 100,
+      "performance": 75
+    }
+  ],
+  "vision_scores": [
+    {
+      "screen": "sign in",
+      "score": 5.0,
+      "summary": "The sign-in screen is functional but lacks polish. It uses browser-default styling, has no visual hierarchy beyond the primary button, and appears unstyled and unbranded. The layout is minimal but not designed \u2014 fields and button are centered with no consistent grid or spacing. The typography is basic and lacks a type scale. On desktop, it's stretched and unoptimized. This is a working prototype, not a polished product."
+    },
+    {
+      "screen": "sign up",
+      "score": 7.0,
+      "summary": "The sign-up screen is clean and functional, with a clear primary action and readable typography. It follows basic design principles but lacks polish in spacing, alignment, and visual hierarchy that would elevate it to a premium product. The desktop version is notably unstyled and unoptimized, which undermines the product's perceived quality."
+    }
+  ]
+}
