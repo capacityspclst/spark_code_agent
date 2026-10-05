@@ -1,0 +1,10 @@
+{
+  "verdict": "revise",
+  "issues": [
+    "The UI primary flow test (ui_flow.json) fails when trying to click the \"Export CSV\" button (step 33). The error is: \"phone: step 33 'click button \\\"Export CSV\\\"' failed: locator.click: Timeout 10000ms exceeded.\" The button is defined in `expo-app/src/screens/ExportScreen.tsx` but the automated UI tests cannot locate it, indicating that the button is not presented as an accessible button in the rendered UI.",
+    "Fix: Ensure the Export CSV (and Export PDF) actions are rendered as clearly identifiable buttons. Update `expo-app/src/screens/ExportScreen.tsx` to use a native `Button` (or a Pressable with explicit `accessibilityRole=\"button\"` and `accessibilityLabel=\"Export CSV\"`) and add a `testID` or `accessible` prop if needed. For example, replace the custom `PrimaryButton` calls with:",
+    "```tsx\nimport { Button } from 'react-native';\n\n// inside ExportScreen's return\n<Button title=\"Export CSV\" onPress={() => handleExport('csv')} accessibilityLabel=\"Export CSV\" testID=\"export-csv-button\" />\n<Button title=\"Export PDF\" onPress={() => handleExport('pdf')} accessibilityLabel=\"Export PDF\" testID=\"export-pdf-button\" />\n```",
+    "Alternatively, augment the existing `PrimaryButton` usage by passing `accessibilityLabel=\"Export CSV\"` (already done) **and** a `testID` prop, and ensure `Pressable` receives `accessible={true}` and `accessibilityRole=\"button\"`. Confirm that the button is rendered and visible on the Export screen."
+  ],
+  "feedback": "All backend acceptance tests pass, but the UI validation fails because the Export screen's CSV export button is not discoverable by the UI test runner. Adjust the Export screen so that the button is rendered as an accessible button with a clear label (or use the native Button component) to satisfy the UI flow test. After fixing the button accessibility, re-run the UI checks; the remaining static validation checks should then pass."
+}
