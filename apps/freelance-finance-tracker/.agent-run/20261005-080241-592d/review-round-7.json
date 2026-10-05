@@ -1,0 +1,8 @@
+{
+  "verdict": "revise",
+  "issues": [
+    "TypeScript compile error in `expo-app/src/screens/ExportScreen.tsx`: `Property 'cacheDirectory' does not exist on type 'typeof import(\"expo-file-system/build/index\")'`. The lazy import `const { default: FileSystem } = await import('expo-file-system');` returns a module whose default export type does not include the static `cacheDirectory` property, causing the TS2339 error and making the static validation step fail. This also prevents the Export screen from working correctly, causing the UI flow test to time out when trying to click the \"Export CSV\" button.",
+    "Same lazy import pattern is used for `expo-sharing`, which may also suffer from type mismatches."
+  ],
+  "feedback": "Update `ExportScreen.tsx` to import `expo-file-system` and `expo-sharing` in a way that TypeScript knows the imported objects have the needed properties. A simple fix is to cast the imports to `any`:\n```ts\n// Inside handleExport, replace the lazy imports with:\nconst FileSystem: any = (await import('expo-file-system')).default;\nconst Sharing: any = (await import('expo-sharing')).default;\n```\nThen you can safely access `FileSystem.cacheDirectory`, `FileSystem.writeAsStringAsync`, and `Sharing.shareAsync` without type errors. After making these changes, run `npm run tsc` (or `npx tsc --noEmit`) to confirm that all TypeScript checks pass. Re\u2011run the acceptance UI flow; the \"Export CSV\" button should now be clickable and the export process should complete.\n\nApply the patch to `expo-app/src/screens/ExportScreen.tsx` accordingly and ensure the project passes the static validation step."
+}
