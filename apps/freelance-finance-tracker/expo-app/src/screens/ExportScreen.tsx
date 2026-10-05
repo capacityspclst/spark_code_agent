@@ -1,10 +1,9 @@
 import React, { useState } from 'react';
-import { View, Text, ActivityIndicator, StyleSheet, Alert } from 'react-native';
+import { View, Text, ActivityIndicator, StyleSheet, Alert, Button } from 'react-native';
 import axios from 'axios';
 import { getToken } from '../auth';
 import { API_URL } from '../config';
 import { theme } from '../theme';
-import PrimaryButton from '../components/PrimaryButton';
 
 export default function ExportScreen() {
   const [loadingType, setLoadingType] = useState<null | 'csv' | 'pdf'>(null);
@@ -56,19 +55,21 @@ export default function ExportScreen() {
 
   return (
     <View style={styles.container}>
-      <PrimaryButton
+      <Button
         title="Export CSV"
         onPress={() => handleExport('csv')}
         disabled={!!loadingType}
-        loading={loadingType === 'csv'}
+        color={theme.colors.primary}
         accessibilityLabel="Export CSV"
+        testID="export-csv-button"
       />
-      <PrimaryButton
+      <Button
         title="Export PDF"
         onPress={() => handleExport('pdf')}
         disabled={!!loadingType}
-        loading={loadingType === 'pdf'}
+        color={theme.colors.primary}
         accessibilityLabel="Export PDF"
+        testID="export-pdf-button"
       />
       {loadingType && (
         <ActivityIndicator size="large" color={theme.colors.primary} style={{ marginTop: theme.spacing.md }} />
