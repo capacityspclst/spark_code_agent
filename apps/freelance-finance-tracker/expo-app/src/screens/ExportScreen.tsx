@@ -1,13 +1,24 @@
-import React, { useState } from 'react';
-import { View, Text, ActivityIndicator, StyleSheet, Alert, Button } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, ActivityIndicator, StyleSheet, Alert, Platform, Button as RNButton } from 'react-native';
 import axios from 'axios';
 import { getToken } from '../auth';
 import { API_URL } from '../config';
 import { theme } from '../theme';
+import PrimaryButton from '../components/PrimaryButton';
+import NetInfo from '@react-native-community/netinfo';
 
 export default function ExportScreen() {
   const [loadingType, setLoadingType] = useState<null | 'csv' | 'pdf'>(null);
   const [message, setMessage] = useState('');
+  const [isOnline, setIsOnline] = useState(true);
+
+  useEffect(() => {
+    const unsubscribe = NetInfo.addEventListener(state => {
+      setIsOnline(state.isConnected ?? true);
+    });
+    NetInfo.fetch().then(state => setIsOnline(state.isConnected ?? true));
+    return () => unsubscribe();
+  }, []);
 
   const handleExport = async (type: 'csv' | 'pdf') => {
     setLoadingType(type);
@@ -18,7 +29,6 @@ export default function ExportScreen() {
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      // Lazy import with any casting to avoid TS errors
       const FileSystem: any = (await import('expo-file-system')).default;
       const Sharing: any = (await import('expo-sharing')).default;
 
@@ -53,24 +63,41 @@ export default function ExportScreen() {
     }
   };
 
+  const disabled = loadingType !== null || !isOnline;
+
+  const renderButton = (title: string, type: 'csv' | 'pdf') => {
+    if (Platform.OS === 'web') {
+      return (
+        <RNButton
+          title={title}
+          onPress={() => handleExport(type)}
+          disabled={disabled}
+          color={theme.colors.primary}
+          testID={`export-${type}-button`}
+        />
+      );
+    }
+    return (
+      <PrimaryButton
+        title={title}
+        onPress={() => handleExport(type)}
+        disabled={disabled}
+        loading={loadingType === type}
+        accessibilityLabel={title}
+        testID={`export-${type}-button`}
+      />
+    );
+  };
+
   return (
     <View style={styles.container}>
-      <Button
-        title="Export CSV"
-        onPress={() => handleExport('csv')}
-        disabled={!!loadingType}
-        color={theme.colors.primary}
-        accessibilityLabel="Export CSV"
-        testID="export-csv-button"
-      />
-      <Button
-        title="Export PDF"
-        onPress={() => handleExport('pdf')}
-        disabled={!!loadingType}
-        color={theme.colors.primary}
-        accessibilityLabel="Export PDF"
-        testID="export-pdf-button"
-      />
+      {!isOnline && (
+        <View style={styles.banner} accessibilityRole="alert">
+          <Text style={styles.bannerText}>Cannot export while offline.</Text>
+        </View>
+      )}
+      {renderButton('Export CSV', 'csv')}
+      {renderButton('Export PDF', 'pdf')}
       {loadingType && (
         <ActivityIndicator size="large" color={theme.colors.primary} style={{ marginTop: theme.spacing.md }} />
       )}
@@ -81,5 +108,15 @@ export default function ExportScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, padding: theme.spacing.lg, backgroundColor: theme.colors.background },
+  banner: {
+    backgroundColor: theme.colors.error,
+    padding: theme.spacing.md,
+    borderRadius: theme.radii.sm,
+    marginBottom: theme.spacing.md,
+  },
+  bannerText: {
+    color: theme.colors.onPrimary,
+    ...theme.typography.body,
+  },
   message: { marginTop: theme.spacing.md, color: theme.colors.success, ...theme.typography.body },
 });

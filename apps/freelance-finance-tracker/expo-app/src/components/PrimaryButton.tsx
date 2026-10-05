@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Pressable, Text, StyleSheet, ActivityIndicator } from 'react-native';
 import { theme } from '../theme';
 
@@ -8,9 +8,10 @@ type Props = {
   disabled?: boolean;
   loading?: boolean;
   accessibilityLabel?: string;
+  testID?: string;
 };
 
-export default function PrimaryButton({ title, onPress, disabled = false, loading = false, accessibilityLabel }: Props) {
+export default function PrimaryButton({ title, onPress, disabled = false, loading = false, accessibilityLabel, testID }: Props) {
   const isDisabled = disabled || loading;
 
   return (
@@ -28,7 +29,7 @@ export default function PrimaryButton({ title, onPress, disabled = false, loadin
       accessibilityLabel={accessibilityLabel || title}
       accessibilityState={isDisabled ? { disabled: true } : undefined}
       accessible={true}
-      tabIndex={0}
+      testID={testID}
     >
       {loading ? (
         <ActivityIndicator size="small" color={theme.colors.onPrimary} />
