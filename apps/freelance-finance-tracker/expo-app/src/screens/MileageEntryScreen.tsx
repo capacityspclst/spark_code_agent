@@ -39,37 +39,43 @@ export default function MileageEntryScreen() {
     <ScrollView contentContainerStyle={styles.container}>
       <Text style={styles.title}>New mileage entry</Text>
       <View style={styles.field}>
-        <Text style={styles.label}>Date</Text>
+        <Text style={styles.label} nativeID="date-label">Date</Text>
         <TextInput
+          nativeID="date-input"
+          testID="date-input"
+          accessibilityLabel="Date"
+          accessibilityLabelledBy="date-label"
           placeholder="Date"
           value={date}
           onChangeText={setDate}
           style={styles.input}
-          accessibilityLabel="Date"
-          testID="date-input"
         />
       </View>
       <View style={styles.field}>
-        <Text style={styles.label}>Miles driven</Text>
+        <Text style={styles.label} nativeID="miles-label">Miles driven</Text>
         <TextInput
+          nativeID="miles-input"
+          testID="miles-input"
+          accessibilityLabel="Miles driven"
+          accessibilityLabelledBy="miles-label"
           placeholder="Miles driven"
           value={miles}
           onChangeText={setMiles}
           style={styles.input}
           keyboardType="numeric"
-          accessibilityLabel="Miles driven"
-          testID="miles-input"
         />
       </View>
       <View style={styles.field}>
-        <Text style={styles.label}>Notes (optional)</Text>
+        <Text style={styles.label} nativeID="notes-label">Notes (optional)</Text>
         <TextInput
+          nativeID="notes-input"
+          testID="notes-input"
+          accessibilityLabel="Notes (optional)"
+          accessibilityLabelledBy="notes-label"
           placeholder="Notes (optional)"
           value={notes}
           onChangeText={setNotes}
           style={styles.input}
-          accessibilityLabel="Notes (optional)"
-          testID="notes-input"
         />
       </View>
       {loading ? (

@@ -115,41 +115,53 @@ export default function ReceiptCaptureScreen() {
       <View style={styles.form}>
         {image && <Image source={{ uri: image.assets[0].uri }} style={styles.image} />}
         <PrimaryButton title="Tap to take a photo or choose from library" onPress={pickImage} accessibilityLabel="Tap to take a photo or choose from library" />
-        <Text style={styles.fieldLabel}>Amount (USD)</Text>
+        <Text style={styles.fieldLabel} nativeID="amount-label">Amount (USD)</Text>
         <TextInput
+          nativeID="amount-input"
+          testID="amount-input"
           placeholder="Amount (USD)"
           value={amount}
           onChangeText={setAmount}
           style={styles.input}
           accessibilityLabel="Amount (USD)"
+          accessibilityLabelledBy="amount-label"
         />
-        <Text style={styles.fieldLabel}>Date</Text>
+        <Text style={styles.fieldLabel} nativeID="date-label">Date</Text>
         <TextInput
+          nativeID="date-input"
+          testID="date-input"
           placeholder="Date"
           value={date}
           onChangeText={setDate}
           style={styles.input}
           accessibilityLabel="Date"
+          accessibilityLabelledBy="date-label"
         />
-        <Text style={styles.fieldLabel}>Category</Text>
+        <Text style={styles.fieldLabel} nativeID="category-label">Category</Text>
         <Picker
           selectedValue={category}
           onValueChange={(itemValue) => setCategory(itemValue)}
           style={styles.picker}
           accessibilityLabel="Category"
+          nativeID="category-input"
+          testID="category-input"
+          accessibilityLabelledBy="category-label"
         >
           <Picker.Item label="Select category" value="" />
           <Picker.Item label="Office supplies" value="Office supplies" />
           <Picker.Item label="Travel" value="Travel" />
           <Picker.Item label="Meals" value="Meals" />
         </Picker>
-        <Text style={styles.fieldLabel}>Notes (optional)</Text>
+        <Text style={styles.fieldLabel} nativeID="notes-label">Notes (optional)</Text>
         <TextInput
+          nativeID="notes-input"
+          testID="notes-input"
           placeholder="Notes (optional)"
           value={notes}
           onChangeText={setNotes}
           style={styles.input}
           accessibilityLabel="Notes (optional)"
+          accessibilityLabelledBy="notes-label"
         />
         {loading ? (
           <ActivityIndicator size="large" color={theme.colors.primary} />
