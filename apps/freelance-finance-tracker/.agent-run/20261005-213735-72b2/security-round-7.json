@@ -1,0 +1,96 @@
+{
+  "verdict": "fail",
+  "summary": "Reviewed the current code against the previously reported security findings. The JWT secret fallback has been hardened and is now fixed. All other earlier findings remain open and unchanged. A new critical vulnerability was discovered: the unauthenticated /media endpoint is susceptible to directory\u2011traversal, allowing an attacker to read arbitrary files on the server (including secrets). This critical issue must be remediated before production release. No other new issues were found.",
+  "findings": [
+    {
+      "id": "unauthenticated-media-endpoint",
+      "severity": "high",
+      "where": "code",
+      "file": "backend/app/main.py",
+      "issue": "GET /media/{filename} serves receipt images without any authentication or ownership checks, exposing private user data to anyone who can guess a filename.",
+      "fix": "Protect the endpoint with authentication (e.g., Depends(get_current_user)) and verify the requested file belongs to the requesting user, or replace it with signed URLs from a secure object store."
+    },
+    {
+      "id": "missing-receipt-upload-validation",
+      "severity": "medium",
+      "where": "code",
+      "file": "backend/app/main.py",
+      "issue": "Receipt uploads are saved without validating file size, MIME type, or scanning for malicious content, enabling potential DoS via oversized uploads or storage of dangerous files.",
+      "fix": "Enforce a reasonable size limit (e.g., 5\u202fMiB), validate that the uploaded file is an allowed image type (e.g., JPEG/PNG), and optionally scan uploads with an antivirus (ClamAV) before saving."
+    },
+    {
+      "id": "missing-auth-rate-limiting",
+      "severity": "medium",
+      "where": "code",
+      "file": "backend/app/main.py",
+      "issue": "Authentication endpoints (/auth/signup, /auth/login) have no rate limiting, allowing credential\u2011stuffing or brute\u2011force attacks.",
+      "fix": "Integrate a rate\u2011limiting middleware such as slowapi or enforce limits at the edge/CDN (e.g., 5 requests per minute per IP) and implement exponential back\u2011off on repeated failures."
+    },
+    {
+      "id": "insecure-token-storage-web",
+      "severity": "medium",
+      "where": "code",
+      "file": "expo-app/src/auth.ts",
+      "issue": "On web platforms the JWT is stored in AsyncStorage (local storage), which is vulnerable to XSS theft.",
+      "fix": "For web builds switch to http\u2011only, secure cookies or another browser\u2011secure storage mechanism; avoid storing JWTs in plain client\u2011side storage."
+    },
+    {
+      "id": "vulnerable-dependency-braces",
+      "severity": "high",
+      "where": "code",
+      "file": "expo-app/package-lock.json",
+      "issue": "braces 3.0.3 has CVE\u20112026\u201193687 (Denial\u2011of\u2011Service via deep regex patterns) and has no fix yet.",
+      "fix": "Upgrade to a version where the vulnerability is patched when released; until then audit the codebase for regex usage that could trigger the issue and consider removing or replacing the library."
+    },
+    {
+      "id": "vulnerable-dependency-decode-uri-compone",
+      "severity": "medium",
+      "where": "code",
+      "file": "expo-app/package-lock.json",
+      "issue": "decode-uri-component 0.2.2 is vulnerable to DoS (CVE\u20112026\u201145822).",
+      "fix": "Update the package to version 0.5.0 or later where the vulnerability is fixed."
+    },
+    {
+      "id": "vulnerable-dependency-node-forge",
+      "severity": "high",
+      "where": "code",
+      "file": "expo-app/package-lock.json",
+      "issue": "node\u2011forge 1.4.0 contains a signature\u2011forgery flaw in RSA PKCS#1 v1.5 verification (CVE\u20112026\u201185393) with no fix available yet.",
+      "fix": "Replace node\u2011forge with a maintained cryptography library (e.g., @stablelib or the built\u2011in Web Crypto API) or wait for a patched release while auditing any code that may use node\u2011forge."
+    },
+    {
+      "id": "vulnerable-dependency-uuid",
+      "severity": "medium",
+      "where": "code",
+      "file": "expo-app/package-lock.json",
+      "issue": "uuid 7.0.3 is vulnerable (CVE\u20112026\u201141907) \u2013 out\u2011of\u2011bounds write affecting data integrity.",
+      "fix": "Upgrade uuid to at least 11.1.1 (or the latest stable version) to obtain the fix."
+    },
+    {
+      "id": "media-path-traversal",
+      "severity": "critical",
+      "where": "code",
+      "file": "backend/app/main.py",
+      "issue": "GET /media/{filename} concatenates the supplied filename with MEDIA_ROOT without any sanitisation, allowing directory\u2011traversal (e.g., \"../..\" sequences) and the reading of arbitrary files on the server. Combined with the lack of authentication, this can expose source code, environment files, private keys, and other secrets.",
+      "fix": "Validate the filename to ensure it contains no path\u2011traversal characters (use pathlib's .resolve() and confirm the result is within MEDIA_ROOT), reject or normalise any \"..\" components, and ideally serve files via a dedicated static\u2011file handler that enforces these checks. Add authentication (reuse get_current_user) and an ownership check so users can only retrieve their own receipt images."
+    }
+  ],
+  "deployment_actions": [
+    {
+      "id": "missing-security-headers",
+      "severity": "medium",
+      "where": "deployment",
+      "file": "backend/app/main.py",
+      "issue": "FastAPI does not emit common security HTTP headers (Strict-Transport-Security, X-Content-Type-Options, X-Frame-Options, Content-Security-Policy), leaving the service vulnerable to clickjacking, MIME\u2011sniffing, and TLS\u2011downgrade attacks.",
+      "fix": "Configure the hosting edge/proxy (e.g., Fly.io, Render, Cloud Run) to add these headers, or add a FastAPI middleware that injects them on every response."
+    }
+  ],
+  "fixed": [
+    "default-jwt-secret"
+  ],
+  "stalled": [
+    "unauthenticated-media-endpoint",
+    "vulnerable-dependency-braces",
+    "vulnerable-dependency-node-forge"
+  ]
+}
