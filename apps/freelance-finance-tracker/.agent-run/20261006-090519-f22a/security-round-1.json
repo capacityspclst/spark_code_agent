@@ -1,0 +1,33 @@
+{
+  "verdict": "pass",
+  "summary": "Critical and high severity issues remain in the code: the /media endpoint is vulnerable to directory traversal (critical) and serves files without authentication (high). Authentication rate\u2011limiting and security HTTP headers are still missing, and several front\u2011end dependencies have known high\u2011severity CVEs. New issues were discovered: CSV export can be abused for spreadsheet formula injection, FastAPI interactive docs are publicly exposed, and the CSV/PDF export endpoints lack any rate\u2011limiting, enabling potential denial\u2011of\u2011service attacks.",
+  "findings": [
+    {
+      "id": "csv-injection",
+      "severity": "medium",
+      "where": "code",
+      "file": "backend/app/main.py",
+      "issue": "The CSV export endpoint writes raw user\u2011provided fields (e.g., category, notes) directly into the CSV without escaping. When the file is opened in spreadsheet software, specially crafted values (e.g., =CMD|'/C calc'!A0) can be interpreted as formulas, leading to CSV/Excel injection attacks.",
+      "fix": "Sanitize or escape fields before writing them to the CSV. For any value that begins with '=', '+', '-', '@' or a tab character, prefix it with a single quote or use a CSV library that automatically escapes such values. Also strip newline characters from fields to prevent row injection."
+    },
+    {
+      "id": "api-docs-exposed",
+      "severity": "low",
+      "where": "code",
+      "file": "backend/app/main.py",
+      "issue": "FastAPI automatically serves interactive documentation at /docs and /redoc without any authentication, exposing endpoint signatures, request/response models, and potentially internal details to unauthenticated users.",
+      "fix": "Disable the auto\u2011generated docs in production by creating the FastAPI app with docs_url=None and redoc_url=None, or protect them with authentication middleware or a separate server configuration."
+    },
+    {
+      "id": "export-rate-limiting-missing",
+      "severity": "medium",
+      "where": "code",
+      "file": "backend/app/main.py",
+      "issue": "The CSV and PDF export endpoints can be called repeatedly without any throttling. An attacker could generate a large number of export requests, causing high CPU and memory consumption and potentially exhausting the service.",
+      "fix": "Add a rate\u2011limiting middleware (e.g., slowapi or a reverse\u2011proxy limit) to the export routes, or implement per\u2011user request counters that cap the number of exports per time window."
+    }
+  ],
+  "deployment_actions": [],
+  "fixed": [],
+  "stalled": []
+}
