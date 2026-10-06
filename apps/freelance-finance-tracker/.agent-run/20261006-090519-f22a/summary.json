@@ -1,0 +1,1199 @@
+{
+  "run_id": "20261006-090519-f22a",
+  "task": "Fix security issues for freelance finance tracker: add authentication to upload endpoints, update vulnerable dependencies",
+  "app": "apps/freelance-finance-tracker",
+  "new_app": true,
+  "success": false,
+  "tests_passed": true,
+  "validation_passed": true,
+  "validation": "python syntax ok, ruff ok, python dependencies install ok, npm install (expo-app) ok, expo dependency versions (expo-app) ok, expo export (expo-app) ok, expo web export (expo-app) ok, ui backend starts (expo-app) ok, ui renders (expo-app) ok, ui styles applied (expo-app) ok, accessibility, serious or critical (expo-app) ok, responsive layout on a phone (expo-app) ok, ui primary flow (expo-app) ok, typescript (tsc) ok, json syntax ok, scanner suppressions ok, semgrep (security errors) ok, trivy secrets ok, trivy dependency vulnerabilities (high/critical, fixable) ok, trivy misconfigurations (high/critical) ok, trivy dependency vulnerabilities (other) warn, planned files present ok",
+  "review": {
+    "verdict": "revise",
+    "issues": [
+      "Critical security issue: GET /media/{filename} endpoint still allows directory traversal via path resolution and does not properly sanitize filename. The code uses pathlib.Path.resolve() and checks resolved.is_relative_to(MEDIA_ROOT), but `Path.is_relative_to` is available only in Python 3.9+ and the check may raise for symlinks. Ensure proper sanitisation and prevent arbitrary path access. Also confirm ownership check: the endpoint correctly checks that the receipt belongs to the current user, but path traversal can still bypass this check or lead to leakage. Fix by restricting filename to a safe pattern (e.g., only alphanumeric and allowed extensions) and store files in a dedicated directory without exposing filesystem paths.",
+      "Media endpoint not fully protected: while it requires authentication, it still reveals the existence of files and may allow enumeration. Consider using signed URLs or a dedicated static file serving middleware with proper access control. This remains an open high severity issue.",
+      "Missing validation for receipt image uploads: The `_validate_image` function checks content type and size, but does not enforce a whitelist of allowed extensions (the extension is used directly in filename). It also trusts the original filename for the extension, which could be spoofed. Add strict extension validation based on detected image format and reject unexpected extensions.",
+      "Rate limiting is only applied to authentication endpoints, but other endpoints (e.g., receipt upload, mileage, export) are not protected against brute\u2011force or denial\u2011of\u2011service attacks. Apply appropriate rate limits to all sensitive endpoints.",
+      "Vulnerable dependencies remain in the Expo app: the `braces` package (3.0.3 CVE\u20112026\u201193687) and `decode-uri-component` (0.2.2 CVE\u20112026\u201145822) are still present in the lockfile and node_modules. The current postinstall scripts attempt to delete entries from `package-lock.json` but do not remove the actual packages from `node_modules`, leaving the vulnerable code in the built app. Update the dependencies to versions where the CVEs are fixed (e.g., `braces` >=4.0.0, `decode-uri-component` >=0.5.0) and ensure the lockfile reflects these updates.",
+      "The Expo app stores the JWT token in a cookie for web builds using `document.cookie` without the `HttpOnly` flag, which is vulnerable to XSS. This issue is flagged as medium severity. Use secure, http\u2011only cookies or another secure storage mechanism for web, and ensure `SameSite=Strict` and `Secure` flags are set.",
+      "Missing security HTTP headers for the backend: although a `SecurityHeadersMiddleware` is added, it does not include the `X-XSS-Protection` header and may not be applied to all responses (e.g., static file responses). Ensure all responses include a full set of security headers (e.g., `X-XSS-Protection`, `Referrer-Policy`, `Permissions-Policy`) or configure the hosting edge to inject them.",
+      "The default JWT secret length warning is still present: a secret shorter than 32 bytes is used in development (\"dev-secret\") which is insecure for production. Ensure production deployments enforce a strong 256\u2011bit secret key via environment variables and fail if not provided."
+    ],
+    "feedback": "The solution passes the provided acceptance tests but leaves several critical and high\u2011severity security problems unresolved. Address the media endpoint path\u2011traversal and ownership checks, tighten image upload validation, apply rate limiting to all mutation endpoints, fully update or replace vulnerable npm dependencies, secure token storage in web builds, and ensure comprehensive security headers. Once these issues are fixed and re\u2011validated, the verdict can be changed to approve."
+  },
+  "review_rounds": 8,
+  "seconds": 22305.6,
+  "agents": {
+    "coder": {
+      "calls": 256,
+      "prompt_tokens": 12845272,
+      "completion_tokens": 180672,
+      "seconds": 10957.567292690277
+    },
+    "security": {
+      "calls": 4,
+      "prompt_tokens": 169973,
+      "completion_tokens": 31697,
+      "seconds": 1813.4399390220642
+    },
+    "designer": {
+      "calls": 6,
+      "prompt_tokens": 220181,
+      "completion_tokens": 21245,
+      "seconds": 1186.5461521148682
+    },
+    "vision": {
+      "calls": 39,
+      "prompt_tokens": 134125,
+      "completion_tokens": 16682,
+      "seconds": 1236.7676119804382
+    },
+    "reviewer": {
+      "calls": 84,
+      "prompt_tokens": 4017150,
+      "completion_tokens": 92606,
+      "seconds": 5518.419033288956
+    },
+    "docs": {
+      "calls": 1,
+      "prompt_tokens": 34470,
+      "completion_tokens": 6034,
+      "seconds": 250.75151109695435
+    },
+    "retro": {
+      "calls": 1,
+      "prompt_tokens": 8198,
+      "completion_tokens": 5445,
+      "seconds": 180.78026223182678
+    }
+  },
+  "stalled": [
+    "vulnerable-dependency-braces",
+    "vulnerable-dependency-node-forge"
+  ],
+  "security": {
+    "verdict": "fail",
+    "summary": "The code base now mitigates several earlier issues (CSV injection, interactive docs, rate limiting, receipt validation, JWT secret handling, and missing security headers). Remaining open issues are primarily high\u2011severity vulnerable dependencies, an openapi.json exposure, email enumeration on signup, insecure token storage on Expo web, and a few low\u2011severity concerns. New findings include a potential decompression\u2011bomb attack on uploaded images, missing rate\u2011limit on the media endpoint, and an additional vulnerable npm dependency (sprintf\u2011js).",
+    "findings": [
+      {
+        "id": "vulnerable-dependency-braces",
+        "severity": "high",
+        "where": "code",
+        "file": "expo-app/package-lock.json",
+        "issue": "braces 3.0.3 contains CVE\u20112026\u201193687 (Denial\u2011of\u2011Service via deep regex patterns) with no patched version available yet.",
+        "fix": "Upgrade to a version where the vulnerability is fixed when released, or replace the library with an alternative that does not use vulnerable regex processing."
+      },
+      {
+        "id": "vulnerable-dependency-node-forge",
+        "severity": "high",
+        "where": "code",
+        "file": "expo-app/package-lock.json",
+        "issue": "node\u2011forge 1.4.0 is vulnerable to CVE\u20112026\u201185393 (RSA PKCS#1 v1.5 signature forgery) and has no current fix.",
+        "fix": "Replace node\u2011forge with a maintained cryptography library (e.g., @stablelib or the Web Crypto API) for any cryptographic operations."
+      },
+      {
+        "id": "vulnerable-dependency-decode-uri-compone",
+        "severity": "medium",
+        "where": "code",
+        "file": "expo-app/package-lock.json",
+        "issue": "decode\u2011uri\u2011component 0.2.2 is vulnerable to CVE\u20112026\u201145822 (Denial\u2011of\u2011Service via crafted input).",
+        "fix": "Upgrade decode\u2011uri\u2011component to version 0.5.0 or later where the issue is fixed."
+      },
+      {
+        "id": "vulnerable-dependency-uuid",
+        "severity": "medium",
+        "where": "code",
+        "file": "expo-app/package-lock.json",
+        "issue": "uuid 7.0.3 is vulnerable to CVE\u20112026\u201141907 (out\u2011of\u2011bounds write) affecting data integrity.",
+        "fix": "Upgrade uuid to at least version 11.1.1 (or the latest stable release) which contains the fix."
+      },
+      {
+        "id": "openapi-json-exposed",
+        "severity": "low",
+        "where": "code",
+        "file": "backend/app/main.py",
+        "issue": "The OpenAPI schema remains publicly accessible at /openapi.json, leaking endpoint signatures and model definitions.",
+        "fix": "Set openapi_url=None in FastAPI configuration or protect the endpoint with authentication / IP\u2011based restrictions."
+      },
+      {
+        "id": "signup-email-enumeration",
+        "severity": "low",
+        "where": "code",
+        "file": "backend/app/main.py",
+        "issue": "The /auth/signup endpoint returns a distinct 400 error when an email is already registered, allowing an attacker to enumerate existing user accounts.",
+        "fix": "Return a generic response regardless of email existence (e.g., always send a success message and perform email verification), or unify error messages to avoid revealing account existence."
+      },
+      {
+        "id": "insecure-token-storage-web",
+        "severity": "medium",
+        "where": "code",
+        "file": "expo-app/src/auth.ts",
+        "issue": "On Expo web builds the JWT is stored in AsyncStorage / local storage, which is accessible to JavaScript and vulnerable to XSS token theft.",
+        "fix": "For web, store the JWT in an httpOnly, Secure cookie or use a web\u2011compatible secure storage mechanism; avoid persisting the token in plain client\u2011side storage."
+      },
+      {
+        "id": "decompression-bomb-image-attack",
+        "severity": "medium",
+        "where": "code",
+        "file": "backend/app/main.py",
+        "issue": "Uploaded receipt images are verified with Pillow (Image.verify) without limiting image dimensions or pixel count, allowing a crafted decompression\u2011bomb image to consume excessive CPU/memory and cause denial\u2011of\u2011service.",
+        "fix": "Set Pillow's Image.MAX_IMAGE_PIXELS limit or explicitly check image width/height before verification; reject images that exceed safe thresholds and consider scanning uploads with an antivirus."
+      },
+      {
+        "id": "media-endpoint-rate-limit-missing",
+        "severity": "medium",
+        "where": "code",
+        "file": "backend/app/main.py",
+        "issue": "`GET /media/{filename}` is authenticated but not protected by any rate\u2011limiting, enabling an attacker with a valid token to flood the endpoint and exhaust server resources.",
+        "fix": "Add a SlowAPI `@limiter.limit` decorator (e.g., \"10/minute\") to the media endpoint or enforce rate limits at the edge/proxy."
+      },
+      {
+        "id": "vulnerable-dependency-sprintf-js",
+        "severity": "medium",
+        "where": "code",
+        "file": "expo-app/package-lock.json",
+        "issue": "`sprintf-js` 1.0.3 is vulnerable to CVE\u20112026\u201197058 (Denial\u2011of\u2011Service via unbounded precision specifiers) and no patched version currently exists.",
+        "fix": "Replace `sprintf-js` with native template literals or a maintained library; if a patched version becomes available, upgrade immediately."
+      }
+    ],
+    "assurance": {
+      "blocking_open": 2,
+      "open": 10,
+      "deployment_actions": 0,
+      "fixed": 7
+    },
+    "ledger": [
+      {
+        "id": "csv-injection",
+        "severity": "medium",
+        "file": "backend/app/main.py",
+        "where": "code",
+        "open_rounds": 1,
+        "issue": "The CSV export endpoint writes raw user\u2011provided fields (e.g., category, notes) directly into the CSV without escaping. When the file is opened in spreadsheet software, specially crafted values (e.g., =CMD|'/C calc'!A0) can be interpreted as formulas, leading to CSV/Excel injection attacks.",
+        "fix": "Sanitize or escape fields before writing them to the CSV. For any value that begins with '=', '+', '-', '@' or a tab character, prefix it with a single quote or use a CSV library that automatically escapes such values. Also strip newline characters from fields to prevent row injection.",
+        "status": "fixed",
+        "first_round": 1,
+        "history": [
+          {
+            "round": 1,
+            "status": "open",
+            "severity": "medium"
+          },
+          {
+            "round": 4,
+            "status": "fixed",
+            "severity": "medium",
+            "reason": "Mitigation added via _escape_csv() which prefixes dangerous values, removing the CSV injection vector."
+          },
+          {
+            "round": 7,
+            "status": "fixed",
+            "severity": "medium",
+            "reason": "no change"
+          },
+          {
+            "round": 8,
+            "status": "fixed",
+            "severity": "medium",
+            "reason": "No change; CSV injection mitigation via _escape_csv remains in place."
+          }
+        ]
+      },
+      {
+        "id": "api-docs-exposed",
+        "severity": "low",
+        "file": "backend/app/main.py",
+        "where": "code",
+        "open_rounds": 1,
+        "issue": "FastAPI automatically serves interactive documentation at /docs and /redoc without any authentication, exposing endpoint signatures, request/response models, and potentially internal details to unauthenticated users.",
+        "fix": "Disable the auto\u2011generated docs in production by creating the FastAPI app with docs_url=None and redoc_url=None, or protect them with authentication middleware or a separate server configuration.",
+        "status": "fixed",
+        "first_round": 1,
+        "history": [
+          {
+            "round": 1,
+            "status": "open",
+            "severity": "low"
+          },
+          {
+            "round": 4,
+            "status": "fixed",
+            "severity": "low",
+            "reason": "FastAPI docs disabled by setting docs_url=None and redoc_url=None, eliminating unauthenticated interactive docs."
+          },
+          {
+            "round": 7,
+            "status": "fixed",
+            "severity": "low",
+            "reason": "no change"
+          },
+          {
+            "round": 8,
+            "status": "fixed",
+            "severity": "low",
+            "reason": "No change; FastAPI docs (/docs, /redoc) are disabled."
+          }
+        ]
+      },
+      {
+        "id": "export-rate-limiting-missing",
+        "severity": "medium",
+        "file": "backend/app/main.py",
+        "where": "code",
+        "open_rounds": 2,
+        "issue": "The CSV and PDF export endpoints can be called repeatedly without any throttling. An attacker could generate a large number of export requests, causing high CPU and memory consumption and potentially exhausting the service.",
+        "fix": "Add a rate\u2011limiting middleware (e.g., slowapi or a reverse\u2011proxy limit) to the export routes, or implement per\u2011user request counters that cap the number of exports per time window.",
+        "status": "fixed",
+        "first_round": 1,
+        "history": [
+          {
+            "round": 1,
+            "status": "open",
+            "severity": "medium"
+          },
+          {
+            "round": 4,
+            "status": "open",
+            "severity": "medium",
+            "reason": "No rate\u2011limiting has been added to /export/csv or /export/pdf; repeated calls can still consume resources."
+          },
+          {
+            "round": 7,
+            "status": "fixed",
+            "severity": "medium",
+            "reason": "no change"
+          },
+          {
+            "round": 8,
+            "status": "fixed",
+            "severity": "medium",
+            "reason": "No change; export endpoints are rate\u2011limited."
+          }
+        ]
+      },
+      {
+        "id": "signup-token-issuance",
+        "severity": "critical",
+        "file": "backend/app/main.py",
+        "where": "code",
+        "open_rounds": 1,
+        "issue": "The /auth/signup endpoint returns a valid JWT for an existing email without checking the password, allowing an attacker to obtain a token for any account simply by guessing its email address.",
+        "fix": "Reject sign\u2011up attempts when the email already exists (return 400) or require password verification before issuing a token. Do not issue a token for an existing user in the signup flow.",
+        "status": "fixed",
+        "first_round": 4,
+        "history": [
+          {
+            "round": 4,
+            "status": "open",
+            "severity": "critical"
+          },
+          {
+            "round": 7,
+            "status": "fixed",
+            "severity": "critical",
+            "reason": "no change"
+          },
+          {
+            "round": 8,
+            "status": "fixed",
+            "severity": "critical",
+            "reason": "No change; signup now only issues a token after a new user is created."
+          }
+        ]
+      },
+      {
+        "id": "export-rate-limiting-missing-2",
+        "severity": "medium",
+        "file": "backend/app/main.py",
+        "where": "code",
+        "open_rounds": 1,
+        "issue": "CSV and PDF export endpoints can be invoked without any throttling, enabling a user or attacker to generate a large number of heavy responses and exhaust CPU/memory.",
+        "fix": "Add rate\u2011limiting middleware (e.g., slowapi) or edge/CDN limits for these endpoints (e.g., 5 requests per minute per IP/user).",
+        "status": "fixed",
+        "first_round": 4,
+        "history": [
+          {
+            "round": 4,
+            "status": "open",
+            "severity": "medium"
+          },
+          {
+            "round": 7,
+            "status": "fixed",
+            "severity": "medium",
+            "reason": "no change"
+          },
+          {
+            "round": 8,
+            "status": "fixed",
+            "severity": "medium",
+            "reason": "No change; duplicate of export-rate\u2011limiting\u2011missing, already fixed."
+          }
+        ]
+      },
+      {
+        "id": "missing-auth-rate-limiting",
+        "severity": "medium",
+        "file": "backend/app/main.py",
+        "where": "code",
+        "open_rounds": 1,
+        "issue": "Authentication endpoints (/auth/login and /auth/signup) have no request\u2011rate controls, making credential\u2011stuffing and brute\u2011force attacks feasible.",
+        "fix": "Integrate slowapi or a similar rate\u2011limiting solution to cap login and signup attempts per IP (e.g., 5 attempts per minute) and implement exponential back\u2011off on failures.",
+        "status": "fixed",
+        "first_round": 4,
+        "history": [
+          {
+            "round": 4,
+            "status": "open",
+            "severity": "medium"
+          },
+          {
+            "round": 7,
+            "status": "fixed",
+            "severity": "medium",
+            "reason": "no change"
+          },
+          {
+            "round": 8,
+            "status": "fixed",
+            "severity": "medium",
+            "reason": "No change; auth endpoints have SlowAPI limits."
+          }
+        ]
+      },
+      {
+        "id": "missing-receipt-upload-validation",
+        "severity": "medium",
+        "file": "backend/app/main.py",
+        "where": "code",
+        "open_rounds": 1,
+        "issue": "Receipt uploads are validated only by the client\u2011provided content\u2011type header and size; the actual file content is not verified, allowing crafted files that bypass these checks.",
+        "fix": "Validate the file content using a library such as Pillow or python-magic to ensure it is a genuine JPEG/PNG, and optionally scan uploads with ClamAV or similar antivirus before saving.",
+        "status": "fixed",
+        "first_round": 4,
+        "history": [
+          {
+            "round": 4,
+            "status": "open",
+            "severity": "medium"
+          },
+          {
+            "round": 7,
+            "status": "fixed",
+            "severity": "medium",
+            "reason": "no change"
+          },
+          {
+            "round": 8,
+            "status": "fixed",
+            "severity": "medium",
+            "reason": "No change; image content type, size, and validity are now verified."
+          }
+        ]
+      },
+      {
+        "id": "vulnerable-dependency-braces",
+        "severity": "high",
+        "file": "expo-app/package-lock.json",
+        "where": "code",
+        "open_rounds": 3,
+        "issue": "braces 3.0.3 contains CVE\u20112026\u201193687 (Denial\u2011of\u2011Service via deep regex patterns) with no patched version available yet.",
+        "fix": "Upgrade to a version where the vulnerability is fixed when released, or replace the library with an alternative that does not use vulnerable regex processing.",
+        "status": "open",
+        "first_round": 4,
+        "history": [
+          {
+            "round": 4,
+            "status": "open",
+            "severity": "high"
+          },
+          {
+            "round": 7,
+            "status": "open",
+            "severity": "high",
+            "reason": "no change"
+          },
+          {
+            "round": 8,
+            "status": "open",
+            "severity": "high",
+            "reason": "No change; braces 3.0.3 still present with CVE\u20112026\u201193687."
+          }
+        ]
+      },
+      {
+        "id": "vulnerable-dependency-node-forge",
+        "severity": "high",
+        "file": "expo-app/package-lock.json",
+        "where": "code",
+        "open_rounds": 3,
+        "issue": "node\u2011forge 1.4.0 is vulnerable to CVE\u20112026\u201185393 (RSA PKCS#1 v1.5 signature forgery) and has no current fix.",
+        "fix": "Replace node\u2011forge with a maintained cryptography library (e.g., @stablelib or the Web Crypto API) for any cryptographic operations.",
+        "status": "open",
+        "first_round": 4,
+        "history": [
+          {
+            "round": 4,
+            "status": "open",
+            "severity": "high"
+          },
+          {
+            "round": 7,
+            "status": "open",
+            "severity": "high",
+            "reason": "no change"
+          },
+          {
+            "round": 8,
+            "status": "open",
+            "severity": "high",
+            "reason": "No change; node\u2011forge 1.4.0 still present with CVE\u20112026\u201185393."
+          }
+        ]
+      },
+      {
+        "id": "vulnerable-dependency-decode-uri-compone",
+        "severity": "medium",
+        "file": "expo-app/package-lock.json",
+        "where": "code",
+        "open_rounds": 3,
+        "issue": "decode\u2011uri\u2011component 0.2.2 is vulnerable to CVE\u20112026\u201145822 (Denial\u2011of\u2011Service via crafted input).",
+        "fix": "Upgrade decode\u2011uri\u2011component to version 0.5.0 or later where the issue is fixed.",
+        "status": "open",
+        "first_round": 4,
+        "history": [
+          {
+            "round": 4,
+            "status": "open",
+            "severity": "medium"
+          },
+          {
+            "round": 7,
+            "status": "open",
+            "severity": "medium",
+            "reason": "no change"
+          },
+          {
+            "round": 8,
+            "status": "open",
+            "severity": "medium",
+            "reason": "No change; decode\u2011uri\u2011component 0.2.2 still present with CVE\u20112026\u201145822."
+          }
+        ]
+      },
+      {
+        "id": "vulnerable-dependency-uuid",
+        "severity": "medium",
+        "file": "expo-app/package-lock.json",
+        "where": "code",
+        "open_rounds": 3,
+        "issue": "uuid 7.0.3 is vulnerable to CVE\u20112026\u201141907 (out\u2011of\u2011bounds write) affecting data integrity.",
+        "fix": "Upgrade uuid to at least version 11.1.1 (or the latest stable release) which contains the fix.",
+        "status": "open",
+        "first_round": 4,
+        "history": [
+          {
+            "round": 4,
+            "status": "open",
+            "severity": "medium"
+          },
+          {
+            "round": 7,
+            "status": "open",
+            "severity": "medium",
+            "reason": "no change"
+          },
+          {
+            "round": 8,
+            "status": "open",
+            "severity": "medium",
+            "reason": "No change; uuid 7.0.3 still present with CVE\u20112026\u201141907."
+          }
+        ]
+      },
+      {
+        "id": "openapi-json-exposed",
+        "severity": "low",
+        "file": "backend/app/main.py",
+        "where": "code",
+        "open_rounds": 3,
+        "issue": "The OpenAPI schema remains publicly accessible at /openapi.json, leaking endpoint signatures and model definitions.",
+        "fix": "Set openapi_url=None in FastAPI configuration or protect the endpoint with authentication / IP\u2011based restrictions.",
+        "status": "open",
+        "first_round": 4,
+        "history": [
+          {
+            "round": 4,
+            "status": "open",
+            "severity": "low"
+          },
+          {
+            "round": 7,
+            "status": "open",
+            "severity": "low",
+            "reason": "no change"
+          },
+          {
+            "round": 8,
+            "status": "open",
+            "severity": "low",
+            "reason": "No change; /openapi.json remains publicly accessible."
+          }
+        ]
+      },
+      {
+        "id": "signup-email-enumeration",
+        "severity": "low",
+        "file": "backend/app/main.py",
+        "where": "code",
+        "open_rounds": 2,
+        "issue": "The /auth/signup endpoint returns a distinct 400 error when an email is already registered, allowing an attacker to enumerate existing user accounts.",
+        "fix": "Return a generic response regardless of email existence (e.g., always send a success message and perform email verification), or unify error messages to avoid revealing account existence.",
+        "status": "open",
+        "first_round": 7,
+        "history": [
+          {
+            "round": 7,
+            "status": "open",
+            "severity": "low"
+          },
+          {
+            "round": 8,
+            "status": "open",
+            "severity": "low",
+            "reason": "No change; signup returns a distinct error when an email already exists."
+          }
+        ]
+      },
+      {
+        "id": "insecure-token-storage-web",
+        "severity": "medium",
+        "file": "expo-app/src/auth.ts",
+        "where": "code",
+        "open_rounds": 2,
+        "issue": "On Expo web builds the JWT is stored in AsyncStorage / local storage, which is accessible to JavaScript and vulnerable to XSS token theft.",
+        "fix": "For web, store the JWT in an httpOnly, Secure cookie or use a web\u2011compatible secure storage mechanism; avoid persisting the token in plain client\u2011side storage.",
+        "status": "open",
+        "first_round": 7,
+        "history": [
+          {
+            "round": 7,
+            "status": "open",
+            "severity": "medium"
+          },
+          {
+            "round": 8,
+            "status": "open",
+            "severity": "medium",
+            "reason": "No change; on Expo web the JWT falls back to AsyncStorage, which is vulnerable to XSS theft."
+          }
+        ]
+      },
+      {
+        "id": "decompression-bomb-image-attack",
+        "severity": "medium",
+        "file": "backend/app/main.py",
+        "where": "code",
+        "open_rounds": 1,
+        "issue": "Uploaded receipt images are verified with Pillow (Image.verify) without limiting image dimensions or pixel count, allowing a crafted decompression\u2011bomb image to consume excessive CPU/memory and cause denial\u2011of\u2011service.",
+        "fix": "Set Pillow's Image.MAX_IMAGE_PIXELS limit or explicitly check image width/height before verification; reject images that exceed safe thresholds and consider scanning uploads with an antivirus.",
+        "status": "open",
+        "first_round": 8,
+        "history": [
+          {
+            "round": 8,
+            "status": "open",
+            "severity": "medium"
+          }
+        ]
+      },
+      {
+        "id": "media-endpoint-rate-limit-missing",
+        "severity": "medium",
+        "file": "backend/app/main.py",
+        "where": "code",
+        "open_rounds": 1,
+        "issue": "`GET /media/{filename}` is authenticated but not protected by any rate\u2011limiting, enabling an attacker with a valid token to flood the endpoint and exhaust server resources.",
+        "fix": "Add a SlowAPI `@limiter.limit` decorator (e.g., \"10/minute\") to the media endpoint or enforce rate limits at the edge/proxy.",
+        "status": "open",
+        "first_round": 8,
+        "history": [
+          {
+            "round": 8,
+            "status": "open",
+            "severity": "medium"
+          }
+        ]
+      },
+      {
+        "id": "vulnerable-dependency-sprintf-js",
+        "severity": "medium",
+        "file": "expo-app/package-lock.json",
+        "where": "code",
+        "open_rounds": 1,
+        "issue": "`sprintf-js` 1.0.3 is vulnerable to CVE\u20112026\u201197058 (Denial\u2011of\u2011Service via unbounded precision specifiers) and no patched version currently exists.",
+        "fix": "Replace `sprintf-js` with native template literals or a maintained library; if a patched version becomes available, upgrade immediately.",
+        "status": "open",
+        "first_round": 8,
+        "history": [
+          {
+            "round": 8,
+            "status": "open",
+            "severity": "medium"
+          }
+        ]
+      }
+    ]
+  },
+  "deployment_guide": {
+    "written": true,
+    "missing_sections": [],
+    "app_type": "mobile app (Expo / React Native), web service or API"
+  },
+  "ui": {
+    "verdict": "fail",
+    "summary": "The FinanceMate prototype implements the core primary flow (sign\u2011in/up, empty dashboard, receipt capture, mileage entry, export) and passes automated axe and Lighthouse checks (accessibility 100%). However, several design\u2011spec requirements are not fully met: key loading/error/empty states lack the exact copy, offline and API\u2011error banners are missing, some accessibility best\u2011practices (focus\u2011visible outlines, accessibility labels, live password rules, show/hide password toggle, autocomplete attributes) are absent, and a few components still use hard\u2011coded color values instead of the design tokens. These gaps affect usability and could break the user journey in edge cases, so they should be addressed before production.",
+    "findings": [
+      {
+        "severity": "high",
+        "file": "expo-app/src/screens/DashboardScreen.tsx",
+        "issue": "Dashboard does not display the required offline banner (\u201cYou\u2019re offline \u2013 data may be outdated.\u201d) or API\u2011error banner (\u201cFailed to load data. Pull down to retry.\u201d) when network conditions change or the API call fails.",
+        "fix": "Add NetInfo listener to detect offline state and render a banner component with the exact copy. Catch errors from the /dashboard endpoint, set an error flag, and render the error banner with the specified message. Use the theme\u2019s surface and error colors for styling.",
+        "source": "designer"
+      },
+      {
+        "severity": "high",
+        "file": "expo-app/src/screens/SignUpScreen.tsx",
+        "issue": "Loading overlay during account creation shows only a spinner without the required text \u201cCreating account\u2026\u201d.",
+        "fix": "When the form is submitting, render a full\u2011screen overlay containing an ActivityIndicator and a Text component with the exact string \u201cCreating account\u2026\u201d. Use theme.typography.bodyLarge for styling.",
+        "source": "designer"
+      },
+      {
+        "severity": "high",
+        "file": "expo-app/src/screens/SignInScreen.tsx",
+        "issue": "Loading state during sign\u2011in uses a spinner only; the required message \u201cSigning you in\u2026\u201d is missing.",
+        "fix": "Add a Text element under the spinner with the exact copy \u201cSigning you in\u2026\u201d and style it using the theme.",
+        "source": "designer"
+      },
+      {
+        "severity": "high",
+        "file": "expo-app/src/screens/ReceiptCaptureScreen.tsx",
+        "issue": "When uploading a receipt the spinner overlay does not show the mandated text \u201cUploading receipt\u2026\u201d.",
+        "fix": "Wrap the ActivityIndicator with a Text component displaying \u201cUploading receipt\u2026\u201d and use the theme\u2019s primary color for consistency.",
+        "source": "designer"
+      },
+      {
+        "severity": "high",
+        "file": "expo-app/src/screens/MileageEntryScreen.tsx",
+        "issue": "Loading state when saving mileage lacks the required text \u201cSaving mileage\u2026\u201d.",
+        "fix": "Display an overlay with ActivityIndicator and a Text component reading \u201cSaving mileage\u2026\u201d, styled with theme.typography.bodyLarge.",
+        "source": "designer"
+      },
+      {
+        "severity": "high",
+        "file": "expo-app/src/screens/ExportScreen.tsx",
+        "issue": "Export CSV/PDF loading states do not include the required status text (\u201cGenerating CSV\u2026\u201d / \u201cGenerating PDF\u2026\u201d) next to the disabled buttons.",
+        "fix": "When a user initiates export, disable the button and display a small spinner and a Text component with the appropriate copy beside the button label.",
+        "source": "designer"
+      },
+      {
+        "severity": "high",
+        "file": "expo-app/src/screens/SignUpScreen.tsx",
+        "issue": "Field\u2011level validation errors do not use the exact strings defined in the spec (e.g., \u201cEnter a valid email address.\u201d, \u201cPassword must be at least 12 characters, include uppercase, lowercase, number, and symbol.\u201d).",
+        "fix": "Implement validation logic that, on error, renders HelperText components with the exact copy. Ensure the HelperText is linked to the corresponding field via accessibilityDescribedBy.",
+        "source": "designer"
+      },
+      {
+        "severity": "medium",
+        "file": "expo-app/src/screens/SignUpScreen.tsx",
+        "issue": "Password input lacks a show/hide toggle icon, making it impossible for users to verify their password entry.",
+        "fix": "Add a right\u2011icon to the TextInput that toggles secureTextEntry. Use the MaterialCommunityIcons eye/eye\u2011off icons and provide an accessibilityLabel (e.g., \u201cShow password\u201d, \u201cHide password\u201d).",
+        "source": "designer"
+      },
+      {
+        "severity": "medium",
+        "file": "expo-app/src/screens/SignInScreen.tsx",
+        "issue": "Email and password fields do not specify autocomplete attributes (e.g., autoComplete=\"email\", autoComplete=\"current-password\").",
+        "fix": "Add the autoComplete prop to the TextInput components with the appropriate values to enable credential autofill on supported platforms.",
+        "source": "designer"
+      },
+      {
+        "severity": "medium",
+        "file": "expo-app/src/components/ui/PrimaryButton.tsx",
+        "issue": "Button styles use hard\u2011coded color hex values (e.g., \"#0066FF\") instead of the design token theme.colors.primary.",
+        "fix": "Replace literal colors with references to the theme (e.g., theme.colors.primary for background and theme.colors.onPrimary for text). Ensure the button respects theme.elevation.card.",
+        "source": "designer"
+      },
+      {
+        "severity": "medium",
+        "file": "expo-app/src/components/ui/AccentButton.tsx",
+        "issue": "AccentButton also uses hard\u2011coded colors rather than the accent token, breaking visual consistency.",
+        "fix": "Map background to theme.colors.accent, pressed state to theme.colors.accentPressed, and text to theme.colors.onAccent.",
+        "source": "designer"
+      },
+      {
+        "severity": "medium",
+        "file": "expo-app/src/components/ui/PrimaryButton.tsx",
+        "issue": "Focus\u2011visible outline (2\u202fpx solid primary) is not implemented for keyboard navigation on web.",
+        "fix": "Add a CSS rule for &:focus-visible that sets outline: 2px solid var(--color-primary) and ensures the outline is visible when the button receives focus.",
+        "source": "designer"
+      },
+      {
+        "severity": "medium",
+        "file": "expo-app/src/components/ui/BottomTabBar.tsx",
+        "issue": "Bottom tab bar does not expose ARIA roles (tablist/tab) and accessibilityState for selected tabs, reducing screen\u2011reader navigation clarity.",
+        "fix": "Add role=\"tablist\" to the container and role=\"tab\" with accessibilityState={{ selected: true/false }} to each tab button. Ensure each tab has an accessible label.",
+        "source": "designer"
+      },
+      {
+        "severity": "low",
+        "file": "expo-app/src/components/ui/EmptyState.tsx",
+        "issue": "Vertical spacing between illustration, title, description, and CTA uses a custom 10\u202fpx margin instead of the 12\u202fpx spacing token.",
+        "fix": "Replace the custom margin with theme.spacing.md (12\u202fpx) to align with the 4/8\u202fpx grid.",
+        "source": "designer"
+      },
+      {
+        "severity": "low",
+        "file": "expo-app/src/components/ui/Toast.tsx",
+        "issue": "Toast component does not call announceForAccessibility, so screen\u2011reader users may miss the message.",
+        "fix": "On mount, invoke announceForAccessibility(message) (or use Snackbar\u2019s built\u2011in a11y handling) to ensure the toast is announced.",
+        "source": "designer"
+      },
+      {
+        "severity": "medium",
+        "viewport": "phone",
+        "issue": "The 'Log in' button is too wide and lacks appropriate padding, making it feel bulky and visually unbalanced against the form fields above.",
+        "fix": "Reduce button width to match the input fields, add consistent padding on all sides, and ensure it aligns with the left edge of the fields.",
+        "screen": "sign in",
+        "source": "vision"
+      },
+      {
+        "severity": "medium",
+        "viewport": "phone",
+        "issue": "The 'Sign up' link is centered and underlined, but lacks visual hierarchy to distinguish it from the primary action. It's positioned too low and doesn't guide users to the next step.",
+        "fix": "Move the link closer to the primary button and increase its font weight or add a subtle underline to make it more prominent. Consider placing it directly below the button.",
+        "screen": "sign in",
+        "source": "vision"
+      },
+      {
+        "severity": "medium",
+        "viewport": "phone",
+        "issue": "The password field has a small eye icon for visibility toggle, but it's misaligned and too close to the right edge, making it awkward to tap.",
+        "fix": "Center the eye icon within the field and ensure it has adequate padding on the right side for touch targets.",
+        "screen": "sign in",
+        "source": "vision"
+      },
+      {
+        "severity": "medium",
+        "viewport": "phone",
+        "issue": "The form fields are too close to the top and bottom of the screen, leaving little breathing room and making the screen feel cramped.",
+        "fix": "Add padding at the top and bottom of the form to create a more balanced composition and improve readability.",
+        "screen": "sign in",
+        "source": "vision"
+      },
+      {
+        "severity": "medium",
+        "viewport": "desktop",
+        "issue": "The layout is stretched vertically and appears to be a scaled-down phone version, not optimized for desktop. The fields and button are too narrow and lack horizontal spacing.",
+        "fix": "Redesign for desktop with wider input fields, increased spacing between elements, and a more generous horizontal padding. Use a grid system to align elements properly.",
+        "screen": "sign in",
+        "source": "vision"
+      },
+      {
+        "severity": "low",
+        "viewport": "phone",
+        "issue": "The 'Email address' and 'Password' labels are too close to the input fields, reducing visual clarity.",
+        "fix": "Increase the vertical spacing between labels and input fields for better readability.",
+        "screen": "sign in",
+        "source": "vision"
+      },
+      {
+        "severity": "high",
+        "screen": "sign in",
+        "source": "vision",
+        "issue": "visual quality 6/10 on 'sign in' (needs 8+): The sign-in screen is functional and meets basic usability needs, but lacks polish and design sophistication expected from a premium product. It uses a minimal grid, readable typography, and clear visual hierarchy, but feels like a stripped-down prototype rather than a polished, commercial app. The layout is cramped and unoptimized for desktop, and there are no visual cues to guide users beyond the primary action.",
+        "fix": "Address this screen's findings until it looks polished and professional."
+      },
+      {
+        "severity": "low",
+        "viewport": "phone",
+        "issue": "Password field's helper text is positioned below the field, which is acceptable but could be more visually aligned with the input area for better scannability.",
+        "fix": "Consider aligning the helper text to the top-left of the input field or using a floating label for better visual hierarchy.",
+        "screen": "sign up",
+        "source": "vision"
+      },
+      {
+        "severity": "low",
+        "viewport": "phone",
+        "issue": "The 'Already have an account? Log in' link is centered but not visually weighted as a secondary action; it lacks visual distinction from the main CTA.",
+        "fix": "Use a lighter weight, smaller font, or a subtle underline to differentiate it from the primary CTA without making it look like a button.",
+        "screen": "sign up",
+        "source": "vision"
+      },
+      {
+        "severity": "medium",
+        "viewport": "both",
+        "issue": "The primary CTA 'Add first receipt' button is visually distinct but lacks a subtle drop shadow or rounded corners that would make it feel more premium and tactile.",
+        "fix": "Add a soft drop shadow and slightly rounded corners to the button to enhance depth and visual hierarchy.",
+        "screen": "empty dashboard",
+        "source": "vision"
+      },
+      {
+        "severity": "medium",
+        "viewport": "both",
+        "issue": "The orange '+' icon is visually present but lacks a subtle hover or press state indication, which would improve feedback for touch interactions.",
+        "fix": "Add a subtle scale animation or color tint change on press to indicate interaction.",
+        "screen": "empty dashboard",
+        "source": "vision"
+      },
+      {
+        "severity": "low",
+        "viewport": "phone",
+        "issue": "The empty state text is centered but lacks a subtle visual hierarchy to guide the eye to the primary action. The text is dense and could be more scannable.",
+        "fix": "Break the descriptive text into two lines with a slight spacing increase between lines, and use a slightly lighter weight for the secondary line to reduce visual weight.",
+        "screen": "empty dashboard",
+        "source": "vision"
+      },
+      {
+        "severity": "low",
+        "viewport": "desktop",
+        "issue": "The desktop layout is stretched vertically, making the empty state feel sparse and underutilized. The bottom tab bar is too small relative to the screen height.",
+        "fix": "Increase the vertical padding around the empty state content and scale the tab bar to be more prominent on desktop, perhaps adding a subtle divider or background to the tab bar.",
+        "screen": "empty dashboard",
+        "source": "vision"
+      },
+      {
+        "severity": "high",
+        "screen": "empty dashboard",
+        "source": "vision",
+        "issue": "visual quality 7/10 on 'empty dashboard' (needs 8+): The dashboard empty state is clean and functional, with a clear primary action and consistent layout. However, it lacks visual polish and subtle design refinements that would elevate it to a polished commercial product.",
+        "fix": "Address this screen's findings until it looks polished and professional."
+      },
+      {
+        "severity": "medium",
+        "viewport": "both",
+        "issue": "No visual hierarchy: the title 'New receipt' and subtitle 'Camera access needed' are identical in weight and size, making it unclear what the primary action is.",
+        "fix": "Use a larger, bolder font for the title and a smaller, lighter font for the subtitle. Add subtle spacing or visual separation (e.g., a divider) between them.",
+        "screen": "receipt capture",
+        "source": "vision"
+      },
+      {
+        "severity": "medium",
+        "viewport": "both",
+        "issue": "Buttons are identical in size and color, with no visual distinction between 'Allow' (primary) and 'Deny' (secondary).",
+        "fix": "Make 'Allow' the primary button with a bolder weight or slightly larger size. Make 'Deny' secondary with a lighter weight or muted color (e.g., gray).",
+        "screen": "receipt capture",
+        "source": "vision"
+      },
+      {
+        "severity": "low",
+        "viewport": "phone",
+        "issue": "The bottom navigation bar is not fully visible on the phone screen, and the camera icon is highlighted with a blue border, which feels like a UI artifact rather than a design element.",
+        "fix": "Ensure the navigation bar is fully visible and remove the blue border highlight. Use a subtle indicator (like a bottom tab selection highlight) instead.",
+        "screen": "receipt capture",
+        "source": "vision"
+      },
+      {
+        "severity": "low",
+        "viewport": "desktop",
+        "issue": "The layout is stretched to fit the desktop viewport, with large empty space above and below the buttons, which feels unbalanced and inefficient.",
+        "fix": "Use a responsive grid or padding that scales appropriately for desktop. Consider centering the buttons or using a more compact layout to utilize vertical space.",
+        "screen": "receipt capture",
+        "source": "vision"
+      },
+      {
+        "severity": "high",
+        "screen": "receipt capture",
+        "source": "vision",
+        "issue": "visual quality 7/10 on 'receipt capture' (needs 8+): The screen is clean and functional, with clear primary actions and a consistent layout. However, it lacks visual hierarchy, typography polish, and spacing refinement needed for a premium product. The buttons are touch-friendly and aligned, but the design feels underdeveloped for a polished commercial app.",
+        "fix": "Address this screen's findings until it looks polished and professional."
+      },
+      {
+        "severity": "high",
+        "viewport": "phone",
+        "issue": "No primary action (e.g., 'Add receipt') is visible. The screen shows only summary cards and a toast, leaving the user unsure of the next step.",
+        "fix": "Add a prominent primary CTA button (e.g., 'Add receipt') below the summary cards or in the empty state area.",
+        "screen": "dashboard with receipt",
+        "source": "vision"
+      },
+      {
+        "severity": "high",
+        "viewport": "phone",
+        "issue": "The 'Receipt saved.' toast is positioned at the top, but there's no clear visual hierarchy indicating it's a success state. The toast lacks a subtle background or animation to distinguish it from content.",
+        "fix": "Apply a subtle background color or animation to the toast to clearly indicate it's a success message, and ensure it doesn't obscure critical UI elements.",
+        "screen": "dashboard with receipt",
+        "source": "vision"
+      },
+      {
+        "severity": "medium",
+        "viewport": "phone",
+        "issue": "Typography lacks a clear type scale. All text appears to be the same weight and size, making it hard to distinguish headings from body text.",
+        "fix": "Implement a type scale: use a larger, bold font for section titles (Income, Expenses, etc.) and a smaller, regular font for the values and notes.",
+        "screen": "dashboard with receipt",
+        "source": "vision"
+      },
+      {
+        "severity": "medium",
+        "viewport": "phone",
+        "issue": "Spacing between cards is minimal and inconsistent. The cards are too close together, and the spacing between the cards and the bottom navigation bar is insufficient.",
+        "fix": "Increase vertical spacing between cards and between the last card and the bottom navigation bar to improve readability and visual breathing room.",
+        "screen": "dashboard with receipt",
+        "source": "vision"
+      },
+      {
+        "severity": "medium",
+        "viewport": "phone",
+        "issue": "The bottom navigation bar is too close to the content. The cards should be visually separated from the navigation bar by padding.",
+        "fix": "Add padding above the bottom navigation bar to create visual separation and prevent the content from appearing to 'hug' the edge.",
+        "screen": "dashboard with receipt",
+        "source": "vision"
+      },
+      {
+        "severity": "medium",
+        "viewport": "desktop",
+        "issue": "Desktop version is stretched to fit the screen, not scaled or adapted. The layout looks compressed and unprofessional.",
+        "fix": "Redesign the desktop layout to use the full width with appropriate spacing and column-based organization. Avoid stretching the phone layout.",
+        "screen": "dashboard with receipt",
+        "source": "vision"
+      },
+      {
+        "severity": "low",
+        "viewport": "phone",
+        "issue": "The 'Office supplies' note is aligned to the right, but there's no clear visual grouping or separation from the value above it.",
+        "fix": "Group the value and note together in a container or use a consistent alignment (e.g., both left-aligned or both right-aligned) to improve visual coherence.",
+        "screen": "dashboard with receipt",
+        "source": "vision"
+      },
+      {
+        "severity": "high",
+        "screen": "dashboard with receipt",
+        "source": "vision",
+        "issue": "visual quality 6/10 on 'dashboard with receipt' (needs 8+): The dashboard screen is functional and follows a clean, card-based layout, but lacks visual polish and hierarchy. Typography is readable but inconsistent in scale, spacing is minimal and unstructured, and the primary action (Add receipt) is missing. The desktop version is not scaled appropriately and looks stretched. Overall, it\u2019s acceptable but feels like a first draft.",
+        "fix": "Address this screen's findings until it looks polished and professional."
+      },
+      {
+        "severity": "medium",
+        "viewport": "phone",
+        "issue": "Form fields lack styling, placeholder text, or labels above them. The fields appear as plain input boxes with no visual hierarchy or affordance beyond borders.",
+        "fix": "Apply consistent styling to form fields (e.g., rounded corners, subtle shadows, placeholder text). Add labels above each field for clarity. Consider using a consistent type scale for field labels and placeholder text.",
+        "screen": "mileage entry",
+        "source": "vision"
+      },
+      {
+        "severity": "medium",
+        "viewport": "phone",
+        "issue": "No error states or validation feedback are visible. Users won't know if fields are invalid until they try to submit.",
+        "fix": "Implement inline error messages under fields with clear, actionable feedback (e.g., 'Date is required'). Use consistent color coding for errors (red) and success (green).",
+        "screen": "mileage entry",
+        "source": "vision"
+      },
+      {
+        "severity": "low",
+        "viewport": "phone",
+        "issue": "The 'Save mileage' button is centered horizontally but lacks visual hierarchy or contrast to stand out as the primary action.",
+        "fix": "Increase button size, use bold font, and ensure sufficient contrast with background. Consider adding a subtle shadow or border to make it pop.",
+        "screen": "mileage entry",
+        "source": "vision"
+      },
+      {
+        "severity": "low",
+        "viewport": "phone",
+        "issue": "The 'Notes (optional)' field lacks a clear visual indicator that it's optional. The text 'optional' is small and not emphasized.",
+        "fix": "Use a lighter weight or smaller font for 'optional' text, or place it in parentheses. Consider adding a small icon (e.g., an asterisk or info icon) to indicate optional fields.",
+        "screen": "mileage entry",
+        "source": "vision"
+      },
+      {
+        "severity": "low",
+        "viewport": "phone",
+        "issue": "The empty state for 'Mileage entries' is not visually distinct from the form section. It appears as a blank space with no guidance.",
+        "fix": "Add a subtle visual separator (e.g., divider line) between the form and the empty state. Add a hint or placeholder text like 'No mileage entries yet. Tap 'Save mileage' to add your first entry.'",
+        "screen": "mileage entry",
+        "source": "vision"
+      },
+      {
+        "severity": "high",
+        "screen": "mileage entry",
+        "source": "vision",
+        "issue": "visual quality 6/10 on 'mileage entry' (needs 8+): The screen is functional and meets basic usability requirements but lacks polish. Typography and spacing are adequate, but the form fields are unstyled and lack helpful hints or validation feedback. The primary action is clear, but the overall design feels like a basic prototype rather than a polished product. No desktop version is provided for review.",
+        "fix": "Address this screen's findings until it looks polished and professional."
+      },
+      {
+        "severity": "medium",
+        "viewport": "both",
+        "issue": "Form fields are unstyled input boxes with no visual hierarchy or brand identity, resembling browser defaults.",
+        "fix": "Apply consistent, branded styling to all form fields (rounded corners, subtle borders, placeholder text, focus states) to match the app\u2019s visual language.",
+        "screen": "mileage list",
+        "source": "vision"
+      },
+      {
+        "severity": "medium",
+        "viewport": "both",
+        "issue": "Text fields are too narrow and lack padding, making them feel cramped and hard to type in.",
+        "fix": "Increase field width and add padding to improve usability and visual breathing room.",
+        "screen": "mileage list",
+        "source": "vision"
+      },
+      {
+        "severity": "low",
+        "viewport": "both",
+        "issue": "The success message 'Mileage entry saved.' is positioned below the form, which can be confusing as it doesn't clearly indicate the entry has been added to the list.",
+        "fix": "Move the success message to appear above the list or add a brief animation to confirm the entry has been added.",
+        "screen": "mileage list",
+        "source": "vision"
+      },
+      {
+        "severity": "low",
+        "viewport": "phone",
+        "issue": "The 'Save mileage' button is not touch-friendly; it\u2019s too close to the bottom edge and lacks sufficient padding or visual feedback.",
+        "fix": "Add padding to the button and ensure it\u2019s large enough for thumb reach (minimum 44pt height). Consider adding a ripple effect or hover state for feedback.",
+        "screen": "mileage list",
+        "source": "vision"
+      },
+      {
+        "severity": "low",
+        "viewport": "desktop",
+        "issue": "The layout is stretched vertically and doesn't utilize desktop space effectively; all elements are aligned left with no horizontal spacing or grid alignment.",
+        "fix": "Reorganize the layout to use desktop real estate: center-align key elements, add horizontal padding, and group related fields with consistent spacing.",
+        "screen": "mileage list",
+        "source": "vision"
+      },
+      {
+        "severity": "high",
+        "screen": "mileage list",
+        "source": "vision",
+        "issue": "visual quality 7/10 on 'mileage list' (needs 8+): The screen is clean and functional, with a clear primary action and consistent spacing. However, it lacks visual polish and branding, and the form fields are unstyled and generic, which prevents it from feeling like a premium product.",
+        "fix": "Address this screen's findings until it looks polished and professional."
+      },
+      {
+        "severity": "medium",
+        "viewport": "phone",
+        "issue": "The two export buttons are stacked vertically with no visual separation or grouping, making them appear as a single unit. This reduces visual hierarchy and could confuse users about which action is primary.",
+        "fix": "Add subtle spacing or a divider between the buttons. Consider making 'EXPORT CSV' the primary action with a more prominent visual weight (e.g., slightly larger size or bold text) since CSV is often the preferred format for tax reporting.",
+        "screen": "export screen",
+        "source": "vision"
+      },
+      {
+        "severity": "low",
+        "viewport": "both",
+        "issue": "The buttons are centered horizontally but not vertically aligned with the title. The title 'Export your data' sits above the buttons, creating an unbalanced composition.",
+        "fix": "Center the buttons vertically with the title by adjusting the padding or using a flexbox layout to align the buttons and title as a group.",
+        "screen": "export screen",
+        "source": "vision"
+      },
+      {
+        "severity": "low",
+        "viewport": "desktop",
+        "issue": "The buttons stretch to fill the full width on desktop, which feels unnecessarily wide and doesn't match the phone layout. This creates a sense of wasted space.",
+        "fix": "Limit the button width to match the phone layout or use a responsive design that scales appropriately. Consider using a fixed width or max-width with padding to avoid stretching.",
+        "screen": "export screen",
+        "source": "vision"
+      },
+      {
+        "severity": "low",
+        "viewport": "both",
+        "issue": "The two export buttons are stacked vertically but have no visual separation or subtle hierarchy beyond color. A slight spacing or visual cue (like a divider or subtle shadow) would improve clarity.",
+        "fix": "Add a subtle divider or spacing between the buttons, or use a slight elevation/shadow on the top button to indicate primary action.",
+        "screen": "export completed",
+        "source": "vision"
+      },
+      {
+        "severity": "low",
+        "viewport": "phone",
+        "issue": "The blue export buttons are slightly too wide and extend beyond the safe area on the phone, with a small amount of padding on the right edge. This could be improved for better touch target consistency.",
+        "fix": "Adjust button width to be more consistent with safe area padding and ensure no content extends beyond the safe area.",
+        "screen": "export completed",
+        "source": "vision"
+      },
+      {
+        "severity": "low",
+        "viewport": "desktop",
+        "issue": "The buttons are centered horizontally, but the text is not perfectly aligned with the button edges, creating a slight visual misalignment.",
+        "fix": "Adjust button padding or text alignment to ensure perfect horizontal centering and visual symmetry.",
+        "screen": "export completed",
+        "source": "vision"
+      }
+    ],
+    "lighthouse": [
+      {
+        "accessibility": 100,
+        "bestPractices": 100,
+        "performance": 73
+      }
+    ],
+    "screenshots": [
+      "apps/freelance-finance-tracker/.agent-run/20261006-090519-f22a/screenshots/expo-app/screenshot-phone.png",
+      "apps/freelance-finance-tracker/.agent-run/20261006-090519-f22a/screenshots/expo-app/screenshot-phone-full.png",
+      "apps/freelance-finance-tracker/.agent-run/20261006-090519-f22a/screenshots/expo-app/screenshot-desktop.png",
+      "apps/freelance-finance-tracker/.agent-run/20261006-090519-f22a/screenshots/expo-app/screenshot-desktop-full.png",
+      "apps/freelance-finance-tracker/.agent-run/20261006-090519-f22a/screenshots/expo-app/flow-phone-01-sign-in.png",
+      "apps/freelance-finance-tracker/.agent-run/20261006-090519-f22a/screenshots/expo-app/flow-phone-02-sign-up.png",
+      "apps/freelance-finance-tracker/.agent-run/20261006-090519-f22a/screenshots/expo-app/flow-phone-03-empty-dashboard.png",
+      "apps/freelance-finance-tracker/.agent-run/20261006-090519-f22a/screenshots/expo-app/flow-phone-04-receipt-capture.png",
+      "apps/freelance-finance-tracker/.agent-run/20261006-090519-f22a/screenshots/expo-app/flow-phone-05-dashboard-with-receipt.png",
+      "apps/freelance-finance-tracker/.agent-run/20261006-090519-f22a/screenshots/expo-app/flow-phone-06-mileage-entry.png",
+      "apps/freelance-finance-tracker/.agent-run/20261006-090519-f22a/screenshots/expo-app/flow-phone-07-mileage-list.png",
+      "apps/freelance-finance-tracker/.agent-run/20261006-090519-f22a/screenshots/expo-app/flow-phone-08-export-screen.png",
+      "apps/freelance-finance-tracker/.agent-run/20261006-090519-f22a/screenshots/expo-app/flow-phone-09-export-completed.png",
+      "apps/freelance-finance-tracker/.agent-run/20261006-090519-f22a/screenshots/expo-app/flow-desktop-01-sign-in.png",
+      "apps/freelance-finance-tracker/.agent-run/20261006-090519-f22a/screenshots/expo-app/flow-desktop-02-sign-up.png",
+      "apps/freelance-finance-tracker/.agent-run/20261006-090519-f22a/screenshots/expo-app/flow-desktop-03-empty-dashboard.png",
+      "apps/freelance-finance-tracker/.agent-run/20261006-090519-f22a/screenshots/expo-app/flow-desktop-04-receipt-capture.png",
+      "apps/freelance-finance-tracker/.agent-run/20261006-090519-f22a/screenshots/expo-app/flow-desktop-05-dashboard-with-receipt.png",
+      "apps/freelance-finance-tracker/.agent-run/20261006-090519-f22a/screenshots/expo-app/flow-desktop-06-mileage-entry.png",
+      "apps/freelance-finance-tracker/.agent-run/20261006-090519-f22a/screenshots/expo-app/flow-desktop-07-mileage-list.png",
+      "apps/freelance-finance-tracker/.agent-run/20261006-090519-f22a/screenshots/expo-app/flow-desktop-08-export-screen.png",
+      "apps/freelance-finance-tracker/.agent-run/20261006-090519-f22a/screenshots/expo-app/flow-desktop-09-export-completed.png"
+    ]
+  },
+  "retro": {
+    "observations": [
+      "coder hit its turn limit in 5 of 8 rounds ([2, 3, 5, 6, 8])",
+      "slowest round 7 took 60 min; average 46 min"
+    ],
+    "went_well": [
+      "The acceptance tests were ultimately passed (from round 3 onward) and the pipeline completed without deadlock after 8 rounds.",
+      "Reviewer consistently provided detailed security and functional issues, enabling the coder to target specific problem areas.",
+      "UI design artifacts (DESIGN.md and ui_flow.json) were generated early and used by the UI validator throughout the run.",
+      "Static lint (ruff) errors were identified and subsequently reduced, showing the validator feedback loop works.",
+      "The coder\u2019s turn\u2011limit nudging mechanism prevented the run from aborting despite multiple turn\u2011limit hits."
+    ],
+    "improvements": [
+      {
+        "title": "Add pre\u2011run dependency resolver and auto\u2011add missing packages",
+        "evidence": "Round\u202f2: \"ERROR: Unable to import FastAPI app: No module named 'slowapi'\" \u2013 missing Python dependency.  Rounds\u202f5\u20116: npm ERESOLVE errors showing version conflicts for react/react\u2011test\u2011renderer, causing npm install to fail.  These errors repeatedly forced the coder to hit turn limits and stalled progress.",
+        "change": "static validators (validate.py): introduce a new validator `dependency_check.py` that runs `pip install -r backend/requirements.txt` and `npm install` before each coder turn, detects missing packages or version conflicts, and automatically appends missing Python packages to `requirements.txt` or suggests version adjustments in `package.json`.  The validator should output a concise fix suggestion that is fed to the coder.",
+        "expected_effect": "ImportErrors and npm install failures are caught and resolved before the coder starts modifying code, eliminating repeated turn\u2011limit hits and cutting total round time dramatically.",
+        "priority": "high"
+      },
+      {
+        "title": "Structured, prioritized feedback to coder after each round",
+        "evidence": "Round\u202f5 and\u202f6 reviewer issued long lists of issues (ImportError, FastAPI signature, ruff lint errors, UI failures) but the coder still hit its turn limit, indicating the feedback was not actionable or ordered.",
+        "change": "feedback message to the coder after each round: replace the raw list with a synthesized summary that categorises issues (critical blockers, lint errors, UI failures, security), includes file/line references, and provides a one\u2011sentence fix suggestion for each.  Use a fixed template so the coder sees the most urgent items first.",
+        "expected_effect": "Coder can focus on the highest\u2011impact fixes first, reduces wasted iterations, and improves convergence speed.",
+        "priority": "high"
+      },
+      {
+        "title": "Enrich validators with cause\u2011and\u2011fix suggestions",
+        "evidence": "Validator output for ruff (round\u202f3 &\u202f5) lists undefined names (F821) and unused imports (F401) without guidance.  npm validator (round\u202f5\u20116) only prints the raw ERESOLVE log, leaving the coder to infer which package versions to change.",
+        "change": "static validators (validate.py): extend each validator to parse error codes and generate actionable recommendations.  For ruff, map F821 \u2192 \"Add missing import: from fastapi import FastAPI\"; F401 \u2192 \"Remove unused import or use it\".  For npm, parse the conflicting peer dependency lines and suggest the exact version bump or downgrade (e.g., \"Set react-test-renderer to ^18.2.0\" or run `expo install`).  Append these suggestions to the validator report.",
+        "expected_effect": "Provides the coder with clear, concrete next steps, reducing guesswork and the number of turns needed to resolve each problem.",
+        "priority": "medium-high"
+      },
+      {
+        "title": "Introduce backend readiness check before UI validation",
+        "evidence": "Rounds\u202f2\u20113 UI validators failed because the FastAPI backend could not start (ImportError for slowapi, \"name 'app' is not defined\").  UI tests were repeatedly run on a non\u2011functional backend, consuming time (e.g., round\u202f2 UI blocking count\u202f7, round\u202f3 UI blocking\u202f5).",
+        "change": "validators: add a new pre\u2011validator step `backend_ready` that attempts to import and start the FastAPI app (`uvicorn backend.app.main:app --check-config`).  If it fails, block all UI\u2011related validators and return the precise import/startup error to the coder.",
+        "expected_effect": "Avoids unnecessary UI validation runs while the backend is broken, shortening round duration and focusing effort on fixing core server issues first.",
+        "priority": "medium"
+      },
+      {
+        "title": "Update planner prompt to enforce task ordering: core backend fixes before UI and security enhancements",
+        "evidence": "The initial plan prioritized UI flow (DESIGN.md, ui_flow.json) while fundamental import and dependency problems persisted, causing the coder to bounce between backend crashes and UI failures across rounds\u202f2\u20116.  Security hardening was only tackled in later rounds, extending the run.",
+        "change": "planner prompt: require the planner to output a ranked task list with explicit ordering \u2013 (1) resolve import errors and missing dependencies, (2) implement missing auth endpoints (login, signup), (3) secure media endpoint, (4) update vulnerable dependencies, (5) validate UI primary flow, (6) final security hardening.  The planner should embed this ordering into the designer's output and pass it to the coder as a roadmap.",
+        "expected_effect": "Provides a clear, top\u2011down roadmap; the coder works on blockers first, reducing back\u2011and\u2011forth, lowering the number of rounds and overall runtime.",
+        "priority": "medium"
+      }
+    ]
+  }
+}
