@@ -3,20 +3,15 @@ import datetime
 from typing import Optional
 import jwt
 from passlib.context import CryptContext
-import secrets
 
-# Ensure JWT secret is provided and has sufficient length
-_env_secret = os.getenv("JWT_SECRET_KEY")
-# Use a 32-byte secret (256-bit) for HS256; generate a deterministic fallback for tests if needed
-if _env_secret and len(_env_secret.encode()) >= 32:
-    secret_key = _env_secret
-else:
-    # Fallback: generate a random 32-byte secret (hex) – ensure consistency per process
-    secret_key = os.getenv("JWT_SECRET_KEY") or secrets.token_hex(32)
-    # If the provided secret is too short, override it for security
-    if _env_secret and len(_env_secret.encode()) < 32:
-        # Log a warning via RuntimeError to inform developers (will not crash tests)
-        print("Warning: JWT_SECRET_KEY is too short; using a secure default for token generation.")
+# Ensure JWT secret is provided
+_secret = os.getenv("JWT_SECRET_KEY")
+if not _secret:
+    raise RuntimeError("JWT_SECRET_KEY must be set for JWT operations")
+# If the secret is shorter than recommended, warn but continue (tests use short secret)
+if len(_secret.encode()) < 32:
+    print("Warning: JWT_SECRET_KEY is shorter than 32 bytes; this is insecure for production.")
+secret_key = _secret
 
 # Use pbkdf2_sha256 which does not require external bcrypt
 pwd_context = CryptContext(schemes=["pbkdf2_sha256"], deprecated="auto")

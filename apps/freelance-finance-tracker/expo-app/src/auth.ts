@@ -1,17 +1,29 @@
 import { Platform } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+// Native SecureStore for iOS/Android
 import * as SecureStore from 'expo-secure-store';
 
-// Token storage abstraction. On native platforms we use SecureStore which stores data
-// encrypted on the device. For the web platform we fall back to AsyncStorage which is
-// the only available storage mechanism in the Expo SDK. This is not ideal for production
-// but satisfies the functional requirements of the demo and avoids the runtime error
-// (`getValueWithKeyAsync is not a function`) that occurs when using SecureStore on web.
-const TOKEN_KEY = 'jwt';
+const TOKEN_KEY = 'jwt_token';
+
+// Helper functions for web cookie handling
+function setCookie(name: string, value: string, days = 7) {
+  const expires = new Date(Date.now() + days * 864e5).toUTCString();
+  const sameSite = 'Strict';
+  const secure = location.protocol === 'https:' ? '; Secure' : '';
+  document.cookie = `${name}=${encodeURIComponent(value)}; expires=${expires}; path=/; SameSite=${sameSite}${secure}`;
+}
+
+function getCookie(name: string) {
+  const match = document.cookie.match(new RegExp('(?:^|; )' + name.replace(/([.$?*|{}()\[\]\\\/\+^])/g, '\\$1') + '=([^;]*)'));
+  return match ? decodeURIComponent(match[1]) : null;
+}
+
+function deleteCookie(name: string) {
+  document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`;
+}
 
 export async function saveToken(token: string): Promise<void> {
   if (Platform.OS === 'web') {
-    await AsyncStorage.setItem(TOKEN_KEY, token);
+    setCookie(TOKEN_KEY, token);
   } else {
     await SecureStore.setItemAsync(TOKEN_KEY, token);
   }
@@ -19,14 +31,14 @@ export async function saveToken(token: string): Promise<void> {
 
 export async function getToken(): Promise<string | null> {
   if (Platform.OS === 'web') {
-    return await AsyncStorage.getItem(TOKEN_KEY);
+    return getCookie(TOKEN_KEY);
   }
   return await SecureStore.getItemAsync(TOKEN_KEY);
 }
 
 export async function deleteToken(): Promise<void> {
   if (Platform.OS === 'web') {
-    await AsyncStorage.removeItem(TOKEN_KEY);
+    deleteCookie(TOKEN_KEY);
   } else {
     await SecureStore.deleteItemAsync(TOKEN_KEY);
   }

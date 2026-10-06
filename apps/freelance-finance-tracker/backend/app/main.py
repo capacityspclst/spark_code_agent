@@ -40,7 +40,7 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         response.headers["Strict-Transport-Security"] = "max-age=63072000; includeSubDomains; preload"
         response.headers["X-Content-Type-Options"] = "nosniff"
         response.headers["X-Frame-Options"] = "DENY"
-        response.headers["Content-Security-Policy"] = "default-src 'self'"
+        response.headers["Content-Security-Policy"] = "default-src 'self' blob: data:"
         return response
 
 app.add_middleware(SecurityHeadersMiddleware)
@@ -256,10 +256,8 @@ def get_media(request: Request, filename: str, current_user: models.User = Depen
         resolved = safe_path.resolve(strict=True)
     except FileNotFoundError:
         raise HTTPException(status_code=404, detail="File not found")
-    # Ensure the resolved path is within MEDIA_ROOT
     if not resolved.is_relative_to(pathlib.Path(MEDIA_ROOT).resolve()):
         raise HTTPException(status_code=400, detail="Invalid file path")
-    # Verify ownership
     receipt = (
         db.query(models.Receipt)
         .filter(models.Receipt.image_path == str(resolved), models.Receipt.user_id == current_user.id)
