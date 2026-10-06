@@ -1,0 +1,8 @@
+{
+  "verdict": "revise",
+  "issues": [
+    "In `backend/app/schemas.py` the `ReceiptBase` model defines the `amount` field with `gt=0` (i.e. it must be greater than zero). This prevents recording negative amounts, which the dashboard logic expects to treat as expenses (`expenses = sum(r.amount for r in receipts if r.amount < 0)`). As a result, expenses will always be zero and the dashboard summary cannot correctly reflect expense data. To align the backend with the specification (income, expenses, mileage deduction, estimated tax), the amount validation should be relaxed to allow negative values (or zero). For example, change the field definition to `amount: float = Field(...)` or `amount: float = Field(..., ge=-1e9)` and update any related documentation/comments. This change will not break the existing acceptance tests (which use a positive amount) but will enable proper expense tracking for real\u2011world use.",
+    "The JWT secret key length is only 10 bytes (`dev-secret`) which triggers an `InsecureKeyLengthWarning`. While not a test failure, using such a short secret is insecure for production. Consider updating the environment handling to enforce a secret of at least 256\u2011bit (32\u2011byte) length (e.g., base64\u2011encoded 32\u2011byte random string) and adjust the `auth.py` check or documentation accordingly."
+  ],
+  "feedback": "The solution passes all acceptance tests and static checks, but the receipt amount validation blocks the intended expense tracking functionality and the JWT secret length is insecure for production. Adjust the `ReceiptBase.amount` field to permit negative values so expenses are captured correctly, and ensure a sufficiently strong JWT secret is used."
+}
