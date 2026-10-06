@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, ActivityIndicator, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, ActivityIndicator, StyleSheet, ScrollView, Pressable } from 'react-native';
 import axios from 'axios';
 import { useNavigation, useIsFocused } from '@react-navigation/native';
 import { getToken } from '../auth';
@@ -48,6 +48,15 @@ export default function DashboardScreen() {
           <Text style={styles.emptyTitle}>No data yet</Text>
           <Text style={styles.emptyText}>You haven’t added any receipts or mileage yet. Tap the + button to get started.</Text>
           <PrimaryButton title="Add first receipt" onPress={() => navigation.navigate('ReceiptCapture')} accessibilityLabel="Add first receipt" />
+          {/* FAB style button for Add receipt action */}
+          <Pressable
+            onPress={() => navigation.navigate('ReceiptCapture')}
+            accessibilityLabel="Add receipt"
+            accessibilityRole="button"
+            style={styles.fab}
+          >
+            <Text style={styles.fabText}>+</Text>
+          </Pressable>
         </View>
       ) : (
         <View style={styles.cards}>
@@ -84,4 +93,6 @@ const styles = StyleSheet.create({
   card: { backgroundColor: theme.colors.surface, padding: theme.spacing.lg, borderRadius: theme.radii.md, marginBottom: theme.spacing.md, ...theme.elevation.card },
   cardTitle: { ...theme.typography.h3, color: theme.colors.onSurface },
   cardValue: { ...theme.typography.h2, color: theme.colors.onSurface, marginTop: theme.spacing.sm },
+  fab: { marginTop: theme.spacing.lg, width: 56, height: 56, borderRadius: 28, backgroundColor: theme.colors.accent, justifyContent: 'center', alignItems: 'center' },
+  fabText: { ...theme.typography.button, color: theme.colors.onAccent },
 });

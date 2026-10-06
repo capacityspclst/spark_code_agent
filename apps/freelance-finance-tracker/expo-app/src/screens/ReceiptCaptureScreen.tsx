@@ -46,7 +46,6 @@ export default function ReceiptCaptureScreen() {
       form.append('date', date);
       form.append('category', category);
       form.append('notes', notes);
-      // Ensure image present; use placeholder if none
       if (image) {
         if (Platform.OS === 'web') {
           const response = await fetch(image.assets[0].uri);
@@ -77,13 +76,11 @@ export default function ReceiptCaptureScreen() {
         headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'multipart/form-data' },
       });
       setMessage('Receipt saved.');
-      // Navigate immediately after success
       navigation.navigate('Dashboard');
     } catch (e) {
       setMessage('Upload failed. Check your connection and try again.');
     } finally {
       setLoading(false);
-      // Clear message after a few seconds
       setTimeout(() => setMessage(''), 3000);
     }
   };
@@ -102,7 +99,8 @@ export default function ReceiptCaptureScreen() {
   if (hasPermission === null) {
     return (
       <View style={styles.container} accessibilityRole="none">
-        <Text style={styles.text}>FinanceMate needs camera access to photograph receipts.</Text>
+        <Text style={styles.heading}>New receipt</Text>
+        <Text style={styles.text}>Camera access needed</Text>
         <PrimaryButton title="Allow" onPress={grantPermission} accessibilityLabel="Allow" />
         <PrimaryButton title="Deny" onPress={() => setHasPermission(false)} accessibilityLabel="Deny" />
       </View>
@@ -112,6 +110,7 @@ export default function ReceiptCaptureScreen() {
   function renderForm() {
     return (
       <View style={styles.form}>
+        <Text style={styles.heading}>New receipt</Text>
         {image && <Image source={{ uri: image.assets[0].uri }} style={styles.image} />}
         <PrimaryButton title="Tap to take a photo or choose from library" onPress={pickImage} accessibilityLabel="Tap to take a photo or choose from library" />
         <Text style={styles.fieldLabel} nativeID="amount-label">Amount (USD)</Text>
@@ -182,6 +181,7 @@ export default function ReceiptCaptureScreen() {
 const styles = StyleSheet.create({
   container: { flexGrow: 1, padding: theme.spacing.lg, backgroundColor: theme.colors.background },
   text: { ...theme.typography.body, marginBottom: theme.spacing.md },
+  heading: { ...theme.typography.h2, color: theme.colors.onSurface, marginBottom: theme.spacing.md },
   form: { marginTop: theme.spacing.md },
   fieldLabel: { ...theme.typography.body, color: theme.colors.onSurface, marginBottom: theme.spacing.xs, marginTop: theme.spacing.sm },
   input: { backgroundColor: theme.colors.surface, padding: theme.spacing.sm, borderRadius: theme.radii.sm, borderWidth: 1, borderColor: theme.colors.secondary, marginBottom: theme.spacing.sm },
