@@ -3,10 +3,12 @@ It provides values used across the application such as the secret key,
 algorithm, token expiry, and database URL.
 """
 import os
+import secrets
 from datetime import timedelta
 
-# Secret key for JWT signing – should be strong in production.
-SECRET_KEY: str = os.getenv("SECRET_KEY", "supersecretkey")
+# Secret key for JWT signing – generate a random one if not provided.
+# Using a 32-byte URL‑safe token gives a suitably long secret for HS256.
+SECRET_KEY: str = os.getenv("SECRET_KEY", secrets.token_urlsafe(32))
 
 # JWT algorithm.
 ALGORITHM: str = os.getenv("ALGORITHM", "HS256")
