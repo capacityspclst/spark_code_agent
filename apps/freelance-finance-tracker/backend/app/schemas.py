@@ -17,7 +17,8 @@ class Token(BaseModel):
     token_type: str = "bearer"
 
 class ReceiptBase(BaseModel):
-    amount: float = Field(..., gt=0)
+    # Allow both positive (income) and negative (expense) amounts
+    amount: float = Field(...)
     date: date
     category: str
     notes: Optional[str] = None
