@@ -8,9 +8,9 @@ export default function LoadingOverlay({ message }: Props) {
   return (
     <View
       style={styles.overlay}
-      accessibilityRole="alert"
+      accessibilityRole="progressbar"
+      accessibilityLabel={message}
       accessibilityLiveRegion="assertive"
-      accessible={true}
     >
       <ActivityIndicator
         size="large"
