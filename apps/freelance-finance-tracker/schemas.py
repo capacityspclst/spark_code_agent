@@ -3,7 +3,7 @@ Only minimal fields needed for the tests are defined.
 """
 from typing import Optional
 
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field, ConfigDict
 
 class UserCreate(BaseModel):
     email: EmailStr
@@ -13,8 +13,7 @@ class UserRead(BaseModel):
     id: int
     email: EmailStr
 
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
 
 class Token(BaseModel):
     access_token: str
