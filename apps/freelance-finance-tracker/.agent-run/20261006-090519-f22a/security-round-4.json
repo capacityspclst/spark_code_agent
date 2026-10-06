@@ -1,0 +1,92 @@
+{
+  "verdict": "fail",
+  "summary": "The FastAPI backend has patched earlier CSV injection and documentation exposure, but critical security gaps remain: the signup endpoint issues JWTs for existing accounts without any proof of identity, allowing account takeover; the OpenAPI schema is still publicly reachable; there is no rate\u2011limiting on authentication or export endpoints, opening the service to brute\u2011force and DoS attacks; several high\u2011severity JavaScript dependencies are still vulnerable; and receipt upload validation is weak. These issues must be resolved before moving to production.",
+  "findings": [
+    {
+      "id": "export-rate-limiting-missing",
+      "severity": "medium",
+      "where": "code",
+      "file": "backend/app/main.py",
+      "issue": "The CSV and PDF export endpoints can be called repeatedly without any throttling. An attacker could generate a large number of export requests, causing high CPU and memory consumption and potentially exhausting the service.",
+      "fix": "Add a rate\u2011limiting middleware (e.g., slowapi or a reverse\u2011proxy limit) to the export routes, or implement per\u2011user request counters that cap the number of exports per time window."
+    },
+    {
+      "id": "signup-token-issuance",
+      "severity": "critical",
+      "where": "code",
+      "file": "backend/app/main.py",
+      "issue": "The /auth/signup endpoint returns a valid JWT for an existing email without checking the password, allowing an attacker to obtain a token for any account simply by guessing its email address.",
+      "fix": "Reject sign\u2011up attempts when the email already exists (return 400) or require password verification before issuing a token. Do not issue a token for an existing user in the signup flow."
+    },
+    {
+      "id": "export-rate-limiting-missing-2",
+      "severity": "medium",
+      "where": "code",
+      "file": "backend/app/main.py",
+      "issue": "CSV and PDF export endpoints can be invoked without any throttling, enabling a user or attacker to generate a large number of heavy responses and exhaust CPU/memory.",
+      "fix": "Add rate\u2011limiting middleware (e.g., slowapi) or edge/CDN limits for these endpoints (e.g., 5 requests per minute per IP/user)."
+    },
+    {
+      "id": "missing-auth-rate-limiting",
+      "severity": "medium",
+      "where": "code",
+      "file": "backend/app/main.py",
+      "issue": "Authentication endpoints (/auth/login and /auth/signup) have no request\u2011rate controls, making credential\u2011stuffing and brute\u2011force attacks feasible.",
+      "fix": "Integrate slowapi or a similar rate\u2011limiting solution to cap login and signup attempts per IP (e.g., 5 attempts per minute) and implement exponential back\u2011off on failures."
+    },
+    {
+      "id": "missing-receipt-upload-validation",
+      "severity": "medium",
+      "where": "code",
+      "file": "backend/app/main.py",
+      "issue": "Receipt uploads are validated only by the client\u2011provided content\u2011type header and size; the actual file content is not verified, allowing crafted files that bypass these checks.",
+      "fix": "Validate the file content using a library such as Pillow or python-magic to ensure it is a genuine JPEG/PNG, and optionally scan uploads with ClamAV or similar antivirus before saving."
+    },
+    {
+      "id": "vulnerable-dependency-braces",
+      "severity": "high",
+      "where": "code",
+      "file": "expo-app/package-lock.json",
+      "issue": "braces 3.0.3 contains CVE\u20112026\u201193687 (Denial\u2011of\u2011Service via deep regex patterns) with no patched version available yet.",
+      "fix": "Upgrade to a version where the vulnerability is fixed when released, or replace the library with an alternative that does not use vulnerable regex processing."
+    },
+    {
+      "id": "vulnerable-dependency-node-forge",
+      "severity": "high",
+      "where": "code",
+      "file": "expo-app/package-lock.json",
+      "issue": "node\u2011forge 1.4.0 is vulnerable to CVE\u20112026\u201185393 (RSA PKCS#1 v1.5 signature forgery) and has no current fix.",
+      "fix": "Replace node\u2011forge with a maintained cryptography library (e.g., @stablelib or the Web Crypto API) for any cryptographic operations."
+    },
+    {
+      "id": "vulnerable-dependency-decode-uri-compone",
+      "severity": "medium",
+      "where": "code",
+      "file": "expo-app/package-lock.json",
+      "issue": "decode\u2011uri\u2011component 0.2.2 is vulnerable to CVE\u20112026\u201145822 (Denial\u2011of\u2011Service via crafted input).",
+      "fix": "Upgrade decode\u2011uri\u2011component to version 0.5.0 or later where the issue is fixed."
+    },
+    {
+      "id": "vulnerable-dependency-uuid",
+      "severity": "medium",
+      "where": "code",
+      "file": "expo-app/package-lock.json",
+      "issue": "uuid 7.0.3 is vulnerable to CVE\u20112026\u201141907 (out\u2011of\u2011bounds write) affecting data integrity.",
+      "fix": "Upgrade uuid to at least version 11.1.1 (or the latest stable release) which contains the fix."
+    },
+    {
+      "id": "openapi-json-exposed",
+      "severity": "low",
+      "where": "code",
+      "file": "backend/app/main.py",
+      "issue": "The OpenAPI schema remains publicly accessible at /openapi.json, leaking endpoint signatures and model definitions.",
+      "fix": "Set openapi_url=None in FastAPI configuration or protect the endpoint with authentication / IP\u2011based restrictions."
+    }
+  ],
+  "deployment_actions": [],
+  "fixed": [
+    "csv-injection",
+    "api-docs-exposed"
+  ],
+  "stalled": []
+}
