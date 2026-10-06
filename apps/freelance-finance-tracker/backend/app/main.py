@@ -1,5 +1,6 @@
 import os
-from fastapi import FastAPI, Depends, HTTPException, File, UploadFile, Form
+import pathlib
+from fastapi import FastAPI, Depends, HTTPException, File, UploadFile, Form, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, StreamingResponse
 from sqlalchemy.orm import Session
@@ -14,10 +15,42 @@ import io
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
 
+# Security middleware imports
+from starlette.middleware.base import BaseHTTPMiddleware
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
+
 # Create tables
 Base.metadata.create_all(bind=engine)
 
-app = FastAPI()
+# Rate limiter configuration
+limiter = Limiter(key_func=get_remote_address)
+
+app = FastAPI(
+    docs_url=None,  # disable auto docs in production
+    redoc_url=None,
+    openapi_url="/openapi.json",
+)
+
+# Add rate limit exception handler
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+# Apply limiter as middleware
+app.state.limiter = limiter
+app.add_middleware(BaseHTTPMiddleware, dispatch=limiter.middleware)
+
+# Security headers middleware
+class SecurityHeadersMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        response = await call_next(request)
+        response.headers["Strict-Transport-Security"] = "max-age=63072000; includeSubDomains; preload"
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["X-Frame-Options"] = "DENY"
+        response.headers["Content-Security-Policy"] = "default-src 'self'"
+        return response
+
+app.add_middleware(SecurityHeadersMiddleware)
 
 origins = os.getenv("FRONTEND_ORIGIN", "http://localhost:19006").split(",")
 app.add_middleware(
@@ -35,6 +68,8 @@ os.makedirs(MEDIA_ROOT, exist_ok=True)
 def health():
     return {"status": "ok"}
 
+# Rate limit auth endpoints (5 per minute per IP)
+@limiter.limit("5/minute")
 @app.post("/auth/signup", response_model=schemas.Token)
 def signup(user_in: schemas.UserCreate, db: Session = Depends(get_db)):
     if crud.get_user_by_email(db, user_in.email):
@@ -43,6 +78,7 @@ def signup(user_in: schemas.UserCreate, db: Session = Depends(get_db)):
     access_token = create_access_token(user.id)
     return {"access_token": access_token, "token_type": "bearer"}
 
+@limiter.limit("5/minute")
 @app.post("/auth/login", response_model=schemas.Token)
 def login(user_in: schemas.UserCreate, db: Session = Depends(get_db)):
     user = crud.authenticate_user(db, user_in.email, user_in.password)
@@ -50,6 +86,16 @@ def login(user_in: schemas.UserCreate, db: Session = Depends(get_db)):
         raise HTTPException(status_code=401, detail="Incorrect email or password")
     access_token = create_access_token(user.id)
     return {"access_token": access_token, "token_type": "bearer"}
+
+def _validate_image(upload: UploadFile):
+    # Accept only jpeg or png and size <= 5 MiB
+    if upload.content_type not in ("image/jpeg", "image/png"):
+        raise HTTPException(status_code=400, detail="Invalid image type")
+    upload.file.seek(0, os.SEEK_END)
+    size = upload.file.tell()
+    if size > 5 * 1024 * 1024:
+        raise HTTPException(status_code=400, detail="Image too large (max 5 MiB)")
+    upload.file.seek(0)
 
 @app.post("/receipts", response_model=schemas.ReceiptRead)
 def create_receipt(
@@ -61,7 +107,8 @@ def create_receipt(
     current_user: models.User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    # Save image
+    _validate_image(image)
+    # Save image with safe generated filename
     ext = os.path.splitext(image.filename)[1]
     filename = f"receipt_{datetime.utcnow().timestamp()}{ext}"
     file_path = os.path.join(MEDIA_ROOT, filename)
@@ -122,14 +169,31 @@ def get_dashboard(current_user: models.User = Depends(get_current_user), db: Ses
 
 @app.get("/export/csv")
 def export_csv(current_user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
+    def escape(value: str) -> str:
+        if value and value[0] in ('=', '+', '-', '@', '\t'):
+            return "'" + value
+        return value
+
     def generate():
         output = io.StringIO()
         writer = csv.writer(output)
         writer.writerow(["type", "date", "amount/miles", "category", "notes"])
         for r in crud.get_receipts(db, current_user):
-            writer.writerow(["receipt", r.date.isoformat(), r.amount, r.category, r.notes or ""])
+            writer.writerow([
+                "receipt",
+                r.date.isoformat(),
+                r.amount,
+                escape(r.category or ""),
+                escape(r.notes or ""),
+            ])
         for m in crud.get_mileages(db, current_user):
-            writer.writerow(["mileage", m.date.isoformat(), m.miles, "", m.notes or ""])
+            writer.writerow([
+                "mileage",
+                m.date.isoformat(),
+                m.miles,
+                "",
+                escape(m.notes or ""),
+            ])
         yield output.getvalue()
     response = StreamingResponse(generate(), media_type="text/csv")
     response.headers["Content-Disposition"] = "attachment; filename=export.csv"
@@ -170,10 +234,21 @@ def export_pdf(current_user: models.User = Depends(get_current_user), db: Sessio
     buffer.seek(0)
     return StreamingResponse(buffer, media_type="application/pdf", headers={"Content-Disposition": "attachment; filename=export.pdf"})
 
-# Serve media files
+# Serve media files – protected
 @app.get("/media/{filename}")
-def get_media(filename: str):
-    file_path = os.path.join(MEDIA_ROOT, filename)
-    if not os.path.isfile(file_path):
+def get_media(filename: str, current_user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
+    # Resolve and normalize path
+    safe_path = pathlib.Path(MEDIA_ROOT) / filename
+    try:
+        resolved = safe_path.resolve(strict=True)
+    except FileNotFoundError:
         raise HTTPException(status_code=404, detail="File not found")
-    return FileResponse(file_path)
+    if not str(resolved).startswith(str(pathlib.Path(MEDIA_ROOT).resolve())):
+        raise HTTPException(status_code=400, detail="Invalid file path")
+    # Verify ownership
+    receipt = db.query(models.Receipt).filter(models.Receipt.image_path == str(resolved), models.Receipt.user_id == current_user.id).first()
+    if not receipt:
+        raise HTTPException(status_code=403, detail="Access denied")
+    return FileResponse(str(resolved))
+
+# End of file

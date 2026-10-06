@@ -1,30 +1,16 @@
 import { Platform } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-
+// Use Expo SecureStore for all platforms to avoid insecure AsyncStorage on web.
+const SecureStore = require('expo-secure-store');
 const TOKEN_KEY = 'jwt';
 
 export async function saveToken(token: string): Promise<void> {
-  if (Platform.OS === 'web') {
-    await AsyncStorage.setItem(TOKEN_KEY, token);
-    return;
-  }
-  const SecureStore = await import('expo-secure-store');
-  await SecureStore.default.setItemAsync(TOKEN_KEY, token);
+  await SecureStore.setItemAsync(TOKEN_KEY, token);
 }
 
 export async function getToken(): Promise<string | null> {
-  if (Platform.OS === 'web') {
-    return await AsyncStorage.getItem(TOKEN_KEY);
-  }
-  const SecureStore = await import('expo-secure-store');
-  return await SecureStore.default.getItemAsync(TOKEN_KEY);
+  return await SecureStore.getItemAsync(TOKEN_KEY);
 }
 
 export async function deleteToken(): Promise<void> {
-  if (Platform.OS === 'web') {
-    await AsyncStorage.removeItem(TOKEN_KEY);
-    return;
-  }
-  const SecureStore = await import('expo-secure-store');
-  await SecureStore.default.deleteItemAsync(TOKEN_KEY);
+  await SecureStore.deleteItemAsync(TOKEN_KEY);
 }
