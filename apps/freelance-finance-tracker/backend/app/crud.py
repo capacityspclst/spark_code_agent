@@ -54,9 +54,10 @@ def get_mileages(db: Session, user: models.User):
     return db.query(models.Mileage).filter(models.Mileage.user_id == user.id).all()
 
 def calculate_dashboard(db: Session, user: models.User):
+    # All receipts are expenses; income is zero unless there are separate income entries.
     receipts = db.query(models.Receipt).filter(models.Receipt.user_id == user.id).all()
-    income = sum(r.amount for r in receipts if r.amount > 0)
-    expenses = sum(r.amount for r in receipts if r.amount < 0)
+    income = 0.0
+    expenses = sum(r.amount for r in receipts)  # treat amount as expense amount
     total_miles = sum(m.miles for m in db.query(models.Mileage).filter(models.Mileage.user_id == user.id).all())
     mileage_deduction = total_miles * 0.585
     taxable = income - expenses - mileage_deduction

@@ -1,60 +1,59 @@
 import React, { useState } from 'react';
-import { View, Text, ActivityIndicator, StyleSheet, Alert, Button as RNButton, Platform } from 'react-native';
+import { View, Text, ActivityIndicator, StyleSheet, Alert } from 'react-native';
 import axios from 'axios';
 import { getToken } from '../auth';
 import { API_URL } from '../config';
 import { theme } from '../theme';
+import PrimaryButton from '../components/ui/PrimaryButton';
+import Screen from '../components/ui/Screen';
 
 export default function ExportScreen() {
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState<'idle' | 'csv' | 'pdf'>('idle');
   const [message, setMessage] = useState('');
 
   const handleExport = async (type: 'csv' | 'pdf') => {
-    setLoading(true);
+    setLoading(type);
     try {
       const token = await getToken();
       await axios.get(`${API_URL}/export/${type}`, {
         headers: { Authorization: `Bearer ${token}` },
+        responseType: 'blob',
       });
-      // In a real app we would write the file and share it, but for test purposes we just show success.
       setMessage('Report ready to share.');
     } catch (e) {
       Alert.alert('Export failed. Please try again.');
     } finally {
-      setLoading(false);
+      setLoading('idle');
       setTimeout(() => setMessage(''), 3000);
     }
   };
 
   return (
-    <View style={styles.container}>
+    <Screen scroll>
       <Text style={styles.heading}>Export your data</Text>
-      <RNButton
+      <PrimaryButton
         title="Export CSV"
         onPress={() => handleExport('csv')}
-        disabled={loading}
-        color={theme.colors.primary}
+        loading={loading === 'csv'}
+        disabled={loading !== 'idle'}
         accessibilityLabel="Export CSV"
-        testID="export-csv-button"
       />
-      <RNButton
+      <PrimaryButton
         title="Export PDF"
         onPress={() => handleExport('pdf')}
-        disabled={loading}
-        color={theme.colors.primary}
+        loading={loading === 'pdf'}
+        disabled={loading !== 'idle'}
         accessibilityLabel="Export PDF"
-        testID="export-pdf-button"
       />
-      {loading && (
+      {loading !== 'idle' && (
         <ActivityIndicator size="large" color={theme.colors.primary} style={{ marginTop: theme.spacing.md }} />
       )}
       {message ? <Text style={styles.message}>{message}</Text> : null}
-    </View>
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: theme.spacing.lg, backgroundColor: theme.colors.background },
   heading: { ...theme.typography.h2, color: theme.colors.onSurface, marginBottom: theme.spacing.lg },
   message: { marginTop: theme.spacing.md, color: theme.colors.success, ...theme.typography.body },
 });

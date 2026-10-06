@@ -1,2 +1,1 @@
-// Navigation entry point (currently defined in App.tsx)
-export {};
+// placeholder file to satisfy import paths if needed

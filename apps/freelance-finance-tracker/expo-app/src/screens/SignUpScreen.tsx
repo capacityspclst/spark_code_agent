@@ -1,13 +1,16 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, ActivityIndicator, StyleSheet, TouchableOpacity, Platform } from 'react-native';
-import axios from 'axios';
+import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import PrimaryButton from '../components/PrimaryButton';
+import axios from 'axios';
+import PrimaryButton from '../components/ui/PrimaryButton';
+import FormField from '../components/ui/FormField';
 import { saveToken } from '../auth';
 import { API_URL } from '../config';
 import { theme } from '../theme';
 import { FontAwesome } from '@expo/vector-icons';
 import LoadingOverlay from '../components/LoadingOverlay';
+import Screen from '../components/ui/Screen';
+import { Button } from 'react-native-paper';
 
 export default function SignUpScreen() {
   const navigation = useNavigation<any>();
@@ -16,19 +19,18 @@ export default function SignUpScreen() {
   const [loading, setLoading] = useState(false);
   const [errorEmail, setErrorEmail] = useState('');
   const [errorPassword, setErrorPassword] = useState('');
-  const [secureEntry, setSecureEntry] = useState(true);
   const [submissionError, setSubmissionError] = useState('');
+  const [secureEntry, setSecureEntry] = useState(true);
 
   const validate = () => {
     let valid = true;
-    if (!email) {
+    if (!email || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
       setErrorEmail('Enter a valid email address.');
       valid = false;
     } else {
       setErrorEmail('');
     }
-    const pwd = password;
-    if (pwd.length < 12 || !/[A-Z]/.test(pwd) || !/[a-z]/.test(pwd) || !/[0-9]/.test(pwd) || !/[^A-Za-z0-9]/.test(pwd)) {
+    if (password.length < 12 || !/[A-Z]/.test(password) || !/[a-z]/.test(password) || !/[0-9]/.test(password) || !/[^A-Za-z0-9]/.test(password)) {
       setErrorPassword('Password must be at least 12 characters, include uppercase, lowercase, number, and symbol.');
       valid = false;
     } else {
@@ -53,77 +55,53 @@ export default function SignUpScreen() {
   };
 
   return (
-    <View style={styles.container}>
-      {submissionError ? <Text style={styles.submissionError} accessibilityRole="alert">{submissionError}</Text> : null}
-      <Text style={styles.title}>Create your account</Text>
-      <View style={styles.field}>
-        <Text style={styles.label}>Email address</Text>
-        <TextInput
-          style={styles.input}
+    <Screen>
+      <View style={styles.container}>
+        {submissionError ? <Text style={styles.submissionError} accessibilityRole="alert">{submissionError}</Text> : null}
+        <Text style={styles.title}>Create your account</Text>
+        <FormField
+          label="Email address"
           value={email}
           onChangeText={setEmail}
-          autoCapitalize="none"
+          error={!!errorEmail}
+          helperText={errorEmail}
           keyboardType="email-address"
-          placeholder="Email address"
-          placeholderTextColor={theme.colors.placeholder}
           accessibilityLabel="Email address"
-          autoComplete="email"
-          testID="email-input"
-          editable={!loading}
         />
-        {errorEmail ? <Text style={styles.error}>{errorEmail}</Text> : null}
-      </View>
-      <View style={styles.field}>
-        <Text style={styles.label}>Password</Text>
-        <View style={styles.passwordRow}>
-          <TextInput
-            style={[styles.input, { flex: 1 }]}
-            value={password}
-            onChangeText={setPassword}
-            secureTextEntry={secureEntry}
-            placeholder="Password"
-            placeholderTextColor={theme.colors.placeholder}
-            accessibilityLabel="Password"
-            autoComplete="new-password"
-            testID="password-input"
-            editable={!loading}
-          />
-          <TouchableOpacity onPress={() => setSecureEntry(!secureEntry)} accessibilityLabel={secureEntry ? "Show password" : "Hide password"}>
-            <FontAwesome name={secureEntry ? 'eye-slash' : 'eye'} size={24} color={theme.colors.secondary} />
-          </TouchableOpacity>
-        </View>
-        {errorPassword ? <Text style={styles.error}>{errorPassword}</Text> : null}
+        <FormField
+          label="Password"
+          value={password}
+          onChangeText={setPassword}
+          error={!!errorPassword}
+          helperText={errorPassword}
+          secureTextEntry={secureEntry}
+          accessibilityLabel={secureEntry ? "Show password" : "Hide password"}
+          right={<FontAwesome name={secureEntry ? 'eye-slash' : 'eye'} size={24} color={theme.colors.secondary} />}
+        />
         <Text style={styles.helper}>12 + characters, uppercase, lowercase, number, symbol</Text>
+        {loading ? (
+          <ActivityIndicator size="large" color={theme.colors.primary} />
+        ) : (
+          <PrimaryButton title="Create account" onPress={handleSignup} accessibilityLabel="Create account" />
+        )}
+        <Button
+          mode="text"
+          onPress={() => navigation.navigate('SignIn')}
+          accessibilityLabel="Log in"
+          style={styles.link}
+        >
+          Already have an account? Log in
+        </Button>
+        {loading && <LoadingOverlay message="Creating account…" />}
       </View>
-      {loading ? (
-        <ActivityIndicator size="large" color={theme.colors.primary} />
-      ) : (
-        <PrimaryButton title="Create account" onPress={handleSignup} accessibilityLabel="Create account" />
-      )}
-      <TouchableOpacity
-        onPress={() => navigation.navigate('SignIn')}
-        style={styles.link}
-        accessibilityRole="link"
-        accessibilityLabel="Log in"
-        testID="back-to-signin"
-      >
-        <Text style={styles.linkText}>Already have an account? Log in</Text>
-      </TouchableOpacity>
-      {loading && <LoadingOverlay message="Creating account…" />}
-    </View>
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: theme.spacing.lg, backgroundColor: theme.colors.background },
+  container: { paddingBottom: theme.spacing.lg },
   title: { ...theme.typography.h2, color: theme.colors.onSurface, marginBottom: theme.spacing.lg },
-  field: { marginBottom: theme.spacing.md },
-  label: { ...theme.typography.body, color: theme.colors.onSurface },
-  input: { backgroundColor: theme.colors.surface, padding: theme.spacing.sm, borderRadius: theme.radii.sm, borderWidth: 1, borderColor: theme.colors.secondary },
-  error: { color: theme.colors.error, ...theme.typography.caption, marginTop: theme.spacing.xs },
   helper: { color: theme.colors.placeholder, ...theme.typography.caption, marginTop: theme.spacing.xs },
-  link: { marginTop: theme.spacing.lg, alignItems: 'center' },
-  linkText: { color: theme.colors.secondary, ...theme.typography.body, textDecorationLine: 'underline' },
-  passwordRow: { flexDirection: 'row', alignItems: 'center', marginTop: theme.spacing.sm },
+  link: { marginTop: theme.spacing.lg, alignSelf: 'center' },
   submissionError: { color: theme.colors.error, ...theme.typography.body, marginBottom: theme.spacing.sm },
 });
