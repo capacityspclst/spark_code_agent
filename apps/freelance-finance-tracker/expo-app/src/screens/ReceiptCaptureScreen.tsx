@@ -17,7 +17,6 @@ export default function ReceiptCaptureScreen() {
   const [category, setCategory] = useState('');
   const [notes, setNotes] = useState('');
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState('');
 
   // Grant permission instantly for test environment
   const grantPermission = () => setHasPermission(true);
@@ -74,15 +73,12 @@ export default function ReceiptCaptureScreen() {
       await axios.post(`${API_URL}/receipts`, form, {
         headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'multipart/form-data' },
       });
-      // Show success message then navigate after short delay
-      setMessage('Receipt saved.');
-      setTimeout(() => navigation.navigate('Dashboard', { receiptSaved: true }), 1500);
+      // Navigate immediately to Dashboard with flag for toast
+      navigation.navigate('Dashboard', { receiptSaved: true });
     } catch (e) {
-      setMessage('Upload failed. Check your connection and try again.');
+      Alert.alert('Error', 'Upload failed. Check your connection and try again.');
     } finally {
       setLoading(false);
-      // Clear message after a while
-      setTimeout(() => setMessage(''), 5000);
     }
   };
 
@@ -92,7 +88,6 @@ export default function ReceiptCaptureScreen() {
         <Text style={styles.text}>Camera access denied. You can select a photo from the library.</Text>
         <PrimaryButton title="Choose from library" onPress={pickImage} accessibilityLabel="Choose from library" />
         {renderForm()}
-        {message ? <Text style={styles.message} accessibilityRole="alert">{message}</Text> : null}
       </ScrollView>
     );
   }
@@ -170,7 +165,6 @@ export default function ReceiptCaptureScreen() {
   return (
     <ScrollView contentContainerStyle={styles.container} accessibilityRole="none">
       {renderForm()}
-      {message ? <Text style={styles.message} accessibilityRole="alert">{message}</Text> : null}
     </ScrollView>
   );
 }
@@ -183,5 +177,4 @@ const styles = StyleSheet.create({
   fieldLabel: { ...theme.typography.body, color: theme.colors.onSurface, marginBottom: theme.spacing.xs, marginTop: theme.spacing.sm },
   input: { backgroundColor: theme.colors.surface, padding: theme.spacing.sm, borderRadius: theme.radii.sm, borderWidth: 1, borderColor: theme.colors.secondary, marginBottom: theme.spacing.sm },
   image: { width: 200, height: 200, marginBottom: theme.spacing.sm },
-  message: { marginTop: theme.spacing.md, color: theme.colors.success, ...theme.typography.body },
 });

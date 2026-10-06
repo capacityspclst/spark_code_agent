@@ -28,6 +28,8 @@ export default function ExportScreen() {
 
   return (
     <View style={styles.container}>
+      {/* Heading as per DESIGN.md */}
+      <Text style={styles.heading}>Export your data</Text>
       <RNButton
         title="Export CSV"
         onPress={() => handleExport('csv')}
@@ -54,5 +56,6 @@ export default function ExportScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, padding: theme.spacing.lg, backgroundColor: theme.colors.background },
+  heading: { ...theme.typography.h2, color: theme.colors.onSurface, marginBottom: theme.spacing.lg },
   message: { marginTop: theme.spacing.md, color: theme.colors.success, ...theme.typography.body },
 });

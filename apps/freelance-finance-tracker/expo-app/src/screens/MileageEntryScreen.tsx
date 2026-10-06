@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { ScrollView, View, Text, TextInput, ActivityIndicator, StyleSheet, Alert } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { ScrollView, View, Text, TextInput, ActivityIndicator, StyleSheet, Alert, FlatList } from 'react-native';
 import axios from 'axios';
 import { useNavigation } from '@react-navigation/native';
 import { getToken } from '../auth';
@@ -14,6 +14,21 @@ export default function MileageEntryScreen() {
   const [notes, setNotes] = useState('');
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
+  const [entries, setEntries] = useState<any[]>([]);
+
+  const fetchEntries = async () => {
+    try {
+      const token = await getToken();
+      const resp = await axios.get(`${API_URL}/mileage`, { headers: { Authorization: `Bearer ${token}` } });
+      setEntries(resp.data);
+    } catch (e) {
+      // ignore errors for now
+    }
+  };
+
+  useEffect(() => {
+    fetchEntries();
+  }, []);
 
   const handleSave = async () => {
     if (!date || !miles) {
@@ -26,16 +41,23 @@ export default function MileageEntryScreen() {
       const payload = { date, miles: parseInt(miles, 10), notes };
       await axios.post(`${API_URL}/mileage`, payload, { headers: { Authorization: `Bearer ${token}` } });
       setMessage('Mileage entry saved.');
-      // Navigate immediately after success
-      navigation.navigate('Dashboard');
+      // refresh list
+      await fetchEntries();
     } catch (e) {
       setMessage('Failed to save mileage. Please try again.');
     } finally {
       setLoading(false);
-      // Clear message after a few seconds
+      // clear message after a while
       setTimeout(() => setMessage(''), 3000);
     }
   };
+
+  const renderItem = ({ item }: { item: any }) => (
+    <View style={styles.entry}>
+      <Text style={styles.entryText}>{item.miles}</Text>
+      {item.notes ? <Text style={styles.entryNotes}>{item.notes}</Text> : null}
+    </View>
+  );
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
@@ -86,6 +108,14 @@ export default function MileageEntryScreen() {
         <PrimaryButton title="Save mileage" onPress={handleSave} accessibilityLabel="Save mileage" />
       )}
       {message ? <Text style={styles.message} accessibilityRole="alert">{message}</Text> : null}
+      {/* List of mileage entries */}
+      <FlatList
+        data={entries}
+        keyExtractor={(item) => item.id?.toString() ?? Math.random().toString()}
+        renderItem={renderItem}
+        style={styles.list}
+        ListHeaderComponent={<Text style={styles.listHeader}>Mileage entries</Text>}
+      />
     </ScrollView>
   );
 }
@@ -97,4 +127,9 @@ const styles = StyleSheet.create({
   label: { ...theme.typography.body, color: theme.colors.onSurface, marginBottom: theme.spacing.xs },
   input: { backgroundColor: theme.colors.surface, padding: theme.spacing.sm, borderRadius: theme.radii.sm, borderWidth: 1, borderColor: theme.colors.secondary },
   message: { marginTop: theme.spacing.md, color: theme.colors.success, ...theme.typography.body },
+  list: { marginTop: theme.spacing.lg },
+  listHeader: { ...theme.typography.h3, color: theme.colors.onSurface, marginBottom: theme.spacing.sm },
+  entry: { paddingVertical: theme.spacing.sm, borderBottomWidth: 1, borderBottomColor: theme.colors.outline },
+  entryText: { ...theme.typography.body, color: theme.colors.onSurface },
+  entryNotes: { ...theme.typography.body, color: theme.colors.secondary },
 });
