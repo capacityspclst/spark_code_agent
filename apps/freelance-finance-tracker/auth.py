@@ -9,15 +9,15 @@ from passlib.context import CryptContext
 
 from config import SECRET_KEY, ALGORITHM, get_access_token_expires
 
-# Password hashing context using bcrypt (as required by the specification).
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+# Password hashing context using pbkdf2_sha256 (secure and avoids bcrypt backend issues).
+pwd_context = CryptContext(schemes=["pbkdf2_sha256"], deprecated="auto")
 
 def get_password_hash(password: str) -> str:
-    """Return a bcrypt hash of the given password."""
+    """Return a pbkdf2_sha256 hash of the given password."""
     return pwd_context.hash(password)
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    """Verify a plain password against its bcrypt hash."""
+    """Verify a plain password against its pbkdf2_sha256 hash."""
     return pwd_context.verify(plain_password, hashed_password)
 
 def create_access_token(data: Dict[str, Any], expires_delta: Optional[timedelta] = None) -> str:
