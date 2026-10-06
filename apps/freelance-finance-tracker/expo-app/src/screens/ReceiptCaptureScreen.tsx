@@ -7,7 +7,6 @@ import { getToken } from '../auth';
 import { API_URL } from '../config';
 import { theme } from '../theme';
 import PrimaryButton from '../components/PrimaryButton';
-import { Picker } from '@react-native-picker/picker';
 
 export default function ReceiptCaptureScreen() {
   const navigation = useNavigation<any>();
@@ -20,11 +19,11 @@ export default function ReceiptCaptureScreen() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
 
-  // Directly grant permission without async request (test environment)
+  // Grant permission instantly for test environment
   const grantPermission = () => setHasPermission(true);
 
   const pickImage = async () => {
-    let result = await ImagePicker.launchImageLibraryAsync({
+    const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       quality: 1,
     });
@@ -48,8 +47,8 @@ export default function ReceiptCaptureScreen() {
       form.append('notes', notes);
       if (image) {
         if (Platform.OS === 'web') {
-          const response = await fetch(image.assets[0].uri);
-          const blob = await response.blob();
+          const resp = await fetch(image.assets[0].uri);
+          const blob = await resp.blob();
           form.append('image', blob, 'receipt.jpg');
         } else {
           (form as any).append('image', {
@@ -75,13 +74,15 @@ export default function ReceiptCaptureScreen() {
       await axios.post(`${API_URL}/receipts`, form, {
         headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'multipart/form-data' },
       });
+      // Show success message then navigate after short delay
       setMessage('Receipt saved.');
-      navigation.navigate('Dashboard');
+      setTimeout(() => navigation.navigate('Dashboard', { receiptSaved: true }), 1500);
     } catch (e) {
       setMessage('Upload failed. Check your connection and try again.');
     } finally {
       setLoading(false);
-      setTimeout(() => setMessage(''), 3000);
+      // Clear message after a while
+      setTimeout(() => setMessage(''), 5000);
     }
   };
 
@@ -136,20 +137,16 @@ export default function ReceiptCaptureScreen() {
           accessibilityLabelledBy="date-label"
         />
         <Text style={styles.fieldLabel} nativeID="category-label">Category</Text>
-        <Picker
-          selectedValue={category}
-          onValueChange={(itemValue) => setCategory(itemValue)}
-          style={styles.picker}
-          accessibilityLabel="Category"
+        <TextInput
           nativeID="category-input"
           testID="category-input"
+          placeholder="Category"
+          value={category}
+          onChangeText={setCategory}
+          style={styles.input}
+          accessibilityLabel="Category"
           accessibilityLabelledBy="category-label"
-        >
-          <Picker.Item label="Select category" value="" />
-          <Picker.Item label="Office supplies" value="Office supplies" />
-          <Picker.Item label="Travel" value="Travel" />
-          <Picker.Item label="Meals" value="Meals" />
-        </Picker>
+        />
         <Text style={styles.fieldLabel} nativeID="notes-label">Notes (optional)</Text>
         <TextInput
           nativeID="notes-input"
@@ -185,7 +182,6 @@ const styles = StyleSheet.create({
   form: { marginTop: theme.spacing.md },
   fieldLabel: { ...theme.typography.body, color: theme.colors.onSurface, marginBottom: theme.spacing.xs, marginTop: theme.spacing.sm },
   input: { backgroundColor: theme.colors.surface, padding: theme.spacing.sm, borderRadius: theme.radii.sm, borderWidth: 1, borderColor: theme.colors.secondary, marginBottom: theme.spacing.sm },
-  picker: { backgroundColor: theme.colors.surface, marginBottom: theme.spacing.sm },
   image: { width: 200, height: 200, marginBottom: theme.spacing.sm },
   message: { marginTop: theme.spacing.md, color: theme.colors.success, ...theme.typography.body },
 });

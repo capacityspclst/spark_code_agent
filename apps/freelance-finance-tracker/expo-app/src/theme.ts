@@ -19,8 +19,12 @@ export const theme = {
     // Status
     error: '#D32F2F',
     success: '#2E7D32',
+    onSuccess: '#FFFFFF',
+    onError: '#FFFFFF',
     // Disabled UI
     disabledBackground: '#E0E0E0',
+    // Outline
+    outline: '#79747E',
   },
 
   // ---- Spacing (4/8 px grid) ----
