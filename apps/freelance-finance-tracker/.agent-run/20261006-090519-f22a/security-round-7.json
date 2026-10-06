@@ -1,0 +1,73 @@
+{
+  "verdict": "fail",
+  "summary": "The FastAPI backend now enforces authentication on all data endpoints, adds robust image validation for receipt uploads, and applies rate\u2011limiting to authentication, receipt, mileage and export endpoints. CSV export is sanitized against formula injection and security headers are emitted via middleware. Critical and high\u2011severity code flaws (unauthenticated media, token issuance on signup, missing rate limits, and upload validation) have been fixed. Remaining high\u2011severity findings are unpatched third\u2011party dependencies (braces, node\u2011forge). Medium\u2011severity issues still open include insecure JWT storage on web builds and exposure of the OpenAPI JSON schema. A new low\u2011severity issue \u2013 user enumeration via the signup endpoint \u2013 has been identified.",
+  "findings": [
+    {
+      "id": "vulnerable-dependency-braces",
+      "severity": "high",
+      "where": "code",
+      "file": "expo-app/package-lock.json",
+      "issue": "braces 3.0.3 contains CVE\u20112026\u201193687 (Denial\u2011of\u2011Service via deep regex patterns) with no patched version available yet.",
+      "fix": "Upgrade to a version where the vulnerability is fixed when released, or replace the library with an alternative that does not use vulnerable regex processing."
+    },
+    {
+      "id": "vulnerable-dependency-node-forge",
+      "severity": "high",
+      "where": "code",
+      "file": "expo-app/package-lock.json",
+      "issue": "node\u2011forge 1.4.0 is vulnerable to CVE\u20112026\u201185393 (RSA PKCS#1 v1.5 signature forgery) and has no current fix.",
+      "fix": "Replace node\u2011forge with a maintained cryptography library (e.g., @stablelib or the Web Crypto API) for any cryptographic operations."
+    },
+    {
+      "id": "vulnerable-dependency-decode-uri-compone",
+      "severity": "medium",
+      "where": "code",
+      "file": "expo-app/package-lock.json",
+      "issue": "decode\u2011uri\u2011component 0.2.2 is vulnerable to CVE\u20112026\u201145822 (Denial\u2011of\u2011Service via crafted input).",
+      "fix": "Upgrade decode\u2011uri\u2011component to version 0.5.0 or later where the issue is fixed."
+    },
+    {
+      "id": "vulnerable-dependency-uuid",
+      "severity": "medium",
+      "where": "code",
+      "file": "expo-app/package-lock.json",
+      "issue": "uuid 7.0.3 is vulnerable to CVE\u20112026\u201141907 (out\u2011of\u2011bounds write) affecting data integrity.",
+      "fix": "Upgrade uuid to at least version 11.1.1 (or the latest stable release) which contains the fix."
+    },
+    {
+      "id": "openapi-json-exposed",
+      "severity": "low",
+      "where": "code",
+      "file": "backend/app/main.py",
+      "issue": "The OpenAPI schema remains publicly accessible at /openapi.json, leaking endpoint signatures and model definitions.",
+      "fix": "Set openapi_url=None in FastAPI configuration or protect the endpoint with authentication / IP\u2011based restrictions."
+    },
+    {
+      "id": "signup-email-enumeration",
+      "severity": "low",
+      "where": "code",
+      "file": "backend/app/main.py",
+      "issue": "The /auth/signup endpoint returns a distinct 400 error when an email is already registered, allowing an attacker to enumerate existing user accounts.",
+      "fix": "Return a generic response regardless of email existence (e.g., always send a success message and perform email verification), or unify error messages to avoid revealing account existence."
+    },
+    {
+      "id": "insecure-token-storage-web",
+      "severity": "medium",
+      "where": "code",
+      "file": "expo-app/src/auth.ts",
+      "issue": "On Expo web builds the JWT is stored in AsyncStorage / local storage, which is accessible to JavaScript and vulnerable to XSS token theft.",
+      "fix": "For web, store the JWT in an httpOnly, Secure cookie or use a web\u2011compatible secure storage mechanism; avoid persisting the token in plain client\u2011side storage."
+    }
+  ],
+  "deployment_actions": [],
+  "fixed": [
+    "csv-injection",
+    "api-docs-exposed",
+    "export-rate-limiting-missing",
+    "signup-token-issuance",
+    "export-rate-limiting-missing-2",
+    "missing-auth-rate-limiting",
+    "missing-receipt-upload-validation"
+  ],
+  "stalled": []
+}
