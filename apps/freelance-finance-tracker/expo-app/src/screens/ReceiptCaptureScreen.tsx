@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, ActivityIndicator, Alert, StyleSheet, Image, ScrollView, Platform } from 'react-native';
+import { View, Text, TextInput, ActivityIndicator, Alert, StyleSheet, Image, ScrollView, Platform, Pressable } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import axios from 'axios';
 import { useNavigation } from '@react-navigation/native';
@@ -18,7 +18,6 @@ export default function ReceiptCaptureScreen() {
   const [notes, setNotes] = useState('');
   const [loading, setLoading] = useState(false);
 
-  // Request camera permission when user clicks Allow
   const requestPermission = async () => {
     const { status } = await ImagePicker.requestCameraPermissionsAsync();
     setHasPermission(status === 'granted');
@@ -44,6 +43,11 @@ export default function ReceiptCaptureScreen() {
     }
   };
 
+  const handlePlaceholderPress = async () => {
+    // Open image library as fallback (covers both web and native)
+    await pickImage();
+  };
+
   const handleSave = async () => {
     if (!amount || !date || !category) {
       Alert.alert('Error', 'Please fill all required fields.');
@@ -61,12 +65,12 @@ export default function ReceiptCaptureScreen() {
         if (Platform.OS === 'web') {
           const resp = await fetch(image.assets[0].uri);
           const blob = await resp.blob();
-          form.append('image', blob, 'receipt.jpg');
+          form.append('image', blob, image.assets[0].name || 'receipt.jpg');
         } else {
           (form as any).append('image', {
             uri: image.assets[0].uri,
-            name: 'receipt.jpg',
-            type: 'image/jpeg',
+            name: image.assets[0].name || 'receipt.jpg',
+            type: image.assets[0].type || 'image/jpeg',
           } as any);
         }
       } else {
@@ -86,7 +90,6 @@ export default function ReceiptCaptureScreen() {
       await axios.post(`${API_URL}/receipts`, form, {
         headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'multipart/form-data' },
       });
-      // Navigate immediately to Dashboard with toast flag
       navigation.navigate('Dashboard', { receiptSaved: true });
     } catch (e) {
       Alert.alert('Error', 'Upload failed. Check your connection and try again.');
@@ -121,8 +124,24 @@ export default function ReceiptCaptureScreen() {
       <View style={styles.form}>
         <Text style={styles.heading}>New receipt</Text>
         {image && <Image source={{ uri: image.assets[0].uri }} style={styles.image} />}
-        <PrimaryButton title="Take photo" onPress={takePhoto} accessibilityLabel="Take photo" />
-        <PrimaryButton title="Choose from library" onPress={pickImage} accessibilityLabel="Choose from library" />
+        {/* Placeholder when no image selected */}
+        {!image && (
+          <Pressable
+            onPress={handlePlaceholderPress}
+            accessibilityRole="button"
+            accessibilityLabel="Tap to take a photo or choose from library"
+            style={styles.placeholderContainer}
+          >
+            <Text style={styles.placeholderText}>Tap to take a photo or choose from library</Text>
+          </Pressable>
+        )}
+        {/* Keep explicit actions for native platforms */}
+        {Platform.OS !== 'web' && (
+          <>
+            <PrimaryButton title="Take photo" onPress={takePhoto} accessibilityLabel="Take photo" />
+            <PrimaryButton title="Choose from library" onPress={pickImage} accessibilityLabel="Choose from library" />
+          </>
+        )}
         <Text style={styles.fieldLabel} nativeID="amount-label">Amount (USD)</Text>
         <TextInput
           nativeID="amount-input"
@@ -191,4 +210,14 @@ const styles = StyleSheet.create({
   fieldLabel: { ...theme.typography.body, color: theme.colors.onSurface, marginBottom: theme.spacing.xs, marginTop: theme.spacing.sm },
   input: { backgroundColor: theme.colors.surface, padding: theme.spacing.sm, borderRadius: theme.radii.sm, borderWidth: 1, borderColor: theme.colors.secondary, marginBottom: theme.spacing.sm },
   image: { width: 200, height: 200, marginBottom: theme.spacing.sm },
+  placeholderContainer: {
+    borderWidth: 1,
+    borderColor: theme.colors.secondary,
+    borderRadius: theme.radii.md,
+    padding: theme.spacing.lg,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: theme.spacing.md,
+  },
+  placeholderText: { ...theme.typography.body, color: theme.colors.secondary },
 });

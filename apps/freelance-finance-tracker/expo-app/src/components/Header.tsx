@@ -31,7 +31,7 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.surface, // use surface for header background
   },
   header: {
-    height: 56,
+    height: theme.headerHeight,
     backgroundColor: theme.colors.surface,
     borderBottomWidth: 1,
     borderBottomColor: theme.colors.secondary,
