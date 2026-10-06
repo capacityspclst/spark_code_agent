@@ -14,6 +14,11 @@ import csv
 import io
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from starlette.requests import Request as StarletteRequest
+from starlette.responses import Response
+from starlette.status import HTTP_429_TOO_MANY_REQUESTS
 
 # Create tables
 Base.metadata.create_all(bind=engine)
@@ -23,6 +28,11 @@ app = FastAPI(
     redoc_url=None,
     openapi_url="/openapi.json",
 )
+
+# Rate limiter
+limiter = Limiter(key_func=get_remote_address)
+app.state.limiter = limiter
+app.add_exception_handler(HTTP_429_TOO_MANY_REQUESTS, _rate_limit_exceeded_handler)
 
 # Security headers middleware
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -55,19 +65,18 @@ os.makedirs(MEDIA_ROOT, exist_ok=True)
 def health():
     return {"status": "ok"}
 
-# Authentication endpoints (no rate limiting)
+# Authentication endpoints with rate limiting
 @app.post("/auth/signup", response_model=schemas.Token)
+@limiter.limit("5/minute")
 def signup(user_in: schemas.UserCreate, db: Session = Depends(get_db)):
     if crud.get_user_by_email(db, user_in.email):
-        # Return existing token if user already exists
-        existing_user = crud.get_user_by_email(db, user_in.email)
-        access_token = create_access_token(existing_user.id)
-        return {"access_token": access_token, "token_type": "bearer"}
+        raise HTTPException(status_code=400, detail="Email already registered")
     user = crud.create_user(db, user_in)
     access_token = create_access_token(user.id)
     return {"access_token": access_token, "token_type": "bearer"}
 
 @app.post("/auth/login", response_model=schemas.Token)
+@limiter.limit("10/minute")
 def login(user_in: schemas.UserCreate, db: Session = Depends(get_db)):
     user = crud.authenticate_user(db, user_in.email, user_in.password)
     if not user:
@@ -78,6 +87,14 @@ def login(user_in: schemas.UserCreate, db: Session = Depends(get_db)):
 def _validate_image(upload: UploadFile):
     if upload.content_type not in ("image/jpeg", "image/png"):
         raise HTTPException(status_code=400, detail="Invalid image type")
+    # Verify actual image content
+    try:
+        from PIL import Image
+        upload.file.seek(0)
+        img = Image.open(upload.file)
+        img.verify()
+    except Exception:
+        raise HTTPException(status_code=400, detail="Uploaded file is not a valid image")
     upload.file.seek(0, os.SEEK_END)
     size = upload.file.tell()
     if size > 5 * 1024 * 1024:
@@ -86,6 +103,7 @@ def _validate_image(upload: UploadFile):
 
 # Receipt endpoints
 @app.post("/receipts", response_model=schemas.ReceiptRead)
+@limiter.limit("20/minute")
 def create_receipt(
     amount: float = Form(...),
     date: str = Form(...),
@@ -119,6 +137,7 @@ def create_receipt(
     )
 
 @app.get("/receipts", response_model=list[schemas.ReceiptRead])
+@limiter.limit("30/minute")
 def list_receipts(current_user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
     receipts = crud.get_receipts(db, current_user)
     result = []
@@ -139,6 +158,7 @@ def list_receipts(current_user: models.User = Depends(get_current_user), db: Ses
 
 # Mileage endpoints
 @app.post("/mileage", response_model=schemas.MileageRead)
+@limiter.limit("20/minute")
 def create_mileage(
     mileage_in: schemas.MileageCreate,
     current_user: models.User = Depends(get_current_user),
@@ -148,11 +168,13 @@ def create_mileage(
     return db_mileage
 
 @app.get("/mileage", response_model=list[schemas.MileageRead])
+@limiter.limit("30/minute")
 def list_mileage(current_user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
     return crud.get_mileages(db, current_user)
 
 # Dashboard endpoint
 @app.get("/dashboard", response_model=schemas.DashboardSummary)
+@limiter.limit("10/minute")
 def get_dashboard(current_user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
     return crud.calculate_dashboard(db, current_user)
 
@@ -163,6 +185,7 @@ def _escape_csv(value: str) -> str:
     return value
 
 @app.get("/export/csv")
+@limiter.limit("5/minute")
 def export_csv(current_user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
     def generate():
         output = io.StringIO()
@@ -191,6 +214,7 @@ def export_csv(current_user: models.User = Depends(get_current_user), db: Sessio
 
 # Export PDF
 @app.get("/export/pdf")
+@limiter.limit("5/minute")
 def export_pdf(current_user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
     buffer = io.BytesIO()
     p = canvas.Canvas(buffer, pagesize=letter)
