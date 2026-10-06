@@ -7,7 +7,7 @@
 ## What this app is
 - **Mobile front‑end** – an Expo (React Native) app in `expo-app/` that runs on iOS, Android (and optionally web). It uses:
   - `expo-secure-store` for JWT storage on device
-  - `expo-image-picker` for receipt photos (camera + library fallback)
+  - `expo-image-picker` for receipt photos
   - `expo-sharing` to open the native share sheet for CSV/PDF export
   - React Navigation (stack) for flow control
 - **API backend** – a FastAPI service in `backend/app/` that provides:
@@ -33,12 +33,12 @@
    Secure Store                     Managed DB (Postgres)
 ```
 
-| Component | Path                     | Runtime                | Port                | Notes |
-|-----------|--------------------------|------------------------|---------------------|-------|
-| Expo app  | `expo-app/`              | Expo Go / EAS Build    | N/A (bundled)       | `process.env.API_URL` defaults to `http://localhost:8000` |
+| Component | Path                     | Runtime                | Port                               | Notes |
+|-----------|--------------------------|------------------------|------------------------------------|-------|
+| Expo app  | `expo-app/`              | Expo Go / EAS Build    | N/A (bundled)                      | `process.env.API_URL` defaults to `http://localhost:8000` |
 | FastAPI   | `backend/app/`           | Python 3.12 (slim)     | **8000** (dev) – **8080** (container) | Reads `DATABASE_URL`, `JWT_SECRET_KEY`, `MEDIA_ROOT`, `FRONTEND_ORIGIN` |
-| DB        | –                        | PostgreSQL 15 (managed) | 5432                | `DATABASE_URL=postgresql://user:pwd@host:5432/dbname` |
-| Media     | `MEDIA_ROOT` (container) | Filesystem or cloud bucket | –               | Served via `/media/{filename}` (to be replaced with signed‑URL storage) |
+| DB        | –                        | PostgreSQL 15 (managed) | 5432                               | `DATABASE_URL=postgresql://user:pwd@host:5432/dbname` |
+| Media     | `MEDIA_ROOT` (container) | Filesystem or cloud bucket | –                              | Served via `/media/{filename}` (to be replaced with signed URLs) |
 
 ---  
 
@@ -46,15 +46,15 @@
 | Tool | Minimum version | Install command |
 |------|-----------------|-----------------|
 | Git | 2.30+ | `git clone <repo>` |
-| Docker | 24+ | macOS: `brew install --cask docker` or Linux: `apt-get install docker.io` |
+| Docker | 24+ | macOS: `brew install --cask docker` or Linux: `sudo apt-get install docker.io` |
 | Docker Compose (optional) | 2.20+ | `docker compose version` |
 | Python | 3.11+ | `pyenv install 3.12 && pyenv global 3.12` |
 | Node | 20+ | `brew install node` |
-| Expo CLI | latest (`npm i -g expo-cli`) | — |
-| EAS CLI | latest (`npm i -g eas-cli`) | — |
+| Expo CLI | latest (`npm i -g expo-cli`) | – |
+| EAS CLI | latest (`npm i -g eas-cli`) | – |
 | PostgreSQL client (`psql`) | any | `brew install libpq` |
-| Apple Developer / Google Play Console | — | required for app‑store submission |
-| GitHub (or GitLab) account | — | CI/CD integration |
+| Apple Developer / Google Play Console | – | required for app‑store submission |
+| GitHub (or GitLab) account | – | CI/CD integration |
 
 ---  
 
@@ -70,7 +70,14 @@
    # Expo (web builds only)
    API_URL=https://api.myfinance.io
    ```
-2. **Set secrets on the host platform** (example for Fly.io):
+2. **Load locals** – copy the example to `backend/.env` (or export vars) for local dev:
+   ```dotenv
+   DATABASE_URL=sqlite:///./test.db
+   JWT_SECRET_KEY=dev-secret
+   FRONTEND_ORIGIN=http://localhost:19006
+   ```
+   Then run `source backend/.env` before starting the server.
+3. **Set secrets on the hosting platform** – example for Fly.io:
    ```bash
    fly secrets set \
      DATABASE_URL=postgresql://user:pwd@my-db.internal:5432/finance \
@@ -78,13 +85,6 @@
      MEDIA_ROOT=/var/media \
      FRONTEND_ORIGIN=https://app.myfinance.io
    ```
-3. **Local development** – copy the example to `backend/.env` (or export vars):
-   ```dotenv
-   DATABASE_URL=sqlite:///./test.db
-   JWT_SECRET_KEY=dev-secret
-   FRONTEND_ORIGIN=http://localhost:19006
-   ```
-   Then run `source backend/.env` before starting the server.
 
 ---  
 
@@ -94,16 +94,16 @@
 cd backend
 python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt          # fastapi, uvicorn[standard], sqlalchemy, pydantic[email], python-multipart, pyjwt, python-dotenv, reportlab, passlib
-pip install pytest                     # test runner
-pytest backend/tests/                  # unit & integration tests
+pip install pytest                      # test runner
+pytest backend/tests/                   # unit & integration tests
 ```
 
 ### Mobile app
 ```bash
 cd expo-app
-npm ci                                 # installs deps defined in package.json
-npm run test                           # Jest + React Native Testing Library
-npm run start                           # starts Expo dev server (QR code)
+npm ci                                   # installs deps declared in package.json
+npm run test                             # Jest + React Native Testing Library
+npm run start                             # starts Expo dev server (QR code)
 ```
 
 ### Production build (EAS)
@@ -178,7 +178,7 @@ CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8080"]
 ### 2️⃣ Choose a hosting platform
 | Platform | Pros | Cons | Typical monthly cost |
 |----------|------|------|----------------------|
-| **Fly.io** | Global edge, Docker ready, free tier (3 shared‑CPU VMs) | Small persistent storage → need external bucket for media | $0 – $20 (free tier + optional managed Postgres) |
+| **Fly.io** | Global edge, native Docker support, free tier (3 shared‑CPU VMs) | Small persistent storage → need external bucket for media | $0 – $20 (free tier + optional managed Postgres) |
 | **Render.com** | Managed Postgres, automatic HTTPS, simple UI | Slightly higher baseline price | $7 (free web) + $7 for starter Postgres |
 | **Google Cloud Run** | Autoscaling to zero, fully managed, Cloud SQL integration | More GCP knowledge required | $0 – $30 (pay‑as‑you‑go + Cloud SQL) |
 | **AWS ECS Fargate** | Fine‑grained scaling, IAM integration | More complex networking, higher base cost | $15 – $40 (depends on vCPU & memory) |
@@ -214,20 +214,21 @@ fly deploy --remote-only
 1. **New Web Service** → point to `backend/`  
    - **Build Command**: `pip install -r requirements.txt`  
    - **Start Command**: `uvicorn app.main:app --host 0.0.0.0 --port 8080`
-2. **Add PostgreSQL** → copy its connection string into the service **Environment** tab (`DATABASE_URL`).  
+2. **Add PostgreSQL** → copy its connection string into the service **Environment** tab (`DATABASE_URL`).
 3. Enable **Auto‑Deploy** from the Git repo.
 
 ### 3️⃣ Media storage – **to‑do**
-Production should store receipt images in a durable object store (S3, GCS, or Azure Blob) instead of the local filesystem.
+Production should store receipt images in a durable object store (S3, GCS, Azure Blob) instead of the local filesystem.
 
 ```bash
-# add a cloud SDK to the backend
-pip install boto3          # for AWS S3 (or google-cloud-storage for GCS)
+# Add AWS SDK (or GCS SDK) to the backend
+pip install boto3          # for S3
+# or: pip install google-cloud-storage
 ```
 
 Update `backend/app/main.py` (or a new `storage.py`) to:
 - upload the received file to the bucket,
-- store the resulting signed URL in `Receipt.image_path`,
+- store the signed URL in `Receipt.image_path`,
 - set `MEDIA_ROOT` to the bucket URL (`s3://finance-mate-receipts/`).
 
 ### 4️⃣ Database migrations – **to‑do**
@@ -235,7 +236,7 @@ Update `backend/app/main.py` (or a new `storage.py`) to:
 cd backend
 pip install alembic
 alembic init alembic                 # creates alembic/ and alembic.ini
-# in alembic.ini replace sqlalchemy.url with ${DATABASE_URL}
+# In alembic.ini replace sqlalchemy.url with ${DATABASE_URL}
 alembic revision --autogenerate -m "initial schema"
 alembic upgrade head
 ```
@@ -244,29 +245,32 @@ Add `alembic upgrade head` as a pre‑start step in the CI/CD pipeline.
 ---  
 
 ## Security checklist
-- [ ] **TLS termination** – ensure the platform (Fly, Render, Cloud Run) provides HTTPS automatically.  
-- [ ] **Secret management** – store `JWT_SECRET_KEY`, `DATABASE_URL`, `MEDIA_ROOT`, `FRONTEND_ORIGIN` in the platform’s secret manager (never commit).  
-- [ ] **Non‑root container user** – Dockerfile already uses `USER app`.  
-- [ ] **Health check** – Dockerfile includes `HEALTHCHECK` and `/health` endpoint.  
-- [ ] **CORS restriction** – `FRONTEND_ORIGIN` env var limits allowed origins in `backend/app/main.py`.  
-- [ ] **JWT hardening** – HS256 with a 256‑bit secret, expiration 30 days (`create_access_token`).  
-- [ ] **Password hashing** – `passlib` with `pbkdf2_sha256`.  
-- [ ] **Rate limiting / brute‑force protection** – **to‑do**: add `slowapi` middleware or configure edge CDN limits (e.g., 5 req/min per IP).  
-- [ ] **Database connection encryption** – use `sslmode=require` in production `DATABASE_URL`.  
-- [ ] **File upload validation** – **to‑do**: enforce size ≤ 5 MiB, allow only `image/jpeg` / `image/png`, optionally scan with ClamAV.  
-- [ ] **Secure `/media/{filename}` endpoint** – **to‑do**:  
-  - Add `Depends(get_current_user)` authentication.  
-  - Verify the requested file belongs to the authenticated user.  
-  - Sanitize the path (use `pathlib.Path.resolve()` and ensure it stays under `MEDIA_ROOT`).  
-  - Prefer signed URLs from the object store instead of a public endpoint.  
-- [ ] **Security HTTP headers** – **to‑do**: either configure the edge (Fly/Render) to add `Strict-Transport-Security`, `X-Content-Type-Options`, `X-Frame-Options`, `Content-Security-Policy`, **or** add a FastAPI middleware that injects them.  
-- [ ] **Dependency updates** – run `npm audit` and `pip list --outdated`; upgrade:
-  - `braces` → next patched version (or remove if unused)  
-  - `node-forge` → replace with a maintained library (`@stablelib` or Web Crypto)  
-  - `decode-uri-component` → `>=0.5.0`  
-  - `uuid` → `>=11.1.1`  
-- [ ] **Web token storage** – for Expo web builds, replace AsyncStorage with http‑only, secure cookies.  
-- [ ] **Backup strategy** – enable automated daily snapshots of the managed Postgres instance; test restores quarterly.  
+> Tick each box once the corresponding mitigation is implemented and verified in the production environment.
+
+- [ ] **TLS termination** – ensure the platform (Fly, Render, Cloud Run) provides automatic HTTPS.
+- [ ] **Secret management** – store `JWT_SECRET_KEY`, `DATABASE_URL`, `MEDIA_ROOT`, `FRONTEND_ORIGIN` in the platform’s secret manager (never commit).
+- [ ] **Non‑root container user** – Dockerfile uses `USER app`.
+- [ ] **Health check** – Dockerfile includes `HEALTHCHECK` and `/health` endpoint.
+- [ ] **CORS restriction** – `FRONTEND_ORIGIN` env var restricts origins in `backend/app/main.py`.
+- [ ] **JWT hardening** – HS256 with a 256‑bit secret, 30‑day expiry (`create_access_token`).
+- [ ] **Password hashing** – `passlib` with `pbkdf2_sha256`.
+- [ ] **Rate limiting / brute‑force protection** – **to‑do**: `slowapi` middleware already added; verify limits (e.g., `5/minute` on `/auth/signup`). Add limits to any remaining unauthenticated routes.
+- [ ] **Database connection encryption** – use `sslmode=require` in production `DATABASE_URL`.
+- [ ] **File upload validation** – **to‑do**: enforce size ≤ 5 MiB, allow only `image/jpeg`/`image/png`, check dimensions (`Image.MAX_IMAGE_PIXELS`) and scan with ClamAV if possible.
+- [ ] **Secure `/media/{filename}` endpoint** – **to‑do**: already authenticates and checks ownership; replace with signed URLs from the object store for better scaling.
+- [ ] **Security HTTP headers** – middleware in `backend/app/main.py` injects `Strict-Transport-Security`, `X-Content-Type-Options`, `X-Frame-Options`, `Content-Security-Policy`.
+- [ ] **Dependency updates** – run `npm audit` & `pip list --outdated`; upgrade or replace:
+  - `braces` 3.0.3 – **to‑do**: wait for a patched version or replace.
+  - `node‑forge` 1.4.0 – **to‑do**: replace with `@stablelib` or Web Crypto API.
+  - `decode-uri-component` 0.2.2 – upgrade to `>=0.5.0`.
+  - `uuid` 7.0.3 – upgrade to `>=11.1.1`.
+  - `sprintf-js` 1.0.3 – replace with native template literals or a maintained lib.
+- [ ] **Web token storage (Expo web)** – **to‑do**: use httpOnly, Secure cookies instead of AsyncStorage/local storage.
+- [ ] **OpenAPI schema exposure** – **to‑do**: set `openapi_url=None` in `FastAPI` constructor or protect with auth/IP restrictions.
+- [ ] **Signup email enumeration** – **to‑do**: return a generic success message regardless of email existence.
+- [ ] **Backup strategy** – enable automated daily snapshots of the managed PostgreSQL instance; test restores quarterly.
+- [ ] **Logging & monitoring** – configure JSON logs (`uvicorn --log-config uvicorn_logging.json`) and forward to a log service (Logtail, Papertrail, CloudWatch).
+- [ ] **Error tracking** – add `sentry-sdk` to FastAPI and `@sentry/react-native` to Expo.
 
 ---  
 
@@ -276,8 +280,8 @@ Add `alembic upgrade head` as a pre‑start step in the CI/CD pipeline.
 | **API health** | `/health` returns `200`, container restarts | Platform health checks (Fly, Render) or Cloud Run liveness probe |
 | **CPU / Memory** | CPU > 70 % or RAM > 80 % for >5 min | Dashboard alerts; optional Slack/PagerDuty webhook |
 | **Database** | Connections, replication lag (if any) | Managed DB console alerts |
-| **Logs** | Structured JSON logs | Set `uvicorn --log-config uvicorn_logging.json` (JSON format) and forward to Logtail, Papertrail, or CloudWatch |
-| **Error tracking** | Uncaught exceptions, 5xx responses | Add `sentry-sdk` to FastAPI (`sentry_sdk.init(dsn=…)`) and `@sentry/react-native` to Expo |
+| **Logs** | Structured JSON logs | `uvicorn --log-config uvicorn_logging.json`; forward to Logtail / Papertrail / CloudWatch |
+| **Error tracking** | Uncaught exceptions, 5xx responses | `sentry-sdk.init(dsn=…)` in FastAPI; `@sentry/react-native` in Expo |
 | **Media storage** | Bucket usage / quota | Enable alerts in S3 / GCS console |
 | **SSL cert renewal** | Automatic via platform | No manual action needed if using Fly/Render/Cloud Run |
 | **Backups** | Successful DB dump & restore | Daily `pg_dump $DATABASE_URL > backup_$(date +%F).sql`; store in a protected bucket; run a restore test monthly |
@@ -397,59 +401,44 @@ jobs:
 ---  
 
 ## Costs
-| Item | Low‑end (Free / Starter) | Mid‑range (Typical) | High‑end (Scalable) |
-|------|--------------------------|---------------------|----------------------|
-| **FastAPI hosting** | Fly free tier (3 shared VMs) – $0 | Render Free Web + $7 Postgres starter | GCP Cloud Run (pay‑as‑you‑go) ≈ $15‑$30 |
-| **PostgreSQL** | Fly managed DB free tier (≤ 5 GB) | Render Postgres Starter $7 | Cloud SQL (HA) $30‑$80 |
-| **Media bucket** | Local `MEDIA_ROOT` – $0 | AWS S3 Standard 20 GB ≈ $0.5 | S3 + CloudFront CDN $5‑$10 |
+| Item | Low‑end (Free/Starter) | Mid‑range (Typical) | High‑end (Scalable) |
+|------|------------------------|---------------------|----------------------|
+| **FastAPI hosting** | Fly free tier (3 shared VMs) ≈ $0 | Render Free Web + $7 Postgres starter | GCP Cloud Run ≈ $15‑$30 (pay‑as‑you‑go + Cloud SQL) |
+| **PostgreSQL** | Fly managed DB free tier (≤ 5 GB) | Render Postgres Starter $7 | Cloud SQL HA $30‑$80 |
+| **Media bucket** | Local `MEDIA_ROOT` ≈ $0 | AWS S3 Standard 20 GB ≈ $0.5 | S3 + CloudFront CDN ≈ $5‑$10 |
 | **CI/CD** | GitHub Actions free (2 k min/mo) | Same + optional self‑hosted runner | Enterprise tier / extra minutes |
 | **EAS Build** | 100 min free/mo; $0.13/min thereafter | $25/mo (EAS Build) | $100+/mo for parallel builds |
 | **Monitoring / Sentry** | Free tier (5 k events) | $29/mo (20 k events) | $199/mo (200 k events) |
-| **Total estimate** | **≈ $0‑$15 /mo** | **≈ $60‑$120 /mo** | **≈ $300+/mo** |
+| **Total estimate** | **≈ $0‑$15 /mo** | **≈ $60‑$120 /mo** | **≈ $300+ /mo** |
 
 ---  
 
 ## Before production
 > Items are ordered by criticality – address them **before** a public launch.
 
-1. **✅ Fix the `/media/{filename}` endpoint**  
-   - Add authentication (`Depends(get_current_user)`).  
-   - Verify ownership of the requested file.  
-   - Sanitize the path with `Path.resolve()` and enforce it stays under `MEDIA_ROOT`.  
-   - Consider replacing the endpoint with signed URLs from the object store.  
-
-2. **✅ Add file‑upload validation**  
-   - Enforce a maximum size (5 MiB).  
-   - Accept only `image/jpeg` or `image/png`.  
-   - (Optional) Scan uploads with ClamAV.  
-
-3. **✅ Implement rate limiting / brute‑force protection**  
-   - Install `slowapi` (`pip install slowapi`) and add middleware,  
-     OR configure edge limits (e.g., Fly rate limits).  
-
-4. **✅ Add security HTTP headers**  
-   - Either configure Fly/Render to inject `Strict-Transport-Security`, `X-Content-Type-Options`, `X-Frame-Options`, `Content-Security-Policy`,  
-   - **or** add a FastAPI middleware that sets these headers on every response.
-
-5. **✅ Migrate receipt image storage to a cloud bucket** (S3/GCS/Azure) and update the backend to store signed URLs.
-
-6. **✅ Set up database migrations with Alembic** and ensure the CI pipeline runs `alembic upgrade head` before starting the new container.
-
-7. **✅ Upgrade vulnerable npm dependencies**:  
-   - `braces` → latest safe version (or remove).  
-   - `node-forge` → replace with `@stablelib` or native Web Crypto.  
-   - `decode-uri-component` → `>=0.5.0`.  
-   - `uuid` → `>=11.1.1`.  
-   Run `npm install <pkg>@latest` and commit updated `package-lock.json`.
-
-8. **✅ Secure JWT storage on web builds** – switch to http‑only, secure cookies instead of AsyncStorage.
-
-9. **✅ Enable structured logging and error tracking** (Sentry) for both backend and Expo app.
-
-10. **✅ Configure automated backups** of the PostgreSQL instance and verify restore procedures monthly.
-
-11. **✅ Run end‑to‑end smoke tests** against the live API (e.g., using Postman/Newman or `pytest` + `httpx`) covering auth, receipt upload, mileage entry, dashboard, and export flows.
-
-12. **✅ Review and harden firewall / IAM policies** on the chosen cloud provider (least‑privilege DB credentials, no public SSH, etc.).
+1. **✅ Fix `/media/{filename}` endpoint**  
+   - Already authenticates via `Depends(get_current_user)`.  
+   - Verify ownership and path sanitisation (`Path.resolve()`).  
+   - **To‑do:** replace with signed URLs from an object store (S3/GCS) for better scalability.
+2. **✅ Add file‑upload validation**  
+   - Size limit 5 MiB and MIME type check already in `_validate_image`.  
+   - **To‑do:** set `Image.MAX_IMAGE_PIXELS` (e.g., `Image.MAX_IMAGE_PIXELS = 10_000_000`) and optionally scan with ClamAV.
+3. **✅ Implement rate limiting / brute‑force protection**  
+   - `slowapi` decorator added to auth & most routes.  
+   - **To‑do:** audit every exposed endpoint (e.g., `/export/*`, `/media/*`) and add appropriate limits.
+4. **✅ Add security HTTP headers** – already injected by `SecurityHeadersMiddleware`. Verify they appear in production responses.
+5. **✅ Migrate receipt image storage to a cloud bucket** – see “Media storage” section.
+6. **✅ Set up database migrations with Alembic** – see “Database migrations” section; ensure CI runs `alembic upgrade head` before start.
+7. **✅ Upgrade vulnerable npm dependencies**  
+   - `braces` – wait for patched version or replace.  
+   - `node‑forge` – replace with `@stablelib` or Web Crypto.  
+   - `decode-uri-component` – `npm i decode-uri-component@>=0.5.0`.  
+   - `uuid` – `npm i uuid@>=11.1.1`.  
+   - `sprintf-js` – replace with native template literals. Commit updated `package-lock.json`.
+8. **✅ Secure JWT storage on Expo web builds** – replace AsyncStorage usage in `expo-app/src/auth.ts` with httpOnly, Secure cookies via a server‑side Set‑Cookie header.
+9. **✅ Enable structured logging and error tracking** – add `sentry-sdk` init in `backend/app/main.py` and `@sentry/react-native` in Expo.
+10. **✅ Configure automated backups** – enable daily snapshots for managed Postgres; test restores monthly.
+11. **✅ Run end‑to‑end smoke tests** against the live API (Postman/Newman or `pytest` + `httpx`) covering auth, receipt upload, mileage entry, dashboard, and export flows.
+12. **✅ Review and harden firewall / IAM policies** on the chosen cloud provider (least‑privilege DB credentials, no public SSH, restrict inbound traffic to 443 only).
 
 Once all the above are completed, the Freelance Finance Tracker will be ready for a secure, production‑grade release. Good luck, John! 🚀
