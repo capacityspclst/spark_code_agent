@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { SafeAreaView, Text, ActivityIndicator, StyleSheet, TouchableOpacity } from 'react-native';
+import { SafeAreaView, Text, ActivityIndicator, StyleSheet } from 'react-native';
 import axios from 'axios';
 import { useNavigation } from '@react-navigation/native';
 import { saveToken } from '../auth';
@@ -8,7 +8,7 @@ import { theme } from '../theme';
 import PrimaryButton from '../components/ui/PrimaryButton';
 import LoadingOverlay from '../components/LoadingOverlay';
 import FormField from '../components/ui/FormField';
-import { TextInput } from 'react-native-paper';
+import { Button as PaperButton, TextInput } from 'react-native-paper';
 
 export default function SignInScreen() {
   const navigation = useNavigation<any>();
@@ -78,14 +78,15 @@ export default function SignInScreen() {
       ) : (
         <PrimaryButton title="Log in" onPress={handleLogin} accessibilityLabel="Log in" />
       )}
-      <TouchableOpacity
+      <PaperButton
+        mode="text"
         onPress={() => navigation.navigate('SignUp')}
-        accessibilityRole="link"
         accessibilityLabel="Don’t have an account? Sign up"
         style={styles.link}
+        labelStyle={styles.linkText}
       >
-        <Text style={styles.linkText}>Don’t have an account? Sign up</Text>
-      </TouchableOpacity>
+        Don’t have an account? Sign up
+      </PaperButton>
       {loading && <LoadingOverlay message="Signing you in…" />}
     </SafeAreaView>
   );

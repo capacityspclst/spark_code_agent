@@ -1,12 +1,10 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
-import { FontAwesome } from '@expo/vector-icons';
-import { theme } from '../theme';
+import { View, Text, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { IconButton } from 'react-native-paper';
+import { theme } from '../theme';
 
 export default function Header() {
-  const navigation = useNavigation<any>();
   const handleSettings = () => {
     // Placeholder: navigate to Settings if exists
   };
@@ -14,13 +12,13 @@ export default function Header() {
     <SafeAreaView edges={["top"]} style={styles.safeArea} accessibilityRole="header">
       <View style={styles.header}>
         <Text style={styles.title}>FinanceMate</Text>
-        <TouchableOpacity
+        <IconButton
+          icon="cog"
+          size={24}
           onPress={handleSettings}
           accessibilityLabel="Settings"
           accessibilityRole="button"
-        >
-          <FontAwesome name="cog" size={24} color={theme.colors.secondary} />
-        </TouchableOpacity>
+        />
       </View>
     </SafeAreaView>
   );
@@ -28,7 +26,7 @@ export default function Header() {
 
 const styles = StyleSheet.create({
   safeArea: {
-    backgroundColor: theme.colors.surface, // use surface for header background
+    backgroundColor: theme.colors.surface,
   },
   header: {
     height: theme.headerHeight,
