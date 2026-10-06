@@ -10,8 +10,11 @@ from datetime import timedelta
 # Using a 32-byte URL‑safe token gives a suitably long secret for HS256.
 SECRET_KEY: str = os.getenv("SECRET_KEY", secrets.token_urlsafe(32))
 
-# JWT algorithm.
+# JWT algorithm – validate against allowed algorithms.
 ALGORITHM: str = os.getenv("ALGORITHM", "HS256")
+_allowed_algorithms = {"HS256", "HS384", "HS512"}
+if ALGORITHM not in _allowed_algorithms:
+    raise RuntimeError(f"Unsupported JWT algorithm: {ALGORITHM}. Allowed: {_allowed_algorithms}")
 
 # Token expiry in minutes.
 ACCESS_TOKEN_EXPIRE_MINUTES: int = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "30"))
