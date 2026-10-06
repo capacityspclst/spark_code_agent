@@ -18,11 +18,24 @@ export default function ReceiptCaptureScreen() {
   const [notes, setNotes] = useState('');
   const [loading, setLoading] = useState(false);
 
-  // Grant permission instantly for test environment
-  const grantPermission = () => setHasPermission(true);
+  // Request camera permission when user clicks Allow
+  const requestPermission = async () => {
+    const { status } = await ImagePicker.requestCameraPermissionsAsync();
+    setHasPermission(status === 'granted');
+  };
 
   const pickImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      quality: 1,
+    });
+    if (!result.canceled) {
+      setImage(result);
+    }
+  };
+
+  const takePhoto = async () => {
+    const result = await ImagePicker.launchCameraAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       quality: 1,
     });
@@ -73,7 +86,7 @@ export default function ReceiptCaptureScreen() {
       await axios.post(`${API_URL}/receipts`, form, {
         headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'multipart/form-data' },
       });
-      // Navigate immediately to Dashboard with flag for toast
+      // Navigate immediately to Dashboard with toast flag
       navigation.navigate('Dashboard', { receiptSaved: true });
     } catch (e) {
       Alert.alert('Error', 'Upload failed. Check your connection and try again.');
@@ -97,7 +110,7 @@ export default function ReceiptCaptureScreen() {
       <View style={styles.container} accessibilityRole="none">
         <Text style={styles.heading}>New receipt</Text>
         <Text style={styles.text}>Camera access needed</Text>
-        <PrimaryButton title="Allow" onPress={grantPermission} accessibilityLabel="Allow" />
+        <PrimaryButton title="Allow" onPress={requestPermission} accessibilityLabel="Allow" />
         <PrimaryButton title="Deny" onPress={() => setHasPermission(false)} accessibilityLabel="Deny" />
       </View>
     );
@@ -108,7 +121,8 @@ export default function ReceiptCaptureScreen() {
       <View style={styles.form}>
         <Text style={styles.heading}>New receipt</Text>
         {image && <Image source={{ uri: image.assets[0].uri }} style={styles.image} />}
-        <PrimaryButton title="Tap to take a photo or choose from library" onPress={pickImage} accessibilityLabel="Tap to take a photo or choose from library" />
+        <PrimaryButton title="Take photo" onPress={takePhoto} accessibilityLabel="Take photo" />
+        <PrimaryButton title="Choose from library" onPress={pickImage} accessibilityLabel="Choose from library" />
         <Text style={styles.fieldLabel} nativeID="amount-label">Amount (USD)</Text>
         <TextInput
           nativeID="amount-input"
