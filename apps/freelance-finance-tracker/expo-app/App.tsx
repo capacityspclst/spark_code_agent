@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { createBottomTabNavigator, BottomTabBarButtonProps } from '@react-navigation/bottom-tabs';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { View, ActivityIndicator, Pressable } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -19,9 +19,10 @@ import { Provider as PaperProvider, MD3LightTheme } from 'react-native-paper';
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 
-// Merge our design tokens with Paper's MD3 theme
+// Merge design tokens with Paper theme
 const paperTheme = {
   ...MD3LightTheme,
+  roundness: theme.radii.md,
   colors: {
     ...MD3LightTheme.colors,
     primary: theme.colors.primary,
@@ -33,23 +34,20 @@ const paperTheme = {
     error: theme.colors.error,
     onError: theme.colors.onError,
   },
-  roundness: theme.radii.md,
 };
 
 function MainTabs() {
   return (
     // @ts-ignore
     <Tab.Navigator
-      lazy={true}
-      detachInactiveScreens={true}
       screenOptions={{
         headerShown: false,
         tabBarStyle: { backgroundColor: theme.colors.background, height: 56 },
         tabBarActiveTintColor: theme.colors.primary,
         tabBarInactiveTintColor: theme.colors.secondary,
-        tabBarShowLabel: true, // show labels per design
+        tabBarShowLabel: true,
         tabBarLabelStyle: { fontSize: 12 },
-        tabBarButton: (props: BottomTabBarButtonProps) => {
+        tabBarButton: (props) => {
           const { onPress, accessibilityState, accessibilityLabel, style, children } = props as any;
           const focused = accessibilityState?.selected;
           const focusStyle = focused ? { borderWidth: 2, borderColor: theme.colors.primary } : {};

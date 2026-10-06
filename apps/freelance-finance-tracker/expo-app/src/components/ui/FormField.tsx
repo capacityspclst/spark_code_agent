@@ -1,7 +1,7 @@
 import React from 'react';
 import { TextInput, HelperText } from 'react-native-paper';
 import { theme } from '../../theme';
-import { TextInputProps } from 'react-native-paper/lib/typescript/components/TextInput/TextInput';
+import type { TextInputProps } from 'react-native-paper/lib/typescript/components/TextInput/TextInput';
 
 type Props = {
   label: string;
@@ -28,7 +28,7 @@ export default function FormField({ label, value, onChangeText, error, helperTex
         keyboardType={keyboardType}
         accessibilityLabel={accessibilityLabel || label}
         style={{ backgroundColor: theme.colors.surface, height: 48 }}
-        right={right ? { icon: () => right } : undefined}
+        right={right}
       />
       {error && helperText ? <HelperText type="error" visible>{helperText}</HelperText> : null}
     </>

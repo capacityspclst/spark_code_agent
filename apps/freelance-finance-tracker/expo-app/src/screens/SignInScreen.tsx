@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { SafeAreaView, View, Text, ActivityIndicator, StyleSheet, TouchableOpacity, Platform } from 'react-native';
+import { SafeAreaView, Text, ActivityIndicator, StyleSheet, TouchableOpacity } from 'react-native';
 import axios from 'axios';
 import { useNavigation } from '@react-navigation/native';
 import { saveToken } from '../auth';
@@ -7,7 +7,6 @@ import { API_URL } from '../config';
 import { theme } from '../theme';
 import PrimaryButton from '../components/ui/PrimaryButton';
 import LoadingOverlay from '../components/LoadingOverlay';
-import { FontAwesome } from '@expo/vector-icons';
 import FormField from '../components/ui/FormField';
 import { TextInput } from 'react-native-paper';
 
@@ -84,7 +83,6 @@ export default function SignInScreen() {
         accessibilityRole="link"
         accessibilityLabel="Don’t have an account? Sign up"
         style={styles.link}
-        accessible={true}
       >
         <Text style={styles.linkText}>Don’t have an account? Sign up</Text>
       </TouchableOpacity>
@@ -96,6 +94,6 @@ export default function SignInScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, padding: theme.spacing.lg, backgroundColor: theme.colors.background },
   title: { ...theme.typography.h2, color: theme.colors.onSurface, marginBottom: theme.spacing.lg },
-  link: { marginTop: theme.spacing.lg, alignItems: 'center' },
-  linkText: { color: theme.colors.secondary, ...theme.typography.body, textDecorationLine: 'underline' },
+  link: { marginTop: theme.spacing.lg, alignSelf: 'center' },
+  linkText: { color: theme.colors.secondary, ...theme.typography.bodyMedium, textDecorationLine: 'underline' },
 });

@@ -2,8 +2,8 @@ export const theme = {
   // ---- Colors ----
   colors: {
     // Brand
-    primary: '#0066FF',          // CTA & active tab
-    primaryVariant: '#004C99',   // pressed primary
+    primary: '#0050CC',          // darker CTA for sufficient contrast
+    primaryVariant: '#003399',   // pressed primary
     accent: '#FF9500',           // secondary CTA
     accentPressed: '#E68A00',    // pressed accent (10 % darker)
     onAccent: '#212121',        // text/icon on accent
@@ -61,10 +61,19 @@ export const theme = {
     h1: { fontSize: 32, lineHeight: 40, fontWeight: '700' as const },
     h2: { fontSize: 24, lineHeight: 32, fontWeight: '600' as const },
     h3: { fontSize: 20, lineHeight: 28, fontWeight: '600' as const },
-    body: { fontSize: 16, lineHeight: 24, fontWeight: '400' as const },
-    small: { fontSize: 14, lineHeight: 20, fontWeight: '400' as const },
-    caption: { fontSize: 12, lineHeight: 16, fontWeight: '400' as const },
+    titleLarge: { fontSize: 22, lineHeight: 28, fontWeight: '600' as const },
+    titleMedium: { fontSize: 16, lineHeight: 24, fontWeight: '500' as const },
+    titleSmall: { fontSize: 14, lineHeight: 20, fontWeight: '500' as const },
+    headlineMedium: { fontSize: 24, lineHeight: 32, fontWeight: '600' as const },
+    bodyLarge: { fontSize: 16, lineHeight: 24, fontWeight: '400' as const },
+    bodyMedium: { fontSize: 14, lineHeight: 20, fontWeight: '400' as const },
+    bodySmall: { fontSize: 12, lineHeight: 16, fontWeight: '400' as const },
+    body: { fontSize: 14, lineHeight: 20, fontWeight: '400' as const }, // alias for bodyMedium
+    labelLarge: { fontSize: 14, lineHeight: 20, fontWeight: '600' as const },
+    labelMedium: { fontSize: 12, lineHeight: 16, fontWeight: '600' as const },
+    labelSmall: { fontSize: 11, lineHeight: 16, fontWeight: '600' as const },
     button: { fontSize: 16, lineHeight: 24, fontWeight: '600' as const },
+    caption: { fontSize: 12, lineHeight: 16, fontWeight: '400' as const },
   },
 
   // Header height token

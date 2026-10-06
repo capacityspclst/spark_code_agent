@@ -12,7 +12,7 @@ type Props = {
 
 export default function EmptyState({ title, description, ctaLabel, onPressCTA }: Props) {
   return (
-    <View style={styles.container} accessibilityRole="region">
+    <View style={styles.container}>
       <Text style={styles.title}>{title}</Text>
       <Text style={styles.description}>{description}</Text>
       <PrimaryButton title={ctaLabel} onPress={onPressCTA} accessibilityLabel={ctaLabel} />
@@ -27,5 +27,5 @@ const styles = StyleSheet.create({
     paddingHorizontal: theme.spacing.lg,
   },
   title: { ...theme.typography.h2, color: theme.colors.onSurface, marginBottom: theme.spacing.sm },
-  description: { ...theme.typography.body, color: theme.colors.onSurface, marginBottom: theme.spacing.lg, textAlign: 'center' },
+  description: { ...theme.typography.bodyMedium, color: theme.colors.onSurface, marginBottom: theme.spacing.lg, textAlign: 'center' },
 });

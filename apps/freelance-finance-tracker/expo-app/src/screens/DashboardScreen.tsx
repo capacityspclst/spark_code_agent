@@ -106,12 +106,12 @@ export default function DashboardScreen() {
 
 const styles = StyleSheet.create({
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  loadingText: { marginTop: theme.spacing.md, ...theme.typography.body },
-  toast: { backgroundColor: theme.colors.success, color: theme.colors.onSuccess, padding: theme.spacing.sm, marginBottom: theme.spacing.md, textAlign: 'center', ...theme.typography.body },
+  loadingText: { marginTop: theme.spacing.md, ...theme.typography.bodyMedium },
+  toast: { backgroundColor: theme.colors.success, color: theme.colors.onSuccess, padding: theme.spacing.sm, marginBottom: theme.spacing.md, textAlign: 'center', ...theme.typography.bodyMedium },
   cards: { flexDirection: 'column' },
   receiptList: { marginTop: theme.spacing.lg },
   receiptItem: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: theme.spacing.sm, borderBottomWidth: 1, borderBottomColor: theme.colors.outline },
-  receiptAmount: { ...theme.typography.body, color: theme.colors.onSurface },
-  receiptCategory: { ...theme.typography.body, color: theme.colors.secondary },
+  receiptAmount: { ...theme.typography.bodyMedium, color: theme.colors.onSurface },
+  receiptCategory: { ...theme.typography.bodyMedium, color: theme.colors.secondary },
   fab: { position: 'absolute', right: theme.spacing.lg, bottom: theme.spacing.lg },
 });

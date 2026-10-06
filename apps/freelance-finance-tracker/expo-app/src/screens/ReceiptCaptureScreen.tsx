@@ -1,12 +1,15 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, ActivityIndicator, Alert, StyleSheet, Image, ScrollView, Platform, Pressable } from 'react-native';
+import { View, Text, ActivityIndicator, Alert, StyleSheet, Image, ScrollView, Platform, Pressable } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import axios from 'axios';
 import { useNavigation } from '@react-navigation/native';
 import { getToken } from '../auth';
 import { API_URL } from '../config';
 import { theme } from '../theme';
-import PrimaryButton from '../components/PrimaryButton';
+import PrimaryButton from '../components/ui/PrimaryButton';
+import FormField from '../components/ui/FormField';
+import Screen from '../components/ui/Screen';
+import { TextInput } from 'react-native-paper';
 
 export default function ReceiptCaptureScreen() {
   const navigation = useNavigation<any>();
@@ -44,7 +47,6 @@ export default function ReceiptCaptureScreen() {
   };
 
   const handlePlaceholderPress = async () => {
-    // Open image library as fallback (covers both web and native)
     await pickImage();
   };
 
@@ -67,7 +69,7 @@ export default function ReceiptCaptureScreen() {
           const blob = await resp.blob();
           form.append('image', blob, image.assets[0].name || 'receipt.jpg');
         } else {
-          (form as any).append('image', {
+          form.append('image', {
             uri: image.assets[0].uri,
             name: image.assets[0].name || 'receipt.jpg',
             type: image.assets[0].type || 'image/jpeg',
@@ -80,7 +82,7 @@ export default function ReceiptCaptureScreen() {
           const blob = await resp.blob();
           form.append('image', blob, 'receipt.jpg');
         } else {
-          (form as any).append('image', {
+          form.append('image', {
             uri: placeholder,
             name: 'receipt.jpg',
             type: 'image/png',
@@ -100,22 +102,22 @@ export default function ReceiptCaptureScreen() {
 
   if (hasPermission === false) {
     return (
-      <ScrollView contentContainerStyle={styles.container} accessibilityRole="none">
+      <Screen scroll>
         <Text style={styles.text}>Camera access denied. You can select a photo from the library.</Text>
         <PrimaryButton title="Choose from library" onPress={pickImage} accessibilityLabel="Choose from library" />
         {renderForm()}
-      </ScrollView>
+      </Screen>
     );
   }
 
   if (hasPermission === null) {
     return (
-      <View style={styles.container} accessibilityRole="none">
+      <Screen scroll>
         <Text style={styles.heading}>New receipt</Text>
         <Text style={styles.text}>Camera access needed</Text>
         <PrimaryButton title="Allow" onPress={requestPermission} accessibilityLabel="Allow" />
         <PrimaryButton title="Deny" onPress={() => setHasPermission(false)} accessibilityLabel="Deny" />
-      </View>
+      </Screen>
     );
   }
 
@@ -123,8 +125,7 @@ export default function ReceiptCaptureScreen() {
     return (
       <View style={styles.form}>
         <Text style={styles.heading}>New receipt</Text>
-        {image && <Image source={{ uri: image.assets[0].uri }} style={styles.image} />}
-        {/* Placeholder when no image selected */}
+        {image && <Image source={{ uri: image.assets[0].uri }} style={styles.image} accessibilityLabel="Receipt photo" />}
         {!image && (
           <Pressable
             onPress={handlePlaceholderPress}
@@ -135,57 +136,16 @@ export default function ReceiptCaptureScreen() {
             <Text style={styles.placeholderText}>Tap to take a photo or choose from library</Text>
           </Pressable>
         )}
-        {/* Keep explicit actions for native platforms */}
         {Platform.OS !== 'web' && (
           <>
             <PrimaryButton title="Take photo" onPress={takePhoto} accessibilityLabel="Take photo" />
             <PrimaryButton title="Choose from library" onPress={pickImage} accessibilityLabel="Choose from library" />
           </>
         )}
-        <Text style={styles.fieldLabel} nativeID="amount-label">Amount (USD)</Text>
-        <TextInput
-          nativeID="amount-input"
-          testID="amount-input"
-          placeholder="Amount (USD)"
-          value={amount}
-          onChangeText={setAmount}
-          style={styles.input}
-          accessibilityLabel="Amount (USD)"
-          accessibilityLabelledBy="amount-label"
-        />
-        <Text style={styles.fieldLabel} nativeID="date-label">Date</Text>
-        <TextInput
-          nativeID="date-input"
-          testID="date-input"
-          placeholder="Date"
-          value={date}
-          onChangeText={setDate}
-          style={styles.input}
-          accessibilityLabel="Date"
-          accessibilityLabelledBy="date-label"
-        />
-        <Text style={styles.fieldLabel} nativeID="category-label">Category</Text>
-        <TextInput
-          nativeID="category-input"
-          testID="category-input"
-          placeholder="Category"
-          value={category}
-          onChangeText={setCategory}
-          style={styles.input}
-          accessibilityLabel="Category"
-          accessibilityLabelledBy="category-label"
-        />
-        <Text style={styles.fieldLabel} nativeID="notes-label">Notes (optional)</Text>
-        <TextInput
-          nativeID="notes-input"
-          testID="notes-input"
-          placeholder="Notes (optional)"
-          value={notes}
-          onChangeText={setNotes}
-          style={styles.input}
-          accessibilityLabel="Notes (optional)"
-          accessibilityLabelledBy="notes-label"
-        />
+        <FormField label="Amount (USD)" value={amount} onChangeText={setAmount} keyboardType="numeric" accessibilityLabel="Amount (USD)" />
+        <FormField label="Date" value={date} onChangeText={setDate} accessibilityLabel="Date" />
+        <FormField label="Category" value={category} onChangeText={setCategory} accessibilityLabel="Category" />
+        <FormField label="Notes (optional)" value={notes} onChangeText={setNotes} accessibilityLabel="Notes (optional)" />
         {loading ? (
           <ActivityIndicator size="large" color={theme.colors.primary} />
         ) : (
@@ -204,11 +164,9 @@ export default function ReceiptCaptureScreen() {
 
 const styles = StyleSheet.create({
   container: { flexGrow: 1, padding: theme.spacing.lg, backgroundColor: theme.colors.background },
-  text: { ...theme.typography.body, marginBottom: theme.spacing.md },
+  text: { ...theme.typography.bodyMedium, marginBottom: theme.spacing.md },
   heading: { ...theme.typography.h2, color: theme.colors.onSurface, marginBottom: theme.spacing.md },
   form: { marginTop: theme.spacing.md },
-  fieldLabel: { ...theme.typography.body, color: theme.colors.onSurface, marginBottom: theme.spacing.xs, marginTop: theme.spacing.sm },
-  input: { backgroundColor: theme.colors.surface, padding: theme.spacing.sm, borderRadius: theme.radii.sm, borderWidth: 1, borderColor: theme.colors.secondary, marginBottom: theme.spacing.sm },
   image: { width: 200, height: 200, marginBottom: theme.spacing.sm },
   placeholderContainer: {
     borderWidth: 1,
@@ -219,5 +177,5 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginBottom: theme.spacing.md,
   },
-  placeholderText: { ...theme.typography.body, color: theme.colors.secondary },
+  placeholderText: { ...theme.typography.bodyMedium, color: theme.colors.secondary },
 });
