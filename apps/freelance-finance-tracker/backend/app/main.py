@@ -16,9 +16,6 @@ from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
-from starlette.requests import Request as StarletteRequest
-from starlette.responses import Response
-from starlette.status import HTTP_429_TOO_MANY_REQUESTS
 
 # Create tables
 Base.metadata.create_all(bind=engine)
@@ -32,7 +29,7 @@ app = FastAPI(
 # Rate limiter
 limiter = Limiter(key_func=get_remote_address)
 app.state.limiter = limiter
-app.add_exception_handler(HTTP_429_TOO_MANY_REQUESTS, _rate_limit_exceeded_handler)
+app.add_exception_handler(429, _rate_limit_exceeded_handler)
 
 # Security headers middleware
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -68,7 +65,7 @@ def health():
 # Authentication endpoints with rate limiting
 @app.post("/auth/signup", response_model=schemas.Token)
 @limiter.limit("5/minute")
-def signup(user_in: schemas.UserCreate, db: Session = Depends(get_db)):
+def signup(request: Request, user_in: schemas.UserCreate, db: Session = Depends(get_db)):
     if crud.get_user_by_email(db, user_in.email):
         raise HTTPException(status_code=400, detail="Email already registered")
     user = crud.create_user(db, user_in)
@@ -77,7 +74,7 @@ def signup(user_in: schemas.UserCreate, db: Session = Depends(get_db)):
 
 @app.post("/auth/login", response_model=schemas.Token)
 @limiter.limit("10/minute")
-def login(user_in: schemas.UserCreate, db: Session = Depends(get_db)):
+def login(request: Request, user_in: schemas.UserCreate, db: Session = Depends(get_db)):
     user = crud.authenticate_user(db, user_in.email, user_in.password)
     if not user:
         raise HTTPException(status_code=401, detail="Incorrect email or password")
@@ -105,6 +102,7 @@ def _validate_image(upload: UploadFile):
 @app.post("/receipts", response_model=schemas.ReceiptRead)
 @limiter.limit("20/minute")
 def create_receipt(
+    request: Request,
     amount: float = Form(...),
     date: str = Form(...),
     category: str = Form(...),
@@ -138,7 +136,7 @@ def create_receipt(
 
 @app.get("/receipts", response_model=list[schemas.ReceiptRead])
 @limiter.limit("30/minute")
-def list_receipts(current_user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
+def list_receipts(request: Request, current_user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
     receipts = crud.get_receipts(db, current_user)
     result = []
     for r in receipts:
@@ -160,6 +158,7 @@ def list_receipts(current_user: models.User = Depends(get_current_user), db: Ses
 @app.post("/mileage", response_model=schemas.MileageRead)
 @limiter.limit("20/minute")
 def create_mileage(
+    request: Request,
     mileage_in: schemas.MileageCreate,
     current_user: models.User = Depends(get_current_user),
     db: Session = Depends(get_db),
@@ -169,13 +168,13 @@ def create_mileage(
 
 @app.get("/mileage", response_model=list[schemas.MileageRead])
 @limiter.limit("30/minute")
-def list_mileage(current_user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
+def list_mileage(request: Request, current_user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
     return crud.get_mileages(db, current_user)
 
 # Dashboard endpoint
 @app.get("/dashboard", response_model=schemas.DashboardSummary)
 @limiter.limit("10/minute")
-def get_dashboard(current_user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
+def get_dashboard(request: Request, current_user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
     return crud.calculate_dashboard(db, current_user)
 
 # Export CSV
@@ -186,7 +185,7 @@ def _escape_csv(value: str) -> str:
 
 @app.get("/export/csv")
 @limiter.limit("5/minute")
-def export_csv(current_user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
+def export_csv(request: Request, current_user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
     def generate():
         output = io.StringIO()
         writer = csv.writer(output)
@@ -215,7 +214,7 @@ def export_csv(current_user: models.User = Depends(get_current_user), db: Sessio
 # Export PDF
 @app.get("/export/pdf")
 @limiter.limit("5/minute")
-def export_pdf(current_user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
+def export_pdf(request: Request, current_user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
     buffer = io.BytesIO()
     p = canvas.Canvas(buffer, pagesize=letter)
     width, height = letter
@@ -251,11 +250,7 @@ def export_pdf(current_user: models.User = Depends(get_current_user), db: Sessio
 
 # Protected media endpoint
 @app.get("/media/{filename}")
-def get_media(
-    filename: str,
-    current_user: models.User = Depends(get_current_user),
-    db: Session = Depends(get_db),
-):
+def get_media(request: Request, filename: str, current_user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
     safe_path = pathlib.Path(MEDIA_ROOT) / filename
     try:
         resolved = safe_path.resolve(strict=True)
