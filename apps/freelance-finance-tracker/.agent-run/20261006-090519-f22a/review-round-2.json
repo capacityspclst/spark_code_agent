@@ -1,0 +1,15 @@
+{
+  "verdict": "revise",
+  "issues": [
+    "backend/app/main.py imports `slowapi` which is not installed (ModuleNotFoundError). Add `slowapi` to backend/requirements.txt or remove the rate limiting middleware and related imports.",
+    "backend/app/main.py uses relative imports (`from . import models, schemas, crud`) but the FastAPI app is started via a file path import, causing ImportError: attempted relative import with no known parent package. Change imports to absolute (e.g., `from backend.app import models, schemas, crud`) or adjust the startup command to use a proper module path (`uvicorn backend.app.main:app`).",
+    "backend/app/auth.py falls back to a random secret when JWT_SECRET_KEY is missing or too short. This should raise an error or enforce a required secret rather than generating a fallback, to avoid insecure tokens.",
+    "backend/app/main.py protects the /media/{filename} endpoint but still allows path traversal if `filename` contains \"..\". Although `resolve(strict=True)` and a prefix check are performed, the prefix check uses string startswith which can be bypassed (e.g., symlinks). Use `pathlib.Path(MEDIA_ROOT).resolve()` and compare resolved paths via `Path.is_relative_to` (Python\u00a03.9+) to ensure the file stays within MEDIA_ROOT.",
+    "backend/app/main.py does not validate the security of uploaded receipt images beyond MIME type and size; consider scanning for malicious content or restricting file extensions strictly (e.g., only `.jpg` and `.png`).",
+    "backend/app/main.py does not add rate limiting to non\u2011auth endpoints (e.g., receipt upload, mileage create) \u2013 add rate limits for those routes to mitigate abuse.",
+    "expo-app/src/auth.ts uses Expo SecureStore on all platforms, but on web SecureStore falls back to AsyncStorage which is insecure. Implement a secure storage strategy for web (e.g., http\u2011only, Secure cookies).",
+    "expo-app/package-lock.json contains multiple high\u2011severity vulnerable dependencies (braces, node\u2011forge, decode\u2011uri\u2011component, uuid). Update these packages to safe versions or replace them with alternatives.",
+    "expo-app/src/screens/SignInScreen.tsx (and other TypeScript files) contain syntax errors when parsed as Python (they were inadvertently treated as Python by the test runner). Ensure the backend startup does not attempt to import the Expo source files; adjust the `ui-backend.json` to correctly point to the FastAPI entry point."
+  ],
+  "feedback": "The backend fails to start due to missing `slowapi` and incorrect import style, causing the whole app to be unavailable. Authentication for the upload endpoints is present, but there are still path\u2011traversal and insecure fallback secret issues. The Expo app also has several vulnerable npm packages and insecure token storage on web. Fix the missing dependency or remove it, correct import paths, enforce a proper JWT secret, tighten file handling, add missing rate limits, secure token storage for web, and update the vulnerable npm dependencies. Once these issues are resolved, the acceptance tests and static validation should pass."
+}

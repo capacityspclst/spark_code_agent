@@ -1,0 +1,120 @@
+{
+  "verdict": "fail",
+  "summary": "The current build fails the primary user flow and has several accessibility and spec\u2011drift issues. The app never lands on the Sign\u2011In screen after launch (step\u202f3 of the flow), causing a hard break. Axe reports an ARIA progressbar without an accessible name, making the loading UI invisible to screen\u2011readers. A review of the UI code shows missing or incomplete implementations of many required states (e.g., field\u2011level errors, loading overlays, empty\u2011state copy), inconsistent use of design tokens (hard\u2011coded colors/sizes appear in some components), lack of visible focus indicators, and missing accessibility markup such as proper headings, aria\u2011describedby links, and announcements for toasts. Navigation elements (bottom tab bar, drawer on web) are not guaranteed to be present on every signed\u2011in screen. These gaps mean the product is not yet polished or compliant with the DESIGN.md requirements.",
+  "findings": [
+    {
+      "severity": "high",
+      "file": "expo-app/src/screens/SignInScreen.tsx",
+      "issue": "The app never renders the Sign\u2011In screen after launch; the primary flow stops at step\u202f3 with an empty page (no \"Welcome back\" title). This breaks the core onboarding flow.",
+      "fix": "Update the SecureStore JWT check in the root navigator to correctly detect a missing token and push the Sign\u2011In screen. Ensure the SignInScreen renders a heading with the exact text \"Welcome back\" and that the navigation stack includes it as the default for unauthenticated users.",
+      "source": "designer"
+    },
+    {
+      "severity": "high",
+      "file": "expo-app/src/components/LoadingOverlay.tsx",
+      "issue": "Overlay spinners use a `<View role=\"progressbar\">` (or ActivityIndicator) without an accessible name, violating WCAG and causing the Axe \"ARIA progressbar nodes must have an accessible name\" error.",
+      "fix": "Add `accessibilityRole=\"progressbar\"` and `accessibilityLabel=\"Loading\u2026\"` (or the appropriate state\u2011specific label such as \"Creating account\u2026\") to each loading indicator. Alternatively, use React\u2011Native\u2011Paper's `ActivityIndicator` with the `accessibilityLabel` prop.",
+      "source": "designer"
+    },
+    {
+      "severity": "high",
+      "file": "expo-app/src/screens/SignUpScreen.tsx",
+      "issue": "Sign\u2011Up screen does not display the live password rule helper text, nor does it link field errors to inputs with `aria-describedby`. The required copy and inline validation messages are missing.",
+      "fix": "Add a `<HelperText>` component below the password field that updates live with \"12\u202f+\u202fcharacters, upper\u2011case, lower\u2011case, number, symbol\". When a validation error occurs, render an error `HelperText` with an `id` and reference it via `accessibilityDescribedBy` on the `TextInput`. Ensure the same pattern is used for the email field.",
+      "source": "designer"
+    },
+    {
+      "severity": "high",
+      "file": "expo-app/src/screens/DashboardScreen.tsx",
+      "issue": "Empty\u2011state UI does not match the spec: missing illustration, title \"No data yet\", body copy, and CTA \"Add first receipt\". This leaves the user without guidance when there is no data.",
+      "fix": "Create an `EmptyState` component that renders the specified illustration, title, body text, and a primary button using the exact copy from DESIGN.md. Ensure the button calls the FAB action or navigates to the receipt capture flow.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "expo-app/src/components/ui/PrimaryButton.tsx",
+      "issue": "Button background color is hard\u2011coded (`backgroundColor: '#0066FF'`) instead of using `theme.colors.primary`. This violates the token\u2011usage rule and makes theming inconsistent.",
+      "fix": "Replace hard\u2011coded colors with `theme.colors.primary` and `theme.colors.onPrimary`. Use the token\u2011based `style` or `contentStyle` props from React\u2011Native\u2011Paper to apply colors, roundness, and elevation from the theme.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "expo-app/src/components/ui/PrimaryButton.tsx",
+      "issue": "Button does not expose a visible focus ring when focused via keyboard/web (no `:focus-visible` style). This fails the \"visible focus\" requirement.",
+      "fix": "Add a `focusStyle` that applies a 2\u202fpx solid border using `theme.colors.primary` when `focusVisible` is true. Ensure the underlying Paper `Button` receives the `onFocus` and `onBlur` handlers to toggle this style.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "expo-app/src/screens/ReceiptCaptureScreen.tsx",
+      "issue": "The image preview component lacks an `accessibilityLabel` (alt text). Screen readers cannot announce the receipt photo.",
+      "fix": "Add `accessibilityLabel=\"Receipt photo\"` (or a more descriptive label) to the Image component and set `accessible={true}`. If decorative, set `accessible={false}`.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "expo-app/src/components/Toast.tsx",
+      "issue": "Toasts/snackbars are not announced to assistive technologies; they appear but screen readers miss them.",
+      "fix": "When a toast mounts, call `announceForAccessibility(message)` (React\u2011Native\u2011Paper provides `Snackbar` with `onDismiss` hook). Ensure the Snackbar component has `accessibilityLiveRegion=\"assertive\"`.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "expo-app/src/screens/ExportScreen.tsx",
+      "issue": "Export CSV/PDF buttons show a disabled spinner state but lack an `aria-label` or live region announcement for the loading message, making it unclear to assistive tech when generation is in progress.",
+      "fix": "When the export begins, set `accessibilityState={{ busy: true }}` on the button and add `accessibilityLabel=\"Generating CSV\u2026\"` (or PDF). Provide a live region announcement when the export completes.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "expo-app/src/components/ui/FormField.tsx",
+      "issue": "TextInput fields miss `autocomplete` attributes (e.g., `autocomplete=\"email\"`, `autocomplete=\"current-password\"`). This reduces form usability.",
+      "fix": "Pass the appropriate `autoComplete` prop to the underlying Paper `TextInput` for email and password fields.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "expo-app/src/navigation/index.tsx",
+      "issue": "Web builds still render the bottom tab bar, contrary to the spec which requires a left\u2011hand navigation drawer on desktop.",
+      "fix": "Detect viewport width (or platform) and conditionally render a `DrawerNavigator` for web (>=1280\u202fpx) while hiding the `BottomNavigation` component. Ensure the drawer contains all primary destinations.",
+      "source": "designer"
+    },
+    {
+      "severity": "high",
+      "viewport": "phone",
+      "issue": "The screen is entirely blank except for a loading spinner, with no UI elements rendered.",
+      "fix": "Render the sign-in form with email and password fields, a primary 'Log in' button, and a 'Sign up' link as specified in the design spec.",
+      "screen": "sign in",
+      "source": "vision"
+    },
+    {
+      "severity": "high",
+      "viewport": "desktop",
+      "issue": "The screen is entirely blank except for a loading spinner, with no UI elements rendered.",
+      "fix": "Render the sign-in form with email and password fields, a primary 'Log in' button, and a 'Sign up' link as specified in the design spec.",
+      "screen": "sign in",
+      "source": "vision"
+    },
+    {
+      "severity": "high",
+      "screen": "sign in",
+      "source": "vision",
+      "issue": "visual quality 1/10 on 'sign in' (needs 8+): The screen is completely blank except for a loading spinner, indicating no UI elements are rendered. This is functionally broken and visually unprofessional for a polished product. No primary action, no typography, no spacing, no alignment, no color, no form design, no navigation, and no empty state guidance are visible. This screen would not be usable in production.",
+      "fix": "Address this screen's findings until it looks polished and professional."
+    }
+  ],
+  "lighthouse": [
+    {
+      "accessibility": 91,
+      "bestPractices": 96,
+      "performance": 71
+    }
+  ],
+  "vision_scores": [
+    {
+      "screen": "sign in",
+      "score": 1.0,
+      "summary": "The screen is completely blank except for a loading spinner, indicating no UI elements are rendered. This is functionally broken and visually unprofessional for a polished product. No primary action, no typography, no spacing, no alignment, no color, no form design, no navigation, and no empty state guidance are visible. This screen would not be usable in production."
+    }
+  ]
+}
