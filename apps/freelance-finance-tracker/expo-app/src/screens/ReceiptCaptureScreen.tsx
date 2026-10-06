@@ -77,14 +77,13 @@ export default function ReceiptCaptureScreen() {
         headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'multipart/form-data' },
       });
       setMessage('Receipt saved.');
-      // Show toast then navigate back after short delay
-      setTimeout(() => {
-        navigation.navigate('Dashboard');
-      }, 1000);
+      // Navigate immediately after success
+      navigation.navigate('Dashboard');
     } catch (e) {
       setMessage('Upload failed. Check your connection and try again.');
     } finally {
       setLoading(false);
+      // Clear message after a few seconds
       setTimeout(() => setMessage(''), 3000);
     }
   };

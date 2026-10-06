@@ -112,12 +112,12 @@ export default function SignInScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, padding: theme.spacing.lg, backgroundColor: theme.colors.background },
-  title: { fontSize: 24, lineHeight: 32, fontWeight: '600' as const, color: theme.colors.onSurface, marginBottom: theme.spacing.lg },
+  title: { ...theme.typography.h2, color: theme.colors.onSurface, marginBottom: theme.spacing.lg },
   field: { marginBottom: theme.spacing.md },
-  label: { fontSize: 16, lineHeight: 24, fontWeight: '400' as const, color: theme.colors.onSurface },
+  label: { ...theme.typography.body, color: theme.colors.onSurface },
   input: { backgroundColor: theme.colors.surface, padding: theme.spacing.sm, borderRadius: theme.radii.sm, borderWidth: 1, borderColor: theme.colors.secondary },
-  error: { color: theme.colors.error, fontSize: 12, lineHeight: 16, marginTop: theme.spacing.xs },
+  error: { color: theme.colors.error, ...theme.typography.caption, marginTop: theme.spacing.xs },
   link: { marginTop: theme.spacing.lg, alignItems: 'center' },
-  linkText: { color: theme.colors.secondary, fontSize: 16, lineHeight: 24, textDecorationLine: 'underline' },
+  linkText: { color: theme.colors.secondary, ...theme.typography.body, textDecorationLine: 'underline' },
   passwordRow: { flexDirection: 'row', alignItems: 'center', marginTop: theme.spacing.sm },
 });

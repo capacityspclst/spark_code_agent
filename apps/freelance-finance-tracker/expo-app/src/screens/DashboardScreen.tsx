@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, Button, ActivityIndicator, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, ActivityIndicator, StyleSheet, ScrollView } from 'react-native';
 import axios from 'axios';
 import { useNavigation, useIsFocused } from '@react-navigation/native';
 import { getToken } from '../auth';
@@ -45,6 +45,7 @@ export default function DashboardScreen() {
     <ScrollView contentContainerStyle={styles.container} accessibilityRole="none">
       {empty ? (
         <View style={styles.empty}>
+          <Text style={styles.emptyTitle}>No data yet</Text>
           <Text style={styles.emptyText}>You haven’t added any receipts or mileage yet. Tap the + button to get started.</Text>
           <PrimaryButton title="Add first receipt" onPress={() => navigation.navigate('ReceiptCapture')} accessibilityLabel="Add first receipt" />
         </View>
@@ -77,6 +78,7 @@ const styles = StyleSheet.create({
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   loadingText: { marginTop: theme.spacing.md, ...theme.typography.body },
   empty: { alignItems: 'center', marginTop: theme.spacing.xl },
+  emptyTitle: { ...theme.typography.h2, color: theme.colors.onSurface, marginBottom: theme.spacing.sm },
   emptyText: { marginBottom: theme.spacing.lg, textAlign: 'center', ...theme.typography.body },
   cards: { flexDirection: 'column' },
   card: { backgroundColor: theme.colors.surface, padding: theme.spacing.lg, borderRadius: theme.radii.md, marginBottom: theme.spacing.md, ...theme.elevation.card },

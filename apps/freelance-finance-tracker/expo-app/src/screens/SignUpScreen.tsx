@@ -116,14 +116,14 @@ export default function SignUpScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, padding: theme.spacing.lg, backgroundColor: theme.colors.background },
-  title: { fontSize: 24, lineHeight: 32, fontWeight: '600', color: theme.colors.onSurface, marginBottom: theme.spacing.lg },
+  title: { ...theme.typography.h2, color: theme.colors.onSurface, marginBottom: theme.spacing.lg },
   field: { marginBottom: theme.spacing.md },
-  label: { fontSize: 16, lineHeight: 24, fontWeight: '400', color: theme.colors.onSurface },
+  label: { ...theme.typography.body, color: theme.colors.onSurface },
   input: { backgroundColor: theme.colors.surface, padding: theme.spacing.sm, borderRadius: theme.radii.sm, borderWidth: 1, borderColor: theme.colors.secondary },
-  error: { color: theme.colors.error, fontSize: 12, lineHeight: 16, marginTop: 4 },
-  helper: { color: theme.colors.placeholder, fontSize: 14, lineHeight: 20, marginTop: 4 },
+  error: { color: theme.colors.error, ...theme.typography.caption, marginTop: theme.spacing.xs },
+  helper: { color: theme.colors.placeholder, ...theme.typography.caption, marginTop: theme.spacing.xs },
   link: { marginTop: theme.spacing.lg, alignItems: 'center' },
-  linkText: { color: theme.colors.onSurface, textDecorationLine: 'underline' },
+  linkText: { color: theme.colors.secondary, ...theme.typography.body, textDecorationLine: 'underline' },
   passwordRow: { flexDirection: 'row', alignItems: 'center', marginTop: theme.spacing.sm },
-  submissionError: { color: theme.colors.error, fontSize: 14, lineHeight: 20, marginBottom: theme.spacing.sm },
+  submissionError: { color: theme.colors.error, ...theme.typography.body, marginBottom: theme.spacing.sm },
 });

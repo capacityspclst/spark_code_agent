@@ -26,15 +26,13 @@ export default function MileageEntryScreen() {
       const payload = { date, miles: parseInt(miles, 10), notes };
       await axios.post(`${API_URL}/mileage`, payload, { headers: { Authorization: `Bearer ${token}` } });
       setMessage('Mileage entry saved.');
-      // Keep toast visible for 3 s, then navigate back to Dashboard
-      setTimeout(() => {
-        navigation.navigate('Dashboard');
-      }, 3000);
+      // Navigate immediately after success
+      navigation.navigate('Dashboard');
     } catch (e) {
       setMessage('Failed to save mileage. Please try again.');
     } finally {
       setLoading(false);
-      // Clear message after 3 s (same as navigation delay)
+      // Clear message after a few seconds
       setTimeout(() => setMessage(''), 3000);
     }
   };
