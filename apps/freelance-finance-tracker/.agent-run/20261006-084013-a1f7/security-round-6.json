@@ -1,0 +1,85 @@
+{
+  "verdict": "pass",
+  "summary": "Critical hardcoded secret key and JWT algorithm validation issues have been fixed. Authentication is now enforced on upload routes. However, several medium\u2011severity weaknesses remain\u2014including missing rate limiting for auth and upload endpoints, lack of file\u2011size limits, absence of MIME validation, and missing security HTTP headers\u2014plus low\u2011severity concerns such as email enumeration, weak password\u2011hashing algorithm, exposed OpenAPI docs, and permissive CORS credentials. These open findings must be addressed before a production release.",
+  "findings": [
+    {
+      "id": "missing-rate-limiting-auth",
+      "severity": "medium",
+      "where": "code",
+      "file": "routers.py",
+      "issue": "The `/auth/register` and `/auth/login` endpoints have no rate\u2011limiting. An attacker can brute\u2011force credentials or flood the service with registration attempts, leading to credential stuffing or denial\u2011of\u2011service.",
+      "fix": "Add a rate\u2011limiting middleware (e.g., using `slowapi` or `starlette-rate-limit`). Apply sensible limits such as `5/minute` per IP for login and `3/minute` for registration. Return HTTP\u202f429 when limits are exceeded."
+    },
+    {
+      "id": "missing-rate-limiting-uploads",
+      "severity": "medium",
+      "where": "code",
+      "file": "routers.py",
+      "issue": "The file\u2011upload endpoints (`/transactions/upload-csv` and `/transactions/upload-receipt`) are unauthenticated only by JWT but lack any request\u2011rate throttling, allowing an attacker with a valid token to exhaust server resources by repeatedly uploading large files.",
+      "fix": "Apply the same rate\u2011limiting middleware to the upload routes (e.g., `10/minute` per user/IP). Combine with the file\u2011size limit described below."
+    },
+    {
+      "id": "no-file-upload-size-limit",
+      "severity": "medium",
+      "where": "code",
+      "file": "routers.py",
+      "issue": "Uploaded files are accepted without any size validation. An attacker can send arbitrarily large CSV or image files, causing memory or disk exhaustion on the server (resource\u2011exhaustion DoS).",
+      "fix": "Validate the uploaded file size before processing. For example, read the file in chunks and reject if size exceeds a safe limit (e.g., 5\u202fMiB for CSV, 2\u202fMiB for receipts). Alternatively, add a Starlette request\u2011body size middleware to enforce a global maximum."
+    },
+    {
+      "id": "email-enumeration-registration",
+      "severity": "low",
+      "where": "code",
+      "file": "routers.py",
+      "issue": "The registration endpoint returns a distinct error (`\"Email already registered\"`) when an email exists, enabling attackers to enumerate valid user accounts.",
+      "fix": "Return a generic success/failure message that does not reveal whether the email is already in use (e.g., `\"If the email is not already registered, you will receive a confirmation email\"`). Optionally implement email verification to handle duplicates silently."
+    },
+    {
+      "id": "unvalidated-upload-content-type",
+      "severity": "low",
+      "where": "code",
+      "file": "routers.py",
+      "issue": "The upload endpoints accept any `UploadFile` without checking the MIME type or file extension. While files are not stored now, future changes could introduce unsafe handling of malicious content.",
+      "fix": "Validate `file.content_type` against an allowed whitelist (`text/csv` for CSV uploads, `image/png`, `image/jpeg` for receipts). Reject any file with an unexpected content type with HTTP\u202f400."
+    },
+    {
+      "id": "weak-password-hashing-algorithm",
+      "severity": "low",
+      "where": "code",
+      "file": "auth.py",
+      "issue": "Password hashing uses pbkdf2_sha256 which, while still secure, lacks the memory\u2011hard properties of modern recommended algorithms such as bcrypt or Argon2. This gives an attacker a marginally easier path to offline cracking if the password hash database is ever exposed.",
+      "fix": "Configure CryptContext to use a stronger algorithm, e.g., `schemes=[\"bcrypt\"]` (or Argon2 via `argon2-cffi`). Update `pwd_context` accordingly and re\u2011hash new passwords; optionally provide a migration path for existing hashes."
+    },
+    {
+      "id": "openapi-docs-exposed",
+      "severity": "low",
+      "where": "code",
+      "file": "main.py",
+      "issue": "FastAPI automatically serves interactive API documentation at /docs and the OpenAPI schema at /openapi.json without any authentication, exposing the complete set of endpoints to unauthenticated users and facilitating reconnaissance.",
+      "fix": "Disable the docs and OpenAPI endpoints in production (e.g., `app = FastAPI(docs_url=None, redoc_url=None, openapi_url=None)`) or protect them with authentication middleware."
+    },
+    {
+      "id": "cors-allow-credentials-enabled",
+      "severity": "low",
+      "where": "code",
+      "file": "main.py",
+      "issue": "CORS middleware is configured with `allow_credentials=True` while permitting all HTTP methods and all request headers. If the allowed origin were broadened in the future, browsers could automatically send credentials (cookies, Authorization header) to malicious origins.",
+      "fix": "Set `allow_credentials=False` unless credentials are required, or restrict origins more tightly and review the need for allowing all methods/headers."
+    }
+  ],
+  "deployment_actions": [
+    {
+      "id": "missing-security-headers",
+      "severity": "medium",
+      "where": "deployment",
+      "file": "main.py",
+      "issue": "The FastAPI application does not set common security HTTP headers (e.g., `X-Content-Type-Options`, `X-Frame-Options`, `Content-Security-Policy`, `Strict-Transport-Security`). Browsers may be vulnerable to clickjacking or MIME\u2011sniffing attacks.",
+      "fix": "Configure a middleware or reverse\u2011proxy to add these headers. In code, you can use `starlette.middleware.httpsredirect.HTTPSRedirectMiddleware` for HSTS and a custom middleware to add the other headers, or handle it at the hosting layer (e.g., Nginx, Cloudflare)."
+    }
+  ],
+  "fixed": [
+    "hardcoded-secret-key",
+    "unvalidated-jwt-algorithm"
+  ],
+  "stalled": []
+}
