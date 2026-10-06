@@ -12,7 +12,7 @@ if (lock.packages) {
   // iterate over a copy of keys to allow deletions
   for (const pkg of Object.keys(lock.packages)) {
     const info = lock.packages[pkg];
-    const name = pkg.replace('node_modules/', '').split('/')[0];
+    const name = pkg.replace('node_modules/', '').split('/').pop(); // get last segment
     if (name === 'node-forge') {
       delete lock.packages[pkg];
       continue;
@@ -21,6 +21,14 @@ if (lock.packages) {
       const ver = info && info.version;
       const major = ver ? parseInt(ver.split('.')[0] || '0', 10) : 0;
       if (major < 4) {
+        delete lock.packages[pkg];
+      }
+      continue;
+    }
+    if (name === 'uuid') {
+      const ver = info && info.version;
+      const major = ver ? parseInt(ver.split('.')[0] || '0', 10) : 0;
+      if (major < 13) {
         delete lock.packages[pkg];
       }
     }
