@@ -1,0 +1,81 @@
+{
+  "verdict": "fail",
+  "summary": "The FastAPI backend contains several critical and high\u2011severity issues: a hard\u2011coded JWT secret fallback allowing token forgery, an unauthenticated media endpoint that leaks receipt images, missing validation on receipt uploads, absent rate\u2011limiting on auth routes, and insecure token storage on the web build. Additionally, the Expo frontend depends on high\u2011severity vulnerable npm packages (braces, node\u2011forge) and medium\u2011severity packages (decode\u2011uri\u2011component, uuid) that should be upgraded or mitigated. All findings must be addressed before production release; the dependency issues are code fixes, while the JWT secret and rate\u2011limiting are code changes, and some hardening steps belong to deployment configuration.",
+  "findings": [
+    {
+      "id": "default-jwt-secret",
+      "severity": "critical",
+      "where": "code",
+      "file": "backend/app/auth.py",
+      "issue": "JWT secret falls back to the literal string \"secret\" when the JWT_SECRET_KEY environment variable is missing, allowing attackers to forge valid tokens and impersonate any user.",
+      "fix": "Remove the default value; raise an error if JWT_SECRET_KEY is not set at startup. Ensure a strong, randomly generated secret is provisioned in all environments."
+    },
+    {
+      "id": "unauthenticated-media-endpoint",
+      "severity": "high",
+      "where": "code",
+      "file": "backend/app/main.py",
+      "issue": "GET /media/{filename} serves receipt images without any authentication or ownership checks, exposing private user data to anyone who can guess a filename.",
+      "fix": "Protect the endpoint with authentication (e.g., Depends(get_current_user)) and verify the requested file belongs to the requesting user, or replace it with signed URLs from a secure object store."
+    },
+    {
+      "id": "missing-receipt-upload-validation",
+      "severity": "medium",
+      "where": "code",
+      "file": "backend/app/main.py",
+      "issue": "Receipt uploads are saved without validating file size, MIME type, or scanning for malicious content, enabling potential DoS via oversized uploads or storage of dangerous files.",
+      "fix": "Enforce a reasonable size limit (e.g., 5\u202fMiB), validate that the uploaded file is an allowed image type (e.g., JPEG/PNG), and optionally scan uploads with an antivirus (ClamAV) before saving."
+    },
+    {
+      "id": "missing-auth-rate-limiting",
+      "severity": "medium",
+      "where": "code",
+      "file": "backend/app/main.py",
+      "issue": "Authentication endpoints (/auth/signup, /auth/login) have no rate limiting, allowing credential\u2011stuffing or brute\u2011force attacks.",
+      "fix": "Integrate a rate\u2011limiting middleware such as slowapi or enforce limits at the edge/CDN (e.g., 5 requests per minute per IP) and implement exponential back\u2011off on repeated failures."
+    },
+    {
+      "id": "insecure-token-storage-web",
+      "severity": "medium",
+      "where": "code",
+      "file": "expo-app/src/auth.ts",
+      "issue": "On web platforms the JWT is stored in AsyncStorage (local storage), which is vulnerable to XSS theft.",
+      "fix": "For web builds switch to http\u2011only, secure cookies or another browser\u2011secure storage mechanism; avoid storing JWTs in plain client\u2011side storage."
+    },
+    {
+      "id": "vulnerable-dependency-braces",
+      "severity": "high",
+      "where": "code",
+      "file": "expo-app/package-lock.json",
+      "issue": "braces 3.0.3 has CVE\u20112026\u201193687 (Denial\u2011of\u2011Service via deep regex patterns) and has no fix yet.",
+      "fix": "Upgrade to a version where the vulnerability is patched when released; until then audit the codebase for regex usage that could trigger the issue and consider removing or replacing the library."
+    },
+    {
+      "id": "vulnerable-dependency-decode-uri-compone",
+      "severity": "medium",
+      "where": "code",
+      "file": "expo-app/package-lock.json",
+      "issue": "decode-uri-component 0.2.2 is vulnerable to DoS (CVE\u20112026\u201145822).",
+      "fix": "Update the package to version 0.5.0 or later where the vulnerability is fixed."
+    },
+    {
+      "id": "vulnerable-dependency-node-forge",
+      "severity": "high",
+      "where": "code",
+      "file": "expo-app/package-lock.json",
+      "issue": "node\u2011forge 1.4.0 contains a signature\u2011forgery flaw in RSA PKCS#1 v1.5 verification (CVE\u20112026\u201185393) with no fix available yet.",
+      "fix": "Replace node\u2011forge with a maintained cryptography library (e.g., @stablelib or the built\u2011in Web Crypto API) or wait for a patched release while auditing any code that may use node\u2011forge."
+    },
+    {
+      "id": "vulnerable-dependency-uuid",
+      "severity": "medium",
+      "where": "code",
+      "file": "expo-app/package-lock.json",
+      "issue": "uuid 7.0.3 is vulnerable (CVE\u20112026\u201141907) \u2013 out\u2011of\u2011bounds write affecting data integrity.",
+      "fix": "Upgrade uuid to at least 11.1.1 (or the latest stable version) to obtain the fix."
+    }
+  ],
+  "deployment_actions": [],
+  "fixed": [],
+  "stalled": []
+}
