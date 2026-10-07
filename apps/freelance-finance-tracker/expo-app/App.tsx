@@ -71,7 +71,7 @@ function MainTabs() {
         component={DashboardScreen}
         options={{
           title: 'Dashboard',
-          tabBarIcon: ({ color }) => <FontAwesome name="home" size={24} color={color} />, 
+          tabBarIcon: ({ color }) => <FontAwesome name="home" size={24} color={color} accessibilityLabel="Dashboard tab icon" />, 
           tabBarAccessibilityLabel: 'Dashboard',
         }}
       />
@@ -80,7 +80,7 @@ function MainTabs() {
         component={ReceiptCaptureScreen}
         options={{
           title: 'Add Receipt',
-          tabBarIcon: ({ color }) => <FontAwesome name="camera" size={24} color={color} />, 
+          tabBarIcon: ({ color }) => <FontAwesome name="camera" size={24} color={color} accessibilityLabel="Add Receipt tab icon" />, 
           tabBarAccessibilityLabel: 'Add Receipt',
         }}
       />
@@ -89,7 +89,7 @@ function MainTabs() {
         component={MileageEntryScreen}
         options={{
           title: 'Mileage',
-          tabBarIcon: ({ color }) => <FontAwesome name="car" size={24} color={color} />, 
+          tabBarIcon: ({ color }) => <FontAwesome name="car" size={24} color={color} accessibilityLabel="Mileage tab icon" />, 
           tabBarAccessibilityLabel: 'Mileage',
         }}
       />
@@ -98,7 +98,7 @@ function MainTabs() {
         component={ExportScreen}
         options={{
           title: 'Export',
-          tabBarIcon: ({ color }) => <FontAwesome name="download" size={24} color={color} />, 
+          tabBarIcon: ({ color }) => <FontAwesome name="download" size={24} color={color} accessibilityLabel="Export tab icon" />, 
           tabBarAccessibilityLabel: 'Export',
         }}
       />

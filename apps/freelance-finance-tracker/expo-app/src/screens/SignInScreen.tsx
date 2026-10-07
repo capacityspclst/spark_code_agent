@@ -71,7 +71,7 @@ export default function SignInScreen() {
         helperText={errorPassword}
         secureTextEntry={secureEntry}
         accessibilityLabel={secureEntry ? "Show password" : "Hide password"}
-        right={<TextInput.Icon name={secureEntry ? 'eye-off' : 'eye'} onPress={() => setSecureEntry(!secureEntry)} accessibilityLabel={secureEntry ? 'Show password' : 'Hide password'} />}
+        right={<TextInput.Icon icon={secureEntry ? 'eye-off' : 'eye'} onPress={() => setSecureEntry(!secureEntry)} accessibilityLabel={secureEntry ? 'Show password' : 'Hide password'} />}
       />
       {loading ? (
         <ActivityIndicator size="large" color={theme.colors.primary} />

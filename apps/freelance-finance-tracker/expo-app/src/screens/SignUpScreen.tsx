@@ -11,6 +11,7 @@ import { FontAwesome } from '@expo/vector-icons';
 import LoadingOverlay from '../components/LoadingOverlay';
 import Screen from '../components/ui/Screen';
 import { Button } from 'react-native-paper';
+import { TextInput } from 'react-native-paper';
 
 export default function SignUpScreen() {
   const navigation = useNavigation<any>();
@@ -76,7 +77,7 @@ export default function SignUpScreen() {
           helperText={errorPassword}
           secureTextEntry={secureEntry}
           accessibilityLabel={secureEntry ? "Show password" : "Hide password"}
-          right={<FontAwesome name={secureEntry ? 'eye-slash' : 'eye'} size={24} color={theme.colors.secondary} />}
+          right={<TextInput.Icon icon={secureEntry ? 'eye-off' : 'eye'} onPress={() => setSecureEntry(!secureEntry)} accessibilityLabel={secureEntry ? 'Show password' : 'Hide password'} />}
         />
         <Text style={styles.helper}>12 + characters, uppercase, lowercase, number, symbol</Text>
         {loading ? (
@@ -87,7 +88,7 @@ export default function SignUpScreen() {
         <Button
           mode="text"
           onPress={() => navigation.navigate('SignIn')}
-          accessibilityLabel="Log in"
+          accessibilityLabel="Already have an account? Log in"
           style={styles.link}
         >
           Already have an account? Log in

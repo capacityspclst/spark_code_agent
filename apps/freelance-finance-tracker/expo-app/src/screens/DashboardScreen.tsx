@@ -99,7 +99,7 @@ export default function DashboardScreen() {
         accessibilityRole="button"
         style={styles.fabButton}
       >
-        <FontAwesome name="plus" size={24} color={theme.colors.onAccent} accessibilityLabel="Add receipt icon" />
+        <FontAwesome name="plus" size={24} color={theme.colors.onAccent} accessible={false} />
       </Pressable>
     </Screen>
   );
