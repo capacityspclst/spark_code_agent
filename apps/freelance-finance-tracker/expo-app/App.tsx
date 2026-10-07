@@ -15,13 +15,14 @@ import { theme } from './src/theme';
 import { getToken } from './src/auth';
 import Header from './src/components/Header';
 import { Provider as PaperProvider, MD3LightTheme } from 'react-native-paper';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 
 const paperTheme = {
   ...MD3LightTheme,
-  roundness: theme.radii.md,
+  roundness: 8,
   colors: {
     ...MD3LightTheme.colors,
     primary: theme.colors.primary,
@@ -34,6 +35,9 @@ const paperTheme = {
     onError: theme.colors.onError,
   },
 };
+
+// PaperProvider settings to hide icons from accessibility tree
+const paperSettings = { icon: (props: any) => <MaterialCommunityIcons {...props} aria-hidden={true} /> };
 
 function TabButton({ children, onPress, accessibilityState }: any) {
   return (
@@ -70,7 +74,7 @@ function MainTabs() {
         options={{
           title: 'Dashboard',
           tabBarIcon: ({ color }) => (
-            <FontAwesome name="home" size={24} color={color} accessible accessibilityLabel="Dashboard" />
+            <FontAwesome name="home" size={24} color={color} accessible={false} aria-hidden={true} />
           ),
         }}
       />
@@ -80,7 +84,7 @@ function MainTabs() {
         options={{
           title: 'Add Receipt',
           tabBarIcon: ({ color }) => (
-            <FontAwesome name="camera" size={24} color={color} accessible accessibilityLabel="Add Receipt" />
+            <FontAwesome name="camera" size={24} color={color} accessible={false} aria-hidden={true} />
           ),
         }}
       />
@@ -90,7 +94,7 @@ function MainTabs() {
         options={{
           title: 'Mileage',
           tabBarIcon: ({ color }) => (
-            <FontAwesome name="car" size={24} color={color} accessible accessibilityLabel="Mileage" />
+            <FontAwesome name="car" size={24} color={color} accessible={false} aria-hidden={true} />
           ),
         }}
       />
@@ -100,7 +104,7 @@ function MainTabs() {
         options={{
           title: 'Export',
           tabBarIcon: ({ color }) => (
-            <FontAwesome name="download" size={24} color={color} accessible accessibilityLabel="Export" />
+            <FontAwesome name="download" size={24} color={color} accessible={false} aria-hidden={true} />
           ),
         }}
       />
@@ -140,7 +144,7 @@ export default function App() {
 
   return (
     <SafeAreaProvider>
-      <PaperProvider theme={paperTheme}>
+      <PaperProvider theme={paperTheme} settings={paperSettings}>
         <NavigationContainer>
           <Stack.Navigator screenOptions={{ headerShown:false }} initialRouteName={initialRoute === 'Main' ? 'Main' : 'Auth'}>
             <Stack.Screen name="Auth" component={AuthStack} />
