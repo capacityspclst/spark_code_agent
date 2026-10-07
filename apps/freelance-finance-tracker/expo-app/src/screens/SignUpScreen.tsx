@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, ActivityIndicator, Pressable } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import axios from 'axios';
 import PrimaryButton from '../components/ui/PrimaryButton';
@@ -7,11 +7,10 @@ import FormField from '../components/ui/FormField';
 import { saveToken } from '../auth';
 import { API_URL } from '../config';
 import { theme } from '../theme';
-import { FontAwesome } from '@expo/vector-icons';
 import LoadingOverlay from '../components/LoadingOverlay';
 import Screen from '../components/ui/Screen';
-import { Button } from 'react-native-paper';
-import { TextInput } from 'react-native-paper';
+import { Button, TextInput } from 'react-native-paper';
+import { FontAwesome } from '@expo/vector-icons';
 
 export default function SignUpScreen() {
   const navigation = useNavigation<any>();
@@ -77,8 +76,16 @@ export default function SignUpScreen() {
           helperText={errorPassword}
           secureTextEntry={secureEntry}
           accessibilityLabel={secureEntry ? "Show password" : "Hide password"}
-          right={<TextInput.Icon icon={secureEntry ? 'eye-off' : 'eye'} onPress={() => setSecureEntry(!secureEntry)} accessibilityLabel={secureEntry ? 'Show password' : 'Hide password'} />}
         />
+        {/* Password visibility toggle button */}
+        <Pressable
+          onPress={() => setSecureEntry(!secureEntry)}
+          accessibilityLabel={secureEntry ? 'Show password' : 'Hide password'}
+          accessibilityRole="button"
+          style={styles.toggleButton}
+        >
+          <FontAwesome name={secureEntry ? 'eye-slash' : 'eye'} size={24} color={theme.colors.secondary} accessibilityElementsHidden={true} />
+        </Pressable>
         <Text style={styles.helper}>12 + characters, uppercase, lowercase, number, symbol</Text>
         {loading ? (
           <ActivityIndicator size="large" color={theme.colors.primary} />
@@ -105,4 +112,5 @@ const styles = StyleSheet.create({
   helper: { color: theme.colors.placeholder, ...theme.typography.caption, marginTop: theme.spacing.xs },
   link: { marginTop: theme.spacing.lg, alignSelf: 'center' },
   submissionError: { color: theme.colors.error, ...theme.typography.body, marginBottom: theme.spacing.sm },
+  toggleButton: { alignSelf: 'flex-start', marginTop: theme.spacing.xs, marginBottom: theme.spacing.sm },
 });

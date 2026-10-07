@@ -9,30 +9,12 @@ try {
   process.exit(1);
 }
 if (lock.packages) {
-  // iterate over a copy of keys to allow deletions
   for (const pkg of Object.keys(lock.packages)) {
-    const info = lock.packages[pkg];
-    const name = pkg.replace('node_modules/', '').split('/').pop(); // get last segment
-    if (name === 'node-forge') {
+    const name = pkg.replace('node_modules/', '').split('/')[0];
+    if (name === 'node-forge' || name === 'braces') {
       delete lock.packages[pkg];
-      continue;
-    }
-    if (name === 'braces') {
-      const ver = info && info.version;
-      const major = ver ? parseInt(ver.split('.')[0] || '0', 10) : 0;
-      if (major < 4) {
-        delete lock.packages[pkg];
-      }
-      continue;
-    }
-    if (name === 'uuid') {
-      const ver = info && info.version;
-      const major = ver ? parseInt(ver.split('.')[0] || '0', 10) : 0;
-      if (major < 13) {
-        delete lock.packages[pkg];
-      }
     }
   }
 }
 fs.writeFileSync(lockPath, JSON.stringify(lock, null, 2));
-console.log('Removed vulnerable deps from lockfile');
+console.log('Removed vulnerable deps (node-forge, braces) from lockfile');
