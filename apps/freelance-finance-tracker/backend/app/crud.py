@@ -54,10 +54,10 @@ def get_mileages(db: Session, user: models.User):
     return db.query(models.Mileage).filter(models.Mileage.user_id == user.id).all()
 
 def calculate_dashboard(db: Session, user: models.User):
-    # All receipts are considered expenses (negative cash flow) per app spec
+    # Compute income as sum of positive receipt amounts, expenses as sum of absolute negative amounts
     receipts = db.query(models.Receipt).filter(models.Receipt.user_id == user.id).all()
-    income = 0.0
-    expenses = sum(r.amount for r in receipts)  # amount stored as positive expense value
+    income = sum(r.amount for r in receipts if r.amount > 0)
+    expenses = sum(-r.amount for r in receipts if r.amount < 0)
     total_miles = sum(m.miles for m in db.query(models.Mileage).filter(models.Mileage.user_id == user.id).all())
     mileage_deduction = total_miles * 0.585
     taxable = income - expenses - mileage_deduction

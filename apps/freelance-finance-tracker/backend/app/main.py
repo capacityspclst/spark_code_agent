@@ -1,6 +1,7 @@
 import os
 import pathlib
-from fastapi import FastAPI, Depends, HTTPException, File, UploadFile, Form, Request
+import tempfile
+from fastapi import FastAPI, Depends, HTTPException, File, UploadFile, Form, Request, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, StreamingResponse
 from sqlalchemy.orm import Session
@@ -68,8 +69,8 @@ def health():
 def signup(request: Request, user_in: schemas.UserCreate, db: Session = Depends(get_db)):
     existing_user = crud.get_user_by_email(db, user_in.email)
     if existing_user:
-        # Reject duplicate registration without revealing existence
-        raise HTTPException(status_code=400, detail="Email already registered")
+        # Generic error to avoid email enumeration
+        raise HTTPException(status_code=400, detail="Unable to create account")
     user = crud.create_user(db, user_in)
     access_token = create_access_token(user.id)
     return {"access_token": access_token, "token_type": "bearer"}
@@ -119,7 +120,6 @@ def create_receipt(
     ext = pathlib.Path(image.filename).suffix
     filename = f"receipt_{datetime.utcnow().timestamp()}{ext}"
     file_path = os.path.join(MEDIA_ROOT, filename)
-    # Store absolute path to avoid mismatch in media endpoint
     absolute_path = os.path.abspath(file_path)
     with open(absolute_path, "wb") as buffer:
         shutil.copyfileobj(image.file, buffer)
@@ -142,8 +142,20 @@ def create_receipt(
 
 @app.get("/receipts", response_model=list[schemas.ReceiptRead])
 @limiter.limit("30/minute")
-def list_receipts(request: Request, current_user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
-    receipts = crud.get_receipts(db, current_user)
+def list_receipts(
+    request: Request,
+    skip: int = Query(0, ge=0),
+    limit: int = Query(100, ge=1),
+    current_user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    receipts = (
+        db.query(models.Receipt)
+        .filter(models.Receipt.user_id == current_user.id)
+        .offset(skip)
+        .limit(limit)
+        .all()
+    )
     result = []
     for r in receipts:
         filename = os.path.basename(r.image_path)
@@ -174,8 +186,20 @@ def create_mileage(
 
 @app.get("/mileage", response_model=list[schemas.MileageRead])
 @limiter.limit("30/minute")
-def list_mileage(request: Request, current_user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
-    return crud.get_mileages(db, current_user)
+def list_mileage(
+    request: Request,
+    skip: int = Query(0, ge=0),
+    limit: int = Query(100, ge=1),
+    current_user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    return (
+        db.query(models.Mileage)
+        .filter(models.Mileage.user_id == current_user.id)
+        .offset(skip)
+        .limit(limit)
+        .all()
+    )
 
 # Dashboard endpoint
 @app.get("/dashboard", response_model=schemas.DashboardSummary)
@@ -193,9 +217,13 @@ def _escape_csv(value: str) -> str:
 @limiter.limit("5/minute")
 def export_csv(request: Request, current_user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
     def generate():
-        output = io.StringIO()
-        writer = csv.writer(output)
-        writer.writerow(["type", "date", "amount/miles", "category", "notes"])
+        header = ["type", "date", "amount/miles", "category", "notes"]
+        buffer = io.StringIO()
+        writer = csv.writer(buffer)
+        writer.writerow(header)
+        yield buffer.getvalue()
+        buffer.seek(0)
+        buffer.truncate(0)
         for r in crud.get_receipts(db, current_user):
             writer.writerow([
                 "receipt",
@@ -204,6 +232,9 @@ def export_csv(request: Request, current_user: models.User = Depends(get_current
                 _escape_csv(r.category or ""),
                 _escape_csv(r.notes or ""),
             ])
+            yield buffer.getvalue()
+            buffer.seek(0)
+            buffer.truncate(0)
         for m in crud.get_mileages(db, current_user):
             writer.writerow([
                 "mileage",
@@ -212,31 +243,36 @@ def export_csv(request: Request, current_user: models.User = Depends(get_current
                 "",
                 _escape_csv(m.notes or ""),
             ])
-        # Add a summary row at the end for tax‑ready data
+            yield buffer.getvalue()
+            buffer.seek(0)
+            buffer.truncate(0)
         summary = crud.calculate_dashboard(db, current_user)
         writer.writerow(["summary", "", "", f"Income: ${summary.income:.2f}", f"Expenses: ${summary.expenses:.2f}"])
+        yield buffer.getvalue()
+        buffer.seek(0)
+        buffer.truncate(0)
         writer.writerow(["", "", "", f"Mileage deduction: ${summary.mileage_deduction:.2f}", f"Estimated tax: ${summary.estimated_tax:.2f}"])
-        yield output.getvalue()
+        yield buffer.getvalue()
     response = StreamingResponse(generate(), media_type="text/csv")
     response.headers["Content-Disposition"] = "attachment; filename=export.csv"
     return response
 
-# Export PDF
+# Export PDF - stream from temp file to avoid large memory use
 @app.get("/export/pdf")
 @limiter.limit("5/minute")
 def export_pdf(request: Request, current_user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
-    buffer = io.BytesIO()
-    p = canvas.Canvas(buffer, pagesize=letter)
+    # Create temporary file on disk
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
+        buffer_path = tmp.name
+    p = canvas.Canvas(buffer_path, pagesize=letter)
     width, height = letter
     y = height - 40
-    # Title
     p.setFont("Helvetica-Bold", 16)
     p.drawString(40, y, "FinanceMate Export Report")
     y -= 30
     p.setFont("Helvetica", 12)
     p.drawString(40, y, f"Generated: {datetime.utcnow().isoformat()} UTC")
     y -= 30
-    # Summary Section (tax‑ready)
     summary = crud.calculate_dashboard(db, current_user)
     p.setFont("Helvetica-Bold", 14)
     p.drawString(40, y, "Summary")
@@ -250,7 +286,6 @@ def export_pdf(request: Request, current_user: models.User = Depends(get_current
     y -= 15
     p.drawString(60, y, f"Estimated tax: ${summary.estimated_tax:.2f}")
     y -= 30
-    # Receipts Section
     p.setFont("Helvetica-Bold", 14)
     p.drawString(40, y, "Receipts:")
     y -= 20
@@ -262,7 +297,6 @@ def export_pdf(request: Request, current_user: models.User = Depends(get_current
         if y < 50:
             p.showPage()
             y = height - 40
-    # Mileage Section
     p.setFont("Helvetica-Bold", 14)
     p.drawString(40, y, "Mileage:")
     y -= 20
@@ -276,8 +310,7 @@ def export_pdf(request: Request, current_user: models.User = Depends(get_current
             y = height - 40
     p.showPage()
     p.save()
-    buffer.seek(0)
-    return StreamingResponse(buffer, media_type="application/pdf", headers={"Content-Disposition": "attachment; filename=export.pdf"})
+    return FileResponse(buffer_path, media_type="application/pdf", filename="export.pdf", background=lambda: os.remove(buffer_path))
 
 # Protected media endpoint with rate limiting
 @app.get("/media/{filename}")
@@ -290,7 +323,6 @@ def get_media(request: Request, filename: str, current_user: models.User = Depen
         raise HTTPException(status_code=404, detail="File not found")
     if not resolved.is_relative_to(pathlib.Path(MEDIA_ROOT).resolve()):
         raise HTTPException(status_code=400, detail="Invalid file path")
-    # Adjust query to compare against the filename part of the stored path
     receipt = (
         db.query(models.Receipt)
         .filter(models.Receipt.user_id == current_user.id)

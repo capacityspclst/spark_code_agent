@@ -5,7 +5,7 @@ export const theme = {
     primary: '#0050CC',          // darker CTA for sufficient contrast
     primaryVariant: '#003399',   // pressed primary
     accent: '#FF9500',           // secondary CTA
-    accentPressed: '#E68A00',    // pressed accent (10 % darker)
+    accentPressed: '#E68A00',    // pressed accent (10% darker)
     onAccent: '#212121',        // text/icon on accent
     // Surfaces
     background: '#F5F6FA',       // app background
@@ -27,7 +27,7 @@ export const theme = {
     outline: '#79747E',
   },
 
-  // ---- Spacing (4/8 px grid) ----
+  // ---- Spacing (4/8 px grid) ----
   spacing: {
     xs: 4,
     sm: 8,
