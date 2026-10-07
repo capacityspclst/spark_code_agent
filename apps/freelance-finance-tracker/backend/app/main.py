@@ -119,7 +119,9 @@ def create_receipt(
     ext = pathlib.Path(image.filename).suffix
     filename = f"receipt_{datetime.utcnow().timestamp()}{ext}"
     file_path = os.path.join(MEDIA_ROOT, filename)
-    with open(file_path, "wb") as buffer:
+    # Store absolute path to avoid mismatch in media endpoint
+    absolute_path = os.path.abspath(file_path)
+    with open(absolute_path, "wb") as buffer:
         shutil.copyfileobj(image.file, buffer)
     receipt_in = schemas.ReceiptCreate(
         amount=amount,
@@ -127,7 +129,7 @@ def create_receipt(
         category=category,
         notes=notes,
     )
-    db_receipt = crud.create_receipt(db, current_user, receipt_in, file_path)
+    db_receipt = crud.create_receipt(db, current_user, receipt_in, absolute_path)
     image_url = f"/media/{filename}"
     return schemas.ReceiptRead(
         id=db_receipt.id,
@@ -288,9 +290,11 @@ def get_media(request: Request, filename: str, current_user: models.User = Depen
         raise HTTPException(status_code=404, detail="File not found")
     if not resolved.is_relative_to(pathlib.Path(MEDIA_ROOT).resolve()):
         raise HTTPException(status_code=400, detail="Invalid file path")
+    # Adjust query to compare against the filename part of the stored path
     receipt = (
         db.query(models.Receipt)
-        .filter(models.Receipt.image_path == str(resolved), models.Receipt.user_id == current_user.id)
+        .filter(models.Receipt.user_id == current_user.id)
+        .filter(models.Receipt.image_path.like(f"%{filename}"))
         .first()
     )
     if not receipt:
