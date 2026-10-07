@@ -7,8 +7,9 @@ export const PrimaryButton: React.FC<{
   disabled?: boolean;
   loading?: boolean;
   children: React.ReactNode;
-}> = ({ onPress, disabled, loading, children }) => (
-  <Button mode="contained" onPress={onPress} disabled={disabled} loading={loading} accessibilityRole="button">
+  style?: any;
+}> = ({ onPress, disabled, loading, children, style }) => (
+  <Button mode="contained" onPress={onPress} disabled={disabled} loading={loading} style={style} accessibilityRole="button">
     {children}
   </Button>
 );

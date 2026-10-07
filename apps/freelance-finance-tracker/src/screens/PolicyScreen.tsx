@@ -2,9 +2,10 @@
 import React, { useState } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { Screen } from '../components/ui/Screen';
-import { Text, Checkbox, Button, ActivityIndicator } from 'react-native-paper';
+import { Text, Checkbox, ActivityIndicator } from 'react-native-paper';
 import { setPolicyAcceptance, POLICY_VERSION } from '../lib/policy';
 import { useNavigation } from '@react-navigation/native';
+import { PrimaryButton } from '../components/ui/PrimaryButton';
 
 export default function PolicyScreen() {
   const navigation = useNavigation<any>();
@@ -25,28 +26,17 @@ export default function PolicyScreen() {
       <Text variant="bodyMedium" style={{ marginBottom: 24 }}>
         Track receipts and mileage locally – your data never leaves the device.
       </Text>
-      <View style={styles.checkboxRow}>
-        <Checkbox
-          status={checked ? 'checked' : 'unchecked'}
-          onPress={() => setChecked(!checked)}
-          accessibilityLabel="I agree to the Terms of Use and Privacy Policy."
-        />
-        <Text style={{ flex: 1 }}>I agree to the Terms of Use and Privacy Policy.</Text>
-      </View>
-      <Button
-        mode="contained"
-        onPress={handleContinue}
-        disabled={!checked || saving}
-        loading={saving}
-        style={{ marginTop: 24 }}
-        accessibilityLabel="Continue"
-      >
+      <Checkbox.Item
+        status={checked ? 'checked' : 'unchecked'}
+        onPress={() => setChecked(!checked)}
+        label="I agree to the Terms of Use and Privacy Policy."
+        accessibilityLabel="I agree to the Terms of Use and Privacy Policy."
+      />
+      <PrimaryButton onPress={handleContinue} disabled={!checked || saving} loading={saving} style={{ marginTop: 24 }}>
         Continue
-      </Button>
+      </PrimaryButton>
     </Screen>
   );
 }
 
-const styles = StyleSheet.create({
-  checkboxRow: { flexDirection: 'row', alignItems: 'center' },
-});
+const styles = StyleSheet.create({});

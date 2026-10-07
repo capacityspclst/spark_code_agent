@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { Screen } from '../components/ui/Screen';
-import { Text, Button, ActivityIndicator, Snackbar } from 'react-native-paper';
+import { Text, Button, Snackbar } from 'react-native-paper';
 import { FormField } from '../components/ui/FormField';
 import { Picker } from '@react-native-picker/picker';
 import * as ImagePicker from 'expo-image-picker';
@@ -25,8 +25,8 @@ export default function ReceiptFormScreen() {
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
     });
-    if (!result.cancelled) {
-      setPhotoUri(result.uri);
+    if (!result.canceled && result.assets && result.assets.length > 0) {
+      setPhotoUri(result.assets[0].uri);
     }
   };
 
@@ -45,7 +45,7 @@ export default function ReceiptFormScreen() {
     await addReceipt(receipt);
     setSaving(false);
     setSnackbar('Receipt saved');
-    navigation.goBack();
+    navigation.navigate('Dashboard', { showSnackbar: true });
   };
 
   return (

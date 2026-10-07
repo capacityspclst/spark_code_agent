@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { Screen } from '../components/ui/Screen';
-import { Text, ActivityIndicator, Snackbar, Button } from 'react-native-paper';
+import { Text, ActivityIndicator, Snackbar } from 'react-native-paper';
 import { PrimaryButton } from '../components/ui/PrimaryButton';
 import { EmptyState } from '../components/ui/EmptyState';
 import { SummaryCard } from '../components/ui/SummaryCard';
@@ -67,7 +67,7 @@ export default function DashboardScreen() {
           title="No activity yet"
           description="Add a receipt or mileage entry to get started."
           actionLabel="Add receipt"
-          onAction={() => navigation.navigate('Receipts')}
+          onAction={() => navigation.navigate('ReceiptForm')}
         />
       ) : (
         <View>
@@ -75,8 +75,8 @@ export default function DashboardScreen() {
           <SummaryCard title="Expenses" value={expenses.toFixed(2)} />
           <SummaryCard title="Mileage deduction" value={deduction.toFixed(2)} />
           <SummaryCard title="Estimated tax" value={tax.toFixed(2)} />
-          <PrimaryButton onPress={() => navigation.navigate('Receipts')}>Add receipt</PrimaryButton>
-          <PrimaryButton onPress={() => navigation.navigate('Mileage')}>Add mileage</PrimaryButton>
+          <PrimaryButton onPress={() => navigation.navigate('ReceiptForm')}>Add receipt</PrimaryButton>
+          <PrimaryButton onPress={() => navigation.navigate('MileageForm')}>Add mileage</PrimaryButton>
         </View>
       )}
       <Snackbar visible={snackbarVisible} onDismiss={() => setSnackbarVisible(false)}>{snackbarMsg}</Snackbar>
