@@ -1,5 +1,6 @@
 import React from 'react';
-import { TextInput, HelperText, Text, View } from 'react-native-paper';
+import { TextInput, HelperText, Text } from 'react-native-paper';
+import { View } from 'react-native';
 import { theme } from '../../theme';
 
 type Props = {
