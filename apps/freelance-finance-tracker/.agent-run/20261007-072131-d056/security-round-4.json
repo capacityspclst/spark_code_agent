@@ -1,0 +1,77 @@
+{
+  "verdict": "pass",
+  "summary": "All previously reported critical and high findings have been addressed. The signup token leak is fixed and the JWT secret length is now enforced. Medium\u2011severity dependency vulnerabilities (decode-uri-component and uuid) remain in the code, as does the sprintf-js issue in deployment. New code issues were identified: the signup endpoint reveals whether an email is already registered (low\u2011severity information leak), lack of length limits on free\u2011text fields (medium), unpaginated list endpoints that can exhaust memory (medium), and CSV/PDF export implementations that build the entire document in memory before streaming (both medium). No critical or high\u2011severity findings remain open.",
+  "findings": [
+    {
+      "id": "dependency-decode-uri-component",
+      "severity": "medium",
+      "where": "code",
+      "file": "expo-app/package-lock.json",
+      "issue": "The `decode-uri-component` package version 0.2.2 is vulnerable to a Denial\u2011of\u2011Service via crafted input (CVE\u20112026\u201145822).",
+      "fix": "Upgrade `decode-uri-component` to version >=0.5.0 (or remove it if not directly used) and regenerate the lockfile. Update `expo-app/package.json` accordingly."
+    },
+    {
+      "id": "dependency-uuid",
+      "severity": "medium",
+      "where": "code",
+      "file": "expo-app/package-lock.json",
+      "issue": "`uuid` version 7.0.3 has an out\u2011of\u2011bounds write vulnerability (CVE\u20112026\u201141907).",
+      "fix": "Upgrade `uuid` to a safe version (>=13.0.1) in `expo-app/package.json` and regenerate the lockfile."
+    },
+    {
+      "id": "signup-email-enumeration",
+      "severity": "low",
+      "where": "code",
+      "file": "backend/app/main.py",
+      "issue": "The /auth/signup endpoint returns a distinct \"Email already registered\" error, allowing attackers to confirm whether an email address is registered.",
+      "fix": "Return a generic error message (e.g., \"Unable to create account\") for both duplicate\u2011email and other validation failures, avoiding disclosure of account existence."
+    },
+    {
+      "id": "unbounded-notes-field",
+      "severity": "medium",
+      "where": "code",
+      "file": "backend/app/schemas.py",
+      "issue": "The optional `notes` fields in ReceiptCreate, ReceiptRead, MileageCreate, and MileageRead have no length constraints, permitting arbitrarily large payloads that could exhaust memory or storage.",
+      "fix": "Add a Pydantic `Field(max_length=500)` (or an appropriate limit) to each `notes` attribute to bound the size of user\u2011provided text."
+    },
+    {
+      "id": "unpaginated-list-endpoints",
+      "severity": "medium",
+      "where": "code",
+      "file": "backend/app/main.py",
+      "issue": "The `/receipts` and `/mileage` endpoints return the full list of records for a user without pagination, which can cause high memory usage and slow responses for large datasets.",
+      "fix": "Introduce pagination parameters (e.g., `skip` and `limit` query params) and return a bounded subset of records, optionally including total count metadata."
+    },
+    {
+      "id": "csv-export-memory",
+      "severity": "medium",
+      "where": "code",
+      "file": "backend/app/main.py",
+      "issue": "The CSV export endpoint builds the entire CSV string in memory before streaming it, leading to potential memory exhaustion for users with many receipts/mileage entries.",
+      "fix": "Yield each CSV row directly from the generator (use `io.StringIO` per row or `csv.writer` on a stream) so that the response is streamed row\u2011by\u2011row without loading the whole file into memory."
+    },
+    {
+      "id": "pdf-export-memory",
+      "severity": "medium",
+      "where": "code",
+      "file": "backend/app/main.py",
+      "issue": "The PDF export endpoint creates the complete PDF in an in\u2011memory `BytesIO` buffer before sending it, which can exhaust memory for large numbers of records.",
+      "fix": "Stream the PDF generation using ReportLab's `canvas` directly to the response (e.g., by writing to the response's raw stream) or impose reasonable limits on the number of records included."
+    }
+  ],
+  "deployment_actions": [
+    {
+      "id": "dependency-sprintf-js",
+      "severity": "medium",
+      "where": "deployment",
+      "file": "expo-app/package-lock.json",
+      "issue": "`sprintf-js` version 1.0.3 is vulnerable to Denial\u2011of\u2011Service via unbounded precision specifiers (CVE\u20112026\u201197058) and has no current fix.",
+      "fix": "No fixed release exists yet: monitor the advisory and upgrade as soon as one ships; confirm whether the package is only a build-time dependency. Replace usage of `sprintf-js` with native template literals or an alternative safe formatting library, then remove `sprintf-js` from dependencies and update the lockfile."
+    }
+  ],
+  "fixed": [
+    "auth-signup-token-leak",
+    "jwt-secret-weak"
+  ],
+  "stalled": []
+}
