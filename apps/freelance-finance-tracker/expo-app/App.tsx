@@ -19,7 +19,6 @@ import { Provider as PaperProvider, MD3LightTheme } from 'react-native-paper';
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 
-// Merge design tokens with Paper theme
 const paperTheme = {
   ...MD3LightTheme,
   roundness: theme.radii.md,
@@ -36,11 +35,24 @@ const paperTheme = {
   },
 };
 
+function TabButton({ children, onPress, accessibilityState }: any) {
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="tab"
+      accessibilityState={{ selected: accessibilityState?.selected }}
+      style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}
+    >
+      {children}
+    </Pressable>
+  );
+}
+
 function MainTabs() {
   return (
     // @ts-ignore
     <Tab.Navigator
-      screenOptions={{
+      screenOptions={({ route }) => ({
         headerShown: false,
         tabBarStyle: { backgroundColor: theme.colors.background, height: 56 },
         tabBarActiveTintColor: theme.colors.primary,
@@ -48,7 +60,9 @@ function MainTabs() {
         tabBarShowLabel: true,
         tabBarLabelStyle: { fontSize: 12 },
         unmountOnBlur: true,
-      }}
+        tabBarButton: (props) => <TabButton {...props} />, 
+        tabBarAccessibilityLabel: route.name,
+      })}
     >
       <Tab.Screen
         name="Dashboard"
@@ -56,7 +70,7 @@ function MainTabs() {
         options={{
           title: 'Dashboard',
           tabBarIcon: ({ color }) => (
-            <FontAwesome name="home" size={24} color={color} accessibilityLabel="Dashboard" accessible={true} accessibilityRole="image" title="Dashboard" />
+            <FontAwesome name="home" size={24} color={color} accessible accessibilityLabel="Dashboard" />
           ),
         }}
       />
@@ -66,7 +80,7 @@ function MainTabs() {
         options={{
           title: 'Add Receipt',
           tabBarIcon: ({ color }) => (
-            <FontAwesome name="camera" size={24} color={color} accessibilityLabel="Add Receipt" accessible={true} accessibilityRole="image" title="Add Receipt" />
+            <FontAwesome name="camera" size={24} color={color} accessible accessibilityLabel="Add Receipt" />
           ),
         }}
       />
@@ -76,7 +90,7 @@ function MainTabs() {
         options={{
           title: 'Mileage',
           tabBarIcon: ({ color }) => (
-            <FontAwesome name="car" size={24} color={color} accessibilityLabel="Mileage" accessible={true} accessibilityRole="image" title="Mileage" />
+            <FontAwesome name="car" size={24} color={color} accessible accessibilityLabel="Mileage" />
           ),
         }}
       />
@@ -86,7 +100,7 @@ function MainTabs() {
         options={{
           title: 'Export',
           tabBarIcon: ({ color }) => (
-            <FontAwesome name="download" size={24} color={color} accessibilityLabel="Export" accessible={true} accessibilityRole="image" title="Export" />
+            <FontAwesome name="download" size={24} color={color} accessible accessibilityLabel="Export" />
           ),
         }}
       />

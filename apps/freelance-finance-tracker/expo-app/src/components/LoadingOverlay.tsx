@@ -8,7 +8,8 @@ export default function LoadingOverlay({ message }: Props) {
   return (
     <View
       style={styles.overlay}
-      accessibilityRole="progressbar"
+      // Use "alert" role for announcements; progressbar requires a numeric value
+      accessibilityRole="alert"
       accessibilityLabel={message}
       accessibilityLiveRegion="assertive"
     >

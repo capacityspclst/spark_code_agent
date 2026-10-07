@@ -132,8 +132,6 @@ export default function ReceiptCaptureScreen() {
             accessibilityLabel="Receipt photo"
             accessibilityRole="image"
             accessible={true}
-            alt="Receipt photo"
-            title="Receipt photo"
           />
         )}
         {!image && (
