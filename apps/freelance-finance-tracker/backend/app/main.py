@@ -210,6 +210,10 @@ def export_csv(request: Request, current_user: models.User = Depends(get_current
                 "",
                 _escape_csv(m.notes or ""),
             ])
+        # Add a summary row at the end for tax‑ready data
+        summary = crud.calculate_dashboard(db, current_user)
+        writer.writerow(["summary", "", "", f"Income: ${summary.income:.2f}", f"Expenses: ${summary.expenses:.2f}"])
+        writer.writerow(["", "", "", f"Mileage deduction: ${summary.mileage_deduction:.2f}", f"Estimated tax: ${summary.estimated_tax:.2f}"])
         yield output.getvalue()
     response = StreamingResponse(generate(), media_type="text/csv")
     response.headers["Content-Disposition"] = "attachment; filename=export.csv"
@@ -223,14 +227,32 @@ def export_pdf(request: Request, current_user: models.User = Depends(get_current
     p = canvas.Canvas(buffer, pagesize=letter)
     width, height = letter
     y = height - 40
+    # Title
     p.setFont("Helvetica-Bold", 16)
     p.drawString(40, y, "FinanceMate Export Report")
     y -= 30
     p.setFont("Helvetica", 12)
     p.drawString(40, y, f"Generated: {datetime.utcnow().isoformat()} UTC")
     y -= 30
+    # Summary Section (tax‑ready)
+    summary = crud.calculate_dashboard(db, current_user)
+    p.setFont("Helvetica-Bold", 14)
+    p.drawString(40, y, "Summary")
+    y -= 20
+    p.setFont("Helvetica", 12)
+    p.drawString(60, y, f"Income: ${summary.income:.2f}")
+    y -= 15
+    p.drawString(60, y, f"Expenses: ${summary.expenses:.2f}")
+    y -= 15
+    p.drawString(60, y, f"Mileage deduction: ${summary.mileage_deduction:.2f}")
+    y -= 15
+    p.drawString(60, y, f"Estimated tax: ${summary.estimated_tax:.2f}")
+    y -= 30
+    # Receipts Section
+    p.setFont("Helvetica-Bold", 14)
     p.drawString(40, y, "Receipts:")
     y -= 20
+    p.setFont("Helvetica", 12)
     for r in crud.get_receipts(db, current_user):
         line = f"{r.date.isoformat()} - ${r.amount:.2f} - {r.category}"
         p.drawString(60, y, line)
@@ -238,8 +260,11 @@ def export_pdf(request: Request, current_user: models.User = Depends(get_current
         if y < 50:
             p.showPage()
             y = height - 40
+    # Mileage Section
+    p.setFont("Helvetica-Bold", 14)
     p.drawString(40, y, "Mileage:")
     y -= 20
+    p.setFont("Helvetica", 12)
     for m in crud.get_mileages(db, current_user):
         line = f"{m.date.isoformat()} - {m.miles} miles"
         p.drawString(60, y, line)
