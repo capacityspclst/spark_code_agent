@@ -126,7 +126,7 @@ export default function ReceiptCaptureScreen() {
       <View style={styles.form}>
         <Text style={styles.heading}>New receipt</Text>
         {image && (
-          <Image source={{ uri: image.assets[0].uri }} style={styles.image} accessibilityLabel="Receipt photo" accessibilityRole="image" />
+          <Image source={{ uri: image.assets[0].uri }} style={styles.image} accessibilityLabel="Receipt photo" accessibilityRole="image" accessible={true} />
         )}
         {!image && (
           <Pressable

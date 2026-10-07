@@ -84,7 +84,7 @@ export default function SignUpScreen() {
           accessibilityRole="button"
           style={styles.toggleButton}
         >
-          <FontAwesome name={secureEntry ? 'eye-slash' : 'eye'} size={24} color={theme.colors.secondary} accessibilityElementsHidden={true} />
+          <FontAwesome name={secureEntry ? 'eye-slash' : 'eye'} size={24} color={theme.colors.secondary} accessible={false} />
         </Pressable>
         <Text style={styles.helper}>12 + characters, uppercase, lowercase, number, symbol</Text>
         {loading ? (

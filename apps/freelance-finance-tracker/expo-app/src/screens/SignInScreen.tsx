@@ -80,7 +80,7 @@ export default function SignInScreen() {
         accessibilityRole="button"
         style={styles.toggleButton}
       >
-        <FontAwesome name={secureEntry ? 'eye-slash' : 'eye'} size={24} color={theme.colors.secondary} accessible={false} aria-hidden={true} />
+        <FontAwesome name={secureEntry ? 'eye-slash' : 'eye'} size={24} color={theme.colors.secondary} accessibilityLabel="Password visibility toggle" accessible={true} />
       </Pressable>
       {loading ? (
         <ActivityIndicator size="large" color={theme.colors.primary} />
