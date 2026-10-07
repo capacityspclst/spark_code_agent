@@ -19,6 +19,7 @@ export default function EmptyState({ title, description, ctaLabel, onPressCTA }:
         accessibilityLabel="Empty state illustration"
         accessibilityRole="image"
         accessible={true}
+        alt="Empty state illustration"
       />
       <Text style={styles.title}>{title}</Text>
       <Text style={styles.description}>{description}</Text>

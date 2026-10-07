@@ -126,8 +126,9 @@ const styles = StyleSheet.create({
   },
   fabIcon: {
     color: theme.colors.onAccent,
-    fontSize: 32,
-    lineHeight: 32,
-    fontWeight: '600',
+    // Use theme typography for size instead of hard‑coded value
+    fontSize: theme.typography.titleLarge.fontSize,
+    lineHeight: theme.typography.titleLarge.lineHeight,
+    fontWeight: theme.typography.titleLarge.fontWeight,
   },
 });

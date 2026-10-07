@@ -9,7 +9,6 @@ import PrimaryButton from '../components/ui/PrimaryButton';
 import LoadingOverlay from '../components/LoadingOverlay';
 import FormField from '../components/ui/FormField';
 import { Button as PaperButton } from 'react-native-paper';
-import { FontAwesome } from '@expo/vector-icons';
 
 export default function SignInScreen() {
   const navigation = useNavigation<any>();
@@ -80,7 +79,7 @@ export default function SignInScreen() {
         accessibilityRole="button"
         style={styles.toggleButton}
       >
-        <FontAwesome name={secureEntry ? 'eye-slash' : 'eye'} size={24} color={theme.colors.secondary} accessibilityLabel="Password visibility toggle" accessible={false} aria-hidden={true} />
+        <Text style={styles.toggleIcon}>{secureEntry ? '🙈' : '👁️'}</Text>
       </Pressable>
       {loading ? (
         <ActivityIndicator size="large" color={theme.colors.primary} />
@@ -90,13 +89,13 @@ export default function SignInScreen() {
       <PaperButton
         mode="text"
         onPress={() => navigation.navigate('SignUp')}
-        accessibilityLabel="Don\u2019t have an account? Sign up"
+        accessibilityLabel="Don’t have an account? Sign up"
         accessibilityRole="link"
         style={styles.link}
       >
-        Don\u2019t have an account? Sign up
+        Don’t have an account? Sign up
       </PaperButton>
-      {loading && <LoadingOverlay message="Signing you in\u2026" />}
+      {loading && <LoadingOverlay message="Signing you in…" />}
     </SafeAreaView>
   );
 }
@@ -106,4 +105,5 @@ const styles = StyleSheet.create({
   title: { ...theme.typography.h2, color: theme.colors.onSurface, marginBottom: theme.spacing.lg },
   link: { marginTop: theme.spacing.lg, alignSelf: 'center' },
   toggleButton: { alignSelf: 'flex-start', marginTop: theme.spacing.sm, marginBottom: theme.spacing.sm },
+  toggleIcon: { fontSize: theme.typography.bodyLarge.fontSize },
 });
