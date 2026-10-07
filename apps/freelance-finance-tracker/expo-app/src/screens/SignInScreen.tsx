@@ -80,7 +80,7 @@ export default function SignInScreen() {
         accessibilityRole="button"
         style={styles.toggleButton}
       >
-        <FontAwesome name={secureEntry ? 'eye-slash' : 'eye'} size={24} color={theme.colors.secondary} accessibilityLabel="Password visibility toggle" accessible={true} />
+        <FontAwesome name={secureEntry ? 'eye-slash' : 'eye'} size={24} color={theme.colors.secondary} accessibilityLabel="Password visibility toggle" accessible={false} aria-hidden={true} />
       </Pressable>
       {loading ? (
         <ActivityIndicator size="large" color={theme.colors.primary} />
@@ -90,13 +90,13 @@ export default function SignInScreen() {
       <PaperButton
         mode="text"
         onPress={() => navigation.navigate('SignUp')}
-        accessibilityLabel="Don’t have an account? Sign up"
+        accessibilityLabel="Don\u2019t have an account? Sign up"
         accessibilityRole="link"
         style={styles.link}
       >
-        Don’t have an account? Sign up
+        Don\u2019t have an account? Sign up
       </PaperButton>
-      {loading && <LoadingOverlay message="Signing you in…" />}
+      {loading && <LoadingOverlay message="Signing you in\u2026" />}
     </SafeAreaView>
   );
 }

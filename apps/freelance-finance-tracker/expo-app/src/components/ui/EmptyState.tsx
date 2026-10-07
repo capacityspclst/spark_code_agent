@@ -13,7 +13,6 @@ type Props = {
 export default function EmptyState({ title, description, ctaLabel, onPressCTA }: Props) {
   return (
     <View style={styles.container}>
-      {/* Placeholder illustration */}
       <Image
         source={{ uri: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/5+hHgAFgwJ/9YX8WAAAAABJRU5ErkJggg==' }}
         style={styles.image}

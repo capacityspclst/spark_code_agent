@@ -9,7 +9,6 @@ import PrimaryButton from '../components/ui/PrimaryButton';
 import Screen from '../components/ui/Screen';
 import SummaryCard from '../components/ui/SummaryCard';
 import EmptyState from '../components/ui/EmptyState';
-import { FontAwesome } from '@expo/vector-icons';
 
 export default function DashboardScreen() {
   const navigation = useNavigation<any>();
@@ -99,7 +98,7 @@ export default function DashboardScreen() {
         accessibilityRole="button"
         style={styles.fabButton}
       >
-        <FontAwesome name="plus" size={24} color={theme.colors.onAccent} accessibilityLabel="Add receipt" accessible={true} />
+        <Text style={styles.fabIcon}>+</Text>
       </Pressable>
     </Screen>
   );
@@ -124,5 +123,11 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.accent,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  fabIcon: {
+    color: theme.colors.onAccent,
+    fontSize: 32,
+    lineHeight: 32,
+    fontWeight: '600',
   },
 });
