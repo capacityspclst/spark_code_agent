@@ -8,9 +8,9 @@ import { theme } from '../theme';
 import PrimaryButton from '../components/ui/PrimaryButton';
 import LoadingOverlay from '../components/LoadingOverlay';
 import FormField from '../components/ui/FormField';
-import { Button as PaperButton, TextInput } from 'react-native-paper';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { TextInput } from 'react-native-paper';
 import Screen from '../components/ui/Screen';
+import TextLink from '../components/ui/TextLink';
 
 export default function SignInScreen() {
   const navigation = useNavigation<any>();
@@ -90,15 +90,12 @@ export default function SignInScreen() {
         ) : (
           <PrimaryButton title="Log in" onPress={handleLogin} accessibilityLabel="Log in" />
         )}
-        <PaperButton
-          mode="text"
+        <TextLink
           onPress={() => navigation.navigate('SignUp')}
           accessibilityLabel="Don’t have an account? Sign up"
-          accessibilityRole="link"
-          style={styles.link}
         >
           Don’t have an account? Sign up
-        </PaperButton>
+        </TextLink>
         {loading && <LoadingOverlay message="Signing you in…" />}
       </SafeAreaView>
     </Screen>
@@ -108,5 +105,4 @@ export default function SignInScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, padding: theme.spacing.lg, backgroundColor: theme.colors.background },
   title: { ...theme.typography.h2, color: theme.colors.onSurface, marginBottom: theme.spacing.lg },
-  link: { marginTop: theme.spacing.lg, alignSelf: 'flex-end' },
 });

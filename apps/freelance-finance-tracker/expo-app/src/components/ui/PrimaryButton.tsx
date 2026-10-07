@@ -20,7 +20,7 @@ export default function PrimaryButton({ title, onPress, disabled = false, loadin
       loading={loading}
       accessibilityLabel={accessibilityLabel || title}
       testID={testID}
-      contentStyle={{ height: 48, minWidth: 120, justifyContent: 'center' }}
+      contentStyle={{ height: 56, minWidth: 120, justifyContent: 'center' }}
       style={{
         marginVertical: theme.spacing.md,
         // subtle elevation for depth

@@ -9,6 +9,7 @@ import FormField from '../components/ui/FormField';
 import Screen from '../components/ui/Screen';
 import axios from 'axios';
 import { Alert } from 'react-native';
+import EmptyState from '../components/ui/EmptyState';
 
 export default function MileageEntryScreen() {
   const navigation = useNavigation<any>();
@@ -55,7 +56,7 @@ export default function MileageEntryScreen() {
 
   const renderItem = ({ item }: { item: any }) => (
     <View style={styles.entry}>
-      <Text style={styles.entryText}>{item.miles}</Text>
+      <Text style={styles.entryText}>{item.miles} miles</Text>
       {item.notes ? <Text style={styles.entryNotes}>{item.notes}</Text> : null}
     </View>
   );
@@ -63,31 +64,40 @@ export default function MileageEntryScreen() {
   return (
     <Screen scroll>
       <Text style={styles.title}>New mileage entry</Text>
-      <FormField label="Date" value={date} onChangeText={setDate} accessibilityLabel="Date" />
-      <FormField label="Miles driven" value={miles} onChangeText={setMiles} keyboardType="numeric" accessibilityLabel="Miles driven" />
-      <FormField label="Notes (optional)" value={notes} onChangeText={setNotes} accessibilityLabel="Notes (optional)" />
+      <FormField label="Date" value={date} onChangeText={setDate} accessibilityLabel="Date" placeholder="YYYY-MM-DD" />
+      <FormField label="Miles driven" value={miles} onChangeText={setMiles} keyboardType="numeric" accessibilityLabel="Miles driven" placeholder="e.g., 120" />
+      <FormField label="Notes (optional)" value={notes} onChangeText={setNotes} accessibilityLabel="Notes (optional)" multiline placeholder="Add any extra details…" />
       {loading ? (
         <ActivityIndicator size="large" color={theme.colors.primary} />
       ) : (
         <PrimaryButton title="Save mileage" onPress={handleSave} accessibilityLabel="Save mileage" />
       )}
       {message ? <Text style={styles.message}>{message}</Text> : null}
-      <FlatList
-        data={entries}
-        keyExtractor={(item) => item.id?.toString() ?? Math.random().toString()}
-        renderItem={renderItem}
-        style={styles.list}
-        ListHeaderComponent={<Text style={styles.listHeader}>Mileage entries</Text>}
-      />
+      {entries.length === 0 ? (
+        <EmptyState
+          title="No mileage entries yet"
+          description="Add mileage to track your travel expenses."
+          ctaLabel="Add mileage"
+          onPressCTA={() => {}}
+        />
+      ) : (
+        <FlatList
+          data={entries}
+          keyExtractor={(item) => item.id?.toString() ?? Math.random().toString()}
+          renderItem={renderItem}
+          style={styles.list}
+          ListHeaderComponent={<Text style={styles.listHeader}>Mileage entries</Text>}
+        />
+      )}
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  title: { ...theme.typography.h2, color: theme.colors.onSurface, marginBottom: theme.spacing.lg },
+  title: { ...theme.typography.headlineMedium, color: theme.colors.onSurface, marginBottom: theme.spacing.lg },
   message: { marginTop: theme.spacing.md, color: theme.colors.success, ...theme.typography.bodyMedium },
   list: { marginTop: theme.spacing.lg },
-  listHeader: { ...theme.typography.h3, color: theme.colors.onSurface, marginBottom: theme.spacing.sm },
+  listHeader: { ...theme.typography.titleLarge, color: theme.colors.onSurface, marginBottom: theme.spacing.sm },
   entry: { paddingVertical: theme.spacing.sm, borderBottomWidth: 1, borderBottomColor: theme.colors.outline },
   entryText: { ...theme.typography.bodyMedium, color: theme.colors.onSurface },
   entryNotes: { ...theme.typography.bodySmall, color: theme.colors.secondary },
