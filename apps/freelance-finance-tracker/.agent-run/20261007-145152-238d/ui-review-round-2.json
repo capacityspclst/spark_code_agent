@@ -1,0 +1,140 @@
+{
+  "verdict": "fail",
+  "summary": "The implementation diverges from DESIGN.md in several critical areas. The onboarding flow cannot be completed because the policy\u2011agreement checkbox is not recognized by the automation (and by screen readers), breaking the primary flow. Multiple required UI states \u2013 loading, error, and version\u2011update banner for PolicyScreen, and the DB error state for DashboardScreen \u2013 are missing, leaving the app without defined fallback UI. Accessibility landmarks and roles are absent (Screen lacks `accessibilityRole=\"main\"`, the checkbox does not expose a native accessible input), resulting in a1\u2011poor experience for assistive\u2011technology users. Forms lack required validation, multiline notes, and a camera option, and some components do not satisfy touch\u2011target or spacing token guidelines. These issues prevent the product from being a polished, accessible, and spec\u2011compliant experience.",
+  "findings": [
+    {
+      "severity": "high",
+      "file": "src/screens/PolicyScreen.tsx",
+      "issue": "The policy acceptance checkbox cannot be programmatically checked; the `Checkbox.Item` does not expose a native accessible checkbox on web, causing the automated flow to time out.",
+      "fix": "Replace `Checkbox.Item` with a component that renders an `<input type=\"checkbox\">` or add `accessibilityRole=\"checkbox\"` and `accessibilityState` props to `Checkbox.Item`. Provide a `testID` and ensure the label is correctly associated so automation and screen readers can interact with it.",
+      "source": "designer"
+    },
+    {
+      "severity": "high",
+      "file": "src/screens/PolicyScreen.tsx",
+      "issue": "PolicyScreen does not implement the Loading state defined in the spec (`<ActivityIndicator/> \"Loading policy\u2026\"`).",
+      "fix": "Introduce a loading flag while fetching the policy text, and render an `ActivityIndicator` with the required copy before displaying the scrollable policy content.",
+      "source": "designer"
+    },
+    {
+      "severity": "high",
+      "file": "src/screens/PolicyScreen.tsx",
+      "issue": "PolicyScreen lacks the SecureStore error state \u2013 the spec requires a red error message `Failed to load policy. Please restart the app.` when loading fails.",
+      "fix": "Wrap the SecureStore call in a try/catch, store an error flag in component state, and conditionally render a `Text` styled with `theme.colors.error` that displays the required message.",
+      "source": "designer"
+    },
+    {
+      "severity": "high",
+      "file": "src/screens/PolicyScreen.tsx",
+      "issue": "PolicyScreen does not display the \"Policy has been updated to version\u202f{VERSION} \u2013 please review.\" banner when the stored version is outdated.",
+      "fix": "After loading the stored version, compare it with `POLICY_VERSION`. If the stored version is older, render a `Banner` component (or a styled `View`) with the exact copy and an action button to re\u2011accept the policy.",
+      "source": "designer"
+    },
+    {
+      "severity": "high",
+      "file": "src/screens/DashboardScreen.tsx",
+      "issue": "DashboardScreen does not handle the DB error state (`Unable to load summary. Please try again later.`). If any data fetch fails, the UI remains blank.",
+      "fix": "Wrap each async data call in try/catch, set an `error` state when a request fails, and render a `Text` component styled with `theme.colors.error` showing the required error message.",
+      "source": "designer"
+    },
+    {
+      "severity": "high",
+      "file": "src/components/ui/Screen.tsx",
+      "issue": "`Screen` does not set an accessibility role or landmark (`accessibilityRole=\"main\"`), violating the accessibility requirements.",
+      "fix": "Add `accessibilityRole=\"main\"` (or `accessibilityRole=\"region\"` with a label) to the outermost `SafeAreaView` or a wrapping `View` so that assistive technology recognises the main content area.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/screens/PolicyScreen.tsx",
+      "issue": "The policy text is not wrapped in a scrollable container; the spec expects a scrollable policy document for long content.",
+      "fix": "Wrap the policy copy in a `ScrollView` (or replace the whole screen's `Screen` scrollable container) ensuring vertical scrolling is possible for lengthy policies.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/screens/ReceiptFormScreen.tsx",
+      "issue": "Receipt form only provides a \"Choose from library\" button; the spec also requires a \"Take photo\" (camera) option.",
+      "fix": "Add a second button that calls `ImagePicker.launchCameraAsync` and handles the captured image, mirroring the library picker UI.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/screens/ReceiptFormScreen.tsx",
+      "issue": "The \"Notes\" field is a single\u2011line `TextInput`; the spec calls for a multiline field that expands up to 8 lines and is scrollable.",
+      "fix": "Pass `multiline={true}` and `numberOfLines={8}` (or appropriate `maxHeight`) to the `TextInput`, enable `scrollEnabled={true}`, and adjust styling to match the design tokens.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/screens/ReceiptFormScreen.tsx",
+      "issue": "Form fields have no client\u2011side validation; the Save button stays enabled even when required fields are empty, violating the \"field\u2011level errors & disabled submit\" rule.",
+      "fix": "Implement validation logic for amount, date, category, and type. Pass `error` and `errorMessage` props to `FormField`, and disable the Save button (`disabled={!isValid || saving}`) until all fields are valid.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/screens/MileageFormScreen.tsx",
+      "issue": "Mileage form lacks validation and does not disable the Save button when fields are incomplete or invalid.",
+      "fix": "Add similar validation as the receipt form: check that date is present, miles is a positive number, and purpose is non\u2011empty. Show `HelperText` errors and disable the Save button until validation passes.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/components/ui/PrimaryButton.tsx",
+      "issue": "`PrimaryButton` does not guarantee the minimum 44\u202f\u00d7\u202f44\u202fpx touch target required by the design spec.",
+      "fix": "Add `contentStyle={{ minHeight: 44, minWidth: 44 }}` or wrap the Paper `Button` in a `Pressable` with `style={{ minHeight: 44, minWidth: 44, padding: theme.spacing.sm }}` to ensure the hit area meets the spec.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "src/components/ui/SummaryCard.tsx",
+      "issue": "Card margin\u2011bottom is set to 8\u202fpx, but the design spec specifies a 16\u202fpx vertical rhythm.",
+      "fix": "Replace `marginBottom: 8` with `marginBottom: theme.spacing.md` (or a constant of 16) to align with the spacing scale.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "src/components/ui/Screen.tsx",
+      "issue": "Hard\u2011coded padding (16) and maxWidth (420) are used instead of the theme\u2019s spacing tokens.",
+      "fix": "Import `useTheme` and replace literals with `theme.spacing.md` for padding and, if available, a token for max width, ensuring consistent token usage.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "src/components/ui/BottomTabNavigator.tsx",
+      "issue": "Icon\u2011only buttons in the bottom tab bar have `aria-hidden` but lack an explicit `accessibilityLabel`, reducing screen\u2011reader discoverability.",
+      "fix": "Provide an `accessibilityLabel` (e.g., `${route.name} tab`) on the icon component or use the `tabBarAccessibilityLabel` prop on the navigator.",
+      "source": "designer"
+    },
+    {
+      "severity": "high",
+      "viewport": "both",
+      "issue": "The screen is entirely blank with no visible UI elements, text, or layout. It does not display the policy text, checkbox, or Continue button as required by the design spec.",
+      "fix": "Render the policy text, checkbox, and Continue button as specified in the design spec. Ensure the screen is scrollable and visually distinct from a blank page.",
+      "screen": "policy",
+      "source": "vision"
+    },
+    {
+      "severity": "high",
+      "screen": "policy",
+      "source": "vision",
+      "issue": "visual quality 1/10 on 'policy' (needs 8+): The screen is completely blank \u2014 no UI elements, text, or visual hierarchy are visible. This is not a usable or presentable state for a polished product. It appears to be a placeholder or a failed render.",
+      "fix": "Address this screen's findings until it looks polished and professional."
+    }
+  ],
+  "lighthouse": [
+    {
+      "accessibility": null,
+      "bestPractices": null,
+      "performance": null
+    }
+  ],
+  "vision_scores": [
+    {
+      "screen": "policy",
+      "score": 1.0,
+      "summary": "The screen is completely blank \u2014 no UI elements, text, or visual hierarchy are visible. This is not a usable or presentable state for a polished product. It appears to be a placeholder or a failed render."
+    }
+  ]
+}
