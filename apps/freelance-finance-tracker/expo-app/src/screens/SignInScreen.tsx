@@ -82,8 +82,8 @@ export default function SignInScreen() {
         mode="text"
         onPress={() => navigation.navigate('SignUp')}
         accessibilityLabel="Don’t have an account? Sign up"
+        accessibilityRole="link"
         style={styles.link}
-        labelStyle={styles.linkText}
       >
         Don’t have an account? Sign up
       </PaperButton>
@@ -96,5 +96,4 @@ const styles = StyleSheet.create({
   container: { flex: 1, padding: theme.spacing.lg, backgroundColor: theme.colors.background },
   title: { ...theme.typography.h2, color: theme.colors.onSurface, marginBottom: theme.spacing.lg },
   link: { marginTop: theme.spacing.lg, alignSelf: 'center' },
-  linkText: { color: theme.colors.secondary, ...theme.typography.bodyMedium, textDecorationLine: 'underline' },
 });

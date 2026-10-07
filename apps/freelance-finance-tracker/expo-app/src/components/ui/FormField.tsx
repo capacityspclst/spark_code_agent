@@ -1,7 +1,6 @@
 import React from 'react';
 import { TextInput, HelperText } from 'react-native-paper';
 import { theme } from '../../theme';
-import type { TextInputProps } from 'react-native-paper/lib/typescript/components/TextInput/TextInput';
 
 type Props = {
   label: string;
@@ -10,7 +9,7 @@ type Props = {
   error?: boolean;
   helperText?: string;
   secureTextEntry?: boolean;
-  keyboardType?: TextInputProps['keyboardType'];
+  keyboardType?: any;
   accessibilityLabel?: string;
   right?: React.ReactNode;
 };

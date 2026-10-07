@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, Text, View, Pressable } from 'react-native';
 import axios from 'axios';
 import { useNavigation, useIsFocused, useRoute } from '@react-navigation/native';
 import { getToken } from '../auth';
@@ -9,7 +9,7 @@ import PrimaryButton from '../components/ui/PrimaryButton';
 import Screen from '../components/ui/Screen';
 import SummaryCard from '../components/ui/SummaryCard';
 import EmptyState from '../components/ui/EmptyState';
-import { FAB } from 'react-native-paper';
+import { FontAwesome } from '@expo/vector-icons';
 
 export default function DashboardScreen() {
   const navigation = useNavigation<any>();
@@ -93,13 +93,14 @@ export default function DashboardScreen() {
           </View>
         </>
       )}
-      <FAB
-        icon="plus"
+      <Pressable
         onPress={() => navigation.navigate('ReceiptCapture')}
-        style={styles.fab}
         accessibilityLabel="Add receipt"
         accessibilityRole="button"
-      />
+        style={styles.fabButton}
+      >
+        <FontAwesome name="plus" size={24} color={theme.colors.onAccent} accessibilityLabel="Add receipt icon" />
+      </Pressable>
     </Screen>
   );
 }
@@ -113,5 +114,15 @@ const styles = StyleSheet.create({
   receiptItem: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: theme.spacing.sm, borderBottomWidth: 1, borderBottomColor: theme.colors.outline },
   receiptAmount: { ...theme.typography.bodyMedium, color: theme.colors.onSurface },
   receiptCategory: { ...theme.typography.bodyMedium, color: theme.colors.secondary },
-  fab: { position: 'absolute', right: theme.spacing.lg, bottom: theme.spacing.lg },
+  fabButton: {
+    position: 'absolute',
+    right: theme.spacing.lg,
+    bottom: theme.spacing.lg,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: theme.colors.accent,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
 });
