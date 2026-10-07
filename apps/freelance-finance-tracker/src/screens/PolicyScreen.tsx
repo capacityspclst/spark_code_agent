@@ -1,6 +1,6 @@
 // src/screens/PolicyScreen.tsx
 import React, { useState } from 'react';
-import { StyleSheet } from 'react-native';
+import { StyleSheet, Pressable } from 'react-native';
 import { Screen } from '../components/ui/Screen';
 import { Text, Checkbox } from 'react-native-paper';
 import { setPolicyAcceptance, POLICY_VERSION } from '../lib/policy';
@@ -28,12 +28,16 @@ export default function PolicyScreen() {
       <Text variant="bodyMedium" style={{ marginBottom: 24 }}>
         Track receipts and mileage locally – your data never leaves the device.
       </Text>
-      <Checkbox.Item
-        status={checked ? 'checked' : 'unchecked'}
+      <Pressable
+        style={styles.checkboxRow}
         onPress={toggle}
-        label="I agree to the Terms of Use and Privacy Policy."
+        accessibilityRole="checkbox"
+        accessibilityState={{ checked }}
         accessibilityLabel="I agree to the Terms of Use and Privacy Policy."
-      />
+      >
+        <Checkbox status={checked ? 'checked' : 'unchecked'} />
+        <Text style={{ marginLeft: 8 }}>I agree to the Terms of Use and Privacy Policy.</Text>
+      </Pressable>
       <PrimaryButton onPress={handleContinue} disabled={!checked || saving} loading={saving} style={{ marginTop: 24 }}>
         Continue
       </PrimaryButton>
@@ -41,4 +45,6 @@ export default function PolicyScreen() {
   );
 }
 
-const styles = StyleSheet.create({});
+const styles = StyleSheet.create({
+  checkboxRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
+});

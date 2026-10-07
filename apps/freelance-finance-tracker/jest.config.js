@@ -1,10 +1,11 @@
 module.exports = {
-  preset: 'ts-jest',
+  preset: 'jest-expo',
   testEnvironment: 'jsdom',
   transform: {
-    '^.+\\.(ts|tsx)$': 'ts-jest',
-    '^.+\\.(js|jsx)$': 'babel-jest',
+    '^.+\\.(js|jsx|ts|tsx)$': 'babel-jest',
   },
-  moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
+  transformIgnorePatterns: [
+    'node_modules/(?!((jest-)?react-native|@react-native|expo|@expo|@react-navigation|react-native-paper|@noble))',
+  ],
   setupFilesAfterEnv: ['@testing-library/jest-native/extend-expect'],
 };

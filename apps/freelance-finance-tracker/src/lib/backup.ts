@@ -3,6 +3,14 @@ import * as FileSystem from 'expo-file-system';
 import { listReceipts, listMileage, Receipt, MileageEntry } from './records';
 import { storage } from './storage';
 
+function generateSalt(length: number): Uint8Array {
+  const arr = new Uint8Array(length);
+  for (let i = 0; i < length; i++) {
+    arr[i] = Math.floor(Math.random() * 256);
+  }
+  return arr;
+}
+
 export async function exportCSV(): Promise<string> {
   const receipts = await listReceipts();
   const mileage = await listMileage();
