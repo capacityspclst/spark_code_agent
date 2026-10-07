@@ -1,0 +1,202 @@
+{
+  "verdict": "fail",
+  "summary": "The app diverges substantially from the DESIGN.md. The onboarding PolicyScreen checkbox does not toggle and is missing required ARIA attributes, causing the primary flow to break and triggering axe failures. The DashboardScreen lacks the FAB and recent\u2011activity list, shows only a button\u2011based add\u2011receipt action, and has no error state for DB failures. Settings, Receipts, Mileage and other screens are placeholders that miss all required states, copy and navigation. Accessibility landmarks, aria\u2011checked, image alt text and visible focus are not implemented, and hard\u2011coded spacing/sizes are used instead of the design token `spacing` scale. These issues prevent a polished, accessible, and spec\u2011compliant product.",
+  "findings": [
+    {
+      "severity": "high",
+      "file": "src/screens/PolicyScreen.tsx",
+      "issue": "The \"I agree to the Terms of Use and Privacy Policy\" checkbox does not change state when clicked and lacks required ARIA attributes (aria\u2011checked, role=\"checkbox\"). Axe reports missing aria\u2011checked and nested\u2011interactive controls, breaking the policy\u2011acceptance flow.",
+      "fix": "Replace the custom checkbox with React Native Paper's `Checkbox` component, bind its `status` to component state, and add `accessibilityState={{ checked: isChecked }}` and a visible label. Remove any nested interactive elements inside the checkbox and ensure the surrounding container is not also focusable.",
+      "source": "designer"
+    },
+    {
+      "severity": "high",
+      "file": "src/screens/DashboardScreen.tsx",
+      "issue": "Dashboard does not include the FAB defined in the spec and only provides a PrimaryButton to add a receipt. This deviates from the fast\u2011path design and removes the Add mileage quick action.",
+      "fix": "Import the `FAB` component from `src/components/ui/FAB` (or React Native Paper) and position it 16\u202fpx from the right and bottom per the layout spec. Give it an `accessibilityLabel=\"Add receipt\"` and `onPress={() => navigation.navigate('ReceiptForm')}`. Add a second FAB or a speed\u2011dial menu for \"Add mileage\" as required.",
+      "source": "designer"
+    },
+    {
+      "severity": "high",
+      "file": "src/screens/DashboardScreen.tsx",
+      "issue": "Dashboard does not render the recent activity list (last 5 receipts/mileage entries) required for the Success state, nor does it handle DB errors with the specified error message.",
+      "fix": "After loading data, fetch the latest 5 items, render them in a `FlatList` below the `SummaryCard`s, and attach appropriate `accessibilityLabel` (e.g., \"Receipt photo taken on <date>\"). Wrap the data fetch in try/catch; on error set an error flag and render `<Text>Unable to load summary. Please try again later.</Text>`.",
+      "source": "designer"
+    },
+    {
+      "severity": "high",
+      "file": "src/screens/SettingsScreen.tsx",
+      "issue": "SettingsScreen is a placeholder with only a title; it does not implement any of the required sections (App lock, Backup & restore, Policy, Delete all data) or the dialogs/toasts defined in the spec.",
+      "fix": "Build the Settings UI with sections and controls as described (toggles, TextInputs, PrimaryButtons). Use `Dialog`, `Snackbar`, and `Alert` components for backup progress, success, restore errors, and delete confirmation. Ensure all copy matches the spec.",
+      "source": "designer"
+    },
+    {
+      "severity": "high",
+      "file": "src/screens/DashboardScreen.tsx",
+      "issue": "Dashboard lacks a proper error state for DB failures, so the UI cannot display the \"Unable to load summary...\" message required by the spec.",
+      "fix": "Add error handling around the calls to `listReceipts` and `listMileage`. If an error occurs, set an error flag and render the error copy inside the `Screen` component.",
+      "source": "designer"
+    },
+    {
+      "severity": "high",
+      "file": "src/screens/ReceiptsScreen.tsx",
+      "issue": "The Receipts screen file is present but does not implement Loading, Empty, Success and Error states nor the copy specified (e.g., empty state description, error message).",
+      "fix": "Implement the four states using `ActivityIndicator`, `EmptyState`, a `FlatList` of receipt cards, and an error view with the exact copy. Use the design token colors and spacing throughout.",
+      "source": "designer"
+    },
+    {
+      "severity": "high",
+      "file": "src/screens/MileageScreen.tsx",
+      "issue": "Mileage screen is missing or incomplete; it does not provide the required Loading, Empty, Success, and Error states nor the copy defined in the spec.",
+      "fix": "Add the full set of UI states analogous to ReceiptsScreen, using `EmptyState` with the correct copy and a list of mileage entries.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/components/ui/Screen.tsx",
+      "issue": "The `Screen` component does not set `accessibilityRole=\"main\"`, so the required main landmark is missing.",
+      "fix": "Add `accessibilityRole=\"main\"` to the outer `SafeAreaView` (or a wrapper `View`) to satisfy the landmark requirement.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/components/ui/Screen.tsx",
+      "issue": "Hard\u2011coded padding (16) and maxWidth (420) are used instead of the spacing tokens defined in `appTheme.spacing`.",
+      "fix": "Consume the theme via `useTheme()` and replace static values with `theme.spacing.md` and `theme.spacing.lg` (or derived values). This ensures the layout follows the design token scale.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/components/ui/SummaryCard.tsx",
+      "issue": "The card style only includes `marginBottom: 8`; it lacks the required elevation (4) and internal padding (12) as specified in the design.",
+      "fix": "Add `elevation={4}` to the `Card` component and set `style={{ padding: theme.spacing.md, marginBottom: theme.spacing.md }}` to match the spec.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/components/ui/PrimaryButton.tsx",
+      "issue": "Button does not expose a visible focus outline on web, violating the visible\u2011focus requirement.",
+      "fix": "Apply a `style` that adds a high\u2011contrast border when `focusVisible` is true (use `Pressable` or Paper\u2019s `theme` to customize `outlined` style).",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/components/ui/FormField.tsx",
+      "issue": "Form fields lack `autoComplete` and other native autocomplete hints for better sign\u2011in\u2011style experience, and the `keyboardType` prop is typed as `any`.",
+      "fix": "Pass `autoComplete` props (e.g., `autoComplete='off'` or appropriate values) to `TextInput`. Refine the `keyboardType` type to `KeyboardTypeOptions`.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/components/ui/BottomTabNavigator.tsx",
+      "issue": "Tab icons are rendered with `aria-hidden` and no explicit `accessibilityLabel`, potentially making the tab unreadable for screen readers.",
+      "fix": "Remove `aria-hidden` from the icon. Rely on the tab label for accessibility or add `accessibilityLabel={route.name}` to the icon component.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/components/ui/EmptyState.tsx",
+      "issue": "EmptyState only offers an \"Add receipt\" action; the spec calls for both receipt and mileage fast\u2011paths via the FAB.",
+      "fix": "Replace the action button with a FAB (or provide two actions) and ensure the mileage path is also reachable from the empty state.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "src/navigation/index.tsx",
+      "issue": "Loading text on the initial route says \"Loading\u2026\" instead of the required \"Loading dashboard\u2026\" or \"Loading policy\u2026\" copy.",
+      "fix": "Update the `<Text>` components to use the exact copy defined in the spec for each loading state.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "src/components/ui/Screen.tsx",
+      "issue": "The `Screen` component uses `gap: 8` which is not part of React Native style properties and may be ignored on native platforms.",
+      "fix": "Replace `gap` with explicit `marginBottom` on child elements or use a Flexbox layout to enforce spacing.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "src/lib/backup.ts",
+      "issue": "Backup file stores the plain passphrase in the JSON payload, which violates security best practices and deviates from the design\u2019s \u201cencrypted backup\u201d description.",
+      "fix": "Encrypt the backup payload with the derived key before writing to disk, and never store the passphrase in plaintext.",
+      "source": "designer"
+    },
+    {
+      "severity": "high",
+      "viewport": "phone",
+      "issue": "The primary action 'Continue' button is centered and lacks visual emphasis, making it feel secondary to the checkbox. No visual hierarchy guides the user to the action.",
+      "fix": "Increase button size, add bold weight or color contrast, and position it at the bottom of the screen for prominence.",
+      "screen": "policy",
+      "source": "vision"
+    },
+    {
+      "severity": "high",
+      "viewport": "phone",
+      "issue": "The checkbox and its label are misaligned with the text above. The checkbox is too close to the left edge, and the label is not vertically centered with the checkbox.",
+      "fix": "Center-align the checkbox and label horizontally and vertically. Add consistent padding around the checkbox and label.",
+      "screen": "policy",
+      "source": "vision"
+    },
+    {
+      "severity": "high",
+      "viewport": "phone",
+      "issue": "The screen uses a plain, unstyled white background with no visual structure or grouping. The content is just a block of text and a form element, lacking any design language or brand identity.",
+      "fix": "Apply a subtle card or container style to the content area. Add spacing around the text and form element to create visual breathing room.",
+      "screen": "policy",
+      "source": "vision"
+    },
+    {
+      "severity": "medium",
+      "viewport": "phone",
+      "issue": "Typography lacks a clear scale. The title and body text are the same size, and there's no visual distinction between headings and body text.",
+      "fix": "Use a type scale: larger, bold title; smaller, regular body text. Add appropriate line height and spacing between paragraphs.",
+      "screen": "policy",
+      "source": "vision"
+    },
+    {
+      "severity": "medium",
+      "viewport": "phone",
+      "issue": "The 'Continue' button is too small for a primary action and lacks visual feedback (e.g., hover state, press animation).",
+      "fix": "Increase button size to at least 44pt, add a subtle shadow or border, and include a loading state animation when pressed.",
+      "screen": "policy",
+      "source": "vision"
+    },
+    {
+      "severity": "medium",
+      "viewport": "desktop",
+      "issue": "Desktop layout is a stretched version of the phone layout, not a responsive design. All content is centered, but there's no use of the full width or proper grid alignment.",
+      "fix": "Re-layout for desktop: use a two-column grid, align content to the left, and utilize the full width with appropriate padding. Use larger font sizes for desktop.",
+      "screen": "policy",
+      "source": "vision"
+    },
+    {
+      "severity": "low",
+      "viewport": "both",
+      "issue": "The screen has no empty states or loading indicators beyond the default text. It doesn't guide the user on what to do next if the policy is missing.",
+      "fix": "Add a loading state with an ActivityIndicator and message. Add an error state with a clear call to action (e.g., 'Restart app').",
+      "screen": "policy",
+      "source": "vision"
+    },
+    {
+      "severity": "high",
+      "screen": "policy",
+      "source": "vision",
+      "issue": "visual quality 5/10 on 'policy' (needs 8+): Basic, functional layout with minimal styling. Lacks visual hierarchy, spacing, and brand identity. The primary action is present but unemphasized. Typography is readable but lacks scale. Desktop version is a stretched phone layout. Not polished enough for a premium product.",
+      "fix": "Address this screen's findings until it looks polished and professional."
+    }
+  ],
+  "lighthouse": [
+    {
+      "accessibility": 93,
+      "bestPractices": 100,
+      "performance": 69
+    }
+  ],
+  "vision_scores": [
+    {
+      "screen": "policy",
+      "score": 5.0,
+      "summary": "Basic, functional layout with minimal styling. Lacks visual hierarchy, spacing, and brand identity. The primary action is present but unemphasized. Typography is readable but lacks scale. Desktop version is a stretched phone layout. Not polished enough for a premium product."
+    }
+  ]
+}
