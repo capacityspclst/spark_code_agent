@@ -1,0 +1,112 @@
+{
+  "verdict": "fail",
+  "summary": "The UI does not meet the DESIGN.md spec. The primary flow cannot reach the Sign\u2011In screen (step\u202f3) \u2013 the expected heading \"Welcome back\" never appears \u2013 which is a fatal break in the user journey. Several screens lack required states, copy, and accessibility details (inline errors, password rules, focus rings, ARIA landmarks). Design tokens are often bypassed with hard\u2011coded colours/sizes, and navigation to primary actions is not guaranteed from every signed\u2011in screen. These issues make the product unusable for the target audience and non\u2011compliant with accessibility best\u2011practices.",
+  "findings": [
+    {
+      "severity": "high",
+      "file": "expo-app/src/navigation/index.tsx",
+      "issue": "Initial route is mis\u2011configured; the app starts on a blank screen instead of the Sign\u2011In screen, causing the primary flow test to fail (\"Welcome back\" not found).",
+      "fix": "Set the start destination of the root stack navigator to the SignInScreen component and ensure the JWT check redirects correctly. Add a fallback to SignIn if no token is present.",
+      "source": "designer"
+    },
+    {
+      "severity": "high",
+      "file": "expo-app/src/screens/SignInScreen.tsx",
+      "issue": "Missing required copy and UI elements: no \"Welcome back\" header, email/password labels above inputs, password show/hide toggle, live validation messages, and the \"Don\u2019t have an account? Sign up\" link with exact text.",
+      "fix": "Add a <Text accessibilityRole=\"header\" level={1}>Welcome back</Text>. Use FormField components with visible <Text> labels for email and password, set autoComplete=\"email\" / \"current-password\", add an eye\u2011icon button with accessibilityLabel=\"Show password\". Implement inline HelperText for field\u2011level errors and the live password rule list.",
+      "source": "designer"
+    },
+    {
+      "severity": "high",
+      "file": "expo-app/src/screens/SignUpScreen.tsx",
+      "issue": "Sign\u2011Up screen lacks live password rule list, inline field errors, and the exact secondary link text. Loading state does not disable fields or show the overlay spinner with the message \"Creating account\u2026\".",
+      "fix": "Render the live rule list under the password field. Use HelperText for validation errors (email, password). When the create\u2011account request is pending, set a loading flag that disables inputs, shows a dimmed overlay with <ActivityIndicator /> and text \"Creating account\u2026\".",
+      "source": "designer"
+    },
+    {
+      "severity": "high",
+      "file": "expo-app/src/screens/DashboardScreen.tsx",
+      "issue": "Empty\u2011state screen does not include the required illustration, title \"No data yet\", body copy, and primary CTA button labelled \"Add first receipt\". Consequently users cannot add their first receipt from an empty dashboard.",
+      "fix": "Create an EmptyState component that displays the illustration, the exact title/body copy, and a PrimaryButton with label \"Add first receipt\" that navigates to the ReceiptCapture screen.",
+      "source": "designer"
+    },
+    {
+      "severity": "high",
+      "file": "expo-app/src/components/ui/BottomTabBar.tsx",
+      "issue": "Bottom tab bar is not rendered on all signed\u2011in screens (e.g., MileageEntryScreen, ExportScreen), violating the spec that every primary action must be reachable at all times.",
+      "fix": "Place BottomTabBar inside the main navigation container that wraps all signed\u2011in screens. Ensure the tab bar is not hidden on any of the three primary tabs.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "expo-app/src/components/ui/PrimaryButton.tsx",
+      "issue": "Button colors and dimensions are hard\u2011coded (e.g., backgroundColor: '#0066FF', height: 48) instead of using the theme tokens (theme.colors.primary, theme.roundness, theme.spacing).",
+      "fix": "Import the MD3 theme and replace all literal colour/size values with theme.colors.primary, theme.roundness, theme.spacing.lg, etc. Use the theme\u2019s button style props (mode=\"contained\", contentStyle) to ensure consistency.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "expo-app/src/components/ui/FormField.tsx",
+      "issue": "Interaction states lack a visible focus indicator; the field does not show the required 2\u202fpx solid primary outline when focused via keyboard.",
+      "fix": "Add a focusStyle that applies borderWidth: 2 and borderColor: theme.colors.primary when the TextInput is focused. Ensure the style is merged with the default outlined mode.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "expo-app/src/components/Header.tsx",
+      "issue": "Header component does not declare the ARIA role \"banner\" and the app name text is not marked as a level\u20111 heading for screen readers.",
+      "fix": "Add accessibilityRole=\"banner\" to the Appbar.Header and wrap the app name in <Text accessibilityRole=\"header\" level={1}>FinanceMate</Text>.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "expo-app/src/components/ui/Screen.tsx",
+      "issue": "Screen wrapper does not set the role=\"main\" or ensure safe\u2011area insets on web; missing semantic landmark.",
+      "fix": "Add accessibilityRole=\"main\" and ensure the wrapper uses <SafeAreaView> with appropriate padding for web/layout.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "expo-app/src/components/ui/EmptyState.tsx",
+      "issue": "Component receives className props but no CSS is defined for web, so styles are ineffective.",
+      "fix": "Either remove className usage or generate matching CSS (e.g., via Tailwind or CSS modules) and import it.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "expo-app/src/components/ui/Toast.tsx",
+      "issue": "Snackbars/toasts are not announced via announceForAccessibility, so screen\u2011reader users may miss them.",
+      "fix": "On mount, call AccessibilityInfo.announceForAccessibility(message) (React Native) or use aria-live=\"assertive\" on the web toast container.",
+      "source": "designer"
+    },
+    {
+      "severity": "high",
+      "viewport": "both",
+      "issue": "The screen is entirely blank with no UI elements, text, or placeholders. No sign-in form, no buttons, no empty state, no loading indicator, no error messages, no navigation.",
+      "fix": "Implement the full sign-in UI as specified in DESIGN.md: email and password fields, 'Log in' button, and 'Don't have an account? Sign up' link. Ensure all states (loading, error, success) are implemented with appropriate visual feedback.",
+      "screen": "sign in",
+      "source": "vision"
+    },
+    {
+      "severity": "high",
+      "screen": "sign in",
+      "source": "vision",
+      "issue": "visual quality 1/10 on 'sign in' (needs 8+): The screen is completely blank \u2014 no UI elements, no text, no placeholders, no loading spinner, no error states, no navigation, no empty state, no form fields, no buttons. This is not a functional or visually designed screen. It violates every core principle of usability and design for a polished product. It is not even a 'working' screen \u2014 it's a placeholder or a bug. A score of 1 is appropriate for a screen that is functionally and visually non-existent.",
+      "fix": "Address this screen's findings until it looks polished and professional."
+    }
+  ],
+  "lighthouse": [
+    {
+      "accessibility": 93,
+      "bestPractices": 96,
+      "performance": null
+    }
+  ],
+  "vision_scores": [
+    {
+      "screen": "sign in",
+      "score": 1.0,
+      "summary": "The screen is completely blank \u2014 no UI elements, no text, no placeholders, no loading spinner, no error states, no navigation, no empty state, no form fields, no buttons. This is not a functional or visually designed screen. It violates every core principle of usability and design for a polished product. It is not even a 'working' screen \u2014 it's a placeholder or a bug. A score of 1 is appropriate for a screen that is functionally and visually non-existent."
+    }
+  ]
+}
