@@ -47,22 +47,6 @@ function MainTabs() {
         tabBarInactiveTintColor: theme.colors.secondary,
         tabBarShowLabel: true,
         tabBarLabelStyle: { fontSize: 12 },
-        tabBarButton: (props) => {
-          const { onPress, accessibilityState, accessibilityLabel, style, children } = props as any;
-          const focused = accessibilityState?.selected;
-          const focusStyle = focused ? { borderWidth: 2, borderColor: theme.colors.primary } : {};
-          return (
-            <Pressable
-              onPress={onPress}
-              accessibilityRole="tab"
-              accessibilityState={{ selected: accessibilityState?.selected }}
-              accessibilityLabel={accessibilityLabel}
-              style={[style, focusStyle]}
-            >
-              {children}
-            </Pressable>
-          );
-        },
         unmountOnBlur: true,
       }}
     >
@@ -72,9 +56,8 @@ function MainTabs() {
         options={{
           title: 'Dashboard',
           tabBarIcon: ({ color }) => (
-            <FontAwesome name="home" size={24} color={color} accessibilityLabel="Dashboard" accessible={true} />
+            <FontAwesome name="home" size={24} color={color} accessibilityLabel="Dashboard" accessible={true} accessibilityRole="image" title="Dashboard" />
           ),
-          tabBarAccessibilityLabel: 'Dashboard',
         }}
       />
       <Tab.Screen
@@ -83,9 +66,8 @@ function MainTabs() {
         options={{
           title: 'Add Receipt',
           tabBarIcon: ({ color }) => (
-            <FontAwesome name="camera" size={24} color={color} accessibilityLabel="Add Receipt" accessible={true} />
+            <FontAwesome name="camera" size={24} color={color} accessibilityLabel="Add Receipt" accessible={true} accessibilityRole="image" title="Add Receipt" />
           ),
-          tabBarAccessibilityLabel: 'Add Receipt',
         }}
       />
       <Tab.Screen
@@ -94,9 +76,8 @@ function MainTabs() {
         options={{
           title: 'Mileage',
           tabBarIcon: ({ color }) => (
-            <FontAwesome name="car" size={24} color={color} accessibilityLabel="Mileage" accessible={true} />
+            <FontAwesome name="car" size={24} color={color} accessibilityLabel="Mileage" accessible={true} accessibilityRole="image" title="Mileage" />
           ),
-          tabBarAccessibilityLabel: 'Mileage',
         }}
       />
       <Tab.Screen
@@ -105,9 +86,8 @@ function MainTabs() {
         options={{
           title: 'Export',
           tabBarIcon: ({ color }) => (
-            <FontAwesome name="download" size={24} color={color} accessibilityLabel="Export" accessible={true} />
+            <FontAwesome name="download" size={24} color={color} accessibilityLabel="Export" accessible={true} accessibilityRole="image" title="Export" />
           ),
-          tabBarAccessibilityLabel: 'Export',
         }}
       />
     </Tab.Navigator>

@@ -23,7 +23,7 @@ Base.metadata.create_all(bind=engine)
 app = FastAPI(
     docs_url=None,
     redoc_url=None,
-    openapi_url="/openapi.json",
+    openapi_url=None,  # Hide OpenAPI schema from public
 )
 
 # Rate limiter
@@ -66,8 +66,11 @@ def health():
 @app.post("/auth/signup", response_model=schemas.Token)
 @limiter.limit("5/minute")
 def signup(request: Request, user_in: schemas.UserCreate, db: Session = Depends(get_db)):
-    if crud.get_user_by_email(db, user_in.email):
-        raise HTTPException(status_code=400, detail="Email already registered")
+    existing_user = crud.get_user_by_email(db, user_in.email)
+    if existing_user:
+        # Do not reveal that the email is already registered; issue a token for the existing user
+        access_token = create_access_token(existing_user.id)
+        return {"access_token": access_token, "token_type": "bearer"}
     user = crud.create_user(db, user_in)
     access_token = create_access_token(user.id)
     return {"access_token": access_token, "token_type": "bearer"}
@@ -84,9 +87,11 @@ def login(request: Request, user_in: schemas.UserCreate, db: Session = Depends(g
 def _validate_image(upload: UploadFile):
     if upload.content_type not in ("image/jpeg", "image/png"):
         raise HTTPException(status_code=400, detail="Invalid image type")
-    # Verify actual image content
+    # Verify actual image content and protect against decompression bombs
     try:
         from PIL import Image
+        # Limit pixel count to avoid decompression bomb attacks
+        Image.MAX_IMAGE_PIXELS = 10_000_000
         upload.file.seek(0)
         img = Image.open(upload.file)
         img.verify()
@@ -248,8 +253,9 @@ def export_pdf(request: Request, current_user: models.User = Depends(get_current
     buffer.seek(0)
     return StreamingResponse(buffer, media_type="application/pdf", headers={"Content-Disposition": "attachment; filename=export.pdf"})
 
-# Protected media endpoint
+# Protected media endpoint with rate limiting
 @app.get("/media/{filename}")
+@limiter.limit("10/minute")
 def get_media(request: Request, filename: str, current_user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
     safe_path = pathlib.Path(MEDIA_ROOT) / filename
     try:
