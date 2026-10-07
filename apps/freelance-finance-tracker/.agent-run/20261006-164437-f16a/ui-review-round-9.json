@@ -1,0 +1,124 @@
+{
+  "verdict": "fail",
+  "summary": "The UI is generally structured with the promised screens and wrapper components, but a critical navigation failure (Sign\u2011In \u2192 Sign\u2011Up) prevents the primary onboarding flow. Several design\u2011system and accessibility best\u2011practices are missing or only partially implemented: loading states/disabled fields on auth forms, autocomplete and secure\u2011text toggles on password inputs, proper ARIA roles and focus outlines for navigation elements, and occasional hard\u2011coded style values that bypass the MD3 design tokens. These gaps will cause users to encounter dead\u2011ends, reduced usability on keyboards and screen\u2011readers, and visual inconsistencies on mobile and web.",
+  "findings": [
+    {
+      "severity": "high",
+      "file": "expo-app/src/screens/SignInScreen.tsx",
+      "issue": "The \"Don\u2019t have an account? Sign up\" link is rendered as plain text (or a non\u2011Pressable component) and cannot be clicked. Automated flow test timed out trying to navigate to the Sign\u2011Up screen.",
+      "fix": "Replace the link with a Pressable/TouchableOpacity or Paper Button that has an onPress handler navigating to the Sign\u2011Up route. Add `accessibilityRole=\"link\"` and ensure it is focusable (keyboard Tab) and has a visible focus outline.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "expo-app/src/screens/SignUpScreen.tsx",
+      "issue": "During account creation the UI does not disable the input fields or show the overlay spinner described in the Loading state. The button remains enabled, allowing duplicate submissions.",
+      "fix": "Wrap the form in a LoadingOverlay component and set `disabled` on FormField components when the submit promise is pending. Show the spinner and replace button label with \"Creating account\u2026\" as defined in the spec.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "expo-app/src/screens/SignInScreen.tsx",
+      "issue": "The sign\u2011in form similarly lacks field\u2011level loading/disable behaviour and does not display the \"Signing you in\u2026\" overlay spinner.",
+      "fix": "Implement the same LoadingOverlay pattern as Sign\u2011Up and toggle `disabled` on the email/password fields while the login request is in flight.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "expo-app/src/components/ui/FormField.tsx",
+      "issue": "TextInput components are missing `autoComplete` / `textContentType` props (e.g., email, password) and therefore do not trigger native autofill on iOS/Android. Password fields also lack a show/hide toggle and live validation feedback.",
+      "fix": "Pass `autoComplete=\"email\"` and `textContentType=\"emailAddress\"` for email fields, and `autoComplete=\"current-password\"` / `textContentType=\"password\"` for password fields. Add a trailing eye\u2011icon button that toggles `secureTextEntry` and expose an accessible label (\"Show password\" / \"Hide password\"). Wire the live password rule list to display validation errors as the user types.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "expo-app/src/navigation/index.tsx",
+      "issue": "Bottom tab bar (or navigation drawer) does not expose proper ARIA roles (`tablist`, `tab`) or `aria\u2011selected` state, and focus handling is missing. Keyboard users cannot navigate between tabs reliably.",
+      "fix": "Use React\u2011Native\u2011Paper\u2019s BottomNavigation component with `accessibilityRole=\"tablist\"` on the container and `accessibilityRole=\"tab\"` on each tab button. Set `accessibilityState={{ selected: isFocused }}` and ensure a 2\u202fpx solid primary outline appears on focus.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "expo-app/src/components/ui/PrimaryButton.tsx",
+      "issue": "Some style objects contain hard\u2011coded colour values (e.g., `backgroundColor: '#0066FF'`) instead of referencing the theme token `theme.colors.primary`.",
+      "fix": "Replace all literal colour strings with references to the MD3 theme (e.g., `backgroundColor: theme.colors.primary`). Do the same for pressed/disabled states (`primaryVariant`, `disabledBackground`).",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "expo-app/src/screens/DashboardScreen.tsx",
+      "issue": "The empty\u2011state illustration is rendered without an `accessibilityLabel` and is not marked as decorative, so screen readers announce a meaningless image description.",
+      "fix": "Add `accessibilityLabel=\"No data illustration\"` or set `accessible={false}` if decorative, and ensure the surrounding Text elements carry the proper heading level and body copy.",
+      "source": "designer"
+    },
+    {
+      "severity": "high",
+      "viewport": "phone",
+      "issue": "Form fields are unstyled browser defaults with no visual hierarchy or brand identity. The 'Email address' and 'Password' fields look like generic input boxes without padding, borders, or visual weight.",
+      "fix": "Apply a consistent type scale and visual hierarchy. Use branded input styles with subtle borders, padding, and focus states. Add visual weight to the primary action button.",
+      "screen": "sign in",
+      "source": "vision"
+    },
+    {
+      "severity": "high",
+      "viewport": "phone",
+      "issue": "The 'Log in' button is too wide and visually aggressive, stretching across the screen. The eye icon for password visibility is misaligned and poorly integrated.",
+      "fix": "Use a button that fits the form width. Align the eye icon properly with the password field. Consider using a more subtle toggle icon.",
+      "screen": "sign in",
+      "source": "vision"
+    },
+    {
+      "severity": "high",
+      "viewport": "phone",
+      "issue": "The 'Don't have an account? Sign up' link is poorly positioned and lacks visual hierarchy. It's too small and centered, making it feel like an afterthought.",
+      "fix": "Increase the font size and weight of the link. Position it below the button with appropriate spacing. Consider using a different color or underline to make it stand out.",
+      "screen": "sign in",
+      "source": "vision"
+    },
+    {
+      "severity": "medium",
+      "viewport": "phone",
+      "issue": "The text 'Welcome back' is too large and lacks contrast. It feels like a heading but isn't styled as one, and the spacing around it is inconsistent.",
+      "fix": "Use a consistent type scale. Make the heading smaller and more appropriate for a sign-in screen. Add spacing above and below for better visual breathing room.",
+      "screen": "sign in",
+      "source": "vision"
+    },
+    {
+      "severity": "medium",
+      "viewport": "phone",
+      "issue": "The overall layout is cramped and lacks breathing room. Elements are too close together, making the screen feel cluttered.",
+      "fix": "Increase vertical spacing between elements. Add padding to the form container. Use a consistent grid system to align elements properly.",
+      "screen": "sign in",
+      "source": "vision"
+    },
+    {
+      "severity": "low",
+      "viewport": "phone",
+      "issue": "The password field lacks a clear placeholder or label. Users may not know what to enter.",
+      "fix": "Add a clear placeholder text like 'Enter your password' or use a label above the field.",
+      "screen": "sign in",
+      "source": "vision"
+    },
+    {
+      "severity": "high",
+      "screen": "sign in",
+      "source": "vision",
+      "issue": "visual quality 6/10 on 'sign in' (needs 8+): The sign-in screen is functional and visually clean, but lacks polish and design maturity. It uses basic form controls without styling, has poor typography hierarchy, and misaligned elements. The layout is cramped and doesn't feel like a premium product. It's acceptable for a prototype but not ready for a paying user base.",
+      "fix": "Address this screen's findings until it looks polished and professional."
+    }
+  ],
+  "lighthouse": [
+    {
+      "accessibility": 100,
+      "bestPractices": 100,
+      "performance": 72
+    }
+  ],
+  "vision_scores": [
+    {
+      "screen": "sign in",
+      "score": 6.0,
+      "summary": "The sign-in screen is functional and visually clean, but lacks polish and design maturity. It uses basic form controls without styling, has poor typography hierarchy, and misaligned elements. The layout is cramped and doesn't feel like a premium product. It's acceptable for a prototype but not ready for a paying user base."
+    }
+  ]
+}
