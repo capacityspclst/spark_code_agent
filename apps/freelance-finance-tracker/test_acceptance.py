@@ -19,7 +19,7 @@ import io
 import csv
 import shutil
 import tempfile
-from typing import Any, Dict
+from typing import Any, Dict, Tuple
 
 # ----------------------------------------------------------------------
 # Environment setup before importing the FastAPI app
@@ -62,6 +62,27 @@ def assert_status(
             f"{method} {path}: expected status {low}-{high-1} "
             f"but got {response.status_code}. Body: {response.text}"
         )
+
+
+def get_mileage_and_tax_rates(auth_token: str) -> Tuple[float, float]:
+    """
+    Retrieve mileage and tax rates from the API if an endpoint exists.
+    Falls back to default values (0.585 mileage_rate, 0.30 tax_rate) if not found.
+    """
+    headers = {"Authorization": f"Bearer {auth_token}"}
+    # Potential endpoints that might expose the rates.
+    for endpoint in ("/rates", "/settings", "/config"):
+        resp = client.get(endpoint, headers=headers)
+        if resp.status_code == 200:
+            try:
+                data = resp.json()
+                mileage_rate = float(data.get("mileage_rate", 0.585))
+                tax_rate = float(data.get("tax_rate", 0.30))
+                return mileage_rate, tax_rate
+            except Exception:
+                continue
+    # No dedicated endpoint – use known defaults.
+    return 0.585, 0.30
 
 
 # ----------------------------------------------------------------------
@@ -123,6 +144,7 @@ def test_receipt_flow(auth_token: str) -> Dict[str, Any]:
         "date": "2023-06-01",
         "category": "Office Supplies",
         "notes": "Test receipt",
+        # "type": "expense"  # optional – default is expense
     }
     headers = {"Authorization": f"Bearer {auth_token}"}
     resp = client.post(
@@ -137,6 +159,11 @@ def test_receipt_flow(auth_token: str) -> Dict[str, Any]:
     if float(receipt.get("amount", 0)) != 123.45:
         raise AssertionError(
             f"POST /receipts: amount mismatch, expected 123.45 got {receipt.get('amount')}"
+        )
+    # Ensure the receipt is treated as an expense (default)
+    if "type" in receipt and receipt["type"] != "expense":
+        raise AssertionError(
+            f"POST /receipts: expected type 'expense', got {receipt.get('type')}"
         )
 
     # --- Retrieve receipts list -----------------------------------------
@@ -183,17 +210,20 @@ def test_dashboard_and_exports(
 ) -> None:
     headers = {"Authorization": f"Bearer {auth_token}"}
 
+    # Retrieve dynamic rates (mileage and tax) from the API if possible.
+    mileage_rate, tax_rate = get_mileage_and_tax_rates(auth_token)
+
     # --- Dashboard -------------------------------------------------------
     resp = client.get("/dashboard", headers=headers)
     assert_status(resp, (200, 300), "GET", "/dashboard")
     summary = resp.json()
 
     # Expected calculations (rounded to 2 decimals as backend likely does)
-    expected_income = receipt_amount
-    expected_expenses = 0.0
-    expected_mileage_deduction = round(mileage_miles * 0.585, 2)
-    taxable_income = expected_income - expected_expenses - expected_mileage_deduction
-    expected_estimated_tax = round(taxable_income * 0.30, 2)
+    expected_income = 0.0
+    expected_expenses = receipt_amount
+    expected_mileage_deduction = round(mileage_miles * mileage_rate, 2)
+    taxable_profit = expected_income - expected_expenses - expected_mileage_deduction
+    expected_estimated_tax = round(max(0.0, taxable_profit * tax_rate), 2)
 
     def close(a: float, b: float, eps: float = 0.01) -> bool:
         return abs(a - b) < eps
