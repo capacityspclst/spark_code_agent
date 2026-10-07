@@ -1,0 +1,105 @@
+{
+  "verdict": "fail",
+  "summary": "The current build diverges from the DESIGN.md in several critical ways. The onboarding flow fails \u2013 the PolicyScreen does not expose a correctly labelled \"I agree to the Terms of Use and Privacy Policy\" checkbox, causing the acceptance test to time\u2011out. The Dashboard fast\u2011path is also broken: a FAB is required by the spec but the screen uses plain PrimaryButtons instead, removing the primary two\u2011tap entry path. Beyond the high\u2011severity flow blockers there are numerous medium\u2011severity mismatches: design tokens are not fully applied (hard\u2011coded paddings, max\u2011widths, and missing elevation/padding on cards), accessibility landmarks and focus cues are missing (Screen lacks accessibilityRole, tab icons are aria\u2011hidden, form fields lack hints), and error\u2011state UI is absent on several screens. Low\u2011severity copy and styling inconsistencies also exist (empty\u2011state wording, button sizing, missing policy\u2011update banner). These issues must be addressed before the product can be considered polished and ready for release.",
+  "findings": [
+    {
+      "severity": "high",
+      "file": "src/screens/PolicyScreen.tsx",
+      "issue": "The required \"I agree to the Terms of Use and Privacy Policy\" checkbox is not rendered with a proper accessibilityLabel, nor does the Continue button enable only after it is checked. This causes the primary onboarding flow test to time\u2011out.",
+      "fix": "Add a React Native Paper Checkbox with `accessibilityLabel=\"I agree to the Terms of Use and Privacy Policy\"` and bind its checked state to the Continue button's `disabled` prop. Ensure the label text matches the spec exactly and that the button becomes enabled only when the box is checked.",
+      "source": "designer"
+    },
+    {
+      "severity": "high",
+      "file": "src/screens/DashboardScreen.tsx",
+      "issue": "The dashboard fast\u2011path uses PrimaryButton components instead of the required FAB positioned 16\u202fpx from the right and bottom. This removes the two\u2011tap entry flow defined in the spec.",
+      "fix": "Import the `FAB` component from `src/components/ui/FAB.tsx` (or React Native Paper) and render two FABs (one for Add receipt, one for Add mileage) with `icon=\"plus\"`, `label` per spec, `accessibilityLabel`, and absolute positioning (`right: 16, bottom: 16`). Hide the PrimaryButtons used for the same actions on the empty state or replace them with the FAB.",
+      "source": "designer"
+    },
+    {
+      "severity": "high",
+      "file": "src/screens/DashboardScreen.tsx",
+      "issue": "Dashboard does not handle the DB error state defined in the spec (\"Unable to load summary. Please try again later.\"). The UI only shows loading, empty or success states.",
+      "fix": "Add a try/catch around the data\u2011loading logic. If an error occurs, set an `error` state and render a view containing the error message styled using the error color token. Provide a retry button.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/components/ui/Screen.tsx",
+      "issue": "Padding and maxWidth are hard\u2011coded (`padding: 16`, `maxWidth: 420`) instead of using the theme's spacing token and responsive desktop width (560\u202fpx). The component also lacks the required `accessibilityRole=\"main\"` landmark.",
+      "fix": "Replace the hard\u2011coded values with `theme.spacing.md` and conditionally set `maxWidth` to 420\u202fpx for mobile (`width < 1280`) and 560\u202fpx for larger viewports using `useWindowDimensions`. Add `accessibilityRole=\"main\"` to the top-level `SafeAreaView`.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/components/ui/SummaryCard.tsx",
+      "issue": "The SummaryCard does not meet the spec's visual requirements: missing elevation\u202f4, internal padding of 12\u202fpx, and margin\u2011bottom\u202f16\u202fpx. Text colors use `theme.colors.onSurfaceVariant` but not the exact token values defined for cards.",
+      "fix": "Update the Card style to `elevation: 4`, add `padding: theme.spacing.md` (or 12\u202fpx) inside Card.Content, and change `marginBottom` to 16. Ensure text colors use the token pairs from DESIGN.md.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/components/ui/BottomTabNavigator.tsx",
+      "issue": "Tab icons are rendered with `aria-hidden` and no `accessibilityLabel`, making them invisible to screen readers. The BottomNavigation also lacks an explicit `accessibilityRole=\"navigation\"`.",
+      "fix": "Remove `aria-hidden` from icons and add `accessibilityLabel` that describes the destination (e.g., \"Dashboard tab\"). Add `accessibilityRole=\"navigation\"` to the tab navigator container.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/components/ui/FormField.tsx",
+      "issue": "FormField does not expose `autoComplete` props, lacks `accessibilityHint` linking the helper text, and does not set `accessibilityState` for error conditions. This reduces form accessibility.",
+      "fix": "Accept an `autoComplete` prop and pass it to TextInput. When `error` is true, set `accessibilityState={{ invalid: true }}` and add `accessibilityHint={errorMessage}` so screen readers announce the validation message.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "src/screens/DashboardScreen.tsx",
+      "issue": "EmptyState description text reads \"Add a receipt or mileage entry to get started.\" which does not match the spec wording \"Add a receipt or mileage entry to see your financial overview.\"",
+      "fix": "Update the `description` prop passed to `<EmptyState>` to the exact spec copy.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "src/components/ui/PrimaryButton.tsx",
+      "issue": "PrimaryButton does not enforce the minimum touch target (44\u202f\u00d7\u202f44\u202fpx) or minimum height (48\u202fpx) required by the spec; the style is left to defaults.",
+      "fix": "Add a default style object that includes `minHeight: 48`, `minWidth: 64`, and sufficient padding to guarantee a 44\u202f\u00d7\u202f44\u202fpx hit area. Use the theme's spacing token for the padding.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "src/screens/PolicyScreen.tsx",
+      "issue": "The screen does not render the version\u2011update banner when a newer policy version is detected, as required by the spec.",
+      "fix": "Detect a saved version that differs from `POLICY_VERSION`. If a newer version exists, render a banner component at the top of the screen with the text \"Policy has been updated to version\u00a0{VERSION}\u00a0\u2013 please review.\" using the appropriate surfaceVariant color.",
+      "source": "designer"
+    },
+    {
+      "severity": "high",
+      "viewport": "both",
+      "issue": "The screen is entirely blank with no visible content, text, or UI elements. This is not a loading state or placeholder; it is a complete absence of interface.",
+      "fix": "Display the policy text, checkbox, and Continue button as specified in the design spec. Ensure the screen is scrollable if needed and that the Continue button is disabled until the checkbox is checked.",
+      "screen": "policy",
+      "source": "vision"
+    },
+    {
+      "severity": "high",
+      "screen": "policy",
+      "source": "vision",
+      "issue": "visual quality 1/10 on 'policy' (needs 8+): The screen is completely blank, showing no UI elements, text, or interactive components. This violates the core requirement of a functional app screen and renders the interface unusable.",
+      "fix": "Address this screen's findings until it looks polished and professional."
+    }
+  ],
+  "lighthouse": [
+    {
+      "accessibility": null,
+      "bestPractices": null,
+      "performance": null
+    }
+  ],
+  "vision_scores": [
+    {
+      "screen": "policy",
+      "score": 1.0,
+      "summary": "The screen is completely blank, showing no UI elements, text, or interactive components. This violates the core requirement of a functional app screen and renders the interface unusable."
+    }
+  ]
+}
