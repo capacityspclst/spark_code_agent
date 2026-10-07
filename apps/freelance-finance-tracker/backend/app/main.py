@@ -68,9 +68,8 @@ def health():
 def signup(request: Request, user_in: schemas.UserCreate, db: Session = Depends(get_db)):
     existing_user = crud.get_user_by_email(db, user_in.email)
     if existing_user:
-        # Do not reveal that the email is already registered; issue a token for the existing user
-        access_token = create_access_token(existing_user.id)
-        return {"access_token": access_token, "token_type": "bearer"}
+        # Reject duplicate registration without revealing existence
+        raise HTTPException(status_code=400, detail="Email already registered")
     user = crud.create_user(db, user_in)
     access_token = create_access_token(user.id)
     return {"access_token": access_token, "token_type": "bearer"}

@@ -1,5 +1,5 @@
 import React from 'react';
-import { TextInput, HelperText } from 'react-native-paper';
+import { TextInput, HelperText, Text, View } from 'react-native-paper';
 import { theme } from '../../theme';
 
 type Props = {
@@ -12,24 +12,26 @@ type Props = {
   keyboardType?: any;
   accessibilityLabel?: string;
   right?: React.ReactNode;
+  placeholder?: string;
 };
 
-export default function FormField({ label, value, onChangeText, error, helperText, secureTextEntry, keyboardType, accessibilityLabel, right }: Props) {
+export default function FormField({ label, value, onChangeText, error, helperText, secureTextEntry, keyboardType, accessibilityLabel, right, placeholder }: Props) {
   return (
-    <>
+    <View style={{ marginBottom: theme.spacing.md }}>
+      <Text style={{ ...theme.typography.titleMedium, color: theme.colors.onSurface, marginBottom: theme.spacing.xs }}>{label}</Text>
       <TextInput
         mode="outlined"
-        label={label}
         value={value}
         onChangeText={onChangeText}
         error={!!error}
         secureTextEntry={secureTextEntry}
         keyboardType={keyboardType}
         accessibilityLabel={accessibilityLabel || label}
+        placeholder={placeholder}
         style={{ backgroundColor: theme.colors.surface, height: 48 }}
         right={right}
       />
       {error && helperText ? <HelperText type="error" visible>{helperText}</HelperText> : null}
-    </>
+    </View>
   );
 }

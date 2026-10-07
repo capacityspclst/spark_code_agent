@@ -10,7 +10,7 @@ import { theme } from '../theme';
 import LoadingOverlay from '../components/LoadingOverlay';
 import Screen from '../components/ui/Screen';
 import { Button, TextInput } from 'react-native-paper';
-import { FontAwesome } from '@expo/vector-icons';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 export default function SignUpScreen() {
   const navigation = useNavigation<any>();
@@ -30,7 +30,13 @@ export default function SignUpScreen() {
     } else {
       setErrorEmail('');
     }
-    if (password.length < 12 || !/[A-Z]/.test(password) || !/[a-z]/.test(password) || !/[0-9]/.test(password) || !/[^A-Za-z0-9]/.test(password)) {
+    if (
+      password.length < 12 ||
+      !/[A-Z]/.test(password) ||
+      !/[a-z]/.test(password) ||
+      !/[0-9]/.test(password) ||
+      !/[^A-Za-z0-9]/.test(password)
+    ) {
       setErrorPassword('Password must be at least 12 characters, include uppercase, lowercase, number, and symbol.');
       valid = false;
     } else {
@@ -57,7 +63,11 @@ export default function SignUpScreen() {
   return (
     <Screen>
       <View style={styles.container}>
-        {submissionError ? <Text style={styles.submissionError} accessibilityRole="alert">{submissionError}</Text> : null}
+        {submissionError ? (
+          <Text style={styles.submissionError} accessibilityRole="alert">
+            {submissionError}
+          </Text>
+        ) : null}
         <Text style={styles.title}>Create your account</Text>
         <FormField
           label="Email address"
@@ -67,6 +77,7 @@ export default function SignUpScreen() {
           helperText={errorEmail}
           keyboardType="email-address"
           accessibilityLabel="Email address"
+          placeholder="you@example.com"
         />
         <FormField
           label="Password"
@@ -75,17 +86,17 @@ export default function SignUpScreen() {
           error={!!errorPassword}
           helperText={errorPassword}
           secureTextEntry={secureEntry}
-          accessibilityLabel={secureEntry ? "Show password" : "Hide password"}
-        />
-        {/* Password visibility toggle button */}
-        <Pressable
-          onPress={() => setSecureEntry(!secureEntry)}
           accessibilityLabel={secureEntry ? 'Show password' : 'Hide password'}
-          accessibilityRole="button"
-          style={styles.toggleButton}
-        >
-          <FontAwesome name={secureEntry ? 'eye-slash' : 'eye'} size={24} color={theme.colors.secondary} accessible={false} />
-        </Pressable>
+          placeholder="Enter your password"
+          right={
+            <TextInput.Icon
+              icon={secureEntry ? 'eye' : 'eye-off'}
+              onPress={() => setSecureEntry(!secureEntry)}
+              accessibilityLabel={secureEntry ? 'Show password' : 'Hide password'}
+              forceTextInputFocus={false}
+            />
+          }
+        />
         <Text style={styles.helper}>12 + characters, uppercase, lowercase, number, symbol</Text>
         {loading ? (
           <ActivityIndicator size="large" color={theme.colors.primary} />
@@ -110,7 +121,6 @@ const styles = StyleSheet.create({
   container: { paddingBottom: theme.spacing.lg },
   title: { ...theme.typography.h2, color: theme.colors.onSurface, marginBottom: theme.spacing.lg },
   helper: { color: theme.colors.placeholder, ...theme.typography.caption, marginTop: theme.spacing.xs },
-  link: { marginTop: theme.spacing.lg, alignSelf: 'center' },
-  submissionError: { color: theme.colors.error, ...theme.typography.body, marginBottom: theme.spacing.sm },
-  toggleButton: { alignSelf: 'flex-start', marginTop: theme.spacing.xs, marginBottom: theme.spacing.sm },
+  link: { marginTop: theme.spacing.lg, alignSelf: 'flex-end' },
+  submissionError: { color: theme.colors.error, ...theme.typography.bodyMedium, marginBottom: theme.spacing.sm },
 });

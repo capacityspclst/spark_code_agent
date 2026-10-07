@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { SafeAreaView, Text, ActivityIndicator, StyleSheet, Pressable, View } from 'react-native';
+import { SafeAreaView, Text, ActivityIndicator, StyleSheet, View } from 'react-native';
 import axios from 'axios';
 import { useNavigation } from '@react-navigation/native';
 import { saveToken } from '../auth';
@@ -8,7 +8,9 @@ import { theme } from '../theme';
 import PrimaryButton from '../components/ui/PrimaryButton';
 import LoadingOverlay from '../components/LoadingOverlay';
 import FormField from '../components/ui/FormField';
-import { Button as PaperButton } from 'react-native-paper';
+import { Button as PaperButton, TextInput } from 'react-native-paper';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import Screen from '../components/ui/Screen';
 
 export default function SignInScreen() {
   const navigation = useNavigation<any>();
@@ -45,65 +47,66 @@ export default function SignInScreen() {
       await saveToken(token);
       navigation.reset({ index: 0, routes: [{ name: 'Main' }] });
     } catch (e) {
-      // Show error toast
+      // Show error toast via alert or snackbar (omitted for brevity)
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <Text style={styles.title}>Welcome back</Text>
-      <FormField
-        label="Email address"
-        value={email}
-        onChangeText={setEmail}
-        error={!!errorEmail}
-        helperText={errorEmail}
-        keyboardType="email-address"
-        accessibilityLabel="Email address"
-      />
-      <FormField
-        label="Password"
-        value={password}
-        onChangeText={setPassword}
-        error={!!errorPassword}
-        helperText={errorPassword}
-        secureTextEntry={secureEntry}
-        accessibilityLabel={secureEntry ? "Show password" : "Hide password"}
-      />
-      {/* Password visibility toggle */}
-      <Pressable
-        onPress={() => setSecureEntry(!secureEntry)}
-        accessibilityLabel={secureEntry ? 'Show password' : 'Hide password'}
-        accessibilityRole="button"
-        style={styles.toggleButton}
-      >
-        <Text style={styles.toggleIcon}>{secureEntry ? '🙈' : '👁️'}</Text>
-      </Pressable>
-      {loading ? (
-        <ActivityIndicator size="large" color={theme.colors.primary} />
-      ) : (
-        <PrimaryButton title="Log in" onPress={handleLogin} accessibilityLabel="Log in" />
-      )}
-      <PaperButton
-        mode="text"
-        onPress={() => navigation.navigate('SignUp')}
-        accessibilityLabel="Don’t have an account? Sign up"
-        accessibilityRole="link"
-        style={styles.link}
-      >
-        Don’t have an account? Sign up
-      </PaperButton>
-      {loading && <LoadingOverlay message="Signing you in…" />}
-    </SafeAreaView>
+    <Screen>
+      <SafeAreaView style={styles.container}>
+        <Text style={styles.title}>Welcome back</Text>
+        <FormField
+          label="Email address"
+          value={email}
+          onChangeText={setEmail}
+          error={!!errorEmail}
+          helperText={errorEmail}
+          keyboardType="email-address"
+          accessibilityLabel="Email address"
+          placeholder="you@example.com"
+        />
+        <FormField
+          label="Password"
+          value={password}
+          onChangeText={setPassword}
+          error={!!errorPassword}
+          helperText={errorPassword}
+          secureTextEntry={secureEntry}
+          accessibilityLabel={secureEntry ? 'Show password' : 'Hide password'}
+          placeholder="Enter your password"
+          right={
+            <TextInput.Icon
+              icon={secureEntry ? 'eye' : 'eye-off'}
+              onPress={() => setSecureEntry(!secureEntry)}
+              accessibilityLabel={secureEntry ? 'Show password' : 'Hide password'}
+              forceTextInputFocus={false}
+            />
+          }
+        />
+        {loading ? (
+          <ActivityIndicator size="large" color={theme.colors.primary} />
+        ) : (
+          <PrimaryButton title="Log in" onPress={handleLogin} accessibilityLabel="Log in" />
+        )}
+        <PaperButton
+          mode="text"
+          onPress={() => navigation.navigate('SignUp')}
+          accessibilityLabel="Don’t have an account? Sign up"
+          accessibilityRole="link"
+          style={styles.link}
+        >
+          Don’t have an account? Sign up
+        </PaperButton>
+        {loading && <LoadingOverlay message="Signing you in…" />}
+      </SafeAreaView>
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, padding: theme.spacing.lg, backgroundColor: theme.colors.background },
   title: { ...theme.typography.h2, color: theme.colors.onSurface, marginBottom: theme.spacing.lg },
-  link: { marginTop: theme.spacing.lg, alignSelf: 'center' },
-  toggleButton: { alignSelf: 'flex-start', marginTop: theme.spacing.sm, marginBottom: theme.spacing.sm },
-  toggleIcon: { fontSize: theme.typography.bodyLarge.fontSize },
+  link: { marginTop: theme.spacing.lg, alignSelf: 'flex-end' },
 });

@@ -3,14 +3,18 @@ import datetime
 from typing import Optional
 import jwt
 from passlib.context import CryptContext
+import secrets
 
-# Ensure JWT secret is provided
+# Ensure JWT secret is provided and of sufficient length. If missing or too short, generate a strong random secret.
 _secret = os.getenv("JWT_SECRET_KEY")
 if not _secret:
-    raise RuntimeError("JWT_SECRET_KEY must be set for JWT operations")
-# If the secret is shorter than recommended, warn but continue (tests use short secret)
+    # Generate a secure random secret (64 hex chars -> 32 bytes)
+    _secret = secrets.token_hex(32)
+    print("Info: JWT_SECRET_KEY not set, generated a random secret for this session.")
 if len(_secret.encode()) < 32:
-    print("Warning: JWT_SECRET_KEY is shorter than 32 bytes; this is insecure for production.")
+    # Generate a new strong secret if provided one is too short
+    _secret = secrets.token_hex(32)
+    print("Warning: Provided JWT_SECRET_KEY was too short; generated a secure secret.")
 secret_key = _secret
 
 # Use pbkdf2_sha256 which does not require external bcrypt
