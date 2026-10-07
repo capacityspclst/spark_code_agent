@@ -1,0 +1,1916 @@
+{
+  "run_id": "20261007-072131-d056",
+  "task": "Build a new freelance finance tracking phone app: an Expo (React Native) app for iOS and Android that uses the phone's camera to photograph receipts (with a photo-library fallback), plus a Python FastAPI backend (PostgreSQL in production; SQLite via DATABASE_URL for tests and previews). Features: JWT auth with the token kept in secure device storage; receipt capture and upload with amount, date, category and notes; mileage entry; a dashboard summary (income, expenses, mileage deduction, estimated tax); tax-ready PDF and CSV export shared through the phone's share sheet. The UI must be polished and professional, with a best\u2011practice sign\u2011up and sign\u2011in flow and clear navigation to every action. Use the current Expo SDK (look up versions with npm view; never guess). Includes unit and integration tests.",
+  "app": "apps/freelance-finance-tracker",
+  "new_app": true,
+  "success": false,
+  "tests_passed": false,
+  "validation_passed": true,
+  "validation": "python syntax ok, ruff ok, python dependencies install ok, npm install (expo-app) ok, expo dependency versions (expo-app) ok, expo export (expo-app) ok, expo web export (expo-app) ok, ui backend starts (expo-app) ok, ui renders (expo-app) ok, ui styles applied (expo-app) ok, accessibility, serious or critical (expo-app) ok, responsive layout on a phone (expo-app) ok, ui primary flow (expo-app) ok, typescript (tsc) ok, json syntax ok, scanner suppressions ok, semgrep (security errors) ok, trivy secrets ok, trivy dependency vulnerabilities (high/critical, fixable) ok, trivy misconfigurations (high/critical) ok, trivy dependency vulnerabilities (other) warn, planned files present ok",
+  "review": {
+    "verdict": "revise",
+    "issues": [
+      "Dashboard endpoint returns incorrect income/expenses values. The test expects income=0 and expenses equal to receipt amount, but the backend returns income=receipt amount. The calculate_dashboard function in backend/app/crud.py still calculates income based on positive receipt amounts. It needs to treat all receipts as expenses (income=0) or adjust the logic to match test expectations.",
+      "The get_media endpoint uses an undefined name 'Tru' (should be True) when calling resolve(strict=...). This typo will cause a NameError if the endpoint is accessed.",
+      "The authentication login endpoint expects a UserCreate schema which includes a password field, but typically a separate Login schema is used. However, this does not cause test failures but is a design issue.",
+      "Potential missing import for typing List in main.py response_model list[schemas.ReceiptRead] (requires Python 3.9+ which is fine)."
+    ],
+    "feedback": "Fix calculate_dashboard to compute income=0 and expenses as sum of receipt amounts, ensuring the dashboard test passes. Also correct the typo in get_media (strict=True). After these changes, re-run the acceptance tests."
+  },
+  "review_rounds": 12,
+  "seconds": 24224.7,
+  "agents": {
+    "coder": {
+      "calls": 121,
+      "prompt_tokens": 4969798,
+      "completion_tokens": 74834,
+      "seconds": 4037.211880683899
+    },
+    "designer": {
+      "calls": 12,
+      "prompt_tokens": 533608,
+      "completion_tokens": 43035,
+      "seconds": 2398.17822766304
+    },
+    "vision": {
+      "calls": 100,
+      "prompt_tokens": 343911,
+      "completion_tokens": 35553,
+      "seconds": 1750.689402103424
+    },
+    "reviewer": {
+      "calls": 109,
+      "prompt_tokens": 6209884,
+      "completion_tokens": 163225,
+      "seconds": 10263.578200817108
+    },
+    "security": {
+      "calls": 9,
+      "prompt_tokens": 461914,
+      "completion_tokens": 65739,
+      "seconds": 3871.485056400299
+    },
+    "retro": {
+      "calls": 1,
+      "prompt_tokens": 5013,
+      "completion_tokens": 3811,
+      "seconds": 138.49895119667053
+    }
+  },
+  "stalled": [
+    "phase 2 (look and feel) did not reach the bar in 10 rounds"
+  ],
+  "security": {
+    "verdict": "skipped",
+    "summary": "Skipped until tests and validation pass.",
+    "findings": [],
+    "assurance": {
+      "blocking_open": 1,
+      "open": 20,
+      "deployment_actions": 2,
+      "fixed": 3
+    },
+    "ledger": [
+      {
+        "id": "auth-signup-token-leak",
+        "severity": "critical",
+        "file": "backend/app/main.py",
+        "where": "code",
+        "open_rounds": 1,
+        "issue": "`/auth/signup` returns a JWT for an existing email without checking a password, allowing an attacker who knows a user's email to obtain a valid authentication token and access the account.",
+        "fix": "Modify the signup endpoint to reject duplicate email registrations (e.g., return a generic success message without a token) or require email verification before issuing a token. Do not generate a JWT for an existing user.",
+        "status": "fixed",
+        "first_round": 2,
+        "history": [
+          {
+            "round": 2,
+            "status": "open",
+            "severity": "critical"
+          },
+          {
+            "round": 4,
+            "status": "fixed",
+            "severity": "critical",
+            "reason": "The signup endpoint now returns a 400 error for existing emails instead of issuing a JWT, eliminating the token\u2011leak vulnerability."
+          },
+          {
+            "round": 5,
+            "status": "fixed",
+            "severity": "critical",
+            "reason": "Fixed \u2013 endpoint no longer returns a JWT for an existing email; duplicate email now raises a generic error."
+          },
+          {
+            "round": 6,
+            "status": "fixed",
+            "severity": "critical"
+          },
+          {
+            "round": 7,
+            "status": "fixed",
+            "severity": "critical",
+            "reason": "No change; the signup endpoint now checks for existing users and does not issue a token for them."
+          },
+          {
+            "round": 8,
+            "status": "fixed",
+            "severity": "critical",
+            "reason": "fixed by checking for existing email before issuing a token"
+          },
+          {
+            "round": 9,
+            "status": "fixed",
+            "severity": "critical",
+            "reason": "unchanged"
+          },
+          {
+            "round": 10,
+            "status": "fixed",
+            "severity": "critical",
+            "reason": "Remains fixed"
+          },
+          {
+            "round": 11,
+            "status": "fixed",
+            "severity": "critical",
+            "reason": "fixed in current code \u2013 signup now requires a password and only issues a token for newly created accounts."
+          }
+        ]
+      },
+      {
+        "id": "jwt-secret-weak",
+        "severity": "medium",
+        "file": "backend/app/auth.py",
+        "where": "code",
+        "open_rounds": 1,
+        "issue": "The JWT secret key length is only warned about if it is shorter than 32 bytes; the application continues to run with a weak secret, making brute\u2011force attacks feasible.",
+        "fix": "Enforce a minimum secret length (e.g., raise an exception if <32 bytes) and require a cryptographically strong secret in production. Optionally generate a strong random secret on startup if none is provided.",
+        "status": "fixed",
+        "first_round": 2,
+        "history": [
+          {
+            "round": 2,
+            "status": "open",
+            "severity": "medium"
+          },
+          {
+            "round": 4,
+            "status": "fixed",
+            "severity": "medium",
+            "reason": "The JWT secret is now forced to be at least 32 bytes; short or missing secrets are replaced with a securely generated random key."
+          },
+          {
+            "round": 5,
+            "status": "fixed",
+            "severity": "medium",
+            "reason": "Fixed \u2013 secret is now generated with 32\u2011byte entropy when missing or too short."
+          },
+          {
+            "round": 6,
+            "status": "fixed",
+            "severity": "medium"
+          },
+          {
+            "round": 7,
+            "status": "fixed",
+            "severity": "medium",
+            "reason": "No change; the secret is now validated for length and a strong random secret is generated if missing."
+          },
+          {
+            "round": 8,
+            "status": "fixed",
+            "severity": "medium",
+            "reason": "fixed by generating a strong secret if missing or too short"
+          },
+          {
+            "round": 9,
+            "status": "fixed",
+            "severity": "medium",
+            "reason": "unchanged"
+          },
+          {
+            "round": 10,
+            "status": "fixed",
+            "severity": "medium",
+            "reason": "Remains fixed"
+          },
+          {
+            "round": 11,
+            "status": "fixed",
+            "severity": "medium",
+            "reason": "fixed \u2013 secret key is validated for length and autogenerated if missing or too short."
+          }
+        ]
+      },
+      {
+        "id": "dependency-decode-uri-component",
+        "severity": "medium",
+        "file": "expo-app/package-lock.json",
+        "where": "code",
+        "open_rounds": 9,
+        "issue": "The `decode-uri-component` package version 0.2.2 is vulnerable to a Denial\u2011of\u2011Service via crafted input (CVE\u20112026\u201145822).",
+        "fix": "Upgrade `decode-uri-component` to version >=0.5.0 (or remove it if not directly used) and regenerate the lockfile. Update `expo-app/package.json` accordingly.",
+        "status": "open",
+        "first_round": 2,
+        "history": [
+          {
+            "round": 2,
+            "status": "open",
+            "severity": "medium"
+          },
+          {
+            "round": 4,
+            "status": "open",
+            "severity": "medium",
+            "reason": "The vulnerable version (0.2.2) is still present in the lockfile; no upgrade has been applied."
+          },
+          {
+            "round": 5,
+            "status": "open",
+            "severity": "medium",
+            "reason": "No code change; vulnerable version 0.2.2 still present."
+          },
+          {
+            "round": 6,
+            "status": "open",
+            "severity": "medium"
+          },
+          {
+            "round": 7,
+            "status": "open",
+            "severity": "medium",
+            "reason": "No change; vulnerable version 0.2.2 still present in expo\u2011app dependencies."
+          },
+          {
+            "round": 8,
+            "status": "open",
+            "severity": "medium",
+            "reason": "no change"
+          },
+          {
+            "round": 9,
+            "status": "open",
+            "severity": "medium",
+            "reason": "unchanged"
+          },
+          {
+            "round": 10,
+            "status": "open",
+            "severity": "medium",
+            "reason": "No change"
+          },
+          {
+            "round": 11,
+            "status": "open",
+            "severity": "medium",
+            "reason": "no change \u2013 vulnerable version 0.2.2 still present in lockfile."
+          }
+        ]
+      },
+      {
+        "id": "dependency-uuid",
+        "severity": "medium",
+        "file": "expo-app/package-lock.json",
+        "where": "code",
+        "open_rounds": 9,
+        "issue": "`uuid` version 7.0.3 has an out\u2011of\u2011bounds write vulnerability (CVE\u20112026\u201141907).",
+        "fix": "Upgrade `uuid` to a safe version (>=13.0.1) in `expo-app/package.json` and regenerate the lockfile.",
+        "status": "open",
+        "first_round": 2,
+        "history": [
+          {
+            "round": 2,
+            "status": "open",
+            "severity": "medium"
+          },
+          {
+            "round": 4,
+            "status": "open",
+            "severity": "medium",
+            "reason": "The vulnerable uuid version (7.0.3) remains in the lockfile; no upgrade has been applied."
+          },
+          {
+            "round": 5,
+            "status": "open",
+            "severity": "medium",
+            "reason": "No code change; vulnerable version 7.0.3 still present."
+          },
+          {
+            "round": 6,
+            "status": "open",
+            "severity": "medium"
+          },
+          {
+            "round": 7,
+            "status": "open",
+            "severity": "medium",
+            "reason": "No change; vulnerable version 7.0.3 still present in expo\u2011app dependencies."
+          },
+          {
+            "round": 8,
+            "status": "open",
+            "severity": "medium",
+            "reason": "no change"
+          },
+          {
+            "round": 9,
+            "status": "open",
+            "severity": "medium",
+            "reason": "unchanged"
+          },
+          {
+            "round": 10,
+            "status": "open",
+            "severity": "medium",
+            "reason": "No change"
+          },
+          {
+            "round": 11,
+            "status": "open",
+            "severity": "medium",
+            "reason": "no change \u2013 vulnerable version 7.0.3 still present."
+          }
+        ]
+      },
+      {
+        "id": "dependency-sprintf-js",
+        "severity": "medium",
+        "file": "expo-app/package-lock.json",
+        "where": "deployment",
+        "open_rounds": 9,
+        "issue": "`sprintf-js` version 1.0.3 is vulnerable to Denial\u2011of\u2011Service via unbounded precision specifiers (CVE\u20112026\u201197058) and has no current fix.",
+        "fix": "No fixed release exists yet: monitor the advisory and upgrade as soon as one ships; confirm whether the package is only a build-time dependency. Replace usage of `sprintf-js` with native template literals or an alternative safe formatting library, then remove `sprintf-js` from dependencies and update the lockfile.",
+        "status": "open",
+        "first_round": 2,
+        "history": [
+          {
+            "round": 2,
+            "status": "open",
+            "severity": "medium"
+          },
+          {
+            "round": 4,
+            "status": "open",
+            "severity": "medium",
+            "reason": "The sprintf\u2011js vulnerability has no current fix; the issue remains as a deployment\u2011level finding."
+          },
+          {
+            "round": 5,
+            "status": "open",
+            "severity": "medium",
+            "reason": "No code change; vulnerable version 1.0.3 still present."
+          },
+          {
+            "round": 6,
+            "status": "open",
+            "severity": "medium"
+          },
+          {
+            "round": 7,
+            "status": "open",
+            "severity": "medium",
+            "reason": "No change; vulnerable sprintf\u2011js 1.0.3 still present."
+          },
+          {
+            "round": 8,
+            "status": "open",
+            "severity": "medium",
+            "reason": "no change"
+          },
+          {
+            "round": 9,
+            "status": "open",
+            "severity": "medium",
+            "reason": "unchanged"
+          },
+          {
+            "round": 10,
+            "status": "open",
+            "severity": "medium",
+            "reason": "No change"
+          },
+          {
+            "round": 11,
+            "status": "open",
+            "severity": "medium",
+            "reason": "no change \u2013 sprintf\u2011js 1.0.3 remains vulnerable."
+          }
+        ]
+      },
+      {
+        "id": "signup-email-enumeration",
+        "severity": "low",
+        "file": "backend/app/main.py",
+        "where": "code",
+        "open_rounds": 8,
+        "issue": "The /auth/signup endpoint returns a distinct \"Email already registered\" error, allowing attackers to confirm whether an email address is registered.",
+        "fix": "Return a generic error message (e.g., \"Unable to create account\") for both duplicate\u2011email and other validation failures, avoiding disclosure of account existence.",
+        "status": "open",
+        "first_round": 4,
+        "history": [
+          {
+            "round": 4,
+            "status": "open",
+            "severity": "low"
+          },
+          {
+            "round": 5,
+            "status": "open",
+            "severity": "low",
+            "reason": "No code change; distinct error reveals registered email."
+          },
+          {
+            "round": 6,
+            "status": "open",
+            "severity": "low"
+          },
+          {
+            "round": 7,
+            "status": "open",
+            "severity": "low",
+            "reason": "No change; the endpoint still returns a distinct \"Email already registered\" error."
+          },
+          {
+            "round": 8,
+            "status": "open",
+            "severity": "low",
+            "reason": "no change"
+          },
+          {
+            "round": 9,
+            "status": "open",
+            "severity": "low",
+            "reason": "unchanged"
+          },
+          {
+            "round": 10,
+            "status": "open",
+            "severity": "low",
+            "reason": "No change"
+          },
+          {
+            "round": 11,
+            "status": "open",
+            "severity": "low",
+            "reason": "no change \u2013 endpoint still returns a distinct \"Email already registered\" error."
+          }
+        ]
+      },
+      {
+        "id": "unbounded-notes-field",
+        "severity": "medium",
+        "file": "backend/app/schemas.py",
+        "where": "code",
+        "open_rounds": 8,
+        "issue": "The optional `notes` fields in ReceiptCreate, ReceiptRead, MileageCreate, and MileageRead have no length constraints, permitting arbitrarily large payloads that could exhaust memory or storage.",
+        "fix": "Add a Pydantic `Field(max_length=500)` (or an appropriate limit) to each `notes` attribute to bound the size of user\u2011provided text.",
+        "status": "open",
+        "first_round": 4,
+        "history": [
+          {
+            "round": 4,
+            "status": "open",
+            "severity": "medium"
+          },
+          {
+            "round": 5,
+            "status": "open",
+            "severity": "medium",
+            "reason": "No code change; notes field has no length restriction."
+          },
+          {
+            "round": 6,
+            "status": "open",
+            "severity": "medium"
+          },
+          {
+            "round": 7,
+            "status": "open",
+            "severity": "medium",
+            "reason": "No change; notes fields have no length limits."
+          },
+          {
+            "round": 8,
+            "status": "open",
+            "severity": "medium",
+            "reason": "no change"
+          },
+          {
+            "round": 9,
+            "status": "open",
+            "severity": "medium",
+            "reason": "unchanged"
+          },
+          {
+            "round": 10,
+            "status": "open",
+            "severity": "medium",
+            "reason": "No change"
+          },
+          {
+            "round": 11,
+            "status": "open",
+            "severity": "medium",
+            "reason": "no change \u2013 no length constraints on notes fields."
+          }
+        ]
+      },
+      {
+        "id": "unpaginated-list-endpoints",
+        "severity": "medium",
+        "file": "backend/app/main.py",
+        "where": "code",
+        "open_rounds": 8,
+        "issue": "The `/receipts` and `/mileage` endpoints return the full list of records for a user without pagination, which can cause high memory usage and slow responses for large datasets.",
+        "fix": "Introduce pagination parameters (e.g., `skip` and `limit` query params) and return a bounded subset of records, optionally including total count metadata.",
+        "status": "open",
+        "first_round": 4,
+        "history": [
+          {
+            "round": 4,
+            "status": "open",
+            "severity": "medium"
+          },
+          {
+            "round": 5,
+            "status": "open",
+            "severity": "medium",
+            "reason": "No code change; list endpoints return full result sets."
+          },
+          {
+            "round": 6,
+            "status": "open",
+            "severity": "medium"
+          },
+          {
+            "round": 7,
+            "status": "open",
+            "severity": "medium",
+            "reason": "No change; /receipts and /mileage return full lists without pagination."
+          },
+          {
+            "round": 8,
+            "status": "open",
+            "severity": "medium",
+            "reason": "no change"
+          },
+          {
+            "round": 9,
+            "status": "open",
+            "severity": "medium",
+            "reason": "unchanged"
+          },
+          {
+            "round": 10,
+            "status": "open",
+            "severity": "medium",
+            "reason": "No change"
+          },
+          {
+            "round": 11,
+            "status": "open",
+            "severity": "medium",
+            "reason": "no change \u2013 receipts and mileage endpoints return full lists without pagination."
+          }
+        ]
+      },
+      {
+        "id": "csv-export-memory",
+        "severity": "medium",
+        "file": "backend/app/main.py",
+        "where": "code",
+        "open_rounds": 8,
+        "issue": "The CSV export endpoint builds the entire CSV string in memory before streaming it, leading to potential memory exhaustion for users with many receipts/mileage entries.",
+        "fix": "Yield each CSV row directly from the generator (use `io.StringIO` per row or `csv.writer` on a stream) so that the response is streamed row\u2011by\u2011row without loading the whole file into memory.",
+        "status": "open",
+        "first_round": 4,
+        "history": [
+          {
+            "round": 4,
+            "status": "open",
+            "severity": "medium"
+          },
+          {
+            "round": 5,
+            "status": "open",
+            "severity": "medium",
+            "reason": "No code change; CSV generated in\u2011memory before streaming."
+          },
+          {
+            "round": 6,
+            "status": "open",
+            "severity": "medium"
+          },
+          {
+            "round": 7,
+            "status": "open",
+            "severity": "medium",
+            "reason": "No change; CSV is built in\u2011memory before streaming."
+          },
+          {
+            "round": 8,
+            "status": "open",
+            "severity": "medium",
+            "reason": "no change"
+          },
+          {
+            "round": 9,
+            "status": "open",
+            "severity": "medium",
+            "reason": "unchanged"
+          },
+          {
+            "round": 10,
+            "status": "open",
+            "severity": "medium",
+            "reason": "No change"
+          },
+          {
+            "round": 11,
+            "status": "open",
+            "severity": "medium",
+            "reason": "no change \u2013 CSV export builds the whole file in memory before streaming."
+          }
+        ]
+      },
+      {
+        "id": "pdf-export-memory",
+        "severity": "medium",
+        "file": "backend/app/main.py",
+        "where": "code",
+        "open_rounds": 8,
+        "issue": "The PDF export endpoint creates the complete PDF in an in\u2011memory `BytesIO` buffer before sending it, which can exhaust memory for large numbers of records.",
+        "fix": "Stream the PDF generation using ReportLab's `canvas` directly to the response (e.g., by writing to the response's raw stream) or impose reasonable limits on the number of records included.",
+        "status": "open",
+        "first_round": 4,
+        "history": [
+          {
+            "round": 4,
+            "status": "open",
+            "severity": "medium"
+          },
+          {
+            "round": 5,
+            "status": "open",
+            "severity": "medium",
+            "reason": "No code change; PDF generated in\u2011memory before streaming."
+          },
+          {
+            "round": 6,
+            "status": "open",
+            "severity": "medium"
+          },
+          {
+            "round": 7,
+            "status": "open",
+            "severity": "medium",
+            "reason": "No change; PDF is fully rendered into a BytesIO buffer before sending."
+          },
+          {
+            "round": 8,
+            "status": "open",
+            "severity": "medium",
+            "reason": "no change"
+          },
+          {
+            "round": 9,
+            "status": "open",
+            "severity": "medium",
+            "reason": "unchanged"
+          },
+          {
+            "round": 10,
+            "status": "open",
+            "severity": "medium",
+            "reason": "No change"
+          },
+          {
+            "round": 11,
+            "status": "open",
+            "severity": "medium",
+            "reason": "no change \u2013 PDF export creates an in\u2011memory buffer for the entire document."
+          }
+        ]
+      },
+      {
+        "id": "dependency-decode-uri-component-2",
+        "severity": "medium",
+        "file": "expo-app/package-lock.json",
+        "where": "code",
+        "open_rounds": 7,
+        "issue": "Version 0.2.2 of `decode-uri-component` is vulnerable to DoS via crafted input (CVE\u20112026\u201145822).",
+        "fix": "Update the package to >=0.5.0 (e.g., `npm install decode-uri-component@^0.5.0`) and regenerate the lockfile.",
+        "status": "open",
+        "first_round": 5,
+        "history": [
+          {
+            "round": 5,
+            "status": "open",
+            "severity": "medium"
+          },
+          {
+            "round": 6,
+            "status": "open",
+            "severity": "medium"
+          },
+          {
+            "round": 7,
+            "status": "open",
+            "severity": "medium",
+            "reason": "No change; duplicate entry for the same vulnerable package."
+          },
+          {
+            "round": 8,
+            "status": "open",
+            "severity": "medium",
+            "reason": "no change"
+          },
+          {
+            "round": 9,
+            "status": "open",
+            "severity": "medium",
+            "reason": "unchanged"
+          },
+          {
+            "round": 10,
+            "status": "open",
+            "severity": "medium",
+            "reason": "No change"
+          },
+          {
+            "round": 11,
+            "status": "open",
+            "severity": "medium",
+            "reason": "no change \u2013 duplicate of the same vulnerable dependency."
+          }
+        ]
+      },
+      {
+        "id": "dependency-uuid-2",
+        "severity": "medium",
+        "file": "expo-app/package-lock.json",
+        "where": "code",
+        "open_rounds": 7,
+        "issue": "`uuid` 7.0.3 has an out\u2011of\u2011bounds write vulnerability (CVE\u20112026\u201141907).",
+        "fix": "Upgrade to a patched version (>=11.1.1, 12.0.1 or later) and update the lockfile.",
+        "status": "open",
+        "first_round": 5,
+        "history": [
+          {
+            "round": 5,
+            "status": "open",
+            "severity": "medium"
+          },
+          {
+            "round": 6,
+            "status": "open",
+            "severity": "medium"
+          },
+          {
+            "round": 7,
+            "status": "open",
+            "severity": "medium",
+            "reason": "No change; duplicate entry for the same vulnerable package."
+          },
+          {
+            "round": 8,
+            "status": "open",
+            "severity": "medium",
+            "reason": "no change"
+          },
+          {
+            "round": 9,
+            "status": "open",
+            "severity": "medium",
+            "reason": "unchanged"
+          },
+          {
+            "round": 10,
+            "status": "open",
+            "severity": "medium",
+            "reason": "No change"
+          },
+          {
+            "round": 11,
+            "status": "open",
+            "severity": "medium",
+            "reason": "no change \u2013 duplicate of the same vulnerable dependency."
+          }
+        ]
+      },
+      {
+        "id": "dependency-sprintf-js-2",
+        "severity": "medium",
+        "file": "expo-app/package-lock.json",
+        "where": "deployment",
+        "open_rounds": 7,
+        "issue": "`sprintf-js` 1.0.3 can cause DoS via unbounded precision specifiers (CVE\u20112026\u201197058) and has no current fix.",
+        "fix": "No fixed release exists yet: monitor the advisory and upgrade as soon as one ships; confirm whether the package is only a build-time dependency. Remove the dependency entirely and replace its usage with native template literals or a safe alternative; if required, upgrade to a version that patches the issue (none exists currently).",
+        "status": "open",
+        "first_round": 5,
+        "history": [
+          {
+            "round": 5,
+            "status": "open",
+            "severity": "medium"
+          },
+          {
+            "round": 6,
+            "status": "open",
+            "severity": "medium"
+          },
+          {
+            "round": 7,
+            "status": "open",
+            "severity": "medium",
+            "reason": "No change; duplicate entry for the same vulnerable package."
+          },
+          {
+            "round": 8,
+            "status": "open",
+            "severity": "medium",
+            "reason": "no change"
+          },
+          {
+            "round": 9,
+            "status": "open",
+            "severity": "medium",
+            "reason": "unchanged"
+          },
+          {
+            "round": 10,
+            "status": "open",
+            "severity": "medium",
+            "reason": "No change"
+          },
+          {
+            "round": 11,
+            "status": "open",
+            "severity": "medium",
+            "reason": "no change \u2013 duplicate of the same vulnerable dependency."
+          }
+        ]
+      },
+      {
+        "id": "signup-email-enumeration-2",
+        "severity": "low",
+        "file": "backend/app/main.py",
+        "where": "code",
+        "open_rounds": 7,
+        "issue": "The `/auth/signup` endpoint returns a distinct \"Email already registered\" error, allowing attackers to confirm registered accounts.",
+        "fix": "Return a generic success message (e.g., \"If the email is not already registered you will receive a confirmation\") without indicating existence, or always return the same HTTP status code.",
+        "status": "open",
+        "first_round": 5,
+        "history": [
+          {
+            "round": 5,
+            "status": "open",
+            "severity": "low"
+          },
+          {
+            "round": 6,
+            "status": "open",
+            "severity": "low"
+          },
+          {
+            "round": 7,
+            "status": "open",
+            "severity": "low",
+            "reason": "No change; duplicate entry for email enumeration."
+          },
+          {
+            "round": 8,
+            "status": "open",
+            "severity": "low",
+            "reason": "no change"
+          },
+          {
+            "round": 9,
+            "status": "open",
+            "severity": "low",
+            "reason": "unchanged"
+          },
+          {
+            "round": 10,
+            "status": "open",
+            "severity": "low",
+            "reason": "No change"
+          },
+          {
+            "round": 11,
+            "status": "open",
+            "severity": "low",
+            "reason": "no change \u2013 duplicate enumeration issue."
+          }
+        ]
+      },
+      {
+        "id": "unbounded-notes-field-2",
+        "severity": "medium",
+        "file": "backend/app/schemas.py",
+        "where": "code",
+        "open_rounds": 7,
+        "issue": "`notes` fields for receipts and mileage entries have no length limits, permitting arbitrarily large payloads that could exhaust memory or storage.",
+        "fix": "Add a maximum length constraint (e.g., `Field(None, max_length=2000)`) in the Pydantic schemas and enforce the same limit in the database (use `VARCHAR(2000)` or a check constraint). Validate the size in the endpoint before persisting.",
+        "status": "open",
+        "first_round": 5,
+        "history": [
+          {
+            "round": 5,
+            "status": "open",
+            "severity": "medium"
+          },
+          {
+            "round": 6,
+            "status": "open",
+            "severity": "medium"
+          },
+          {
+            "round": 7,
+            "status": "open",
+            "severity": "medium",
+            "reason": "No change; duplicate entry for notes length."
+          },
+          {
+            "round": 8,
+            "status": "open",
+            "severity": "medium",
+            "reason": "no change"
+          },
+          {
+            "round": 9,
+            "status": "open",
+            "severity": "medium",
+            "reason": "unchanged"
+          },
+          {
+            "round": 10,
+            "status": "open",
+            "severity": "medium",
+            "reason": "No change"
+          },
+          {
+            "round": 11,
+            "status": "open",
+            "severity": "medium",
+            "reason": "no change \u2013 duplicate issue."
+          }
+        ]
+      },
+      {
+        "id": "unbounded-category-field",
+        "severity": "low",
+        "file": "backend/app/schemas.py",
+        "where": "code",
+        "open_rounds": 7,
+        "issue": "`category` field for receipts is unlimited in length, which could be abused to consume resources.",
+        "fix": "Add a reasonable `max_length` constraint (e.g., `Field(..., max_length=100)`) to the `ReceiptBase` schema and enforce it at the database level.",
+        "status": "open",
+        "first_round": 5,
+        "history": [
+          {
+            "round": 5,
+            "status": "open",
+            "severity": "low"
+          },
+          {
+            "round": 6,
+            "status": "open",
+            "severity": "low"
+          },
+          {
+            "round": 7,
+            "status": "open",
+            "severity": "low",
+            "reason": "No change; category field is unlimited in length."
+          },
+          {
+            "round": 8,
+            "status": "open",
+            "severity": "low",
+            "reason": "no change"
+          },
+          {
+            "round": 9,
+            "status": "open",
+            "severity": "low",
+            "reason": "unchanged"
+          },
+          {
+            "round": 10,
+            "status": "open",
+            "severity": "low",
+            "reason": "No change"
+          },
+          {
+            "round": 11,
+            "status": "open",
+            "severity": "low",
+            "reason": "no change \u2013 category field has no length limit."
+          }
+        ]
+      },
+      {
+        "id": "unpaginated-list-endpoints-2",
+        "severity": "medium",
+        "file": "backend/app/main.py",
+        "where": "code",
+        "open_rounds": 7,
+        "issue": "`/receipts` and `/mileage` return the complete list of a user's records without pagination, risking high memory usage and slow responses for large datasets.",
+        "fix": "Implement pagination (limit/offset or cursor) on both endpoints and return paginated results with total counts.",
+        "status": "open",
+        "first_round": 5,
+        "history": [
+          {
+            "round": 5,
+            "status": "open",
+            "severity": "medium"
+          },
+          {
+            "round": 6,
+            "status": "open",
+            "severity": "medium"
+          },
+          {
+            "round": 7,
+            "status": "open",
+            "severity": "medium",
+            "reason": "No change; duplicate entry for unpaginated list endpoints."
+          },
+          {
+            "round": 8,
+            "status": "open",
+            "severity": "medium",
+            "reason": "no change"
+          },
+          {
+            "round": 9,
+            "status": "open",
+            "severity": "medium",
+            "reason": "unchanged"
+          },
+          {
+            "round": 10,
+            "status": "open",
+            "severity": "medium",
+            "reason": "No change"
+          },
+          {
+            "round": 11,
+            "status": "open",
+            "severity": "medium",
+            "reason": "no change \u2013 duplicate issue."
+          }
+        ]
+      },
+      {
+        "id": "csv-export-memory-2",
+        "severity": "medium",
+        "file": "backend/app/main.py",
+        "where": "code",
+        "open_rounds": 7,
+        "issue": "CSV export builds the whole CSV string in a `StringIO` buffer before streaming, which can exhaust memory for users with many records.",
+        "fix": "Stream rows directly by yielding each line as it's generated (e.g., use a generator that writes to the response line\u2011by\u2011line) instead of accumulating the entire output in memory.",
+        "status": "open",
+        "first_round": 5,
+        "history": [
+          {
+            "round": 5,
+            "status": "open",
+            "severity": "medium"
+          },
+          {
+            "round": 6,
+            "status": "open",
+            "severity": "medium"
+          },
+          {
+            "round": 7,
+            "status": "open",
+            "severity": "medium",
+            "reason": "No change; duplicate entry for CSV memory usage."
+          },
+          {
+            "round": 8,
+            "status": "open",
+            "severity": "medium",
+            "reason": "no change"
+          },
+          {
+            "round": 9,
+            "status": "open",
+            "severity": "medium",
+            "reason": "unchanged"
+          },
+          {
+            "round": 10,
+            "status": "open",
+            "severity": "medium",
+            "reason": "No change"
+          },
+          {
+            "round": 11,
+            "status": "open",
+            "severity": "medium",
+            "reason": "no change \u2013 duplicate issue."
+          }
+        ]
+      },
+      {
+        "id": "pdf-export-memory-2",
+        "severity": "medium",
+        "file": "backend/app/main.py",
+        "where": "code",
+        "open_rounds": 7,
+        "issue": "PDF export creates the complete PDF in an in\u2011memory `BytesIO` buffer before returning, leading to possible memory exhaustion with many records.",
+        "fix": "Generate the PDF in a streamed fashion (e.g., use `ReportLab`'s `canvas.showPage()` with incremental writes to a temporary file or a streaming response) or limit the number of records that can be exported at once.",
+        "status": "open",
+        "first_round": 5,
+        "history": [
+          {
+            "round": 5,
+            "status": "open",
+            "severity": "medium"
+          },
+          {
+            "round": 6,
+            "status": "open",
+            "severity": "medium"
+          },
+          {
+            "round": 7,
+            "status": "open",
+            "severity": "medium",
+            "reason": "No change; duplicate entry for PDF memory usage."
+          },
+          {
+            "round": 8,
+            "status": "open",
+            "severity": "medium",
+            "reason": "no change"
+          },
+          {
+            "round": 9,
+            "status": "open",
+            "severity": "medium",
+            "reason": "unchanged"
+          },
+          {
+            "round": 10,
+            "status": "open",
+            "severity": "medium",
+            "reason": "No change"
+          },
+          {
+            "round": 11,
+            "status": "open",
+            "severity": "medium",
+            "reason": "no change \u2013 duplicate issue."
+          }
+        ]
+      },
+      {
+        "id": "health-endpoint-public",
+        "severity": "low",
+        "file": "backend/app/main.py",
+        "where": "code",
+        "open_rounds": 7,
+        "issue": "The `/health` endpoint is publicly accessible, revealing service status to unauthenticated callers.",
+        "fix": "Restrict the health check to internal networks (e.g., via IP allow\u2011list) or require a lightweight token; alternatively, keep it public but ensure no sensitive information is exposed.",
+        "status": "open",
+        "first_round": 5,
+        "history": [
+          {
+            "round": 5,
+            "status": "open",
+            "severity": "low"
+          },
+          {
+            "round": 6,
+            "status": "open",
+            "severity": "low"
+          },
+          {
+            "round": 7,
+            "status": "open",
+            "severity": "low",
+            "reason": "No change; /health is publicly accessible."
+          },
+          {
+            "round": 8,
+            "status": "open",
+            "severity": "low",
+            "reason": "no change"
+          },
+          {
+            "round": 9,
+            "status": "open",
+            "severity": "low",
+            "reason": "unchanged"
+          },
+          {
+            "round": 10,
+            "status": "open",
+            "severity": "low",
+            "reason": "No change"
+          },
+          {
+            "round": 11,
+            "status": "open",
+            "severity": "low",
+            "reason": "no change \u2013 /health is publicly accessible."
+          }
+        ]
+      },
+      {
+        "id": "receipt-filename-collision",
+        "severity": "low",
+        "file": "backend/app/main.py",
+        "where": "code",
+        "open_rounds": 7,
+        "issue": "Receipt filenames are generated solely from a timestamp; concurrent uploads within the same second could overwrite each other's files.",
+        "fix": "Include additional entropy such as the user ID or a UUID in the filename (e.g., `receipt_{user.id}_{uuid4().hex}{ext}`) to guarantee uniqueness.",
+        "status": "open",
+        "first_round": 5,
+        "history": [
+          {
+            "round": 5,
+            "status": "open",
+            "severity": "low"
+          },
+          {
+            "round": 6,
+            "status": "open",
+            "severity": "low"
+          },
+          {
+            "round": 7,
+            "status": "open",
+            "severity": "low",
+            "reason": "No change; filenames are timestamp\u2011based only and may collide under high concurrency."
+          },
+          {
+            "round": 8,
+            "status": "open",
+            "severity": "low",
+            "reason": "no change"
+          },
+          {
+            "round": 9,
+            "status": "open",
+            "severity": "low",
+            "reason": "unchanged"
+          },
+          {
+            "round": 10,
+            "status": "open",
+            "severity": "low",
+            "reason": "No change"
+          },
+          {
+            "round": 11,
+            "status": "open",
+            "severity": "low",
+            "reason": "no change \u2013 filenames generated solely from timestamp could collide in rare cases."
+          }
+        ]
+      },
+      {
+        "id": "jwt-secret-logging",
+        "severity": "medium",
+        "file": "backend/app/auth.py",
+        "where": "code",
+        "open_rounds": 1,
+        "issue": "The JWT secret is printed to stdout when it is missing or deemed too short, which could expose the secret via application logs and enable token forgery.",
+        "fix": "Remove or replace the `print` statements that output the generated secret. Log only generic informational messages without revealing the secret value, and ensure the secret is always sourced from a secure environment variable.",
+        "status": "fixed",
+        "first_round": 6,
+        "history": [
+          {
+            "round": 6,
+            "status": "open",
+            "severity": "medium"
+          },
+          {
+            "round": 7,
+            "status": "fixed",
+            "severity": "medium",
+            "reason": "Issue resolved; the secret is no longer printed to stdout, only informational messages are logged."
+          },
+          {
+            "round": 8,
+            "status": "fixed",
+            "severity": "medium",
+            "reason": "fixed by removing secret value from logs"
+          },
+          {
+            "round": 9,
+            "status": "fixed",
+            "severity": "medium",
+            "reason": "unchanged"
+          },
+          {
+            "round": 10,
+            "status": "fixed",
+            "severity": "medium",
+            "reason": "Remains fixed"
+          },
+          {
+            "round": 11,
+            "status": "fixed",
+            "severity": "medium",
+            "reason": "fixed \u2013 secret is no longer printed to logs."
+          }
+        ]
+      },
+      {
+        "id": "missing-request-size-limit",
+        "severity": "medium",
+        "file": "backend/app/main.py",
+        "where": "code",
+        "open_rounds": 5,
+        "issue": "The multipart/form\u2011data and JSON endpoints (e.g., /receipts, /mileage, login, signup) do not enforce a maximum request body size. An attacker could send arbitrarily large payloads (e.g., huge JSON strings in notes or category) causing excessive memory consumption and potential denial\u2011of\u2011service.",
+        "fix": "Add a request size limit middleware (e.g., Starlette's `LimitUploadSize`) or configure FastAPI's `max_body_size` to a reasonable value (e.g., 5\u202fMiB for JSON/form fields) and return a 413 response when exceeded.",
+        "status": "open",
+        "first_round": 7,
+        "history": [
+          {
+            "round": 7,
+            "status": "open",
+            "severity": "medium"
+          },
+          {
+            "round": 8,
+            "status": "open",
+            "severity": "medium",
+            "reason": "no change"
+          },
+          {
+            "round": 9,
+            "status": "open",
+            "severity": "medium",
+            "reason": "unchanged"
+          },
+          {
+            "round": 10,
+            "status": "open",
+            "severity": "medium",
+            "reason": "No change"
+          },
+          {
+            "round": 11,
+            "status": "open",
+            "severity": "medium",
+            "reason": "no change \u2013 no global request size enforcement."
+          }
+        ]
+      },
+      {
+        "id": "unlimited-user-storage",
+        "severity": "medium",
+        "file": "backend/app/models.py",
+        "where": "code",
+        "open_rounds": 5,
+        "issue": "There is no quota on the number or total size of receipt images or mileage records a user may create. A malicious or compromised account could exhaust server disk space, leading to service degradation or failure.",
+        "fix": "Introduce per\u2011user storage quotas (e.g., max number of receipts, max total image size). Enforce the limits in the receipt\u2011creation logic and reject uploads that would exceed the quota with a clear error message.",
+        "status": "open",
+        "first_round": 7,
+        "history": [
+          {
+            "round": 7,
+            "status": "open",
+            "severity": "medium"
+          },
+          {
+            "round": 8,
+            "status": "open",
+            "severity": "medium",
+            "reason": "no change"
+          },
+          {
+            "round": 9,
+            "status": "open",
+            "severity": "medium",
+            "reason": "unchanged"
+          },
+          {
+            "round": 10,
+            "status": "open",
+            "severity": "medium",
+            "reason": "No change"
+          },
+          {
+            "round": 11,
+            "status": "open",
+            "severity": "medium",
+            "reason": "no change \u2013 no quota on number/size of receipts or mileage records."
+          }
+        ]
+      },
+      {
+        "id": "web-jwt-storage-insecure",
+        "severity": "high",
+        "file": "expo-app/src/auth.ts",
+        "where": "code",
+        "open_rounds": 1,
+        "issue": "When running in a web environment the JWT token is persisted in localStorage. localStorage is accessible to any JavaScript on the page, making the token trivially stealable via XSS, leading to account compromise.",
+        "fix": "Do not store JWTs in localStorage for web. Use httpOnly, Secure, SameSite=Strict cookies for authentication, or employ a short\u2011lived token stored in memory only. If persistence is required, consider using the Web Crypto API with encrypted IndexedDB storage and enforce a strong Content\u2011Security\u2011Policy to mitigate XSS.",
+        "status": "open",
+        "first_round": 11,
+        "history": [
+          {
+            "round": 11,
+            "status": "open",
+            "severity": "high"
+          }
+        ]
+      }
+    ]
+  },
+  "deployment_guide": {
+    "written": false
+  },
+  "ui": {
+    "verdict": "fail",
+    "summary": "Automated audits show perfect accessibility (axe\u00a00, Lighthouse accessibility\u202f100) and the primary happy\u2011path flow works on both mobile and desktop. However, several required UI states from DESIGN.md are not verified or appear missing, some usability best\u2011practices (autocomplete, password show/hide, focus\u2011visible outlines) are not clearly implemented, and a few low\u2011level code hygiene issues remain (hard\u2011coded colours, medium\u2011severity dependency vulnerabilities). These gaps could surface as broken flows or a degraded experience when errors occur, when keyboard navigation is used, or when the app is run on slower devices.",
+    "findings": [
+      {
+        "severity": "high",
+        "file": "expo-app/src/screens/SignUpScreen.tsx",
+        "issue": "Loading overlay with spinner and exact copy \u201cCreating account\u2026\u201d, field disabling, and overlay dimming are not present; the screen only shows a static button.",
+        "fix": "Add a full\u2011screen overlay component (e.g., <LoadingOverlay>) that shows ActivityIndicator and the text \u201cCreating account\u2026\u201d while the sign\u2011up request is pending, and disable the email/password inputs and the Create account button.",
+        "source": "designer"
+      },
+      {
+        "severity": "high",
+        "file": "expo-app/src/screens/SignUpScreen.tsx",
+        "issue": "Field\u2011level validation errors (invalid email, weak password) are not displayed as inline HelperText with the exact messages from the spec.",
+        "fix": "Integrate React\u2011Hook\u2011Form (or similar) to validate inputs on blur/submit and render <HelperText type=\"error\"> with the exact copy defined in DESIGN.md.",
+        "source": "designer"
+      },
+      {
+        "severity": "high",
+        "file": "expo-app/src/screens/SignUpScreen.tsx",
+        "issue": "Submission error toast with red background and message \u201cWe couldn\u2019t create your account. Please check the fields and try again.\u201d is missing.",
+        "fix": "Show a <Snackbar> or <Toast> on API error with the exact error text and red background, ensuring it\u2019s announced for screen readers.",
+        "source": "designer"
+      },
+      {
+        "severity": "high",
+        "file": "expo-app/src/screens/SignInScreen.tsx",
+        "issue": "Missing loading overlay with spinner and text \u201cSigning you in\u2026\u201d. Fields remain interactable during the login request.",
+        "fix": "Wrap the login request in a loading state that displays a full\u2011screen overlay with ActivityIndicator and the exact copy, and disable inputs/buttons while loading.",
+        "source": "designer"
+      },
+      {
+        "severity": "high",
+        "file": "expo-app/src/screens/SignInScreen.tsx",
+        "issue": "Field error handling (invalid email/password) and submission error toast (\u201cIncorrect email or password.\u201d) are not implemented.",
+        "fix": "Add inline <HelperText> for field errors and a top\u2011positioned red <Snackbar> for submission errors with the prescribed copy.",
+        "source": "designer"
+      },
+      {
+        "severity": "high",
+        "file": "expo-app/src/screens/DashboardScreen.tsx",
+        "issue": "Empty\u2011state UI (illustration, title \u201cNo data yet\u201d, body copy, CTA \u201cAdd first receipt\u201d) is not rendered when the user has no data.",
+        "fix": "Detect an empty receipt/mileage list and render the <EmptyState> component with the exact title, body, and primary button label.",
+        "source": "designer"
+      },
+      {
+        "severity": "high",
+        "file": "expo-app/src/screens/DashboardScreen.tsx",
+        "issue": "Missing loading screen with ActivityIndicator and message \u201cLoading summary\u2026\u201d.",
+        "fix": "Show a full\u2011screen <ActivityIndicator> with the designated copy while the dashboard summary API call is in\u2011flight.",
+        "source": "designer"
+      },
+      {
+        "severity": "high",
+        "file": "expo-app/src/screens/DashboardScreen.tsx",
+        "issue": "API error banner (\u201cFailed to load data. Pull down to retry.\u201d) and offline banner (\u201cYou\u2019re offline \u2013 data may be outdated.\u201d) are not present.",
+        "fix": "Render a top banner <Banner> with the exact messages for API errors and offline detection, and enable pull\u2011to\u2011refresh to retry.",
+        "source": "designer"
+      },
+      {
+        "severity": "high",
+        "file": "expo-app/src/screens/ReceiptCaptureScreen.tsx",
+        "issue": "Permission prompt modal, permission\u2011denied notice, default placeholder with copy, and loading overlay \u201cUploading receipt\u2026\u201d are missing.",
+        "fix": "Implement the permission modal (with Allow/Deny buttons and exact copy), a fallback notice with \u201cChoose from library\u201d button, a default placeholder view with the tap prompt text, and a full\u2011screen overlay with spinner and the exact uploading message.",
+        "source": "designer"
+      },
+      {
+        "severity": "high",
+        "file": "expo-app/src/screens/ReceiptCaptureScreen.tsx",
+        "issue": "Success toast (\u201cReceipt saved.\u201d) and error toast (\u201cUpload failed. Check your connection and try again.\u201d) are not displayed after saving.",
+        "fix": "Show a <Snackbar> on successful receipt creation with the success copy, and a red <Snackbar> on upload error with the exact error text.",
+        "source": "designer"
+      },
+      {
+        "severity": "high",
+        "file": "expo-app/src/screens/MileageEntryScreen.tsx",
+        "issue": "Loading overlay with spinner and copy \u201cSaving mileage\u2026\u201d is absent; fields stay active during the save request.",
+        "fix": "Add a loading state that disables all inputs and the Save button, displays a full\u2011screen overlay with ActivityIndicator and the required copy.",
+        "source": "designer"
+      },
+      {
+        "severity": "high",
+        "file": "expo-app/src/screens/ExportScreen.tsx",
+        "issue": "CSV/PDF button loading states (spinner next to button) with messages \u201cGenerating CSV\u2026\u201d / \u201cGenerating PDF\u2026\u201d are missing; buttons are not disabled during generation.",
+        "fix": "When export is triggered, disable both buttons, show a small spinner next to the active button, and display the exact generating message in a textual overlay or beside the spinner.",
+        "source": "designer"
+      },
+      {
+        "severity": "high",
+        "file": "expo-app/src/screens/ExportScreen.tsx",
+        "issue": "Offline banner (\u201cCannot export while offline.\u201d) and error toast (\u201cExport failed. Please try again.\u201d) are not implemented.",
+        "fix": "Detect network status and render a top banner with the offline copy, and on export failure show a red <Snackbar> with the error message.",
+        "source": "designer"
+      },
+      {
+        "severity": "medium",
+        "file": "expo-app/src/components/ui/FormField.tsx",
+        "issue": "Password fields lack a show/hide toggle and an accessibilityLabel (e.g., \u201cShow password\u201d).",
+        "fix": "Add a right\u2011aligned icon button to toggle secureTextEntry, set accessibilityLabel appropriately, and update the eye icon state.",
+        "source": "designer"
+      },
+      {
+        "severity": "medium",
+        "file": "expo-app/src/components/ui/FormField.tsx",
+        "issue": "Autocomplete attributes (autocomplete=\"email\", autocomplete=\"current-password\"/\"new-password\") are not set on TextInput components.",
+        "fix": "Pass the appropriate autocomplete prop to the underlying <TextInput> for email and password fields.",
+        "source": "designer"
+      },
+      {
+        "severity": "medium",
+        "file": "expo-app/src/components/ui/PrimaryButton.tsx",
+        "issue": "Button styling uses hard\u2011coded colour hex values (e.g., \"#0066FF\") instead of the theme token `theme.colors.primary`.",
+        "fix": "Replace all literal colour strings with references to `theme.colors.primary`, `theme.colors.primaryVariant`, and `theme.colors.onPrimary` via the Paper theme.",
+        "source": "designer"
+      },
+      {
+        "severity": "medium",
+        "file": "expo-app/src/components/ui/Screen.tsx",
+        "issue": "Layout dimensions (padding, maxWidth) are hard\u2011coded (e.g., 360\u202fpx) rather than using the spacing tokens (`theme.spacing.lg`, `theme.spacing.xl`).",
+        "fix": "Refactor the style to use `theme.spacing` values for padding and margin, and set maxWidth via `theme.spacing.xxxl` or a design token.",
+        "source": "designer"
+      },
+      {
+        "severity": "low",
+        "file": "expo-app/src/components/ui/PrimaryButton.tsx",
+        "issue": "Focus\u2011visible outline (2\u202fpx solid primary) is not explicitly defined for keyboard navigation.",
+        "fix": "Add a style rule that applies `borderWidth: 2, borderColor: theme.colors.primary` when the button receives focus (e.g., `onFocus` state).",
+        "source": "designer"
+      },
+      {
+        "severity": "low",
+        "file": "expo-app/src/components/ui/BottomTabBar.tsx",
+        "issue": "ARIA roles for the tab bar (`role=\"tablist\"`) and individual tabs (`role=\"tab\"`) are not set, reducing screen\u2011reader discoverability.",
+        "fix": "Add `accessibilityRole=\"tablist\"` to the BottomNavigation container and `accessibilityRole=\"tab\"` plus `accessibilityState={{ selected }}` to each tab item.",
+        "source": "designer"
+      },
+      {
+        "severity": "low",
+        "file": "expo-app/src/theme.ts",
+        "issue": "Design token file defines colour and spacing constants but the PaperProvider is not shown being wrapped around the app, risking default theme usage.",
+        "fix": "Wrap the root component with `<Provider theme={theme}>` from react\u2011native\u2011paper to ensure all components consume the custom token set.",
+        "source": "designer"
+      },
+      {
+        "severity": "low",
+        "file": "expo-app/package.json",
+        "issue": "Dependency `decode-uri-component@0.2.2` has a medium\u2011severity CVE\u20112026\u201145822. `sprintf-js@1.0.3` has CVE\u20112026\u201197058 (no fix). `uuid@7.0.3` has CVE\u20112026\u201141907.",
+        "fix": "Upgrade `decode-uri-component` to >=0.5.0, replace `sprintf-js` with native template literals or a maintained library, and upgrade `uuid` to >=11.1.1.",
+        "source": "designer"
+      },
+      {
+        "severity": "low",
+        "file": "expo-app",
+        "issue": "Lighthouse performance score is 57, indicating sub\u2011optimal load times (large bundle, un\u2011lazy\u2011loaded images).",
+        "fix": "Implement code\u2011splitting, lazy\u2011load heavy screens (e.g., receipt capture), compress images, and enable Hermes for faster JS execution.",
+        "source": "designer"
+      },
+      {
+        "severity": "medium",
+        "viewport": "both",
+        "issue": "No consistent type scale or visual hierarchy beyond the primary button; heading, labels, and input text are similar in weight and size, making the hierarchy feel flat.",
+        "fix": "Use a clear type scale: larger heading, medium labels, smaller placeholder text. Consider bolding the primary button text for emphasis.",
+        "screen": "sign in",
+        "source": "vision"
+      },
+      {
+        "severity": "medium",
+        "viewport": "both",
+        "issue": "Desktop layout is too minimal and unstyled \u2014 elements are centered without a grid, and spacing feels arbitrary. The blue button is too small for desktop and lacks hover states.",
+        "fix": "Apply a consistent grid system with gutters. Use larger button sizes and add hover states. Add subtle shadows or borders to define elements on desktop.",
+        "screen": "sign in",
+        "source": "vision"
+      },
+      {
+        "severity": "low",
+        "viewport": "phone",
+        "issue": "Password field\u2019s eye icon is misaligned \u2014 it\u2019s inset too far right, creating an asymmetrical look.",
+        "fix": "Center the eye icon within the password field\u2019s width, or use a consistent padding on both sides.",
+        "screen": "sign in",
+        "source": "vision"
+      },
+      {
+        "severity": "low",
+        "viewport": "phone",
+        "issue": "The 'Sign up' link is underlined but not styled with a button-like appearance, making it feel secondary and less actionable.",
+        "fix": "Style the link with a subtle background or border to match the primary button\u2019s visual weight.",
+        "screen": "sign in",
+        "source": "vision"
+      },
+      {
+        "severity": "high",
+        "screen": "sign in",
+        "source": "vision",
+        "issue": "visual quality 7/10 on 'sign in' (needs 8+): A clean, functional sign-in screen with clear visual hierarchy and a prominent primary action. Typography is readable and consistent, spacing is generous, and form elements are well-aligned. However, it lacks visual polish and brand identity, and the desktop layout is minimal and unoptimized.",
+        "fix": "Address this screen's findings until it looks polished and professional."
+      },
+      {
+        "severity": "medium",
+        "viewport": "phone",
+        "issue": "The password field's eye icon is misaligned and appears to be cut off or partially obscured.",
+        "fix": "Reposition the eye icon to align perfectly with the right edge of the input field.",
+        "screen": "sign up",
+        "source": "vision"
+      },
+      {
+        "severity": "medium",
+        "viewport": "phone",
+        "issue": "The password field's placeholder text 'Enter your password' is too small and lacks sufficient contrast against the input background.",
+        "fix": "Increase the placeholder text size and ensure it has adequate contrast with the field background.",
+        "screen": "sign up",
+        "source": "vision"
+      },
+      {
+        "severity": "medium",
+        "viewport": "phone",
+        "issue": "The password strength requirements text is too small and appears to be in a sans-serif font without clear visual hierarchy.",
+        "fix": "Increase the font size and weight of the password requirements text, and consider using a different color or style to make it stand out.",
+        "screen": "sign up",
+        "source": "vision"
+      },
+      {
+        "severity": "low",
+        "viewport": "phone",
+        "issue": "The 'Already have an account? Log in' link is centered but lacks visual emphasis, making it less discoverable.",
+        "fix": "Add a subtle underline or hover effect to the link to make it more noticeable.",
+        "screen": "sign up",
+        "source": "vision"
+      },
+      {
+        "severity": "low",
+        "viewport": "desktop",
+        "issue": "The desktop version is identical to the phone version, with no scaling or layout adjustments for the larger screen.",
+        "fix": "Stretch the layout to fill the desktop viewport, add padding, and ensure the form elements are spaced appropriately for a wider screen.",
+        "screen": "sign up",
+        "source": "vision"
+      },
+      {
+        "severity": "high",
+        "screen": "sign up",
+        "source": "vision",
+        "issue": "visual quality 7/10 on 'sign up' (needs 8+): A clean, functional sign-up screen with clear hierarchy and consistent spacing. The primary action is prominent, typography is readable, and form fields are well-designed. However, it lacks visual polish and brand identity, and the desktop version is underdeveloped.",
+        "fix": "Address this screen's findings until it looks polished and professional."
+      },
+      {
+        "severity": "low",
+        "viewport": "phone",
+        "issue": "The empty state text 'Tap the + button to get started' is redundant since the + button is visually prominent and the primary CTA.",
+        "fix": "Remove the redundant instruction to avoid clutter and reinforce the visual hierarchy.",
+        "screen": "empty dashboard",
+        "source": "vision"
+      },
+      {
+        "severity": "low",
+        "viewport": "desktop",
+        "issue": "The empty state content is centered but the surrounding whitespace is not uniformly distributed \u2014 left and right margins are asymmetrically padded.",
+        "fix": "Apply consistent padding to all sides to ensure the content is centered and balanced on desktop.",
+        "screen": "empty dashboard",
+        "source": "vision"
+      },
+      {
+        "severity": "medium",
+        "viewport": "both",
+        "issue": "The 'Allow' button is the primary action, but there's no visual hierarchy to emphasize it over 'Deny' \u2014 both are identical blue buttons with no size or weight difference.",
+        "fix": "Make the 'Allow' button slightly larger, bolder, or use a different color/opacity to clearly indicate primary action.",
+        "screen": "receipt capture",
+        "source": "vision"
+      },
+      {
+        "severity": "medium",
+        "viewport": "desktop",
+        "issue": "The desktop layout appears stretched and unoptimized \u2014 content is centered with large margins, but the overall layout feels empty and lacks purposeful spacing or grid alignment.",
+        "fix": "Apply a consistent grid system to align content, adjust padding/margins for desktop, and consider adding subtle visual cues (like dividers or background shading) to guide the eye.",
+        "screen": "receipt capture",
+        "source": "vision"
+      },
+      {
+        "severity": "low",
+        "viewport": "phone",
+        "issue": "The buttons are touch-friendly in size (approx. 48x48px), but the spacing between the buttons and the title is minimal, reducing visual breathing room.",
+        "fix": "Increase vertical spacing between the buttons and the title, and between the buttons themselves, to improve readability and reduce accidental taps.",
+        "screen": "receipt capture",
+        "source": "vision"
+      },
+      {
+        "severity": "low",
+        "viewport": "both",
+        "issue": "The title 'New receipt' and subtitle 'Camera access needed' are not visually differentiated \u2014 they use the same font weight and size, making the hierarchy unclear.",
+        "fix": "Use a larger, bolder font for the title, and a smaller, lighter font for the subtitle to create clear visual hierarchy.",
+        "screen": "receipt capture",
+        "source": "vision"
+      },
+      {
+        "severity": "high",
+        "screen": "receipt capture",
+        "source": "vision",
+        "issue": "visual quality 7/10 on 'receipt capture' (needs 8+): The screen is clean and functional, with a clear primary action (Allow) and consistent branding. However, it lacks visual hierarchy and spacing refinement, and the desktop version appears stretched and unoptimized. The design is acceptable but not polished for a premium product.",
+        "fix": "Address this screen's findings until it looks polished and professional."
+      },
+      {
+        "severity": "low",
+        "viewport": "desktop",
+        "issue": "Cards are vertically centered but not aligned to a consistent grid; there's inconsistent horizontal padding on the left/right of the card stack.",
+        "fix": "Apply a consistent 16px horizontal padding to the card container and ensure all cards are aligned to the same left margin.",
+        "screen": "dashboard with receipt",
+        "source": "vision"
+      },
+      {
+        "severity": "low",
+        "viewport": "desktop",
+        "issue": "The orange FAB is slightly misaligned with the bottom edge of the card stack; it appears to be floating above a faint horizontal line that doesn't align with the card bottom margins.",
+        "fix": "Adjust the FAB's vertical positioning to align precisely with the bottom edge of the cards or the container's bottom edge.",
+        "screen": "dashboard with receipt",
+        "source": "vision"
+      },
+      {
+        "severity": "low",
+        "viewport": "phone",
+        "issue": "The 'Receipt saved.' toast is positioned too high and overlaps the top of the first card, potentially obscuring the 'Income' label.",
+        "fix": "Lower the toast position to ensure it sits above the cards but doesn't obscure any content.",
+        "screen": "dashboard with receipt",
+        "source": "vision"
+      },
+      {
+        "severity": "medium",
+        "viewport": "phone",
+        "issue": "Form fields lack visual hierarchy or subtle styling (e.g., no placeholder color, no border radius variation, no focus state). The 'Save mileage' button is prominent but the form fields look like unstyled browser inputs.",
+        "fix": "Apply subtle visual hierarchy: use a consistent border radius, add placeholder text color, and add a focus state to inputs. Consider adding a subtle shadow or background tint to the form container for depth.",
+        "screen": "mileage entry",
+        "source": "vision"
+      },
+      {
+        "severity": "medium",
+        "viewport": "phone",
+        "issue": "The empty state 'Add mileage' button is partially cut off at the bottom, suggesting a layout issue or missing padding.",
+        "fix": "Ensure the empty state button is fully visible by adjusting padding or container height. Add a small margin above the button to prevent it from being clipped.",
+        "screen": "mileage entry",
+        "source": "vision"
+      },
+      {
+        "severity": "low",
+        "viewport": "desktop",
+        "issue": "Desktop layout is underutilized: the form is centered but not responsive, and the empty state is not adapted for desktop. The form fields are not scaled or spaced to take advantage of desktop real estate.",
+        "fix": "Expand the form to use the full width on desktop. Add padding to the sides and adjust field spacing to feel more spacious. Consider adding a subtle grid or divider to improve structure.",
+        "screen": "mileage entry",
+        "source": "vision"
+      },
+      {
+        "severity": "low",
+        "viewport": "both",
+        "issue": "Typography lacks a clear scale: all text is similar weight and size, with no visual hierarchy between headings, labels, and placeholder text. The empty state text is the same size as form labels.",
+        "fix": "Apply a type scale: use a larger font for the heading, a medium size for labels, and a smaller size for placeholder text. Consider bolding the heading for emphasis.",
+        "screen": "mileage entry",
+        "source": "vision"
+      },
+      {
+        "severity": "high",
+        "screen": "mileage entry",
+        "source": "vision",
+        "issue": "visual quality 7/10 on 'mileage entry' (needs 8+): The screen is clean, functional, and meets core usability needs for a mileage entry form. It has a clear primary action, good spacing, and a helpful empty state. However, it lacks visual polish and brand consistency, with generic inputs and minimal styling that feels like a prototype. The typography and layout are adequate but not exceptional, and the desktop version is underutilized.",
+        "fix": "Address this screen's findings until it looks polished and professional."
+      },
+      {
+        "severity": "low",
+        "viewport": "desktop",
+        "issue": "Minor vertical spacing inconsistency between 'Save mileage' button and 'Mileage entry saved.' toast message.",
+        "fix": "Adjust vertical padding around the toast message to match the spacing above and below the button.",
+        "screen": "mileage list",
+        "source": "vision"
+      },
+      {
+        "severity": "low",
+        "viewport": "both",
+        "issue": "Form fields lack helpful hints or placeholder text to guide users on expected input format (e.g., 'MM/DD/YYYY' for date, '123.45' for miles).",
+        "fix": "Add placeholder text or inline hints to each field to improve usability.",
+        "screen": "mileage list",
+        "source": "vision"
+      },
+      {
+        "severity": "low",
+        "viewport": "both",
+        "issue": "Buttons are centered vertically but not aligned to a consistent grid; slight asymmetry in spacing between buttons and header.",
+        "fix": "Adjust vertical spacing to align buttons to a consistent grid, ensuring equal padding above and below each button and consistent margin from header.",
+        "screen": "export screen",
+        "source": "vision"
+      },
+      {
+        "severity": "low",
+        "viewport": "phone",
+        "issue": "Buttons are touch-friendly but could benefit from slightly larger tap targets (minimum 44pt) for better usability on smaller screens.",
+        "fix": "Increase button height and width slightly to ensure they meet iOS/Android touch target guidelines.",
+        "screen": "export screen",
+        "source": "vision"
+      },
+      {
+        "severity": "low",
+        "viewport": "desktop",
+        "issue": "Desktop layout has generous whitespace, but the buttons are centered and not anchored to the left or right, which can feel slightly unbalanced.",
+        "fix": "Anchor the button group to the left or right edge of the content area for a more structured feel, or add subtle vertical alignment guides.",
+        "screen": "export screen",
+        "source": "vision"
+      }
+    ],
+    "lighthouse": [
+      {
+        "accessibility": 100,
+        "bestPractices": 100,
+        "performance": 57
+      }
+    ],
+    "screenshots": [
+      "apps/freelance-finance-tracker/.agent-run/20261007-072131-d056/screenshots/expo-app/screenshot-phone.png",
+      "apps/freelance-finance-tracker/.agent-run/20261007-072131-d056/screenshots/expo-app/screenshot-phone-full.png",
+      "apps/freelance-finance-tracker/.agent-run/20261007-072131-d056/screenshots/expo-app/screenshot-desktop.png",
+      "apps/freelance-finance-tracker/.agent-run/20261007-072131-d056/screenshots/expo-app/screenshot-desktop-full.png",
+      "apps/freelance-finance-tracker/.agent-run/20261007-072131-d056/screenshots/expo-app/flow-phone-01-sign-in.png",
+      "apps/freelance-finance-tracker/.agent-run/20261007-072131-d056/screenshots/expo-app/flow-phone-02-sign-up.png",
+      "apps/freelance-finance-tracker/.agent-run/20261007-072131-d056/screenshots/expo-app/flow-phone-03-empty-dashboard.png",
+      "apps/freelance-finance-tracker/.agent-run/20261007-072131-d056/screenshots/expo-app/flow-phone-04-receipt-capture.png",
+      "apps/freelance-finance-tracker/.agent-run/20261007-072131-d056/screenshots/expo-app/flow-phone-05-dashboard-with-receipt.png",
+      "apps/freelance-finance-tracker/.agent-run/20261007-072131-d056/screenshots/expo-app/flow-phone-06-mileage-entry.png",
+      "apps/freelance-finance-tracker/.agent-run/20261007-072131-d056/screenshots/expo-app/flow-phone-07-mileage-list.png",
+      "apps/freelance-finance-tracker/.agent-run/20261007-072131-d056/screenshots/expo-app/flow-phone-08-export-screen.png",
+      "apps/freelance-finance-tracker/.agent-run/20261007-072131-d056/screenshots/expo-app/flow-phone-09-export-completed.png",
+      "apps/freelance-finance-tracker/.agent-run/20261007-072131-d056/screenshots/expo-app/flow-desktop-01-sign-in.png",
+      "apps/freelance-finance-tracker/.agent-run/20261007-072131-d056/screenshots/expo-app/flow-desktop-02-sign-up.png",
+      "apps/freelance-finance-tracker/.agent-run/20261007-072131-d056/screenshots/expo-app/flow-desktop-03-empty-dashboard.png",
+      "apps/freelance-finance-tracker/.agent-run/20261007-072131-d056/screenshots/expo-app/flow-desktop-04-receipt-capture.png",
+      "apps/freelance-finance-tracker/.agent-run/20261007-072131-d056/screenshots/expo-app/flow-desktop-05-dashboard-with-receipt.png",
+      "apps/freelance-finance-tracker/.agent-run/20261007-072131-d056/screenshots/expo-app/flow-desktop-06-mileage-entry.png",
+      "apps/freelance-finance-tracker/.agent-run/20261007-072131-d056/screenshots/expo-app/flow-desktop-07-mileage-list.png",
+      "apps/freelance-finance-tracker/.agent-run/20261007-072131-d056/screenshots/expo-app/flow-desktop-08-export-screen.png",
+      "apps/freelance-finance-tracker/.agent-run/20261007-072131-d056/screenshots/expo-app/flow-desktop-09-export-completed.png"
+    ]
+  },
+  "retro": {
+    "observations": [
+      "slowest round 11 took 61 min; average 34 min"
+    ],
+    "went_well": [
+      "Security scans recovered after early failures and passed in subsequent rounds, showing the security\u2011scanner integration works.",
+      "The reviewer approved several rounds (4,\u202f8,\u202f9,\u202f10), indicating the code base reached a stable, merge\u2011ready state for many components.",
+      "The pipeline successfully identified and fixed concrete bugs such as the missing Pillow dependency (round\u202f7), the media\u2011endpoint path typo (round\u202f6), and the invalid TypeScript syntax in theme.ts (round\u202f11).",
+      "Iterative feedback loops eventually resolved the TypeScript import errors and the React runtime crash, demonstrating the self\u2011correcting nature of the multi\u2011agent loop.",
+      "The dashboard test passed after round\u202f2, showing that the acceptance\u2011test suite can be satisfied early and later regressions are detectable."
+    ],
+    "improvements": [
+      {
+        "title": "Make reviewer and validator feedback explicitly actionable",
+        "evidence": "Round\u202f1 reviewer issue: \"Static validation fails the accessibility check (serious) for Expo app...\" \u2013 the message was truncated and lacked file/line details. Round\u202f3 reviewer issue: \"TypeScript compilation error: expo-app/src/components/ui/FormField.tsx imports View from 'react-native-paper'...\" \u2013 feedback did not include a concrete diff or exact line to edit, leading to repeated import mistakes across rounds 3\u20114\u20115.",
+        "change": "Update the reviewer prompt (and static validator output format) to require a concise, file\u2011specific fix suggestion: include the file path, line number, and the exact code snippet to replace (e.g., \"Replace import { View } from 'react-native-paper' with import { View } from 'react-native' in src/components/ui/FormField.tsx\"). Also enforce that every validator returns the offending file and line number when possible.",
+        "expected_effect": "Coder receives a clear, one\u2011step patch instruction, reducing the number of revision rounds needed to fix import errors, accessibility issues, and dashboard logic bugs. This should cut total rounds by 30\u201140% and lower token usage.",
+        "priority": "high"
+      },
+      {
+        "title": "Add early TypeScript import linting to catch invalid imports before UI execution",
+        "evidence": "Round\u202f3 reported \"TS2305: Module 'react-native-paper' has no exported member 'View'\" and the same import caused a Minified React error #130 that broke the primary flow tests (round\u202f3 UI validator failures). The issue persisted for multiple rounds before being fixed.",
+        "change": "Introduce a new static validator (typescript_import_lint.py) that runs after the planner and before the first coder turn. It should parse all .tsx files and flag any import of symbols not exported by the declared package (e.g., importing View from 'react-native-paper'). The validator\u2019s error message must follow the actionable format from improvement\u202f1.",
+        "expected_effect": "Invalid imports are detected in round\u202f0, preventing runtime crashes and UI flow test failures, thereby eliminating at least two full rounds of UI debugging and saving ~1\u202fhour per run.",
+        "priority": "high"
+      },
+      {
+        "title": "Enforce dependency\u2011to\u2011manifest consistency",
+        "evidence": "Round\u202f7 revealed \"Missing dependency: Pillow not listed in backend/requirements.txt\", causing an ImportError when uploading receipts. The issue was only discovered after the coder had already committed code referencing PIL.",
+        "change": "Add a dependency consistency validator (dependency_check.py) to the static\u2011validation stage. It scans all import statements in both backend (Python) and Expo (JavaScript/TypeScript) source files, compares them against backend/requirements.txt and expo-app/package.json, and reports any missing entries with file/line details.",
+        "expected_effect": "Missing packages are caught before code execution, preventing runtime import failures and reducing the need for post\u2011hoc dependency fixes, which should cut at least one revision round per missing package.",
+        "priority": "medium"
+      },
+      {
+        "title": "Require secure JWT secret length at project generation",
+        "evidence": "Both round\u202f1 and round\u202f12 test logs show warnings: \"JWT_SECRET_KEY is shorter than 32 bytes; this is insecure for production\" and the test suite still flagged a dashboard mismatch possibly tied to token handling.",
+        "change": "Modify the planner prompt to generate a JWT secret of at least 32\u202fbytes (e.g., a 64\u2011character base64 string) and set it in the .env template. Add a validator (jwt_secret_length.py) that checks the length of JWT_SECRET_KEY at the start of each run and fails with a clear fix suggestion if it is too short.",
+        "expected_effect": "Eliminates insecure\u2011key warnings, satisfies security policies on the first attempt, and removes the related test failure noise, improving both security\u2011scan pass rate and test stability.",
+        "priority": "medium"
+      },
+      {
+        "title": "Standardise accessibility handling for icon components",
+        "evidence": "Round\u202f1 accessibility validator reported serious issues: icons rendered as <div role=\"img\"> lacked alternative text, and the reviewer\u2019s suggestion was generic, resulting in the issue persisting through multiple rounds (still UI\u2011blocking in later rounds).",
+        "change": "Extend the designer prompt with a mandatory rule: \"All icon components must be hidden from the accessibility tree (aria\u2011hidden) unless they convey meaning. The designer must add aria\u2011hidden to any <Icon>, <MaterialCommunityIcons>, or PaperProvider\u2011generated icon and document this in DESIGN.md. Include a sample snippet.\" Also enhance the UI validator to flag any role=\"img\" without aria\u2011hidden/aria\u2011label and output file/line details.",
+        "expected_effect": "Accessibility validator passes from round\u202f1 onward, removing the need for repeated UI revisions related to icons and lowering the UI\u2011blocking count, which speeds up convergence of UI flow tests.",
+        "priority": "low"
+      }
+    ]
+  }
+}
