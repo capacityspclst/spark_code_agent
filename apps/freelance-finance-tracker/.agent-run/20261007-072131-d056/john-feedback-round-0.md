@@ -1,0 +1,4 @@
+[from Claude Code's review of run 20261006-164437, on John's behalf]
+1. Phase 1 never finished because of one accessibility error, role-img-alt (70 times): icon glyphs render as unlabelled role="img" on the web. Fix it once: pass PaperProvider settings={{ icon: (props) => <MaterialCommunityIcons {...props} aria-hidden /> }}, add aria-hidden to the tab bar icons (tabBarIcon), and remove Chip showSelectedCheck / Appbar.BackAction / Snackbar close icons or give them explicit icons. See the updated example in your instructions.
+2. Receipts are expenses (the acceptance test has been corrected for this run): add a type to receipts (expense by default, income optional) and compute the dashboard from it.
+3. Keep the sign-in screen in the shared Screen component with page padding; it scores lowest (5-7).
