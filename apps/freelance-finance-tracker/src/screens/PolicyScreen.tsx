@@ -1,8 +1,8 @@
 // src/screens/PolicyScreen.tsx
 import React, { useState } from 'react';
-import { View, StyleSheet } from 'react-native';
+import { StyleSheet } from 'react-native';
 import { Screen } from '../components/ui/Screen';
-import { Text, Checkbox, ActivityIndicator } from 'react-native-paper';
+import { Text, Checkbox } from 'react-native-paper';
 import { setPolicyAcceptance, POLICY_VERSION } from '../lib/policy';
 import { useNavigation } from '@react-navigation/native';
 import { PrimaryButton } from '../components/ui/PrimaryButton';
@@ -20,6 +20,8 @@ export default function PolicyScreen() {
     navigation.reset({ index: 0, routes: [{ name: 'Main' }] });
   };
 
+  const toggle = () => setChecked(prev => !prev);
+
   return (
     <Screen>
       <Text variant="headlineMedium" style={{ marginBottom: 16 }}>Terms of Use and Privacy Policy</Text>
@@ -28,7 +30,7 @@ export default function PolicyScreen() {
       </Text>
       <Checkbox.Item
         status={checked ? 'checked' : 'unchecked'}
-        onPress={() => setChecked(!checked)}
+        onPress={toggle}
         label="I agree to the Terms of Use and Privacy Policy."
         accessibilityLabel="I agree to the Terms of Use and Privacy Policy."
       />

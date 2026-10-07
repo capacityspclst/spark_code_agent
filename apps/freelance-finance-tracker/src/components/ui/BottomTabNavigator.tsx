@@ -13,15 +13,15 @@ const Tab = createBottomTabNavigator();
 
 const BottomTabNavigator: React.FC = () => (
   <Tab.Navigator
-    screenOptions={({ route }) => ({
+    screenOptions={({ route }: any) => ({
       headerShown: false,
-      tabBarIcon: ({ color, size }) => {
+      tabBarIcon: ({ color, size }: any) => {
         let iconName = 'home';
         if (route.name === 'Dashboard') iconName = 'view-dashboard';
         else if (route.name === 'Receipts') iconName = 'receipt';
         else if (route.name === 'Mileage') iconName = 'map-marker-distance';
         else if (route.name === 'Settings') iconName = 'cog';
-        return <MaterialCommunityIcons name={iconName} size={size} color={color} aria-hidden />;
+        return <MaterialCommunityIcons name={iconName as any} size={size} color={color} aria-hidden />;
       },
     })}
   >

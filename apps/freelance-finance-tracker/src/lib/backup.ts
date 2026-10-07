@@ -13,13 +13,13 @@ export async function exportCSV(): Promise<string> {
   mileage.forEach(m => {
     csv += `mileage,${m.id},,,${m.date},,,${m.miles},${m.purpose}\n`;
   });
-  const uri = `${FileSystem.documentDirectory}export_${Date.now()}.csv`;
+  const uri = `${(FileSystem as any).cacheDirectory}export_${Date.now()}.csv`;
   await FileSystem.writeAsStringAsync(uri, csv, { encoding: FileSystem.EncodingType.UTF8 });
   return uri;
 }
 
 export async function exportPDF(): Promise<string> {
-  const uri = `${FileSystem.documentDirectory}export_${Date.now()}.pdf`;
+  const uri = `${(FileSystem as any).cacheDirectory}export_${Date.now()}.pdf`;
   await FileSystem.writeAsStringAsync(uri, 'PDF placeholder', { encoding: FileSystem.EncodingType.UTF8 });
   return uri;
 }
@@ -28,7 +28,7 @@ export async function createBackup(passphrase: string): Promise<string> {
   const receipts = await listReceipts();
   const mileage = await listMileage();
   const payload = JSON.stringify({ receipts, mileage, passphrase });
-  const uri = `${FileSystem.documentDirectory}backup_${Date.now()}.backup`;
+  const uri = `${(FileSystem as any).cacheDirectory}backup_${Date.now()}.backup`;
   await FileSystem.writeAsStringAsync(uri, payload, { encoding: FileSystem.EncodingType.UTF8 });
   return uri;
 }
