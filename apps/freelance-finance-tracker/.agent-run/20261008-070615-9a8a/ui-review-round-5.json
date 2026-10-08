@@ -1,0 +1,144 @@
+{
+  "verdict": "fail",
+  "summary": "The current implementation falls far short of the DESIGN.md specification. The primary policy\u2011acceptance flow is broken: the custom checkbox never toggles, lacks required ARIA attributes, and keeps the Continue button disabled. Major screens such as Settings are only placeholders and miss all required states and UI elements. Several components use hard\u2011coded numbers instead of the theme\u2019s spacing and colour tokens, and key accessibility requirements (alt text for images, landmarks, focus outlines, proper ARIA roles) are missing. Navigation to primary actions (adding receipts/mileage) is not reliably exposed from every signed\u2011in screen. These gaps cause the app to be inaccessible, break the core user journey, and deviate from the design system.",
+  "findings": [
+    {
+      "severity": "high",
+      "file": "src/screens/PolicyScreen.tsx",
+      "issue": "The policy acceptance checkbox is rendered as a <div role=\"checkbox\"> with aria-label but without aria-checked, and clicking it does not toggle its state, breaking the primary flow and violating WCAG.",
+      "fix": "Replace the custom checkbox with React Native Paper's Checkbox component (or a native <input type=\"checkbox\"/>), bind it to component state, add `accessibilityState={{ checked }}` or `aria-checked`, and ensure the Continue button becomes enabled only when checked.",
+      "source": "designer"
+    },
+    {
+      "severity": "high",
+      "file": "src/screens/SettingsScreen.tsx",
+      "issue": "SettingsScreen only shows a headline and lacks all required states (loading, backup progress, restore error, delete confirmation) and UI sections defined in the spec.",
+      "fix": "Implement the full Settings screen: add loading indicator, sections for App lock, Mileage rate, Tax rate, Backup & restore, Policy, Delete all data. Use Dialogs for backup/restore, Confirmation Alert for data deletion, and Snackbar for success messages. Wire these to the storage layer and apply the design tokens.",
+      "source": "designer"
+    },
+    {
+      "severity": "high",
+      "file": "src/components/ReceiptThumbnail.tsx (or equivalent component rendering receipt images)",
+      "issue": "Receipt thumbnails are rendered with `role=\"img\"` but without an `aria-label` or `alt` attribute, causing axe rule `role-img-alt` failures.",
+      "fix": "Use React Native\u2019s `Image` component and set `accessibilityLabel` (e.g., `Receipt photo taken on ${date}`) or `alt` prop. Ensure the element also has `accessible={true}`.",
+      "source": "designer"
+    },
+    {
+      "severity": "high",
+      "file": "src/components/ui/Screen.tsx",
+      "issue": "Screen wrapper does not provide an ARIA landmark (`accessibilityRole=\"main\"`) and uses hard\u2011coded spacing (padding: 16, maxWidth: 420) instead of the theme\u2019s spacing tokens.",
+      "fix": "Add `accessibilityRole=\"main\"` to the outermost view. Pull spacing values from `theme.spacing` (e.g., `padding: theme.spacing.md`, `maxWidth: 420` can be expressed as `theme.spacing.xxl * 7`). Replace raw numbers with token references throughout the component.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/components/ui/EmptyState.tsx",
+      "issue": "EmptyState uses literal numbers for margin and text alignment and does not reference the design token spacing or colour palette.",
+      "fix": "Import `useTheme` and replace `marginTop: 40`, `marginBottom: 8`, etc., with equivalents from `theme.spacing` (e.g., `theme.spacing.xl`, `theme.spacing.sm`). Apply `theme.colors` for text colour if custom styling is needed.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/components/ui/BottomTabNavigator.tsx",
+      "issue": "Tab icons lack `accessibilityLabel`/`accessibilityHint` and the tab navigator does not expose proper ARIA roles or focus\u2011visible styling.",
+      "fix": "Add `tabBarAccessibilityLabel` or `accessibilityLabel` for each Tab.Screen. Ensure the navigator has `accessibilityRole=\"navigation\"`. Provide a high\u2011contrast outline on focus (e.g., via `style` or CSS) for keyboard users.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/components/ui/FormField.tsx",
+      "issue": "FormField does not expose autocomplete attributes, lacks `accessibilityHint` linking error messages, and does not set `accessibilityState` for invalid fields.",
+      "fix": "Pass appropriate `autoComplete` props (e.g., `autoComplete='email'`, `autoComplete='off'`), add `accessibilityHint` that describes the error when `error` is true, and set `accessibilityState={{ invalid: error }}`. Ensure `HelperText` is linked via `accessibilityDescribedBy` if possible.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "src/components/ui/PrimaryButton.tsx",
+      "issue": "Button component does not expose a visible focus indicator on web; keyboard users may not see focus.",
+      "fix": "Leverage React Native Paper\u2019s `theme={...}` to enable `focusVisible` styling or add a custom `style` that adds a high\u2011contrast outline when `:focus-visible` (via web CSS) or when the component receives focus on native.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "src/components/ui/SummaryCard.tsx",
+      "issue": "SummaryCard uses hard\u2011coded `marginBottom: 8` and fixed card height styling without referencing design tokens; also lacks explicit `accessibilityRole` for the card content.",
+      "fix": "Replace literal values with `theme.spacing.sm` and set `accessibilityRole=\"region\"` with a descriptive `accessibilityLabel` (e.g., `${title} card`).",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "src/components/ui/PrimaryButton.tsx",
+      "issue": "Button does not set `accessibilityState` for the loading state (busy) which helps screen readers announce progress.",
+      "fix": "Add `accessibilityState={{ busy: loading }}` when `loading` prop is true.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "src/components/ui/Screen.tsx",
+      "issue": "Screen component does not explicitly set a background colour from the theme; it relies on default background which may not match `theme.colors.background`.",
+      "fix": "Apply `backgroundColor: theme.colors.background` to the container style (already done in the inline style but ensure it\u2019s sourced from the token and not a hard\u2011coded value).",
+      "source": "designer"
+    },
+    {
+      "severity": "high",
+      "viewport": "phone",
+      "issue": "The entire screen uses browser-default typography and styling with no custom type scale or visual hierarchy. The text is small and cramped, and the layout is unstyled, resembling a prototype.",
+      "fix": "Apply a consistent type scale with readable sizes (e.g., 24pt for headings, 16pt for body). Use spacing and padding to create visual hierarchy and breathing room. Style the container with rounded corners and subtle shadows to separate it from the background.",
+      "screen": "policy",
+      "source": "vision"
+    },
+    {
+      "severity": "high",
+      "viewport": "phone",
+      "issue": "The primary action button 'Continue' is not visually emphasized. It's centered and lacks any styling or visual weight to indicate it's the primary action.",
+      "fix": "Style the 'Continue' button with a solid background color, rounded corners, and a clear, bold label. Ensure it's positioned prominently and is the only interactive element that stands out visually.",
+      "screen": "policy",
+      "source": "vision"
+    },
+    {
+      "severity": "high",
+      "viewport": "phone",
+      "issue": "The checkbox and its label are misaligned and lack proper spacing. The checkbox is not visually connected to the text, and the label is too close to the checkbox, making it hard to read.",
+      "fix": "Use a proper checkbox component with adequate padding and alignment. Ensure the label is positioned to the right of the checkbox with sufficient spacing. Consider using a helper text or tooltip to explain the checkbox.",
+      "screen": "policy",
+      "source": "vision"
+    },
+    {
+      "severity": "high",
+      "viewport": "phone",
+      "issue": "The policy text is truncated with a line break (\\u2013) that is visually jarring and unprofessional. The text is also too small and lacks sufficient line height.",
+      "fix": "Fix the line break to use a proper em dash or hyphen. Increase the font size and line height for better readability. Consider using a larger font size for the main policy text to improve legibility.",
+      "screen": "policy",
+      "source": "vision"
+    },
+    {
+      "severity": "high",
+      "viewport": "phone",
+      "issue": "The screen is cramped and lacks spacing. The container is positioned too close to the edges, and there is no padding or margin to create breathing room.",
+      "fix": "Apply padding to the container to create breathing room. Use a consistent grid system to align elements and ensure proper spacing between the policy text, checkbox, and button.",
+      "screen": "policy",
+      "source": "vision"
+    },
+    {
+      "severity": "high",
+      "screen": "policy",
+      "source": "vision",
+      "issue": "visual quality 4/10 on 'policy' (needs 8+): The screen is functional but lacks polish. It uses browser-default styling, has no visual hierarchy or consistent spacing, and the primary action is not clearly emphasized. The layout is cramped and unstyled, resembling a prototype rather than a polished product.",
+      "fix": "Address this screen's findings until it looks polished and professional."
+    }
+  ],
+  "lighthouse": [
+    {
+      "accessibility": 93,
+      "bestPractices": 100,
+      "performance": 57
+    }
+  ],
+  "vision_scores": [
+    {
+      "screen": "policy",
+      "score": 4.0,
+      "summary": "The screen is functional but lacks polish. It uses browser-default styling, has no visual hierarchy or consistent spacing, and the primary action is not clearly emphasized. The layout is cramped and unstyled, resembling a prototype rather than a polished product."
+    }
+  ]
+}
