@@ -1,0 +1,175 @@
+{
+  "verdict": "fail",
+  "summary": "The app\u2019s primary user flow breaks: the Dashboard never leaves its loading indicator, preventing the expected empty\u2011state UI and halting the end\u2011to\u2011end scenario. The root cause appears to be a mismatch between the SQLite mock (used for web/CI builds) and the actual queries the screens issue, leaving the data\u2011fetch promises unresolved. A handful of secondary compliance gaps also exist \u2013 missing accessibility landmarks, hard\u2011coded spacing values, incomplete use of design tokens, and some components not fully matching the spec (e.g., FormField lacks auto\u2011complete, EmptyState uses a generic Button, BottomTabNavigator\u2019s tab button doesn\u2019t expose the selected state). These issues don\u2019t crash the app but reduce polish, accessibility, and design fidelity.",
+  "findings": [
+    {
+      "severity": "high",
+      "file": "src/screens/DashboardScreen.tsx",
+      "issue": "DashboardScreen stays in the loading state indefinitely; it never renders the empty\u2011state or summary cards when there are no receipts/mileage entries, causing the primary flow test to time\u2011out.",
+      "fix": "Ensure the data\u2011loading promise resolves (e.g., handle DB query errors, set loading to false). Add logic to detect an empty data set and render the EmptyState component with the exact copy \"No activity yet\" as defined in DESIGN.md.",
+      "source": "designer"
+    },
+    {
+      "severity": "high",
+      "file": "__mocks__/expo-sqlite.js",
+      "issue": "The SQLite mock only recognises a few specific SQL strings (e.g., `SELECT data FROM receipts`). The app issues more complex queries (such as `SELECT * FROM receipts ORDER BY date DESC`) which fall through to the error branch, leaving the queries unresolved and the UI stuck on loading.",
+      "fix": "Extend the mock\u2019s `executeSql` to pattern\u2011match common query forms used by the app (`SELECT * FROM receipts`, `SELECT * FROM mileage`, `SELECT value FROM config WHERE key = ?`, etc.) and return appropriate mock rows. Alternatively, refactor the DB layer to use a simple abstraction that the mock can reliably satisfy.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/components/ui/Screen.tsx",
+      "issue": "Screen wrapper does not include the required accessibility landmark (`accessibilityRole=\"main\"`) and uses the unsupported React Native style property `gap`, which may be ignored on some platforms.",
+      "fix": "Add `accessibilityRole=\"main\"` to the outer SafeAreaView (or a wrapper View). Replace `gap: 8` with explicit margin/padding using `theme.spacing.sm` or `StyleSheet` based spacing.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/components/ui/FormField.tsx",
+      "issue": "FormField does not accept or forward the `autoComplete` prop required by the spec for better keyboard experience, and it does not expose a toggle for password visibility where `secureTextEntry` is true.",
+      "fix": "Add an `autoComplete?: string` prop to FormField and pass it to the underlying `TextInput`. For password fields, add an icon button that toggles `secureTextEntry` and announces the state via accessibilityLabel.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "src/components/ui/EmptyState.tsx",
+      "issue": "The action button inside EmptyState uses the generic `Button` component instead of the designated `PrimaryButton` component, deviating from the design system.",
+      "fix": "Replace `<Button>` with `<PrimaryButton>` (imported from the UI library) to ensure consistent styling and token usage.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "src/components/ui/BottomTabNavigator.tsx",
+      "issue": "Custom tab bar button does not convey the selected state to screen readers (missing `accessibilityState={{ selected: ... }}`). This reduces accessibility for navigation.",
+      "fix": "Pass the `selected` flag from `props.accessibilityState?.selected` to the Pressable\u2019s `accessibilityState` (e.g., `{ ...props.accessibilityState, selected: props.accessibilityState?.selected }`).",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "src/components/ui/PrimaryButton.tsx",
+      "issue": "PrimaryButton does not apply the design token spacing for minimum touch target or height, relying on Paper defaults which may not meet the 44\u00d744\u202fpx requirement on all platforms.",
+      "fix": "Explicitly set `style={{ minHeight: 48, minWidth: 64, paddingHorizontal: theme.spacing.md }}` (or similar) using `useTheme()` to reference the token values.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "src/components/ui/SummaryCard.tsx",
+      "issue": "Margins and inner padding are hard\u2011coded (e.g., `marginBottom: 8`) rather than using the `theme.spacing` scale, and the card height is not constrained to the spec\u2019s 120\u202fpx.",
+      "fix": "Replace hard\u2011coded numbers with `theme.spacing.sm` and add a fixed `height: 120` style (or let the layout define height via flex) to align with the design spec.",
+      "source": "designer"
+    },
+    {
+      "severity": "high",
+      "viewport": "phone",
+      "issue": "Unstyled browser-default text and layout. No type scale, no spacing, no alignment. Text is cramped and lacks hierarchy.",
+      "fix": "Apply a proper type scale with readable sizes. Add consistent spacing and alignment on a grid. Use visual hierarchy to guide the user.",
+      "screen": "policy",
+      "source": "vision"
+    },
+    {
+      "severity": "high",
+      "viewport": "phone",
+      "issue": "The 'Continue' button is centered but lacks visual weight or styling. It appears as plain text, not a button.",
+      "fix": "Style the button with appropriate padding, weight, and color to make it stand out as the primary action.",
+      "screen": "policy",
+      "source": "vision"
+    },
+    {
+      "severity": "high",
+      "viewport": "phone",
+      "issue": "The checkbox and its label are poorly positioned. The checkbox is too close to the text, and the entire element is not aligned with the surrounding content.",
+      "fix": "Align the checkbox and label properly. Add consistent spacing around the checkbox and label to improve readability and usability.",
+      "screen": "policy",
+      "source": "vision"
+    },
+    {
+      "severity": "high",
+      "viewport": "phone",
+      "issue": "The text 'Track receipts and mileage locally \\u2013 your data never leaves the device.' is poorly formatted. The '\u2013' is a Unicode character that should be a proper em dash or hyphen. The text is also too close to the top of the screen.",
+      "fix": "Use a proper em dash or hyphen. Add more vertical spacing between the text and the checkbox.",
+      "screen": "policy",
+      "source": "vision"
+    },
+    {
+      "severity": "high",
+      "viewport": "phone",
+      "issue": "The entire screen is tightly packed against the left edge with no padding or margins. This looks unprofessional and cramped.",
+      "fix": "Add consistent padding and margins to the content. Use a grid system to ensure alignment and spacing.",
+      "screen": "policy",
+      "source": "vision"
+    },
+    {
+      "severity": "high",
+      "screen": "policy",
+      "source": "vision",
+      "issue": "visual quality 3/10 on 'policy' (needs 8+): The screen is unstyled and looks like browser defaults. It lacks visual hierarchy, spacing, and alignment. The primary action button is centered but lacks visual weight. Text is unstyled and cramped. The checkbox and button are poorly positioned. This is not a polished product.",
+      "fix": "Address this screen's findings until it looks polished and professional."
+    },
+    {
+      "severity": "high",
+      "viewport": "both",
+      "issue": "The screen is a plain loading state with no visual hierarchy, primary action, or guidance. The only content is a centered loading indicator and text, with no grouping, spacing, or alignment that creates structure or visual interest.",
+      "fix": "Add a branded empty state with clear instructions and a prominent primary action (e.g., 'Add receipt' FAB) to guide the user. Use consistent spacing and alignment on a grid. Add visual hierarchy with typography scale and color contrast to make the screen feel intentional, not bare.",
+      "screen": "dashboard empty",
+      "source": "vision"
+    },
+    {
+      "severity": "high",
+      "viewport": "both",
+      "issue": "The layout is minimal and unstyled, resembling browser defaults. No typography scale, no line length control, no spacing or alignment that suggests a designed layout.",
+      "fix": "Apply a consistent type scale with readable sizes. Use proper line length (ideally 45-75 characters). Add consistent spacing and alignment on a grid. Use subtle visual hierarchy through typography, spacing, and color to guide the user's eye.",
+      "screen": "dashboard empty",
+      "source": "vision"
+    },
+    {
+      "severity": "high",
+      "viewport": "both",
+      "issue": "The screen is visually empty and lacks any form of grouping, sectioning, or visual structure that would make it feel like a polished product. The bottom navigation is present but not integrated into the layout.",
+      "fix": "Introduce visual grouping (e.g., cards, sections) to organize content. Use consistent spacing and alignment. Ensure the bottom navigation is properly integrated into the layout, not floating at the bottom edge.",
+      "screen": "dashboard empty",
+      "source": "vision"
+    },
+    {
+      "severity": "high",
+      "viewport": "both",
+      "issue": "The loading indicator and text are centered but lack any visual context or guidance. The screen feels like a placeholder, not a designed state.",
+      "fix": "Add a branded empty state with clear instructions and a prominent primary action (e.g., 'Add receipt' FAB) to guide the user. Use consistent spacing and alignment on a grid. Add visual hierarchy with typography scale and color contrast to make the screen feel intentional, not bare.",
+      "screen": "dashboard empty",
+      "source": "vision"
+    },
+    {
+      "severity": "high",
+      "viewport": "both",
+      "issue": "The screen is not touch-friendly on phone and lacks any visual cues for interaction. The bottom navigation is present but not integrated into the layout.",
+      "fix": "Ensure the bottom navigation is properly integrated into the layout, not floating at the bottom edge. Add visual cues for interaction (e.g., subtle hover states, focus states). Ensure the screen is touch-friendly with appropriately sized buttons and controls.",
+      "screen": "dashboard empty",
+      "source": "vision"
+    },
+    {
+      "severity": "high",
+      "screen": "dashboard empty",
+      "source": "vision",
+      "issue": "visual quality 3/10 on 'dashboard empty' (needs 8+): The screen is visually barren and functionally incomplete. It shows a loading state with no visual hierarchy, no primary action, and no guidance for the user. The layout is minimal but lacks any design polish or structure that would make it feel like a polished product. It resembles a browser-default skeleton screen with no styling, spacing, or alignment to guide the user.",
+      "fix": "Address this screen's findings until it looks polished and professional."
+    }
+  ],
+  "lighthouse": [
+    {
+      "accessibility": 100,
+      "bestPractices": 100,
+      "performance": 74
+    }
+  ],
+  "vision_scores": [
+    {
+      "screen": "policy",
+      "score": 3.0,
+      "summary": "The screen is unstyled and looks like browser defaults. It lacks visual hierarchy, spacing, and alignment. The primary action button is centered but lacks visual weight. Text is unstyled and cramped. The checkbox and button are poorly positioned. This is not a polished product."
+    },
+    {
+      "screen": "dashboard empty",
+      "score": 3.0,
+      "summary": "The screen is visually barren and functionally incomplete. It shows a loading state with no visual hierarchy, no primary action, and no guidance for the user. The layout is minimal but lacks any design polish or structure that would make it feel like a polished product. It resembles a browser-default skeleton screen with no styling, spacing, or alignment to guide the user."
+    }
+  ]
+}
