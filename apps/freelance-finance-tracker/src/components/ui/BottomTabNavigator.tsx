@@ -39,7 +39,7 @@ const BottomTabNavigator: React.FC = () => {
           else if (route.name === 'Receipts') iconName = 'receipt';
           else if (route.name === 'Mileage') iconName = 'map-marker-distance';
           else if (route.name === 'Settings') iconName = 'cog';
-          return <MaterialCommunityIcons name={iconName as any} size={size} color={color} aria-hidden />;
+          return <MaterialCommunityIcons name={iconName as any} size={size} color={color} />;
         },
         tabBarActiveTintColor: activeColor,
         tabBarInactiveTintColor: inactiveColor,

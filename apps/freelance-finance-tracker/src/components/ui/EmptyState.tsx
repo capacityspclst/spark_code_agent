@@ -1,4 +1,5 @@
 // src/components/ui/EmptyState.tsx
+import React from 'react';
 import { View } from 'react-native';
 import { Card, Title, Paragraph, Button } from 'react-native-paper';
 
