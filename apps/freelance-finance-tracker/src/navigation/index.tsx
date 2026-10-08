@@ -32,7 +32,7 @@ function Tabs() {
     >
       <Tab.Screen name="Dashboard" component={DashboardScreen} options={{ tabBarIcon: tabIcon('view-dashboard-outline') }} />
       <Tab.Screen name="Receipts" component={ReceiptsScreen} options={{ tabBarIcon: tabIcon('receipt-outline') }} />
-      <Tab.Screen name="Mileage" component={MileageScreen} options={{ tabBarIcon: tabIcon('run-outline') }} />
+      <Tab.Screen name="Mileage" component={MileageScreen} options={{ tabBarIcon: tabIcon('run') }} />
       <Tab.Screen name="Settings" options={{ tabBarIcon: tabIcon('cog-outline') }}>
         {({ navigation }) => <SettingsScreen onViewPolicy={() => navigation.getParent()?.navigate('Policy')} />}
       </Tab.Screen>
