@@ -1,0 +1,246 @@
+{
+  "verdict": "fail",
+  "summary": "The project follows the visual language of the design system in most places, but critical gaps prevent the primary user flow and break accessibility requirements. The Dashboard never renders the required EmptyState (\"No activity yet\"), causing the flow to stall on a perpetual loading indicator. Several components bypass the design\u2011token system, and the bottom\u2011tab navigation hides its icons from assistive technology, making the app unusable for screen\u2011reader users. These high\u2011severity defects must be addressed before the product can be considered production\u2011ready. Lighthouse reports a perfect accessibility score (100) and best\u2011practices (100), but the functional flow failure and the accessibility oversights highlighted below override those metrics.",
+  "findings": [
+    {
+      "severity": "high",
+      "file": "src/screens/DashboardScreen.tsx",
+      "issue": "The screen never transitions from the loading state to the EmptyState when there are no receipts or mileage entries. The expected title \"No activity yet\" (and description) is never rendered, causing the primary flow test to time out.",
+      "fix": "After the DB query resolves, check if both receipt and mileage lists are empty. If empty, render the <EmptyState> component with title \"No activity yet\" and description \"Add a receipt or mileage entry to see your financial overview.\" Ensure the loading spinner is hidden once data loading finishes.",
+      "source": "designer"
+    },
+    {
+      "severity": "high",
+      "file": "src/components/ui/BottomTabNavigator.tsx",
+      "issue": "Tab icons are rendered with `aria\u2011hidden`, removing them from the accessibility tree, and there is no `accessibilityLabel` for the tab items. This makes the bottom navigation invisible to screen\u2011reader users.",
+      "fix": "Remove `aria\u2011hidden` from the <MaterialCommunityIcons> and provide an `accessibilityLabel` (e.g., `${route.name} tab`) either via `tabBarAccessibilityLabel` in `screenOptions` or by wrapping the icon in a view that supplies the label. Verify that the label is announced and that the icons are traversable by assistive tech.",
+      "source": "designer"
+    },
+    {
+      "severity": "high",
+      "file": "src/screens/PolicyScreen.tsx",
+      "issue": "The screen does not implement several required states: version\u2011updated banner, SecureStore error UI, and the Continue button is not disabled until the \"I agree\u2026\" checkbox is checked. Users could bypass policy acceptance or see no feedback on errors.",
+      "fix": "Add conditional rendering for the version banner using the stored policy version. Show a red error message when SecureStore throws. Bind the Continue button's `disabled` prop to the checkbox state and ensure the checkbox has an explicit `accessibilityLabel`. Update the flow to only navigate forward after successful acceptance.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/components/ui/Screen.tsx",
+      "issue": "Layout uses hard\u2011coded numbers (padding: 16, maxWidth: 420) instead of the spacing tokens defined in `appTheme`. This violates the token\u2011first design rule.",
+      "fix": "Import `useTheme` and replace literals with `theme.spacing.md` for padding and `theme.spacing.xl` (or appropriate token) for maxWidth. This ensures consistent spacing across platforms.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/components/ui/SummaryCard.tsx",
+      "issue": "Card styling does not match the specification: missing elevation\u202f=\u202f4, internal padding of 12\u202fpx, and margin\u2011bottom should be 16\u202fpx (code uses 8\u202fpx).",
+      "fix": "Add `elevation={4}` to <Card>, set `style={{ padding: theme.spacing.md, marginBottom: theme.spacing.lg }}` and adjust the inner layout to respect the 12\u202fpx internal padding. Use the theme spacing values instead of raw numbers.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/components/ui/PrimaryButton.tsx",
+      "issue": "Button does not explicitly guarantee the minimum touch\u2011target size (44\u202f\u00d7\u202f44\u202fpx) or the required minimum width of 64\u202fpx; it relies on default Paper behaviour which may not meet the spec on all platforms.",
+      "fix": "Add a style prop that enforces `minHeight: 48`, `minWidth: 64`, and `hitSlop: { top: 8, bottom: 8, left: 8, right: 8 }` (or equivalent) to satisfy the 44\u202f\u00d7\u202f44\u202fpx touch\u2011area requirement.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/components/ui/EmptyState.tsx",
+      "issue": "Uses fixed spacing (marginTop: 40) and lacks an accessibility role/label for the region, which reduces semantic clarity for assistive technology.",
+      "fix": "Replace the hard\u2011coded value with `theme.spacing.lg` (or appropriate token) and add `accessibilityRole=\"region\"` and `accessibilityLabel=\"empty state\"` to the container View.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "src/components/ui/FormField.tsx",
+      "issue": "`FormField` does not expose an `autoComplete` prop to the underlying `TextInput`, missing native auto\u2011fill support on web.",
+      "fix": "Add an optional `autoComplete?: string` prop to `FormFieldProps` and forward it to the `<TextInput>` component.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "src/components/ui/Screen.tsx",
+      "issue": "The root `SafeAreaView` does not set `accessibilityRole=\"main\"`, which is required for the main landmark according to the accessibility section of the spec.",
+      "fix": "Add `accessibilityRole=\"main\"` to the `SafeAreaView` element.",
+      "source": "designer"
+    },
+    {
+      "severity": "high",
+      "viewport": "both",
+      "issue": "Uses browser-default typography and styling \u2014 no custom type scale, no brand identity, no visual hierarchy. Text is plain, unstyled, and lacks contrast or emphasis.",
+      "fix": "Apply a custom type scale with clear hierarchy: bold, larger title; readable body text; subtle secondary text. Use a brand color palette and add subtle visual cues (e.g., borders, shadows, icons) to differentiate elements.",
+      "screen": "policy",
+      "source": "vision"
+    },
+    {
+      "severity": "high",
+      "viewport": "both",
+      "issue": "No visual grouping or spacing \u2014 all elements are presented as a flat list with no alignment, padding, or grid structure. The layout feels like a raw HTML form.",
+      "fix": "Implement a consistent grid system. Add padding, margins, and spacing around elements. Group related items (e.g., policy text and checkbox) into a card or section with subtle borders or background.",
+      "screen": "policy",
+      "source": "vision"
+    },
+    {
+      "severity": "high",
+      "viewport": "both",
+      "issue": "The 'Continue' button is centered but lacks visual weight or affordance \u2014 it looks like a plain link or button without any styling, making it feel unimportant or unactionable.",
+      "fix": "Style the button with a clear background color, rounded corners, and hover/press states. Make it visually distinct from the rest of the content to signal it as the primary action.",
+      "screen": "policy",
+      "source": "vision"
+    },
+    {
+      "severity": "high",
+      "viewport": "both",
+      "issue": "The checkbox and text are misaligned \u2014 the checkbox is not vertically centered with the text, and the text is too close to the checkbox, creating a cramped, unprofessional look.",
+      "fix": "Center the checkbox vertically with the text. Add consistent spacing around the checkbox and text. Use a proper input field or styled checkbox component for better visual alignment and usability.",
+      "screen": "policy",
+      "source": "vision"
+    },
+    {
+      "severity": "high",
+      "viewport": "both",
+      "issue": "The policy text is truncated with a broken character (\\u2013) \u2014 this is a technical artifact that should not appear in production UI. It breaks the professional tone.",
+      "fix": "Replace the broken character with the correct em dash (\u2014) or hyphen (-) as appropriate. Ensure all text is properly formatted and free of encoding errors.",
+      "screen": "policy",
+      "source": "vision"
+    },
+    {
+      "severity": "medium",
+      "viewport": "both",
+      "issue": "The screen is too empty and lacks visual guidance \u2014 no visual cues for where to tap or what to do next. The 'Continue' button is the only actionable element, but its lack of styling makes it feel secondary.",
+      "fix": "Add subtle visual cues such as a faint background highlight or border around the button. Consider adding a small icon or label to reinforce the action (e.g., 'Continue to Dashboard').",
+      "screen": "policy",
+      "source": "vision"
+    },
+    {
+      "severity": "high",
+      "screen": "policy",
+      "source": "vision",
+      "issue": "visual quality 4/10 on 'policy' (needs 8+): The screen is functional but visually underwhelming and lacks polish. It uses browser-default styling, has no visual hierarchy or branding, and appears as a basic form without any design language. The layout is minimal but unrefined, with no spacing, alignment, or typography that suggests a premium product.",
+      "fix": "Address this screen's findings until it looks polished and professional."
+    },
+    {
+      "severity": "high",
+      "viewport": "both",
+      "issue": "The screen is entirely blank except for a loading indicator and a bottom navigation bar with no content or guidance.",
+      "fix": "Implement an empty state with clear copy and a primary action (e.g., 'Add receipt' FAB) as per the design spec. Add proper typography, spacing, and visual hierarchy.",
+      "screen": "dashboard empty",
+      "source": "vision"
+    },
+    {
+      "severity": "high",
+      "viewport": "both",
+      "issue": "No visual hierarchy or primary action is indicated. The user has no clear next step.",
+      "fix": "Add a prominent FAB (e.g., 'Add receipt') and ensure it's visually distinct and positioned for easy access.",
+      "screen": "dashboard empty",
+      "source": "vision"
+    },
+    {
+      "severity": "high",
+      "viewport": "both",
+      "issue": "Typography is missing entirely. No readable text size or line length.",
+      "fix": "Add a type scale with readable sizes for headings, body, and labels. Ensure line length is comfortable (45-75 characters).",
+      "screen": "dashboard empty",
+      "source": "vision"
+    },
+    {
+      "severity": "high",
+      "viewport": "both",
+      "issue": "No spacing or alignment on a consistent grid. Elements are not grouped or separated.",
+      "fix": "Apply a consistent grid system. Use padding, margins, and spacing to separate elements and create visual breathing room.",
+      "screen": "dashboard empty",
+      "source": "vision"
+    },
+    {
+      "severity": "high",
+      "viewport": "both",
+      "issue": "No grouping of cards or sections. Everything is flat and unstructured.",
+      "fix": "Group related elements into cards or sections with clear visual boundaries and consistent spacing.",
+      "screen": "dashboard empty",
+      "source": "vision"
+    },
+    {
+      "severity": "high",
+      "viewport": "both",
+      "issue": "No color use or contrast. The screen is monochromatic and lacks visual guidance.",
+      "fix": "Use a brand color palette with sufficient contrast for text and interactive elements. Apply color to highlight primary actions and states.",
+      "screen": "dashboard empty",
+      "source": "vision"
+    },
+    {
+      "severity": "high",
+      "viewport": "both",
+      "issue": "No form design. No labels, no field sizes, no hints, no error placement.",
+      "fix": "Implement form design with labels above fields, consistent field sizes, helpful hints, and error placement below fields.",
+      "screen": "dashboard empty",
+      "source": "vision"
+    },
+    {
+      "severity": "high",
+      "viewport": "both",
+      "issue": "Navigation is present but not useful. The bottom tab bar is visible but doesn't guide the user to the next action.",
+      "fix": "Ensure the bottom tab bar is contextually relevant and guides the user to the next step. Consider hiding or dimming non-relevant tabs during loading states.",
+      "screen": "dashboard empty",
+      "source": "vision"
+    },
+    {
+      "severity": "high",
+      "viewport": "both",
+      "issue": "No empty state that guides the next step. The user has no idea what to do next.",
+      "fix": "Implement an empty state with clear copy and a primary action (e.g., 'Add receipt' FAB) as per the design spec.",
+      "screen": "dashboard empty",
+      "source": "vision"
+    },
+    {
+      "severity": "high",
+      "viewport": "both",
+      "issue": "No use of space on desktop. The layout is stretched and everything hugs the left edge.",
+      "fix": "Design a desktop layout that uses the full viewport. Avoid stretching or hugging the left edge. Use padding and spacing to create a balanced layout.",
+      "screen": "dashboard empty",
+      "source": "vision"
+    },
+    {
+      "severity": "high",
+      "viewport": "phone",
+      "issue": "No touch-friendly controls. The screen is empty and has no interactive elements.",
+      "fix": "Add touch-friendly controls (e.g., FAB) with appropriate size and spacing for finger taps.",
+      "screen": "dashboard empty",
+      "source": "vision"
+    },
+    {
+      "severity": "high",
+      "viewport": "both",
+      "issue": "Everything looks like unstyled browser defaults. No designed layout, no brand, no hierarchy.",
+      "fix": "Apply a designed layout with proper typography, spacing, color, and visual hierarchy. Add brand elements and visual cues.",
+      "screen": "dashboard empty",
+      "source": "vision"
+    },
+    {
+      "severity": "high",
+      "screen": "dashboard empty",
+      "source": "vision",
+      "issue": "visual quality 3/10 on 'dashboard empty' (needs 8+): The screen is visually empty and unstyled, resembling browser defaults. No visual hierarchy, no primary action, no typography, no spacing, no grouping, no color contrast, no form design, no navigation guidance, and no empty state guidance. It looks broken and unprofessional.",
+      "fix": "Address this screen's findings until it looks polished and professional."
+    }
+  ],
+  "lighthouse": [
+    {
+      "accessibility": 100,
+      "bestPractices": 100,
+      "performance": 74
+    }
+  ],
+  "vision_scores": [
+    {
+      "screen": "policy",
+      "score": 4.0,
+      "summary": "The screen is functional but visually underwhelming and lacks polish. It uses browser-default styling, has no visual hierarchy or branding, and appears as a basic form without any design language. The layout is minimal but unrefined, with no spacing, alignment, or typography that suggests a premium product."
+    },
+    {
+      "screen": "dashboard empty",
+      "score": 3.0,
+      "summary": "The screen is visually empty and unstyled, resembling browser defaults. No visual hierarchy, no primary action, no typography, no spacing, no grouping, no color contrast, no form design, no navigation guidance, and no empty state guidance. It looks broken and unprofessional."
+    }
+  ]
+}
