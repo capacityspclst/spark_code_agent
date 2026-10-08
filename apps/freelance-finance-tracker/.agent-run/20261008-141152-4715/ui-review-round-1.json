@@ -1,0 +1,153 @@
+{
+  "verdict": "fail",
+  "summary": "The app largely implements the design spec, but the critical PolicyScreen is broken \u2013 the agreement checkbox never toggles, so the user cannot proceed past the policy gate. Axe audits also flag missing ARIA attributes on the custom checkbox, nested interactive elements, and an image with no accessible label. These accessibility failures together block the primary flow and violate WCAG. Additional issues include inconsistent use of the design token palette, missing autocomplete props on form fields, and a few minor accessibility and touch\u2011target regressions. Fixing the checkbox implementation (and any related components) will resolve the highest\u2011severity blockers; the remaining items are important for polish and compliance.",
+  "findings": [
+    {
+      "severity": "high",
+      "file": "src/screens/PolicyScreen.tsx",
+      "issue": "Policy acceptance checkbox does not change state when tapped, leaving the Continue button permanently disabled and blocking the primary flow.",
+      "fix": "Replace the custom checkbox with React Native Paper's <Checkbox> component (or a correctly managed <TouchableOpacity>) and wire its onPress to update a boolean state. Ensure the Continue button\u2019s disabled prop is tied to that state. Add proper state handling in the component and unit\u2011test the toggle.",
+      "source": "designer"
+    },
+    {
+      "severity": "high",
+      "file": "src/screens/PolicyScreen.tsx",
+      "issue": "Custom checkbox element uses role=\"checkbox\" but lacks required aria-checked attribute, causing a critical axe accessibility violation.",
+      "fix": "If keeping a custom element, add aria-checked=\"true|false\" reflecting the component\u2019s state, and ensure the element has a proper label via aria-label. Prefer using the native <Checkbox> component which emits correct accessibility props automatically.",
+      "source": "designer"
+    },
+    {
+      "severity": "high",
+      "file": "src/screens/PolicyScreen.tsx",
+      "issue": "Nested interactive elements inside the custom checkbox (a negative tabindex element) trigger axe\u2019s \u2018nested-interactive\u2019 error, breaking keyboard navigation and screen\u2011reader focus.",
+      "fix": "Remove any interactive child (e.g., a <div> or <span> with its own tabindex) inside the checkbox container. The checkbox should be a single actionable element that contains only presentational markup.",
+      "source": "designer"
+    },
+    {
+      "severity": "high",
+      "file": "src/components/ui/SummaryCard.tsx",
+      "issue": "<div role=\"img\"> used for receipt thumbnail without an accessible label or alt text, violating WCAG and axe\u2019s \u2018role-img-alt\u2019 rule.",
+      "fix": "Replace the <div> with React Native's <Image> component and provide an accessibilityLabel such as \"Receipt photo taken on <date>\". If a <div> must be used, add aria-label or aria-labelledby pointing to a descriptive element.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/components/ui/FormField.tsx",
+      "issue": "Form inputs lack autoComplete attributes (e.g., amount, date, category) which the design spec requires for best\u2011practice sign\u2011up / data entry flows.",
+      "fix": "Pass appropriate autoComplete values to the underlying <TextInput> (e.g., autoComplete=\"off\", \"name\", \"email\", \"postal-code\"). Align each field with the HTML autocomplete spec.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/components/ui/PrimaryButton.tsx",
+      "issue": "Button components use hard\u2011coded color values in style props (e.g., '#0061A4') rather than pulling from the MD3 theme tokens.",
+      "fix": "Replace any literal color values with `theme.colors.primary`, `theme.colors.onPrimary`, etc., via the `useTheme` hook or styled components. Ensure spacing uses `theme.spacing` values instead of magic numbers.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/components/ui/BottomTabNavigator.tsx",
+      "issue": "Bottom\u2011tab icons lack explicit `accessibilityLabel` props, making them invisible to screen\u2011readers.",
+      "fix": "Add an `accessibilityLabel` prop to each BottomNavigation route, describing the destination (e.g., \"Dashboard\", \"Receipts\").",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "src/components/ui/EmptyState.tsx",
+      "issue": "EmptyState view does not set a landmark role (e.g., `role=\"region\"`), which could aid navigation for assistive technology.",
+      "fix": "Add `accessibilityRole=\"region\"` and `accessibilityLabel` describing the empty state context.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "src/components/ui/SummaryCard.tsx",
+      "issue": "SummaryCard lacks a visible focus outline on web when focused via keyboard, violating the design\u2019s focus\u2011visible requirement.",
+      "fix": "Add CSS (or style prop) for `:focus-visible { outline: 2px solid ${theme.colors.onSurfaceVariant}; }` or use React Native Paper\u2019s `style` prop to emulate a high\u2011contrast outline on focus.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "src/components/ui/Screen.tsx",
+      "issue": "Screen wrapper uses a hard\u2011coded maxWidth (420) that does not adapt to the desktop spec\u2019s 560\u202fpx column width.",
+      "fix": "Update the wrapper to conditionally apply `maxWidth: 560` on viewports \u2265 1280\u202fpx (e.g., using `useWindowDimensions` or a responsive style helper).",
+      "source": "designer"
+    },
+    {
+      "severity": "high",
+      "viewport": "phone",
+      "issue": "The entire screen uses browser-default styling with no custom fonts, spacing, or visual hierarchy. Text is monotonous and lacks a type scale.",
+      "fix": "Apply a custom type scale with distinct headings, body, and button typography. Use consistent spacing and padding to create visual hierarchy.",
+      "screen": "policy",
+      "source": "vision"
+    },
+    {
+      "severity": "high",
+      "viewport": "phone",
+      "issue": "The checkbox and 'Continue' button are misaligned and lack visual emphasis. The button is centered but too small and lacks a clear action state.",
+      "fix": "Center the checkbox and button within a card or container. Increase button size and add visual feedback (e.g., border, hover state) to make it the clear primary action.",
+      "screen": "policy",
+      "source": "vision"
+    },
+    {
+      "severity": "high",
+      "viewport": "phone",
+      "issue": "The screen is cramped and uses a single column layout with no padding or margins, making it feel like a browser default. The text is too close to the edges.",
+      "fix": "Add generous padding on all sides. Use a consistent grid system to align elements. Increase spacing between the checkbox and button.",
+      "screen": "policy",
+      "source": "vision"
+    },
+    {
+      "severity": "high",
+      "viewport": "phone",
+      "issue": "The 'Continue' button is disabled by default, but there's no visual indicator (e.g., opacity, grayed-out state) to communicate this to the user.",
+      "fix": "Apply a disabled state to the button with reduced opacity and/or a gray color to clearly indicate it's inactive.",
+      "screen": "policy",
+      "source": "vision"
+    },
+    {
+      "severity": "medium",
+      "viewport": "phone",
+      "issue": "The text 'I agree to the Terms of Use and Privacy Policy.' is split across two lines, which is visually jarring and inconsistent with the rest of the text.",
+      "fix": "Ensure all text lines are aligned and consistent. Consider wrapping the text to fit within a single line or using a more compact font if necessary.",
+      "screen": "policy",
+      "source": "vision"
+    },
+    {
+      "severity": "medium",
+      "viewport": "phone",
+      "issue": "The background color is a light gray, which is not a brand color or design system color, making the screen feel generic and unpolished.",
+      "fix": "Apply a brand color or design system color to the background. Ensure it provides sufficient contrast with the text.",
+      "screen": "policy",
+      "source": "vision"
+    },
+    {
+      "severity": "low",
+      "viewport": "both",
+      "issue": "The desktop version is a stretched phone layout with no responsive design. The content is not scaled or reflowed for desktop.",
+      "fix": "Implement a responsive design that adapts to desktop. Use a grid system to align elements and ensure proper spacing and alignment on larger screens.",
+      "screen": "policy",
+      "source": "vision"
+    },
+    {
+      "severity": "high",
+      "screen": "policy",
+      "source": "vision",
+      "issue": "visual quality 5/10 on 'policy' (needs 8+): The screen is functional but lacks polish and visual hierarchy. It uses browser-default styling, has poor spacing, and appears unstyled and unprofessional. The layout is cramped and misaligned, making it look like a first draft rather than a polished product.",
+      "fix": "Address this screen's findings until it looks polished and professional."
+    }
+  ],
+  "lighthouse": [
+    {
+      "accessibility": 93,
+      "bestPractices": 100,
+      "performance": 58
+    }
+  ],
+  "vision_scores": [
+    {
+      "screen": "policy",
+      "score": 5.0,
+      "summary": "The screen is functional but lacks polish and visual hierarchy. It uses browser-default styling, has poor spacing, and appears unstyled and unprofessional. The layout is cramped and misaligned, making it look like a first draft rather than a polished product."
+    }
+  ]
+}
