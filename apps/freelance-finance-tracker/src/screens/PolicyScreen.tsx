@@ -1,8 +1,8 @@
 // src/screens/PolicyScreen.tsx
 import React, { useState } from 'react';
-import { View } from 'react-native';
+import { Pressable, View } from 'react-native';
 import { Screen } from '../components/ui/Screen';
-import { Text, useTheme, Checkbox } from 'react-native-paper';
+import { Text, useTheme } from 'react-native-paper';
 import { setPolicyAcceptance, POLICY_VERSION } from '../lib/policy';
 import { useNavigation } from '@react-navigation/native';
 import { PrimaryButton } from '../components/ui/PrimaryButton';
@@ -32,17 +32,21 @@ export default function PolicyScreen() {
       <Text variant="bodyMedium" style={{ marginBottom: spacing.lg ?? 24 }}>
         Track receipts and mileage locally \u2013 your data never leaves the device.
       </Text>
-      <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: spacing.sm ?? 8 }}>
-        <Checkbox
-          status={checked ? 'checked' : 'unchecked'}
-          onPress={toggle}
-          accessibilityLabel="I agree to the Terms of Use and Privacy Policy."
-          accessibilityState={{ checked }}
-        />
-        <Text variant="bodyMedium" style={{ marginLeft: spacing.sm ?? 8 }}>
+      {/* Accessible custom checkbox */}
+      <Pressable
+        onPress={toggle}
+        accessibilityRole="checkbox"
+        accessibilityState={{ checked }}
+        accessibilityLabel="I agree to the Terms of Use and Privacy Policy."
+        style={{ flexDirection: 'row', alignItems: 'center', marginBottom: spacing.sm ?? 8 }}
+      >
+        <Text variant="bodyLarge" style={{ marginRight: spacing.sm ?? 8 }}>
+          {checked ? '\u2611' : '\u2610'}
+        </Text>
+        <Text variant="bodyMedium">
           I agree to the Terms of Use and Privacy Policy.
         </Text>
-      </View>
+      </Pressable>
       <PrimaryButton
         onPress={handleContinue}
         disabled={!checked || saving}
