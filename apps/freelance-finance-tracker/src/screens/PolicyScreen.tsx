@@ -31,8 +31,8 @@ export default function PolicyScreen({ onAccept, readOnly }: Props) {
       </Card>
       {readOnly ? null : (
         <>
-          <CheckboxField label="I agree to the Terms of Use and Privacy Policy." checked={agreed} onChange={setAgreed} />
-          <PrimaryButton label="Continue" disabled={!agreed} onPress={onAccept} />
+          <CheckboxField label="I have read and agree to the Terms of Use and Privacy Policy." checked={agreed} onChange={setAgreed} />
+          <PrimaryButton label="Accept" disabled={!agreed} onPress={onAccept} />
           {!agreed ? <Text variant="bodySmall" style={styles.hint}>Tick the box above to continue.</Text> : null}
         </>
       )}

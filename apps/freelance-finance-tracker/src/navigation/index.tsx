@@ -3,9 +3,11 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { NavigationContainer, DefaultTheme } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import HomeScreen from '../screens/HomeScreen';
-import PolicyScreen from '../screens/PolicyScreen';
+import DashboardScreen from '../screens/DashboardScreen';
+import ReceiptsScreen from '../screens/ReceiptsScreen';
 import SettingsScreen from '../screens/SettingsScreen';
+import PolicyScreen from '../screens/PolicyScreen';
+import ReceiptEntryScreen from '../screens/ReceiptEntryScreen';
 import { theme } from '../theme';
 
 const Tab = createBottomTabNavigator();
@@ -26,7 +28,8 @@ function Tabs() {
         tabBarLabelStyle: { fontSize: 12, fontWeight: '500' },
       }}
     >
-      <Tab.Screen name="Home" component={HomeScreen} options={{ tabBarIcon: tabIcon('home-outline') }} />
+      <Tab.Screen name="Dashboard" component={DashboardScreen} options={{ tabBarIcon: tabIcon('view-dashboard-outline') }} />
+      <Tab.Screen name="Receipts" component={ReceiptsScreen} options={{ tabBarIcon: tabIcon('receipt-outline') }} />
       <Tab.Screen name="Settings" options={{ tabBarIcon: tabIcon('cog-outline') }}>
         {({ navigation }) => <SettingsScreen onViewPolicy={() => navigation.getParent()?.navigate('Policy')} />}
       </Tab.Screen>
@@ -45,6 +48,8 @@ export default function Navigation() {
         <Stack.Screen name="Policy" options={{ title: 'Terms and Privacy Policy' }}>
           {() => <PolicyScreen readOnly onAccept={() => {}} />}
         </Stack.Screen>
+        <Stack.Screen name="ReceiptEntry" options={{ title: 'Add receipt' }} component={ReceiptEntryScreen} />
+        {/* Future modal screens like MileageEntry can be added here */}
       </Stack.Navigator>
     </NavigationContainer>
   );

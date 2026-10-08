@@ -22,3 +22,9 @@ export async function acceptPolicy(store: Store, now: Date = new Date()): Promis
   await store.set(KEY, acceptance);
   return acceptance;
 }
+
+/** Helper for tests: returns true if policy already accepted in the given store. */
+export async function isPolicyAccepted(store: Store): Promise<boolean> {
+  const a = await getPolicyAcceptance(store);
+  return policyAccepted(a);
+}

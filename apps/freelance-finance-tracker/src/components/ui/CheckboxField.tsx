@@ -6,15 +6,13 @@ import { layout, space, theme } from '../../theme';
 
 interface Props { label: string; checked: boolean; onChange: (checked: boolean) => void }
 
-/** A real checkbox: one pressable element with role checkbox, its checked state and its label. Paper's
- * Checkbox.Item isn't used because on the web it nests two checkboxes and leaves out aria-checked, so it can't
- * be ticked by assistive tech (or the UI flow). Never draw a checkbox with a text glyph. */
+/** A real checkbox: one pressable element with role checkbox, its checked state and its label. */
 export default function CheckboxField({ label, checked, onChange }: Props) {
   return (
     <Pressable
-      role="checkbox"
-      aria-checked={checked}
-      aria-label={label}
+      accessibilityRole="checkbox"
+      accessibilityState={{ checked }}
+      accessibilityLabel={label}
       onPress={() => onChange(!checked)}
       style={({ pressed }) => [styles.row, pressed && styles.pressed]}
     >
