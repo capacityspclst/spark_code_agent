@@ -45,8 +45,8 @@ export default function ReceiptEntryScreen() {
     try {
       await addReceipt(getStore(), receipt);
       setPendingSnack('Receipt saved');
-      // Navigate to Dashboard; it will display the snackbar via pending snack
-      navigation.navigate('Dashboard');
+      // Navigate to Dashboard tab within the Main stack
+      navigation.navigate('Main', { screen: 'Dashboard' });
     } catch (e) {
       setError('Unable to save receipt. Please try again.');
     } finally {
