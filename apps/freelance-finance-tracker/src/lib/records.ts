@@ -1,5 +1,13 @@
 // src/lib/records.ts
-import { storage } from './storage';
+import {
+  addReceipt as dbAddReceipt,
+  listReceipts as dbListReceipts,
+  clearAll as dbClearAll,
+  addMileage as dbAddMileage,
+  listMileage as dbListMileage,
+  setConfig as dbSetConfig,
+  getConfig as dbGetConfig,
+} from './storage';
 
 export interface Receipt {
   id: string;
@@ -26,37 +34,41 @@ export interface Config {
 
 // Receipt CRUD
 export async function addReceipt(r: Receipt): Promise<void> {
-  storage.addReceipt(r);
+  await dbAddReceipt(r);
 }
 export async function listReceipts(): Promise<Receipt[]> {
-  return storage.listReceipts();
+  return dbListReceipts();
 }
 export async function deleteReceipt(id: string): Promise<void> {
-  // simple filter
-  const receipts = await storage.listReceipts();
+  const receipts = await dbListReceipts();
   const filtered = receipts.filter(r => r.id !== id);
-  // replace store
-  // @ts-ignore - direct manipulation for test stub
-  (storage as any).receiptStore = filtered;
+  // Clear and re-add remaining receipts
+  await dbClearAll();
+  for (const r of filtered) {
+    await dbAddReceipt(r);
+  }
 }
 
 // Mileage CRUD
 export async function addMileage(m: MileageEntry): Promise<void> {
-  storage.addMileage(m);
+  await dbAddMileage(m);
 }
 export async function listMileage(): Promise<MileageEntry[]> {
-  return storage.listMileage();
+  return dbListMileage();
 }
 export async function deleteMileage(id: string): Promise<void> {
-  const entries = await storage.listMileage();
+  const entries = await dbListMileage();
   const filtered = entries.filter(e => e.id !== id);
-  (storage as any).mileageStore = filtered;
+  await dbClearAll();
+  for (const e of filtered) {
+    await dbAddMileage(e);
+  }
 }
 
 // Config
 export async function setConfig(cfg: Config): Promise<void> {
-  storage.setConfig(cfg);
+  await dbSetConfig(cfg);
 }
 export async function getConfig(): Promise<Config> {
-  return storage.getConfig();
+  return dbGetConfig();
 }

@@ -21,8 +21,7 @@ import {
   restoreBackup,
 } from '../../src/lib/backup';
 import * as FileSystem from 'expo-file-system';
-import { deriveKey, encrypt, decrypt } from '../../src/lib/encryption';
-import { randomBytes } from '@noble/hashes/utils';
+import { deriveKey, encrypt, decrypt, randomBytes } from '../../src/lib/encryption';
 
 describe('Freelance Finance Tracker Acceptance Tests', () => {
   test('Initial policy acceptance is null', async () => {
