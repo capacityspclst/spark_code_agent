@@ -1,0 +1,124 @@
+{
+  "verdict": "fail",
+  "summary": "The app fails the critical primary\u2011flow test because the policy acceptance checkbox is not accessible nor functional, preventing users from ever reaching the dashboard. AXe also flags missing aria\u2011checked on the custom checkbox and missing alt text on image roles, and console errors show SecureStore is being called with a non\u2011existent API. Apart from those show\u2011stopper issues, the implementation deviates from the design spec in several smaller ways: design tokens are not consistently applied, several screens lack the required loading/empty/error states, and some interactive elements lack proper ARIA labels or visible focus outlines.",
+  "findings": [
+    {
+      "severity": "high",
+      "file": "src/screens/PolicyScreen.tsx",
+      "issue": "Custom checkbox rendered with role=\"checkbox\" does not have an aria-checked attribute and does not toggle its checked state. Clicking the checkbox does not change the state, so the Continue button remains disabled and the primary flow (policy acceptance \u2192 dashboard) is blocked.",
+      "fix": "Replace the custom checkbox with React Native Paper\u2019s <Checkbox> component (or a native <input type=\"checkbox\"> on web) and bind its checked value to component state. Add aria-checked={checked} (and aria-label if needed) and ensure onPress updates the state and persists the acceptance via SecureStore. Verify that the Continue button becomes enabled only when checked.",
+      "source": "designer"
+    },
+    {
+      "severity": "high",
+      "file": "src/lib/policy.ts",
+      "issue": "Console error: \"Error reading policy acceptance TypeError: n.default.getValueWithKeyAsync is not a function\" indicates the SecureStore mock or usage is mismatched, causing the policy check to fail at runtime.",
+      "fix": "Verify that all calls use SecureStore.getItemAsync / setItemAsync (the API provided by expo-secure-store). Update the Jest mock to export these exact method names (already does) and remove any stray import that references getValueWithKeyAsync. Add a try/catch that logs a user\u2011friendly error and falls back to showing the PolicyScreen.",
+      "source": "designer"
+    },
+    {
+      "severity": "high",
+      "file": "src/screens/ReceiptsScreen.tsx",
+      "issue": "Receipt thumbnails are rendered with role=\"img\" but lack an aria-label or alt text, violating WCAG and triggering Axe\u2019s role-img-alt violation.",
+      "fix": "Pass an explicit accessibilityLabel (or alt prop) to the image component, e.g., accessibilityLabel={`Receipt photo taken on ${date}`}. Ensure the underlying element is a <Image> or Paper\u2019s <Avatar.Image> that correctly maps the label to a native accessibility description.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/components/ui/Screen.tsx",
+      "issue": "Layout uses hard\u2011coded numeric values (padding: 16, maxWidth: 420) instead of the design token spacing defined in appTheme (theme.spacing.md, theme.spacing.lg, etc.). This deviates from the token\u2011driven design system.",
+      "fix": "Import the theme via useTheme() and replace literals with theme.spacing values (e.g., padding: theme.spacing.md, maxWidth: theme.spacing.xxl * 5 or a named token). This ensures consistent spacing across platforms and future theming changes.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/screens/SettingsScreen.tsx",
+      "issue": "SettingsScreen only displays a headline \"Settings\" and does not implement the sections (App lock, Mileage rate, Tax rate, Backup & restore, Policy, Delete all data) required by the spec, nor the associated loading, error, and success states for backup/restore.",
+      "fix": "Add the missing sections using the appropriate Paper components (List.Item, Switch, TextInput, Dialog, Snackbar) and implement the state handling (loading indicator, error dialogs, success toasts) as described in DESIGN.md.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "src/components/ui/BottomTabNavigator.tsx",
+      "issue": "Icons in the bottom tab bar are rendered with aria\u2011hidden, removing them from the accessibility tree, and no explicit accessibilityLabel is provided for the tab items. Screen reader users cannot identify the purpose of each tab.",
+      "fix": "Remove aria\u2011hidden from the icons and instead provide an accessibilityLabel on the tabBarIcon element (or rely on the label prop). Ensure the BottomNavigation component\u2019s tabBarAccessibilityLabel reflects the route name.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "src/components/ui/FormField.tsx",
+      "issue": "FormField passes only accessibilityLabel to TextInput but does not set an explicit role or link the HelperText to the input via aria-describedby, which can reduce the clarity of validation errors for assistive technologies.",
+      "fix": "Add a unique id to the TextInput and reference it from the HelperText using the accessibilityLabel/aria-describedby pattern (or use the helperText prop provided by React Native Paper). This will improve error announcement.",
+      "source": "designer"
+    },
+    {
+      "severity": "high",
+      "viewport": "phone",
+      "issue": "The entire screen is a plain white background with no visual hierarchy or grouping. The policy text is not styled or emphasized, and the checkbox and button are unstyled and lack affordance.",
+      "fix": "Apply a consistent type scale: use a bold, larger font for the title, a smaller font for the policy text, and a clear, branded button style for 'Continue'. Add subtle padding and spacing around the checkbox and button to create visual breathing room.",
+      "screen": "policy",
+      "source": "vision"
+    },
+    {
+      "severity": "high",
+      "viewport": "phone",
+      "issue": "The 'Continue' button is centered with no visual weight or emphasis, making it hard to identify as the primary action. It's also not styled with a button state or hover effect.",
+      "fix": "Style the button with a clear border, background color, or elevation to make it stand out. Add a subtle animation or state change on tap to reinforce it as the primary action.",
+      "screen": "policy",
+      "source": "vision"
+    },
+    {
+      "severity": "high",
+      "viewport": "phone",
+      "issue": "The checkbox is unstyled and lacks visual feedback. The text next to it is not aligned or spaced properly, making it feel like a raw HTML element.",
+      "fix": "Apply a consistent checkbox design with a clear icon or checkmark. Align the text to the left of the checkbox and add padding around it for readability.",
+      "screen": "policy",
+      "source": "vision"
+    },
+    {
+      "severity": "high",
+      "viewport": "phone",
+      "issue": "The policy text is a single paragraph with no line breaks or visual separation, making it hard to scan. It\u2019s also not aligned to a grid.",
+      "fix": "Break the policy text into multiple lines with appropriate line height. Align it to the left and add a subtle margin to create visual separation from the checkbox and button.",
+      "screen": "policy",
+      "source": "vision"
+    },
+    {
+      "severity": "high",
+      "viewport": "phone",
+      "issue": "The screen is not touch-friendly. The button and checkbox are too close to the edges and lack sufficient tap targets.",
+      "fix": "Add padding around the button and checkbox to create a comfortable tap target. Ensure the button is large enough for thumb navigation.",
+      "screen": "policy",
+      "source": "vision"
+    },
+    {
+      "severity": "high",
+      "viewport": "desktop",
+      "issue": "The desktop version is a stretched phone layout with no responsive design. The content is centered and lacks any desktop-specific layout or spacing.",
+      "fix": "Apply a desktop layout with proper margins, padding, and alignment. Use a grid system to organize the content and ensure the button and checkbox are appropriately sized for desktop interaction.",
+      "screen": "policy",
+      "source": "vision"
+    },
+    {
+      "severity": "high",
+      "screen": "policy",
+      "source": "vision",
+      "issue": "visual quality 4/10 on 'policy' (needs 8+): The screen is minimally styled and lacks visual hierarchy, spacing, and alignment that would make it feel polished. It resembles browser defaults with no grid, no consistent typography scale, and no touch-friendly design. The layout is sparse but not intentional \u2014 it feels like a placeholder.",
+      "fix": "Address this screen's findings until it looks polished and professional."
+    }
+  ],
+  "lighthouse": [
+    {
+      "accessibility": 93,
+      "bestPractices": 96,
+      "performance": 57
+    }
+  ],
+  "vision_scores": [
+    {
+      "screen": "policy",
+      "score": 4.0,
+      "summary": "The screen is minimally styled and lacks visual hierarchy, spacing, and alignment that would make it feel polished. It resembles browser defaults with no grid, no consistent typography scale, and no touch-friendly design. The layout is sparse but not intentional \u2014 it feels like a placeholder."
+    }
+  ]
+}
