@@ -1,8 +1,8 @@
 // src/screens/PolicyScreen.tsx
 import React, { useState } from 'react';
-import { Pressable } from 'react-native';
+import { View } from 'react-native';
 import { Screen } from '../components/ui/Screen';
-import { Text, useTheme } from 'react-native-paper';
+import { Text, useTheme, Checkbox } from 'react-native-paper';
 import { setPolicyAcceptance, POLICY_VERSION } from '../lib/policy';
 import { useNavigation } from '@react-navigation/native';
 import { PrimaryButton } from '../components/ui/PrimaryButton';
@@ -32,19 +32,22 @@ export default function PolicyScreen() {
       <Text variant="bodyMedium" style={{ marginBottom: spacing.lg ?? 24 }}>
         Track receipts and mileage locally \u2013 your data never leaves the device.
       </Text>
-      <Pressable
-        style={{ flexDirection: 'row', alignItems: 'center', marginBottom: spacing.sm ?? 8 }}
-        onPress={toggle}
-        accessibilityRole="checkbox"
-        accessibilityState={{ checked }}
-        accessibilityLabel="I agree to the Terms of Use and Privacy Policy."
-      >
-        <Text variant="bodyLarge" style={{ marginRight: spacing.sm ?? 8 }}>
-          {checked ? '\u2611' : '\u2610'}
+      <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: spacing.sm ?? 8 }}>
+        <Checkbox
+          status={checked ? 'checked' : 'unchecked'}
+          onPress={toggle}
+          accessibilityLabel="I agree to the Terms of Use and Privacy Policy."
+        />
+        <Text variant="bodyMedium" style={{ marginLeft: spacing.sm ?? 8 }}>
+          I agree to the Terms of Use and Privacy Policy.
         </Text>
-        <Text variant="bodyMedium">I agree to the Terms of Use and Privacy Policy.</Text>
-      </Pressable>
-      <PrimaryButton onPress={handleContinue} disabled={!checked || saving} loading={saving} style={{ marginTop: spacing.lg ?? 24 }}>
+      </View>
+      <PrimaryButton
+        onPress={handleContinue}
+        disabled={!checked || saving}
+        loading={saving}
+        style={{ marginTop: spacing.lg ?? 24 }}
+      >
         Continue
       </PrimaryButton>
     </Screen>

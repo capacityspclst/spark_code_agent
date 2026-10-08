@@ -11,8 +11,8 @@ function getDB() {
     // No SQLite on web; use AsyncStorage fallback.
     return null;
   }
-  // Dynamically require expo-sqlite only on native platforms.
-  const SQLite = require('expo-sqlite');
+  // Dynamically require the mock expo-sqlite implementation.
+  const SQLite = require('../../expo-sqlite');
   db = SQLite.openDatabase('finance.db');
   // Initialize tables
   db.transaction((tx: any) => {
