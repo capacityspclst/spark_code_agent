@@ -1,0 +1,119 @@
+{
+  "verdict": "fail",
+  "summary": "The current implementation diverges dramatically from the DESIGN.md specifications. Key screens (Policy, Settings, Receipts, Mileage, their forms, and several Dashboard states) are incomplete or missing required UI states, copy, and interaction patterns. Accessibility is lacking (no landmarks, missing accessible labels on navigation icons, checkbox not reachable for screen\u2011readers), and touch\u2011target guidelines are not guaranteed. Design tokens are only partially used and hard\u2011coded spacing persists. These gaps cause the primary acceptance flow to fail (the policy\u2011acceptance checkbox cannot be found) and would prevent a user from completing the core receipt/mileage workflow.",
+  "findings": [
+    {
+      "severity": "high",
+      "file": "src/screens/PolicyScreen.tsx",
+      "issue": "PolicyScreen does not render the required checkbox with a proper accessibilityLabel, does not disable the Continue button until the box is checked, and lacks the Loading, Error (SecureStore), and Updated\u2011Version banner states described in the spec. The test suite cannot locate the checkbox, breaking the primary flow.",
+      "fix": "Implement PolicyScreen using the Screen wrapper, render an ActivityIndicator with \"Loading policy\u2026\" while fetching SecureStore, display a Paper Checkbox with `accessibilityLabel=\"I agree to the Terms of Use and Privacy Policy\"`, bind its state to enable/disable a PrimaryButton labelled \"Continue\", show error text in `theme.colors.error` when SecureStore fails, and render a Banner when the stored policy version is outdated. Add appropriate testIDs for automation.",
+      "source": "designer"
+    },
+    {
+      "severity": "high",
+      "file": "src/screens/DashboardScreen.tsx",
+      "issue": "Empty state only includes an \"Add receipt\" action and uses copy that does not match the spec. The \"Add mileage\" FAB is missing, and the layout does not switch to a 2\u00d72 grid on desktop widths.",
+      "fix": "Update the EmptyState to include the description \"Add a receipt or mileage entry to see your financial overview.\" and render two FABs (Add receipt, Add mileage) positioned per the design. Add a responsive container that on viewports \u22651280\u202fpx arranges the four SummaryCards in a 2\u00d72 grid with a 16\u202fpx gap. Use `theme.spacing` for margins.",
+      "source": "designer"
+    },
+    {
+      "severity": "high",
+      "file": "src/screens/SettingsScreen.tsx",
+      "issue": "SettingsScreen only displays a headline and omits all required sections (App lock, Mileage rate, Tax rate, Backup & restore, Policy, Delete all data) as well as the dialogs and alerts defined in the spec.",
+      "fix": "Build the Settings screen using the Screen wrapper and Paper components: switches for App lock, TextInputs with placeholders for mileage and tax rates, PrimaryButtons for \"Create backup\" and \"Restore backup\" that open Dialogs, a Banner for policy version, and an AlertDialog for delete confirmation. Wire these to the existing lib functions and ensure copy matches the spec.",
+      "source": "designer"
+    },
+    {
+      "severity": "high",
+      "file": "src/screens/ReceiptsScreen.tsx",
+      "issue": "The screen does not handle Loading, Empty, Error, or Success states with the exact copy required. No ActivityIndicator or error message is shown and the EmptyState copy is incorrect.",
+      "fix": "Add state management (loading, error, data) to ReceiptsScreen. Show `<ActivityIndicator>Loading receipts\u2026</ActivityIndicator>` while fetching, an `<EmptyState>` with title \"No receipts\" and description \"Tap the + button to add your first receipt.\", an error Text in red when DB fails, and a FlatList of receipt cards on success.",
+      "source": "designer"
+    },
+    {
+      "severity": "high",
+      "file": "src/screens/MileageScreen.tsx",
+      "issue": "Similar to ReceiptsScreen, the Mileage screen lacks the Loading, Empty, Error, and Success states and uses wrong copy.",
+      "fix": "Mirror the implementation of ReceiptsScreen but with mileage\u2011specific copy: loading indicator \"Loading mileage\u2026\", empty state title \"No mileage entries\" and description \"Tap the + button to log your first trip.\", error message \"Could not load mileage.\" and a FlatList of mileage items.",
+      "source": "designer"
+    },
+    {
+      "severity": "high",
+      "file": "src/screens/ReceiptFormScreen.tsx",
+      "issue": "Form does not display inline validation errors, does not show a spinner on the Save button with the label \"Saving receipt\u2026\", and does not navigate back with a Snackbar on success. Required field labels, autocomplete attributes, and show/hide password (not needed) are missing.",
+      "fix": "Wrap each field in `FormField` with appropriate `keyboardType` and `autoComplete` props, show `HelperText` on validation errors, change Save button to `loading={isSaving}` and label \"Saving receipt\u2026\", and after successful save call navigation.goBack() and trigger a Snackbar with \"Receipt saved\".",
+      "source": "designer"
+    },
+    {
+      "severity": "high",
+      "file": "src/screens/MileageFormScreen.tsx",
+      "issue": "Same deficiencies as ReceiptFormScreen: missing validation feedback, saving spinner, success Snackbar, and correct copy for fields and messages.",
+      "fix": "Implement the FormScreen analogous to ReceiptFormScreen but with fields Date, Miles, Purpose, validation messages from the spec, and the Save button showing \"Saving mileage\u2026\".",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/components/ui/BottomTabNavigator.tsx",
+      "issue": "Navigation icons are rendered with `aria-hidden` and no `accessibilityLabel`, making them invisible to screen readers. Touch target size is not explicitly enforced to >=44\u202f\u00d7\u202f44\u202fpx.",
+      "fix": "Remove `aria-hidden` from icons, add `accessibilityLabel={route.name}` to each tab, and wrap icons in a pressable that applies a minimum hit\u2011area style (e.g., padding of 10\u202fpx) to guarantee the required touch target.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/components/ui/Screen.tsx",
+      "issue": "The outer `SafeAreaView`/`ScrollView` does not declare a landmark role (`accessibilityRole=\"main\"`), violating the accessibility requirement for proper page landmarks.",
+      "fix": "Add `accessibilityRole=\"main\"` to the top\u2011level container (e.g., `<SafeAreaView accessibilityRole=\"main\" \u2026>`).",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/components/ui/PrimaryButton.tsx",
+      "issue": "Button does not enforce the required minimum height (48\u202fpx) and width (64\u202fpx) nor provide a visible focus outline for keyboard navigation on web.",
+      "fix": "Extend the Button style to include `minHeight: 48, minWidth: 64` and on web add `:focus-visible { outline: 2px solid ${theme.colors.outline}; }` via a style sheet or the `theme` prop. Ensure `accessibilityRole=\"button\"` is retained.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "src/components/ui/Screen.tsx",
+      "issue": "Spacing values (padding:16, maxWidth:420) are hard\u2011coded instead of using the `theme.spacing` tokens defined in `src/theme.ts`.",
+      "fix": "Import `useTheme` and replace literals with `theme.spacing.md` for padding and `theme.spacing.xl` (or appropriate token) for maxWidth values, keeping the design\u2011token consistency.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "src/components/ui/SummaryCard.tsx",
+      "issue": "Margin and padding are hard\u2011coded (marginBottom:8) rather than using the spacing scale from the theme.",
+      "fix": "Replace the literal with `marginBottom: theme.spacing.sm` (or appropriate token) and ensure internal padding respects the spacing tokens.",
+      "source": "designer"
+    },
+    {
+      "severity": "high",
+      "viewport": "both",
+      "issue": "The screen is entirely blank \u2014 no text, no buttons, no placeholders, no loading indicator, no error message, no empty state. It appears as a white canvas with no UI elements.",
+      "fix": "Display a loading indicator (e.g., ActivityIndicator) with text like 'Loading policy...' or, if loading failed, show an error message like 'Failed to load policy. Please restart the app.' or an empty state with guidance. Never ship a blank screen.",
+      "screen": "policy",
+      "source": "vision"
+    },
+    {
+      "severity": "high",
+      "screen": "policy",
+      "source": "vision",
+      "issue": "visual quality 1/10 on 'policy' (needs 8+): The screen is completely blank, showing no content, UI elements, or even placeholder states. This is functionally broken and visually unprofessional. A polished product would never ship with an empty screen like this.",
+      "fix": "Address this screen's findings until it looks polished and professional."
+    }
+  ],
+  "lighthouse": [
+    {
+      "accessibility": null,
+      "bestPractices": null,
+      "performance": null
+    }
+  ],
+  "vision_scores": [
+    {
+      "screen": "policy",
+      "score": 1.0,
+      "summary": "The screen is completely blank, showing no content, UI elements, or even placeholder states. This is functionally broken and visually unprofessional. A polished product would never ship with an empty screen like this."
+    }
+  ]
+}
