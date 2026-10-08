@@ -1,0 +1,175 @@
+{
+  "verdict": "fail",
+  "summary": "The current codebase is missing a large portion of the UI required by the DESIGN.md. The primary onboarding flow crashes because the PolicyScreen does not render a functional \"I agree\" checkbox, leaving the Continue button permanently disabled. In addition, almost every screen lacks the required states (loading, empty, error, success) and UI copy, so the app cannot fulfil the primary flow (add receipt / mileage, view dashboard, export, backup, settings). Where UI does exist, it deviates from the design tokens (hard\u2011coded spacing, unsupported gap style) and falls short on accessibility (missing focus outlines, unchecked accessibility labels, helper text not linked to inputs). These gaps are high\u2011severity blockers; the remaining issues are medium\u2011severity polish/UX problems.",
+  "findings": [
+    {
+      "severity": "high",
+      "file": "src/screens/PolicyScreen.tsx",
+      "issue": "The \"I agree to the Terms of Use and Privacy Policy\" checkbox is missing or not interactable, causing the Continue button to stay disabled and breaking the primary flow.",
+      "fix": "Add a `Checkbox.Item` (or `Checkbox`) from react\u2011native\u2011paper with a visible label, manage its checked state, and enable the Continue button only when checked. Ensure the component has an accessible label and a test\u2011id for automation.",
+      "source": "designer"
+    },
+    {
+      "severity": "high",
+      "file": "src/screens/PolicyScreen.tsx",
+      "issue": "Loading state (ActivityIndicator with \"Loading policy\u2026\") is not implemented, so there is no feedback while SecureStore is read.",
+      "fix": "Introduce a `loading` state flag. While fetching policy acceptance, render `<ActivityIndicator animating={true} />` and a Text element with the required copy.",
+      "source": "designer"
+    },
+    {
+      "severity": "high",
+      "file": "src/screens/PolicyScreen.tsx",
+      "issue": "Error handling for SecureStore failures is missing; the spec requires a red error message \"Failed to load policy. Please restart the app.\"",
+      "fix": "Catch errors from `SecureStore.getItemAsync`, set an `error` state, and display a `Text` component styled with `theme.colors.error` and appropriate `accessibilityLiveRegion=\"assertive\"`.",
+      "source": "designer"
+    },
+    {
+      "severity": "high",
+      "file": "src/screens/PolicyScreen.tsx",
+      "issue": "Version\u2011update banner (\"Policy has been updated to version\u00a0{VERSION} \u2013 please review.\") is not present.",
+      "fix": "Compare stored policy version to `POLICY_VERSION`. If outdated, render a `Banner` component (or a styled `View`) with the exact copy.",
+      "source": "designer"
+    },
+    {
+      "severity": "high",
+      "file": "src/screens/DashboardScreen.tsx",
+      "issue": "DashboardScreen does not implement any of the required states (Loading, Empty, Success, Error) nor the four SummaryCards, recent activity list, or FABs for Add receipt / Add mileage.",
+      "fix": "Create state handling for data fetching with a loading spinner and label. If no activity, render `EmptyState` with the exact copy and an `Add receipt` FAB. On success, layout four `SummaryCard`s in a 2\u00d72 grid (desktop) or vertical stack (mobile) and list recent items. Show error text on DB failure.",
+      "source": "designer"
+    },
+    {
+      "severity": "high",
+      "file": "src/screens/DashboardScreen.tsx",
+      "issue": "The FAB for adding receipts/mileage is missing or not wired to navigation, preventing users from reaching the fast\u2011path forms.",
+      "fix": "Import `FAB` from react-native-paper, position it 16\u202fpx from right/bottom, set `icon=\"plus\"` and `label=\"Add receipt\"` (or a separate button for mileage), and call `navigation.navigate('ReceiptForm')` / `navigation.navigate('MileageForm')` on press.",
+      "source": "designer"
+    },
+    {
+      "severity": "high",
+      "file": "src/screens/ReceiptsScreen.tsx",
+      "issue": "All required states (Loading, Empty, Success, Error) and the list UI are absent; the screen only displays a placeholder or nothing.",
+      "fix": "Implement data fetch with loading indicator, show `EmptyState` when no receipts, render a `FlatList` of receipt cards with thumbnail, amount, date, category, and display an error message on DB failure.",
+      "source": "designer"
+    },
+    {
+      "severity": "high",
+      "file": "src/screens/ReceiptFormScreen.tsx",
+      "issue": "Form does not display validation errors, saving state, success navigation, or the expandable notes field as defined in the spec.",
+      "fix": "Validate each field on blur/submit, show inline `HelperText` errors, disable the Save button until valid, show a spinner and label \"Saving receipt\u2026\" while persisting, then navigate back and trigger a Snackbar. Use a multiline `TextInput` with `maxLength` or `numberOfLines={8}` and `scrollEnabled` for long notes.",
+      "source": "designer"
+    },
+    {
+      "severity": "high",
+      "file": "src/screens/MileageScreen.tsx",
+      "issue": "Missing the full set of states (Loading, Empty, Success, Error) and UI for mileage entries.",
+      "fix": "Mirror ReceiptsScreen implementation: loading indicator, `EmptyState` with the correct copy, `FlatList` of mileage items, and error handling.",
+      "source": "designer"
+    },
+    {
+      "severity": "high",
+      "file": "src/screens/MileageFormScreen.tsx",
+      "issue": "MileageForm lacks validation, saving indicator, success flow, and proper field layout as required.",
+      "fix": "Add Date, Miles, Purpose fields using `FormField`, enforce numeric validation for Miles, show `HelperText` on error, display spinner with \"Saving mileage\u2026\" on submission, navigate back on success, and show a Snackbar.",
+      "source": "designer"
+    },
+    {
+      "severity": "high",
+      "file": "src/screens/SettingsScreen.tsx",
+      "issue": "SettingsScreen is a placeholder showing only a headline; it does not implement loading state, sections (App lock, Mileage rate, Tax rate, Backup & restore, Policy, Delete all data), dialogs for backup/restore, or the delete\u2011confirmation alert.",
+      "fix": "Build the full settings UI using `List.Section` and `List.Item` from react\u2011native\u2011paper, include toggles and text inputs with placeholders, implement dialogs (`Dialog` + `Portal`) for backup progress/success, restore error, and an `Alert` with typed confirmation for data deletion.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/components/ui/PrimaryButton.tsx",
+      "issue": "Button lacks a visible focus outline on web and does not expose a high\u2011contrast focus style, reducing keyboard accessibility.",
+      "fix": "Add `style` that includes `outlineWidth: 2, outlineColor: theme.colors.onPrimary` when `accessibilityState.focused` is true, or rely on Paper\u2019s `theme` to enable focus-visible styling.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/components/ui/FormField.tsx",
+      "issue": "`HelperText` is not linked to its `TextInput` via `accessibilityHint` or `aria-describedby`, so screen readers may not announce the error message.",
+      "fix": "Pass `accessibilityHint={errorMessage}` to `TextInput` when `error` is true, or add `accessibilityLiveRegion=\"assertive\"` to `HelperText`.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/components/ui/Screen.tsx",
+      "issue": "Spacing uses hard\u2011coded numbers (padding: 16, maxWidth: 420) and a `gap: 8` style which is not supported in React Native, violating the design token usage.",
+      "fix": "Replace hard\u2011coded values with `theme.spacing.md` and `theme.spacing.sm`. Remove `gap` and use explicit `marginBottom` on child elements or a `FlatList` approach.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/components/ui/EmptyState.tsx",
+      "issue": "EmptyState does not include proper heading semantics (no `accessibilityRole=\"header\"`) and lacks ARIA live region for dynamic content.",
+      "fix": "Wrap the title `Text` with `accessibilityRole=\"header\"` and set `accessibilityLiveRegion=\"polite\"` on the container so assistive tech announces the empty state.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/components/ui/BottomTabNavigator.tsx",
+      "issue": "Tab bar icons are rendered with `aria-hidden` only, missing descriptive `accessibilityLabel` for screen readers.",
+      "fix": "Provide an `accessibilityLabel` prop to each `MaterialCommunityIcons` based on the route name (e.g., \"Dashboard tab\", \"Receipts tab\").",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/components/ui/BottomTabNavigator.tsx",
+      "issue": "The `size` prop for icons may produce icons smaller than the required 44\u202f\u00d7\u202f44\u202fpx touch target, potentially violating minimum hit\u2011area guidelines.",
+      "fix": "Wrap icons in a View with `style={{ width: 44, height: 44, justifyContent: 'center', alignItems: 'center' }}` to guarantee the hit area, while keeping the visual icon size at 24\u202fpx.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "src/components/ui/PrimaryButton.tsx",
+      "issue": "`style` prop is typed as `any`, reducing type safety.",
+      "fix": "Change the prop type to `StyleProp<ViewStyle>` from `react-native`.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "src/components/ui/SummaryCard.tsx",
+      "issue": "Card height/style does not follow the spec (120\u202fpx height, margin\u2011bottom\u202f16) and uses fixed values instead of design tokens.",
+      "fix": "Apply `style={{ height: 120, marginBottom: theme.spacing.md }}` using the theme spacing values.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "src/components/ui/Screen.tsx",
+      "issue": "`ScrollView` content container uses `width: '100%'` which may exceed the maxWidth on larger screens, causing horizontal overflow on desktop.",
+      "fix": "Set `alignSelf: 'center'` and enforce `maxWidth` only, removing `width: '100%'` to rely on maxWidth constraint.",
+      "source": "designer"
+    },
+    {
+      "severity": "high",
+      "viewport": "both",
+      "issue": "The screen is entirely blank \u2014 no content, no UI elements, no text, no layout, no placeholders, no error message, no loading indicator. It is visually unusable.",
+      "fix": "Render the PolicyScreen UI as specified in DESIGN.md: scrollable policy text, checkbox, and a disabled Continue button. Ensure the screen is visible and functional.",
+      "screen": "policy",
+      "source": "vision"
+    },
+    {
+      "severity": "high",
+      "screen": "policy",
+      "source": "vision",
+      "issue": "visual quality 1/10 on 'policy' (needs 8+): The screen is completely blank \u2014 no UI elements, text, or visual structure are visible. This is not a usable or presentable screen for a polished product. It fails all design criteria and appears to be an unrendered or placeholder image.",
+      "fix": "Address this screen's findings until it looks polished and professional."
+    }
+  ],
+  "lighthouse": [
+    {
+      "accessibility": null,
+      "bestPractices": null,
+      "performance": null
+    }
+  ],
+  "vision_scores": [
+    {
+      "screen": "policy",
+      "score": 1.0,
+      "summary": "The screen is completely blank \u2014 no UI elements, text, or visual structure are visible. This is not a usable or presentable screen for a polished product. It fails all design criteria and appears to be an unrendered or placeholder image."
+    }
+  ]
+}
