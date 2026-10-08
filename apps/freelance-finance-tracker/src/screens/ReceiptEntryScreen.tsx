@@ -7,6 +7,7 @@ import { getStore } from '../lib/storage';
 import { Receipt, ReceiptType } from '../lib/models';
 import { Snackbar } from 'react-native-paper';
 import { setPendingSnack } from '../lib/uiState';
+import ReceiptImagePicker from '../components/ui/ReceiptImagePicker';
 
 export default function ReceiptEntryScreen() {
   const navigation = useNavigation<NavigationProp<any>>();
@@ -15,6 +16,7 @@ export default function ReceiptEntryScreen() {
   const [category, setCategory] = useState('');
   const [type, setType] = useState<ReceiptType>('expense');
   const [notes, setNotes] = useState('');
+  const [photoUri, setPhotoUri] = useState<string | undefined>(undefined);
   const [error, setError] = useState<string>('');
   const [saving, setSaving] = useState(false);
 
@@ -41,11 +43,11 @@ export default function ReceiptEntryScreen() {
       category,
       type,
       notes,
+      photoUri,
     };
     try {
       await addReceipt(getStore(), receipt);
       setPendingSnack('Receipt saved');
-      // Navigate to Dashboard tab within the Main stack
       navigation.navigate('Main', { screen: 'Dashboard' });
     } catch (e) {
       setError('Unable to save receipt. Please try again.');
@@ -57,6 +59,7 @@ export default function ReceiptEntryScreen() {
   return (
     <Screen title="Add receipt">
       <View style={{ gap: 12 }}>
+        <ReceiptImagePicker photoUri={photoUri} onChange={setPhotoUri} />
         <FormField label="Amount" value={amount} onChangeText={setAmount} keyboardType="numeric" />
         <FormField label="Date" value={date} onChangeText={setDate} placeholder="YYYY-MM-DD" />
         <FormField label="Category" value={category} onChangeText={setCategory} />

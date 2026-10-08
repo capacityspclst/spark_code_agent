@@ -8,6 +8,8 @@ import ReceiptsScreen from '../screens/ReceiptsScreen';
 import SettingsScreen from '../screens/SettingsScreen';
 import PolicyScreen from '../screens/PolicyScreen';
 import ReceiptEntryScreen from '../screens/ReceiptEntryScreen';
+import MileageScreen from '../screens/MileageScreen';
+import MileageEntryScreen from '../screens/MileageEntryScreen';
 import { theme } from '../theme';
 
 const Tab = createBottomTabNavigator();
@@ -30,6 +32,7 @@ function Tabs() {
     >
       <Tab.Screen name="Dashboard" component={DashboardScreen} options={{ tabBarIcon: tabIcon('view-dashboard-outline') }} />
       <Tab.Screen name="Receipts" component={ReceiptsScreen} options={{ tabBarIcon: tabIcon('receipt-outline') }} />
+      <Tab.Screen name="Mileage" component={MileageScreen} options={{ tabBarIcon: tabIcon('run-outline') }} />
       <Tab.Screen name="Settings" options={{ tabBarIcon: tabIcon('cog-outline') }}>
         {({ navigation }) => <SettingsScreen onViewPolicy={() => navigation.getParent()?.navigate('Policy')} />}
       </Tab.Screen>
@@ -49,7 +52,7 @@ export default function Navigation() {
           {() => <PolicyScreen readOnly onAccept={() => {}} />}
         </Stack.Screen>
         <Stack.Screen name="ReceiptEntry" options={{ title: 'Add receipt' }} component={ReceiptEntryScreen} />
-        {/* Future modal screens like MileageEntry can be added here */}
+        <Stack.Screen name="MileageEntry" options={{ title: 'Add mileage' }} component={MileageEntryScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );
