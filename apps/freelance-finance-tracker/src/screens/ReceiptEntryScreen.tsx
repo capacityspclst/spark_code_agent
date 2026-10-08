@@ -5,6 +5,7 @@ import { PrimaryButton, Screen, FormField, ChoiceField } from '../components/ui'
 import { addReceipt } from '../lib/receiptStore';
 import { getStore } from '../lib/storage';
 import { Receipt, ReceiptType } from '../lib/models';
+import { Snackbar } from 'react-native-paper';
 import { setPendingSnack } from '../lib/uiState';
 
 export default function ReceiptEntryScreen() {
@@ -44,7 +45,7 @@ export default function ReceiptEntryScreen() {
     try {
       await addReceipt(getStore(), receipt);
       setPendingSnack('Receipt saved');
-      // Navigate to Dashboard tab
+      // Navigate to Dashboard; it will display the snackbar via pending snack
       navigation.navigate('Dashboard');
     } catch (e) {
       setError('Unable to save receipt. Please try again.');
@@ -66,7 +67,7 @@ export default function ReceiptEntryScreen() {
           options={[{ value: 'expense', label: 'Expense' }, { value: 'income', label: 'Income' }]}
         />
         <FormField label="Notes" value={notes} onChangeText={setNotes} multiline />
-        {error ? <FormField label="" value={error} onChangeText={() => {}} error={true} /> : null}
+        {error ? <Snackbar visible={true} onDismiss={() => setError('')} duration={3000}>{error}</Snackbar> : null}
         <PrimaryButton label="Save receipt" onPress={onSave} loading={saving} disabled={saving} />
       </View>
     </Screen>
