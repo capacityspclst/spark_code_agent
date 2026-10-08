@@ -1,0 +1,51 @@
+import React from 'react';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { NavigationContainer, DefaultTheme } from '@react-navigation/native';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import HomeScreen from '../screens/HomeScreen';
+import PolicyScreen from '../screens/PolicyScreen';
+import SettingsScreen from '../screens/SettingsScreen';
+import { theme } from '../theme';
+
+const Tab = createBottomTabNavigator();
+const Stack = createNativeStackNavigator();
+
+// Tab icons are decorative: the tab's label names it (aria-hidden keeps axe from flagging an unlabelled image).
+const tabIcon = (name: React.ComponentProps<typeof MaterialCommunityIcons>['name']) =>
+  ({ color, size }: { color: string; size: number }) => <MaterialCommunityIcons name={name} color={color} size={size} aria-hidden />;
+
+function Tabs() {
+  return (
+    <Tab.Navigator
+      screenOptions={{
+        headerShown: false,
+        tabBarActiveTintColor: theme.colors.primary,
+        tabBarInactiveTintColor: theme.colors.secondary,
+        tabBarStyle: { backgroundColor: theme.colors.surface, height: 64, paddingTop: 6, paddingBottom: 8 },
+        tabBarLabelStyle: { fontSize: 12, fontWeight: '500' },
+      }}
+    >
+      <Tab.Screen name="Home" component={HomeScreen} options={{ tabBarIcon: tabIcon('home-outline') }} />
+      <Tab.Screen name="Settings" options={{ tabBarIcon: tabIcon('cog-outline') }}>
+        {({ navigation }) => <SettingsScreen onViewPolicy={() => navigation.getParent()?.navigate('Policy')} />}
+      </Tab.Screen>
+    </Tab.Navigator>
+  );
+}
+
+const navTheme = { ...DefaultTheme, colors: { ...DefaultTheme.colors, background: theme.colors.background, primary: theme.colors.primary } };
+
+/** Main app after the policy is accepted: tabs, plus the policy as a read-only page. */
+export default function Navigation() {
+  return (
+    <NavigationContainer theme={navTheme}>
+      <Stack.Navigator>
+        <Stack.Screen name="Main" component={Tabs} options={{ headerShown: false }} />
+        <Stack.Screen name="Policy" options={{ title: 'Terms and Privacy Policy' }}>
+          {() => <PolicyScreen readOnly onAccept={() => {}} />}
+        </Stack.Screen>
+      </Stack.Navigator>
+    </NavigationContainer>
+  );
+}
