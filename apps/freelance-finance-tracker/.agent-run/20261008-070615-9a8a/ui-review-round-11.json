@@ -1,0 +1,165 @@
+{
+  "verdict": "fail",
+  "summary": "The app largely follows the design tokens and passes automated accessibility (axe) checks, but the core user journey is broken. After policy acceptance the Dashboard never reaches the EmptyState (\"No activity yet\") \u2013 the UI stays in a loading state and the acceptance flow does not navigate correctly. This prevents the primary flow (add receipt/mileage in two taps) from working and is a high\u2011severity defect. Several secondary issues also need fixing: missing landmark roles, incomplete accessibility labeling on tab icons and FABs, hard\u2011coded dimensions that ignore the desktop layout spec, and occasional use of ad\u2011hoc colors instead of the theme token palette. These issues reduce usability, keyboard navigation, and visual consistency, especially on web and larger screens.",
+  "findings": [
+    {
+      "severity": "high",
+      "file": "src/screens/DashboardScreen.tsx",
+      "issue": "Dashboard never exits the loading state when there are no receipts or mileage entries, so the EmptyState with the title \"No activity yet\" is never rendered. The UI flow test times out waiting for this copy.",
+      "fix": "Ensure the data\u2011loading logic resolves (e.g., handling the empty SQLite result set) and sets a `loading` flag to false. When receipts and mileage arrays are empty, render the `EmptyState` component with the exact copy defined in DESIGN.md. Add a fallback `catch` to clear loading on DB errors and display the error message as specified.",
+      "source": "designer"
+    },
+    {
+      "severity": "high",
+      "file": "src/screens/PolicyScreen.tsx",
+      "issue": "After checking the \"I agree\" box and tapping Continue, navigation to the Dashboard does not happen reliably (race condition with SecureStore write). The flow sometimes stays on the PolicyScreen, causing the Dashboard step to be unreachable.",
+      "fix": "Make the Continue handler `async`, await `SecureStore.setItemAsync` (or the abstraction in `policy.ts`), then use `navigation.reset({ index: 0, routes: [{ name: 'Dashboard' }] })` to guarantee navigation. Also disable the button while persisting to avoid double taps.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/components/ui/BottomTabNavigator.tsx",
+      "issue": "Icon\u2011only tab items lack explicit `accessibilityLabel`/`accessibilityHint`, so screen\u2011reader users cannot identify the target tab.",
+      "fix": "Add `accessibilityLabel={label}` and `accessibilityRole=\"tab\"` to each `BottomNavigation` route definition. Ensure the label matches the visible text (e.g., \"Dashboard\", \"Receipts\").",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/components/ui/Screen.tsx",
+      "issue": "The shared `Screen` wrapper does not declare a landmark role (`accessibilityRole=\"main\"`). This violates the accessibility hierarchy required in the spec.",
+      "fix": "Wrap the root `View` in `<SafeAreaView accessibilityRole=\"main\" ...>` or add `accessibilityRole=\"main\"` to the outermost view. Verify that nested headers use `accessibilityRole=\"header\"` as the spec describes.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/components/ui/PrimaryButton.tsx",
+      "issue": "On web the button lacks a visible focus indicator (outline) when navigated via keyboard, which breaches the \"visible focus\" requirement.",
+      "fix": "Add a CSS rule (or `style` prop) for `:focus-visible` that sets `outline: 2px solid var(--color-primary)` and increases contrast. React Native Paper already supports `rippleColor` but ensure the focus style is applied for non\u2011touch devices.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/components/ui/FAB.tsx",
+      "issue": "The FAB is not keyboard focusable on web and does not have a visible focus outline, making it inaccessible for keyboard users.",
+      "fix": "Set `accessibilityRole=\"button\"` and `tabIndex={0}` on the FAB, and add a `:focus-visible` outline style matching the design token (e.g., 2\u202fpx solid `var(--color-primary)`).",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "src/components/ui/Screen.tsx",
+      "issue": "Screen width is hard\u2011coded to `maxWidth: 420` regardless of viewport size, so the desktop specification (max\u2011width 560\u202fpx) is not met.",
+      "fix": "Detect screen width via `useWindowDimensions()` or a media query and set `maxWidth: width >= 1280 ? 560 : 420`. Keep the 16\u202fpx padding from the theme spacing.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "src/components/ui/EmptyState.tsx",
+      "issue": "Some text components use hard\u2011coded color values (e.g., `color: '#4A5862'`) instead of the theme token `theme.colors.onSurfaceVariant`.",
+      "fix": "Replace all literal color strings with references to `theme.colors.*` (or CSS custom properties for web) to ensure consistency and future theming.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "src/components/ui/FormField.tsx",
+      "issue": "TextInput fields do not include `autoComplete` props for fields like Date, Category, and Type, missing a best\u2011practice for faster data entry.",
+      "fix": "Add appropriate `autoComplete` attributes (e.g., `autoComplete='off'` for free\u2011form fields, `autoComplete='bday'` for dates, custom values for category/type) and ensure they align with the device\u2019s autofill capabilities.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "src/components/ui/Snackbar.tsx",
+      "issue": "Snackbar does not explicitly set `accessibilityLiveRegion=\"polite\"`, relying on default behaviour that may not be consistent across platforms.",
+      "fix": "Pass `accessibilityLiveRegion=\"polite\"` prop to the Paper `Snackbar` component to guarantee polite live region announcements.",
+      "source": "designer"
+    },
+    {
+      "severity": "high",
+      "viewport": "phone",
+      "issue": "Text is cramped and lacks proper line height and spacing, making it hard to read.",
+      "fix": "Apply a proper type scale with adequate line height and spacing around text blocks.",
+      "screen": "policy",
+      "source": "vision"
+    },
+    {
+      "severity": "high",
+      "viewport": "phone",
+      "issue": "The 'Continue' button is centered but not aligned with the checkbox or text, creating visual imbalance.",
+      "fix": "Align the button with the checkbox and text using a consistent vertical rhythm.",
+      "screen": "policy",
+      "source": "vision"
+    },
+    {
+      "severity": "high",
+      "viewport": "phone",
+      "issue": "The checkbox is visually disconnected from its label, appearing as if it\u2019s floating.",
+      "fix": "Place the checkbox directly adjacent to the label with consistent spacing and alignment.",
+      "screen": "policy",
+      "source": "vision"
+    },
+    {
+      "severity": "high",
+      "viewport": "phone",
+      "issue": "The entire content block is centered with no left/right padding, making it feel unstructured and unprofessional.",
+      "fix": "Apply consistent padding to the content block to establish a clear visual boundary and structure.",
+      "screen": "policy",
+      "source": "vision"
+    },
+    {
+      "severity": "high",
+      "viewport": "desktop",
+      "issue": "The layout is stretched and unbalanced, with the content block centered and no proper grid alignment.",
+      "fix": "Use a consistent grid system to align the content and establish a balanced layout on desktop.",
+      "screen": "policy",
+      "source": "vision"
+    },
+    {
+      "severity": "high",
+      "screen": "policy",
+      "source": "vision",
+      "issue": "visual quality 3/10 on 'policy' (needs 8+): The screen is unstyled and unpolished, resembling browser defaults. It lacks visual hierarchy, spacing, and alignment, making it look broken and unprofessional. The text is cramped, the button is misaligned, and the checkbox is visually disconnected from its label.",
+      "fix": "Address this screen's findings until it looks polished and professional."
+    },
+    {
+      "severity": "high",
+      "viewport": "phone",
+      "issue": "Screen is almost entirely blank except for a loading indicator and a bottom navigation bar. No primary action, no visual hierarchy, no typography, no spacing, no grouping, no color use, no form design, no empty state guidance. The bottom navigation is barely visible and appears to be cut off at the bottom edge.",
+      "fix": "Design a proper empty state with clear guidance (e.g., 'Add a receipt or mileage entry to get started') and a prominent FAB. Add typography, spacing, and alignment on a consistent grid. Ensure the bottom navigation is fully visible and properly styled. Use color and contrast to guide the user.",
+      "screen": "dashboard empty",
+      "source": "vision"
+    },
+    {
+      "severity": "high",
+      "viewport": "desktop",
+      "issue": "Screen is almost entirely blank except for a loading indicator. No primary action, no visual hierarchy, no typography, no spacing, no grouping, no color use, no form design, no empty state guidance. The bottom navigation is barely visible and appears to be cut off at the bottom edge.",
+      "fix": "Design a proper empty state with clear guidance (e.g., 'Add a receipt or mileage entry to get started') and a prominent FAB. Add typography, spacing, and alignment on a consistent grid. Ensure the bottom navigation is fully visible and properly styled. Use color and contrast to guide the user.",
+      "screen": "dashboard empty",
+      "source": "vision"
+    },
+    {
+      "severity": "high",
+      "screen": "dashboard empty",
+      "source": "vision",
+      "issue": "visual quality 3/10 on 'dashboard empty' (needs 8+): The screen is visually barren and functionally incomplete. It shows only a loading indicator and a bottom navigation bar, with no visual hierarchy, no primary action, no typography, no spacing, no grouping, no color contrast, no form design, and no empty state guidance. It looks like a browser default or a placeholder, not a polished product. The layout is not optimized for either phone or desktop, and the bottom nav is barely visible on the phone view. This is unacceptable for a product that users would pay for.",
+      "fix": "Address this screen's findings until it looks polished and professional."
+    }
+  ],
+  "lighthouse": [
+    {
+      "accessibility": 100,
+      "bestPractices": 100,
+      "performance": 74
+    }
+  ],
+  "vision_scores": [
+    {
+      "screen": "policy",
+      "score": 3.0,
+      "summary": "The screen is unstyled and unpolished, resembling browser defaults. It lacks visual hierarchy, spacing, and alignment, making it look broken and unprofessional. The text is cramped, the button is misaligned, and the checkbox is visually disconnected from its label."
+    },
+    {
+      "screen": "dashboard empty",
+      "score": 3.0,
+      "summary": "The screen is visually barren and functionally incomplete. It shows only a loading indicator and a bottom navigation bar, with no visual hierarchy, no primary action, no typography, no spacing, no grouping, no color contrast, no form design, and no empty state guidance. It looks like a browser default or a placeholder, not a polished product. The layout is not optimized for either phone or desktop, and the bottom nav is barely visible on the phone view. This is unacceptable for a product that users would pay for."
+    }
+  ]
+}
