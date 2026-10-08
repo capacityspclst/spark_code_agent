@@ -1,133 +1,56 @@
 // src/lib/storage.ts
-// Real storage implementation using expo-sqlite on native platforms and AsyncStorage on web.
-import { Platform } from 'react-native';
-import * as SecureStore from 'expo-secure-store';
+// Unified storage using AsyncStorage for all platforms (web and native).
+import * as AsyncStorage from '@react-native-async-storage/async-storage';
 
-let db: any = null;
+type Key = 'receipts' | 'mileage' | 'config';
 
-function getDB() {
-  if (db) return db;
-  if (Platform.OS === 'web') {
-    // No SQLite on web; use AsyncStorage fallback.
-    return null;
-  }
-  // Dynamically require the mock expo-sqlite implementation.
-  const SQLite = require('../../expo-sqlite');
-  db = SQLite.openDatabase('finance.db');
-  // Initialize tables
-  db.transaction((tx: any) => {
-    tx.executeSql(
-      'CREATE TABLE IF NOT EXISTS receipts (id TEXT PRIMARY KEY NOT NULL, data TEXT NOT NULL);'
-    );
-    tx.executeSql(
-      'CREATE TABLE IF NOT EXISTS mileage (id TEXT PRIMARY KEY NOT NULL, data TEXT NOT NULL);'
-    );
-    tx.executeSql(
-      'CREATE TABLE IF NOT EXISTS config (key TEXT PRIMARY KEY NOT NULL, value TEXT NOT NULL);'
-    );
-  });
-  return db;
+// Helper to get array from storage
+async function getArray<T>(key: Key): Promise<T[]> {
+  const json = await AsyncStorage.getItem(key);
+  return json ? JSON.parse(json) : [];
 }
 
-// Helper to run a SQL query and return a Promise of result rows.
-function executeSql(sql: string, params: any[] = []): Promise<any[]> {
-  return new Promise((resolve, reject) => {
-    const db = getDB();
-    if (Platform.OS === 'web') {
-      // Web fallback will not use this function directly.
-      reject(new Error('SQLite not available on web'));
-      return;
-    }
-    db.transaction((tx: any) => {
-      tx.executeSql(
-        sql,
-        params,
-        (_tx: any, resultSet: any) => {
-          const rows = resultSet.rows._array;
-          resolve(rows);
-        },
-        (_tx: any, error: any) => {
-          reject(error);
-          return false;
-        }
-      );
-    });
-  });
+// Helper to set array to storage
+async function setArray<T>(key: Key, arr: T[]): Promise<void> {
+  await AsyncStorage.setItem(key, JSON.stringify(arr));
 }
 
 // ---------- Receipt helpers ----------
 export async function addReceipt(r: any): Promise<void> {
-  const data = JSON.stringify(r);
-  await executeSql('INSERT OR REPLACE INTO receipts (id, data) VALUES (?, ?);', [r.id, data]);
+  const receipts = await getArray<any>('receipts');
+  const filtered = receipts.filter((it: any) => it.id !== r.id);
+  filtered.push(r);
+  await setArray('receipts', filtered);
 }
 export async function listReceipts(): Promise<any[]> {
-  if (Platform.OS === 'web') {
-    const { getItemAsync } = require('@react-native-async-storage/async-storage');
-    const json = await getItemAsync('receipts');
-    return json ? JSON.parse(json) : [];
-  }
-  const rows = await executeSql('SELECT data FROM receipts;');
-  return rows.map((r: any) => JSON.parse(r.data));
+  return getArray<any>('receipts');
 }
 export async function clearReceipts(): Promise<void> {
-  if (Platform.OS === 'web') {
-    const { removeItemAsync } = require('@react-native-async-storage/async-storage');
-    await removeItemAsync('receipts');
-    return;
-  }
-  await executeSql('DELETE FROM receipts;');
+  await AsyncStorage.removeItem('receipts');
 }
 
 // ---------- Mileage helpers ----------
 export async function addMileage(m: any): Promise<void> {
-  const data = JSON.stringify(m);
-  await executeSql('INSERT OR REPLACE INTO mileage (id, data) VALUES (?, ?);', [m.id, data]);
+  const mileage = await getArray<any>('mileage');
+  const filtered = mileage.filter((it: any) => it.id !== m.id);
+  filtered.push(m);
+  await setArray('mileage', filtered);
 }
 export async function listMileage(): Promise<any[]> {
-  if (Platform.OS === 'web') {
-    const { getItemAsync } = require('@react-native-async-storage/async-storage');
-    const json = await getItemAsync('mileage');
-    return json ? JSON.parse(json) : [];
-  }
-  const rows = await executeSql('SELECT data FROM mileage;');
-  return rows.map((r: any) => JSON.parse(r.data));
+  return getArray<any>('mileage');
 }
 export async function clearMileage(): Promise<void> {
-  if (Platform.OS === 'web') {
-    const { removeItemAsync } = require('@react-native-async-storage/async-storage');
-    await removeItemAsync('mileage');
-    return;
-  }
-  await executeSql('DELETE FROM mileage;');
+  await AsyncStorage.removeItem('mileage');
 }
 
 // ---------- Config helpers ----------
 export async function setConfig(cfg: any): Promise<void> {
-  const value = JSON.stringify(cfg);
-  if (Platform.OS === 'web') {
-    const { setItemAsync } = require('@react-native-async-storage/async-storage');
-    await setItemAsync('config', value);
-    return;
-  }
-  await executeSql('INSERT OR REPLACE INTO config (key, value) VALUES (?, ?);', ['config', value]);
+  await AsyncStorage.setItem('config', JSON.stringify(cfg));
 }
 export async function getConfig(): Promise<any> {
-  if (Platform.OS === 'web') {
-    const { getItemAsync } = require('@react-native-async-storage/async-storage');
-    const json = await getItemAsync('config');
-    return json ? JSON.parse(json) : {};
-  }
-  const rows = await executeSql('SELECT value FROM config WHERE key = ?;', ['config']);
-  if (rows.length === 0) return {};
-  return JSON.parse(rows[0].value);
+  const json = await AsyncStorage.getItem('config');
+  return json ? JSON.parse(json) : {};
 }
 export async function clearAll(): Promise<void> {
-  await clearReceipts();
-  await clearMileage();
-  if (Platform.OS === 'web') {
-    const { removeItemAsync } = require('@react-native-async-storage/async-storage');
-    await removeItemAsync('config');
-    return;
-  }
-  await executeSql('DELETE FROM config;');
+  await AsyncStorage.multiRemove(['receipts', 'mileage', 'config']);
 }

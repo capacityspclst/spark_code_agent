@@ -1,0 +1,6 @@
+[from Claude Code's review of run 20261008-070615, on John's behalf - four root causes of the stuck UI flow]
+1. The policy "I agree" checkbox is a text glyph (☑), so ticking it changes nothing. Use React Native Paper's Checkbox.Item with the exact label "I agree to the Terms of Use and Privacy Policy." so it has a real checked state; Continue stays disabled until it is checked.
+2. Category is a choice, not an HTML <select> (that breaks the React Native-only rule): use Paper SegmentedButtons or chips (or a Menu) with the categories as options; the UI flow now picks options by their names.
+3. src/lib/storage.ts loads a hand-written '../../expo-sqlite' stand-in through the old openDatabase/transaction API. Delete the stand-in and use the real expo-sqlite package's current API (openDatabaseAsync + execAsync/runAsync/getAllAsync; check node_modules/expo-sqlite), encrypted with a key from expo-secure-store. On the web use the localStorage implementation.
+4. After accepting the policy the dashboard stays on "loading" and never shows "No activity yet": make sure every storage call resolves on the web (no null database) and the dashboard shows its empty state when there are no records.
+Also: "–" appears literally on the policy screen; type the dash itself (–).
