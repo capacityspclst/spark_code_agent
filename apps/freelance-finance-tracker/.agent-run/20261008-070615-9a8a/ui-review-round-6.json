@@ -1,0 +1,161 @@
+{
+  "verdict": "fail",
+  "summary": "The app fails to meet the DESIGN.md spec in several critical areas. The PolicyScreen is not functional and lacks required ARIA attributes, breaking the primary flow and making the app inaccessible. Many required screens and states are missing or incomplete (SettingsScreen only shows a header, no sections; other screens lack loading, empty, error, and success states). Interactive components often use hard\u2011coded styles instead of the design tokens, and the checkbox implementation does not toggle or expose aria\u2011checked. Navigation for hidden form screens is done via a bottom\u2011tab navigator instead of a proper stack, causing potential navigation bugs. Overall the UI is far from a polished product.",
+  "findings": [
+    {
+      "severity": "high",
+      "file": "src/screens/PolicyScreen.tsx",
+      "issue": "Checkbox markup lacks required ARIA attributes (no aria-checked) and does not toggle state on click, causing the flow test to fail and making the screen inaccessible.",
+      "fix": "Replace the custom checkbox with React Native Paper's Checkbox component or add role=\"checkbox\" and aria-checked=\"true|false\" properties. Ensure the onPress updates a state variable and the Continue button enables only when checked. Add proper focus management and visible focus outlines.",
+      "source": "designer"
+    },
+    {
+      "severity": "high",
+      "file": "src/screens/SettingsScreen.tsx",
+      "issue": "Screen only renders a headline; all required sections (App lock, Mileage rate, Tax rate, Backup & restore, Policy, Delete all data) are missing, breaking navigation to primary actions and violating the spec.",
+      "fix": "Implement the full Settings UI with the sections listed in DESIGN.md, using Paper components (List.Item, Switch, TextInput, Dialog, Snackbar). Ensure each interactive element follows the design tokens, has accessible labels, and appropriate states (loading, success, error).",
+      "source": "designer"
+    },
+    {
+      "severity": "high",
+      "file": "src/components/ui/BottomTabNavigator.tsx",
+      "issue": "Form screens (ReceiptForm, MileageForm) are added as hidden Tab screens. This mixes modal navigation with tab navigation, leading to awkward back navigation and potentially leaves the user stranded.",
+      "fix": "Create a separate stack navigator for the form screens (e.g., using @react-navigation/native-stack) and navigate to them with `navigation.navigate`. Remove the hidden Tab.Screen entries to keep the bottom tab purely for top\u2011level sections.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/components/ui/Screen.tsx",
+      "issue": "Uses hard\u2011coded padding (16) and maxWidth (420) instead of design token `theme.spacing.md` and the token\u2011based max width values. This deviates from the token\u2011driven styling guideline.",
+      "fix": "Replace `padding: 16` with `padding: theme.spacing.md` and `maxWidth: 420` with a token or a constant derived from the design system (e.g., `maxWidth: theme.isDesktop ? 560 : 420`).",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/components/ui/PrimaryButton.tsx",
+      "issue": "Button does not expose a visible focus indicator on web (no `style` for focus-visible) and does not set an accessible name for screen readers beyond the child text.",
+      "fix": "Add `accessibilityState={{ disabled }}` and ensure the component forwards `accessibilityLabel`. Use `style` with `:focus-visible` (via `StyleSheet` or `react-native-web` style) to show a high\u2011contrast outline, matching the design spec.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/components/ui/FormField.tsx",
+      "issue": "Keyboard types are passed directly as `any` and no `autoComplete` prop is set, missing best\u2011practice autocomplete and mobile keyboard optimization.",
+      "fix": "Add `autoComplete` props (e.g., 'off', 'username', 'email', etc.) based on field type, and define explicit `keyboardType` values (numeric, email-address). Ensure `autoCapitalize` and `autoComplete` follow specs.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/components/ui/EmptyState.tsx",
+      "issue": "Uses `marginTop: 40` (ad\u2011hoc spacing) instead of the 8\u2011px spacing scale and does not apply theme colors for text.",
+      "fix": "Replace fixed margin with theme spacing (e.g., `marginTop: theme.spacing.lg`) and use `style={{ color: theme.colors.onSurface }}` for text to stay consistent with design tokens.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "src/components/ui/SummaryCard.tsx",
+      "issue": "Card marginBottom is set to 8 (matches the 8px scale) but height is not enforced to the 120px spec, and elevation defaults may not match the design token.",
+      "fix": "Add explicit `height: 120` and `elevation: 4` (or use theme elevation values) to meet the design spec.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "src/App.tsx",
+      "issue": "Icon component passes `aria-hidden={true}` but does not set `accessible={false}` which might cause screen readers to attempt reading the icon.",
+      "fix": "Add `accessible={false}` to the icon component to ensure it is ignored by accessibility services.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "src/components/ui/PrimaryButton.tsx",
+      "issue": "The `style` prop is passed but not typed; missing `StyleProp<ViewStyle>` typing may cause runtime style issues.",
+      "fix": "Update component props to `style?: StyleProp<ViewStyle>` and spread the style onto the Button's `contentStyle` if needed.",
+      "source": "designer"
+    },
+    {
+      "severity": "high",
+      "viewport": "phone",
+      "issue": "The entire screen uses browser-default typography with no type scale, readable sizes, or line length optimization. Text is unstyled and appears like plain HTML.",
+      "fix": "Apply a consistent type scale with readable sizes (e.g., 24pt for headings, 16pt for body). Use line height and spacing to improve readability and visual hierarchy.",
+      "screen": "policy",
+      "source": "vision"
+    },
+    {
+      "severity": "high",
+      "viewport": "phone",
+      "issue": "No visual hierarchy or clear primary action. The 'Continue' button is unstyled and lacks contrast or emphasis, making it hard to identify as the primary action.",
+      "fix": "Style the 'Continue' button with a clear background, border, and contrast. Use padding and typography to make it stand out as the primary action.",
+      "screen": "policy",
+      "source": "vision"
+    },
+    {
+      "severity": "high",
+      "viewport": "phone",
+      "issue": "The checkbox and its label are not aligned or grouped properly. The checkbox is misaligned with the text, and there's no visual grouping or spacing to indicate it's a single interactive unit.",
+      "fix": "Center-align the checkbox and label. Add consistent spacing around the checkbox and label to create a clear, grouped interactive element.",
+      "screen": "policy",
+      "source": "vision"
+    },
+    {
+      "severity": "high",
+      "viewport": "phone",
+      "issue": "The layout is not on a consistent grid. Elements are centered or left-aligned without a clear grid system, leading to inconsistent spacing and alignment.",
+      "fix": "Implement a consistent grid system (e.g., 16px grid) to align elements and ensure consistent spacing and alignment across the screen.",
+      "screen": "policy",
+      "source": "vision"
+    },
+    {
+      "severity": "high",
+      "viewport": "phone",
+      "issue": "The screen uses a light gray background with no visual hierarchy or contrast. The text and button lack contrast, making them hard to read and visually unappealing.",
+      "fix": "Use a high-contrast color scheme with a dark background or light text. Ensure the button has sufficient contrast against the background for readability.",
+      "screen": "policy",
+      "source": "vision"
+    },
+    {
+      "severity": "high",
+      "viewport": "phone",
+      "issue": "The screen is visually empty and lacks any visual cues or guidance for the user. There is no indication of what to do next or how to interact with the screen.",
+      "fix": "Add visual cues such as a subtle background gradient, icons, or subtle animations to guide the user and make the screen feel more engaging.",
+      "screen": "policy",
+      "source": "vision"
+    },
+    {
+      "severity": "high",
+      "viewport": "phone",
+      "issue": "The screen is not touch-friendly. The button is too small and lacks sufficient padding or hit area for easy tapping.",
+      "fix": "Increase the button size and add sufficient padding to make it easy to tap. Ensure the button is large enough for thumb navigation.",
+      "screen": "policy",
+      "source": "vision"
+    },
+    {
+      "severity": "high",
+      "viewport": "phone",
+      "issue": "The screen is not optimized for desktop. The layout is stretched and does not use the full screen space effectively.",
+      "fix": "Implement a responsive design that adapts to desktop screen sizes. Use a grid system and spacing to ensure the layout is optimized for desktop.",
+      "screen": "policy",
+      "source": "vision"
+    },
+    {
+      "severity": "high",
+      "screen": "policy",
+      "source": "vision",
+      "issue": "visual quality 4/10 on 'policy' (needs 8+): The screen is functionally complete but visually underwhelming and lacks polish. It uses browser-default styling, has no consistent grid or spacing, and the primary action is not clearly emphasized. The typography is minimal and unstyled, and the layout feels like a placeholder.",
+      "fix": "Address this screen's findings until it looks polished and professional."
+    }
+  ],
+  "lighthouse": [
+    {
+      "accessibility": 93,
+      "bestPractices": 100,
+      "performance": 73
+    }
+  ],
+  "vision_scores": [
+    {
+      "screen": "policy",
+      "score": 4.0,
+      "summary": "The screen is functionally complete but visually underwhelming and lacks polish. It uses browser-default styling, has no consistent grid or spacing, and the primary action is not clearly emphasized. The typography is minimal and unstyled, and the layout feels like a placeholder."
+    }
+  ]
+}
