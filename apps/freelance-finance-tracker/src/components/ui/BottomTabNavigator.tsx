@@ -18,17 +18,21 @@ const CustomTabBarButton = (props:any) => (
     {...props}
     accessibilityRole="tab"
     accessibilityState={props.accessibilityState}
-  />
+  >
+    {props.children}
+  </Pressable>
 );
 
 const BottomTabNavigator: React.FC = () => {
   const theme = useTheme();
-  const activeColor = theme.colors.onSurface; // high contrast dark
+  const activeColor = theme.colors.onSurface;
   const inactiveColor = theme.colors.onSurfaceVariant;
   return (
     <Tab.Navigator
       screenOptions={({ route }: any) => ({
         headerShown: false,
+        tabBarLabel: route.name,
+        tabBarAccessibilityLabel: route.name,
         tabBarIcon: ({ color, size }: any) => {
           let iconName = 'home';
           if (route.name === 'Dashboard') iconName = 'view-dashboard';

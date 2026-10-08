@@ -1,8 +1,6 @@
 // src/components/ui/EmptyState.tsx
-import React from 'react';
-import { View, StyleSheet } from 'react-native';
-import { PrimaryButton } from './PrimaryButton';
-import { Text } from 'react-native-paper';
+import { View } from 'react-native';
+import { Card, Title, Paragraph, Button } from 'react-native-paper';
 
 interface EmptyStateProps {
   title: string;
@@ -12,17 +10,11 @@ interface EmptyStateProps {
 }
 
 export const EmptyState: React.FC<EmptyStateProps> = ({ title, description, actionLabel, onAction }) => (
-  <View style={styles.container}>
-    <Text variant="titleLarge" style={styles.title}>{title}</Text>
-    <Text variant="bodyMedium" style={styles.desc}>{description}</Text>
-    {actionLabel && onAction && (
-      <PrimaryButton onPress={onAction}>{actionLabel}</PrimaryButton>
-    )}
+  <View style={{ alignItems: 'center', marginTop: 32 }}>
+    <Card style={{ padding: 16, maxWidth: 300 }}>
+      <Title>{title}</Title>
+      <Paragraph>{description}</Paragraph>
+      {actionLabel && onAction && <Button onPress={onAction}>{actionLabel}</Button>}
+    </Card>
   </View>
 );
-
-const styles = StyleSheet.create({
-  container: { alignItems: 'center', marginTop: 40 },
-  title: { marginBottom: 8 },
-  desc: { marginBottom: 16, textAlign: 'center' },
-});
