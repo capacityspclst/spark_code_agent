@@ -1,0 +1,172 @@
+{
+  "verdict": "fail",
+  "summary": "The built UI shows many points of alignment with the DESIGN.md \u2013 it uses the shared UI primitives, design tokens for spacing, colors and typography, and has solid accessibility scores (axe audit 0 violations, Lighthouse accessibility 98). However the primary user flow is broken: after filling the receipt entry form, the expected \"Receipt saved\" snackbar never appears and navigation back to the dashboard does not happen, causing the acceptance test to time\u2011out on both phone and desktop. In addition there are a handful of compliance gaps \u2013 an undefined `success` color token, decorative icons not hidden from assistive tech, missing focus\u2011visible styling on buttons, and minor accessibility omissions. These issues must be fixed before the app can be considered polished and production\u2011ready.",
+  "findings": [
+    {
+      "severity": "high",
+      "file": "src/screens/ReceiptEntryScreen.tsx",
+      "issue": "The save handler does not display the \"Receipt saved\" Snackbar nor navigate back to the Dashboard after a successful receipt creation, causing the primary flow test to time\u2011out.",
+      "fix": "After the receipt is persisted, call a Snackbar component (or context) with the message \"Receipt saved\", announce it for accessibility, and programmatically navigate back to the Dashboard screen. Ensure the Save button is enabled only when the form is valid and set its loading state appropriately.",
+      "source": "designer"
+    },
+    {
+      "severity": "high",
+      "file": "src/components/ui/SummaryCard.tsx",
+      "issue": "The component references `theme.colors.success` for the positive tone, but the theme does not define a `success` color token, resulting in an undefined color style.",
+      "fix": "Add a `success` color (e.g., a green value) to the `colors` object in `src/theme.ts` and mirror it in `public/theme.css`. Update the token list and ensure the component uses the new token.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/navigation/index.tsx",
+      "issue": "Bottom tab navigation is not guaranteed to be present on all primary screens (e.g., Settings, Export, Backup), violating the spec that the tab bar should be accessible from any screen.",
+      "fix": "Wrap each top\u2011level screen in a BottomTabNavigator (or use a persistent TabBar component) so that the tab bar remains visible and functional across the entire app. Verify that each route is reachable via the tab bar.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/components/ui/EmptyState.tsx",
+      "issue": "The decorative icon (`Avatar.Icon`) is not marked `aria-hidden`, which can cause screen readers to announce it unnecessarily and might trigger axe warnings on stricter audits.",
+      "fix": "Add `aria-hidden={true}` (or `aria-hidden`) to the `Avatar.Icon` component to hide it from assistive technology.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/components/ui/PrimaryButton.tsx",
+      "issue": "Button focus\u2011visible styling is missing; on web the button does not show the required 2\u202fdp outline when focused, failing the visible focus requirement.",
+      "fix": "Add a focus style (e.g., `borderWidth: 2, borderColor: theme.colors.outline`) that is applied when the button receives focus. For React Native Paper, pass a `style` prop that includes a conditional outline based on the `focused` state, or use the `onFocus`/`onBlur` events to toggle a style.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "src/components/ui/FormField.tsx",
+      "issue": "Error `HelperText` does not have an `aria-live` attribute, so error messages may not be announced immediately by screen readers.",
+      "fix": "Wrap the `HelperText` component with `<View aria-live=\"assertive\">` or set the `accessibilityLiveRegion=\"assertive\"` prop on the `HelperText` when `type=\"error\"`.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "src/components/ui/SettingSwitch.tsx",
+      "issue": "Custom switch implementation does not use the native `Switch` component, which may miss platform\u2011specific accessibility features (e.g., proper `accessibilityRole` handling on iOS/Android).",
+      "fix": "Replace the custom track/thumb implementation with React Native Paper's `Switch` component (or React Native's `Switch`) and style it to match the secondary color token. Ensure the `accessibilityLabel` and `value` props are correctly passed.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "src/components/ui/ChoiceField.tsx",
+      "issue": "The label uses a `Text` component with `accessibilityRole=\"text\"`, which is unnecessary and may not be announced as a label for the segmented buttons.",
+      "fix": "Change the label to a `<Text>` with `accessibilityRole=\"heading\"` or simply omit the role, relying on the native association between the label and the `SegmentedButtons`. Ensure the label is programmatically linked if needed.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "viewport": "phone",
+      "issue": "Form field labels are missing \u2014 the checkbox and button are not clearly tied to any form fields or instructions beyond the text above.",
+      "fix": "Add explicit labels above or next to the checkbox and button to clarify what action is required.",
+      "screen": "policy_gate",
+      "source": "vision"
+    },
+    {
+      "severity": "medium",
+      "viewport": "phone",
+      "issue": "No visual feedback for interaction \u2014 the button is disabled and greyed out, but there\u2019s no subtle animation or state change to indicate it\u2019s interactive or how it should be used.",
+      "fix": "Add a subtle hover or press effect (e.g., slight scale or color shift) to indicate interactivity and improve tactile feedback.",
+      "screen": "policy_gate",
+      "source": "vision"
+    },
+    {
+      "severity": "medium",
+      "viewport": "phone",
+      "issue": "No error states or validation feedback shown \u2014 the screen assumes the user will understand the checkbox is required, but there\u2019s no visual cue for what happens if they don\u2019t check it.",
+      "fix": "Add a subtle visual indicator (e.g., red border or icon) next to the checkbox when it\u2019s unchecked, and a tooltip or inline message explaining the requirement.",
+      "screen": "policy_gate",
+      "source": "vision"
+    },
+    {
+      "severity": "medium",
+      "viewport": "desktop",
+      "issue": "The desktop layout appears stretched and unoptimized \u2014 the content is not scaled or reflowed for the larger viewport, and it looks like a phone layout shrunk to fit.",
+      "fix": "Redesign the desktop layout to use the full width, adjust spacing and font sizes for readability, and avoid stretching the phone layout. Consider using a two-column or card-based layout for better use of desktop real estate.",
+      "screen": "policy_gate",
+      "source": "vision"
+    },
+    {
+      "severity": "low",
+      "viewport": "both",
+      "issue": "The typography scale is minimal \u2014 only one font weight and size is used for body text, which lacks visual hierarchy and makes the content feel flat.",
+      "fix": "Apply a proper type scale: use bold for headings, medium for subheadings, and light for body text. Add spacing between paragraphs and use line height to improve readability.",
+      "screen": "policy_gate",
+      "source": "vision"
+    },
+    {
+      "severity": "high",
+      "screen": "policy_gate",
+      "source": "vision",
+      "issue": "visual quality 7/10 on 'policy_gate' (needs 8+): The policy gate screen is clean and functional, with clear visual hierarchy and a single primary action. Typography is readable and consistent, spacing is adequate, and the layout is well-aligned. However, it lacks polish in form design (e.g., no field labels, no error states shown, no visual feedback for interaction), and the desktop version appears stretched and unoptimized. It meets core usability needs but feels like a first draft rather than a polished product.",
+      "fix": "Address this screen's findings until it looks polished and professional."
+    },
+    {
+      "severity": "medium",
+      "viewport": "phone",
+      "issue": "The form fields (Amount, Date, Category, Notes) are all the same height and width, but the 'Type' toggle is slightly shorter and narrower, creating a visual inconsistency in the form's rhythm.",
+      "fix": "Adjust the height and width of the 'Type' toggle to match the other fields for visual uniformity. Consider adding subtle visual feedback (like a border or shadow) to the selected state.",
+      "screen": "receipt_entry",
+      "source": "vision"
+    },
+    {
+      "severity": "medium",
+      "viewport": "phone",
+      "issue": "The 'Save receipt' button is visually dominant but lacks a subtle state indicator (like a loading spinner or disabled state) to communicate its current state during interaction.",
+      "fix": "Add a loading spinner or disable state animation to the button to improve user feedback during saving.",
+      "screen": "receipt_entry",
+      "source": "vision"
+    },
+    {
+      "severity": "low",
+      "viewport": "phone",
+      "issue": "The 'Add receipt' header is not visually separated from the form fields below it, which could make the form feel less structured.",
+      "fix": "Add a subtle divider or margin above the form fields to visually separate the header from the input section.",
+      "screen": "receipt_entry",
+      "source": "vision"
+    },
+    {
+      "severity": "low",
+      "viewport": "phone",
+      "issue": "The 'Type' toggle buttons lack a subtle hover or focus state, which reduces interactivity feedback.",
+      "fix": "Add a subtle hover or focus state (e.g., slight shadow or color change) to the toggle buttons to improve user interaction feedback.",
+      "screen": "receipt_entry",
+      "source": "vision"
+    },
+    {
+      "severity": "high",
+      "screen": "receipt_entry",
+      "source": "vision",
+      "issue": "visual quality 7/10 on 'receipt_entry' (needs 8+): The form is clean and functional, with clear visual hierarchy and a prominent primary action. Typography is readable, spacing is consistent, and alignment is good. However, it lacks visual polish and subtle design touches that would elevate it to 'polished' status. The form fields are well-organized but appear slightly generic without branding or micro-interactions.",
+      "fix": "Address this screen's findings until it looks polished and professional."
+    }
+  ],
+  "lighthouse": [
+    {
+      "accessibility": 98,
+      "bestPractices": 100,
+      "performance": 57
+    }
+  ],
+  "vision_scores": [
+    {
+      "screen": "policy_gate",
+      "score": 7.0,
+      "summary": "The policy gate screen is clean and functional, with clear visual hierarchy and a single primary action. Typography is readable and consistent, spacing is adequate, and the layout is well-aligned. However, it lacks polish in form design (e.g., no field labels, no error states shown, no visual feedback for interaction), and the desktop version appears stretched and unoptimized. It meets core usability needs but feels like a first draft rather than a polished product."
+    },
+    {
+      "screen": "dashboard_empty",
+      "score": 8.0,
+      "summary": "Polished, clean, and consistent empty state that clearly guides the user to the next action. Typography is readable and well-spaced. Navigation is present and functional. No critical issues found."
+    },
+    {
+      "screen": "receipt_entry",
+      "score": 7.0,
+      "summary": "The form is clean and functional, with clear visual hierarchy and a prominent primary action. Typography is readable, spacing is consistent, and alignment is good. However, it lacks visual polish and subtle design touches that would elevate it to 'polished' status. The form fields are well-organized but appear slightly generic without branding or micro-interactions."
+    }
+  ]
+}
