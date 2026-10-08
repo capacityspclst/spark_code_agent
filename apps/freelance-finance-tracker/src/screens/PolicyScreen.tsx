@@ -2,10 +2,11 @@
 import React, { useState } from 'react';
 import { StyleSheet, Pressable } from 'react-native';
 import { Screen } from '../components/ui/Screen';
-import { Text, Checkbox } from 'react-native-paper';
+import { Text } from 'react-native-paper';
 import { setPolicyAcceptance, POLICY_VERSION } from '../lib/policy';
 import { useNavigation } from '@react-navigation/native';
 import { PrimaryButton } from '../components/ui/PrimaryButton';
+import { Text as RNText } from 'react-native';
 
 export default function PolicyScreen() {
   const navigation = useNavigation<any>();
@@ -26,7 +27,7 @@ export default function PolicyScreen() {
     <Screen>
       <Text variant="headlineMedium" style={{ marginBottom: 16 }}>Terms of Use and Privacy Policy</Text>
       <Text variant="bodyMedium" style={{ marginBottom: 24 }}>
-        Track receipts and mileage locally – your data never leaves the device.
+        Track receipts and mileage locally \u2013 your data never leaves the device.
       </Text>
       <Pressable
         style={styles.checkboxRow}
@@ -35,8 +36,8 @@ export default function PolicyScreen() {
         accessibilityState={{ checked }}
         accessibilityLabel="I agree to the Terms of Use and Privacy Policy."
       >
-        <Checkbox status={checked ? 'checked' : 'unchecked'} />
-        <Text style={{ marginLeft: 8 }}>I agree to the Terms of Use and Privacy Policy.</Text>
+        <RNText style={styles.box}>{checked ? '\u2611' : '\u2610'}</RNText>
+        <RNText style={styles.label}>I agree to the Terms of Use and Privacy Policy.</RNText>
       </Pressable>
       <PrimaryButton onPress={handleContinue} disabled={!checked || saving} loading={saving} style={{ marginTop: 24 }}>
         Continue
@@ -47,4 +48,6 @@ export default function PolicyScreen() {
 
 const styles = StyleSheet.create({
   checkboxRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
+  box: { fontSize: 24, marginRight: 8 },
+  label: { fontSize: 16 },
 });
