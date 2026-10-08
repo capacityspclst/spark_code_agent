@@ -1,14 +1,16 @@
 // src/screens/PolicyScreen.tsx
 import React, { useState } from 'react';
-import { Pressable, View } from 'react-native';
+import { Pressable } from 'react-native';
 import { Screen } from '../components/ui/Screen';
 import { Text, useTheme } from 'react-native-paper';
 import { setPolicyAcceptance, POLICY_VERSION } from '../lib/policy';
-import { useNavigation } from '@react-navigation/native';
 import { PrimaryButton } from '../components/ui/PrimaryButton';
 
-export default function PolicyScreen() {
-  const navigation = useNavigation<any>();
+interface PolicyScreenProps {
+  onAccept?: () => void;
+}
+
+export default function PolicyScreen({ onAccept }: PolicyScreenProps) {
   const [checked, setChecked] = useState(false);
   const [saving, setSaving] = useState(false);
   const theme = useTheme();
@@ -19,7 +21,7 @@ export default function PolicyScreen() {
     const now = new Date().toISOString();
     await setPolicyAcceptance(POLICY_VERSION, now);
     setSaving(false);
-    navigation.reset({ index: 0, routes: [{ name: 'Main' }] });
+    if (onAccept) onAccept();
   };
 
   const toggle = () => setChecked(prev => !prev);
@@ -38,15 +40,12 @@ export default function PolicyScreen() {
         accessibilityRole="checkbox"
         accessibilityState={{ checked }}
         accessibilityLabel="I agree to the Terms of Use and Privacy Policy."
-        aria-checked={checked}
         style={{ flexDirection: 'row', alignItems: 'center', marginBottom: spacing.sm ?? 8 }}
       >
         <Text variant="bodyLarge" style={{ marginRight: spacing.sm ?? 8 }}>
           {checked ? '\u2611' : '\u2610'}
         </Text>
-        <Text variant="bodyMedium">
-          I agree to the Terms of Use and Privacy Policy.
-        </Text>
+        <Text variant="bodyMedium">I agree to the Terms of Use and Privacy Policy.</Text>
       </Pressable>
       <PrimaryButton
         onPress={handleContinue}

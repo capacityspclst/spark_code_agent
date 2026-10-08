@@ -1,15 +1,14 @@
 // src/screens/DashboardScreen.tsx
 import React, { useEffect, useState } from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View } from 'react-native';
 import { Screen } from '../components/ui/Screen';
 import { Text, ActivityIndicator, Snackbar } from 'react-native-paper';
 import { PrimaryButton } from '../components/ui/PrimaryButton';
 import { EmptyState } from '../components/ui/EmptyState';
 import { SummaryCard } from '../components/ui/SummaryCard';
 import { useNavigation } from '@react-navigation/native';
-import { listReceipts, listMileage } from '../lib/records';
+import { listReceipts, listMileage, getConfig } from '../lib/records';
 import { getTotalIncome, getTotalExpenses, getMileageDeduction, getEstimatedTax } from '../lib/calculations';
-import { getConfig } from '../lib/records';
 
 export default function DashboardScreen() {
   const navigation = useNavigation<any>();
@@ -24,23 +23,30 @@ export default function DashboardScreen() {
   const [snackbarMsg, setSnackbarMsg] = useState('');
 
   const loadData = async () => {
-    setLoading(true);
-    const receipts = await listReceipts();
-    const mileage = await listMileage();
-    setReceiptsCount(receipts.length);
-    setMileageCount(mileage.length);
-    const inc = await getTotalIncome();
-    const exp = await getTotalExpenses();
-    setIncome(inc);
-    setExpenses(exp);
-    const cfg = await getConfig();
-    const rate = cfg.mileageRate ?? 0.58;
-    const taxRate = cfg.taxRate ?? 0.22;
-    const ded = await getMileageDeduction(rate);
-    setDeduction(ded);
-    const taxVal = getEstimatedTax(taxRate, inc, exp, ded);
-    setTax(taxVal);
-    setLoading(false);
+    try {
+      setLoading(true);
+      const receipts = await listReceipts();
+      const mileage = await listMileage();
+      setReceiptsCount(receipts.length);
+      setMileageCount(mileage.length);
+      const inc = await getTotalIncome();
+      const exp = await getTotalExpenses();
+      setIncome(inc);
+      setExpenses(exp);
+      const cfg = await getConfig();
+      const rate = cfg.mileageRate ?? 0.58;
+      const taxRate = cfg.taxRate ?? 0.22;
+      const ded = await getMileageDeduction(rate);
+      setDeduction(ded);
+      const taxVal = getEstimatedTax(taxRate, inc, exp, ded);
+      setTax(taxVal);
+    } catch (e) {
+      console.error('Dashboard load error', e);
+      setSnackbarMsg('Unable to load summary.');
+      setSnackbarVisible(true);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {

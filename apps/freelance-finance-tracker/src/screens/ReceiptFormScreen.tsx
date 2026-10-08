@@ -1,6 +1,6 @@
 // src/screens/ReceiptFormScreen.tsx
 import React, { useState } from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, Platform } from 'react-native';
 import { Screen } from '../components/ui/Screen';
 import { Text, Button, Snackbar } from 'react-native-paper';
 import { FormField } from '../components/ui/FormField';
@@ -45,7 +45,7 @@ export default function ReceiptFormScreen() {
     await addReceipt(receipt);
     setSaving(false);
     setSnackbar('Receipt saved');
-    navigation.navigate('Dashboard', { showSnackbar: true });
+    navigation.navigate('Dashboard');
   };
 
   return (
@@ -57,14 +57,45 @@ export default function ReceiptFormScreen() {
       {photoUri && <Text>{photoUri}</Text>}
       <FormField label="Amount" value={amount} onChangeText={setAmount} keyboardType="numeric" />
       <FormField label="Date" value={date} onChangeText={setDate} />
-      <FormField label="Category" value={category} onChangeText={setCategory} />
-      <View style={styles.row}>
-        <Text style={{ marginRight: 8 }}>Type</Text>
-        <Picker selectedValue={type} style={{ flex: 1 }} onValueChange={v => setType(v as any)}>
-          <Picker.Item label="Expense" value="expense" />
-          <Picker.Item label="Income" value="income" />
+      {Platform.OS === 'web' ? (
+        <View>
+          <label htmlFor="category-select" style={{ marginTop: 8, marginBottom: 4 }}>Category</label>
+          <select
+            id="category-select"
+            value={category}
+            onChange={e => setCategory(e.target.value)}
+            aria-label="Category"
+            style={{ marginBottom: 8, padding: 8, width: '100%' }}
+          >
+            <option value="">Select a category</option>
+            <option value="Office">Office</option>
+            <option value="Travel">Travel</option>
+            <option value="Meals">Meals</option>
+            <option value="Other">Other</option>
+          </select>
+        </View>
+      ) : (
+        <Picker
+          selectedValue={category}
+          onValueChange={v => setCategory(v as string)}
+          accessibilityLabel="Category"
+        >
+          <Picker.Item label="Select a category" value="" />
+          <Picker.Item label="Office" value="Office" />
+          <Picker.Item label="Travel" value="Travel" />
+          <Picker.Item label="Meals" value="Meals" />
+          <Picker.Item label="Other" value="Other" />
         </Picker>
-      </View>
+      )}
+      <Text variant="bodyMedium" style={{ marginTop: 8 }}>Type</Text>
+      <Picker
+        selectedValue={type}
+        onValueChange={v => setType(v as any)}
+        accessibilityLabel="Type"
+      >
+        <Picker.Item label="Expense" value="expense" />
+        <Picker.Item label="Income" value="income" />
+      </Picker>
       <FormField label="Notes" value={notes} onChangeText={setNotes} />
       <Button mode="contained" onPress={handleSave} loading={saving} disabled={saving} accessibilityLabel="Save receipt">
         Save receipt
@@ -75,5 +106,5 @@ export default function ReceiptFormScreen() {
 }
 
 const styles = StyleSheet.create({
-  row: { flexDirection: 'row', alignItems: 'center', marginVertical: 8 },
+  picker: { marginBottom: 8 },
 });
