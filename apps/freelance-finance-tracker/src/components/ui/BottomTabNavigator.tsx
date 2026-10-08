@@ -8,8 +8,8 @@ import SettingsScreen from '../../screens/SettingsScreen';
 import ReceiptFormScreen from '../../screens/ReceiptFormScreen';
 import MileageFormScreen from '../../screens/MileageFormScreen';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { useTheme, Pressable } from 'react-native-paper';
-import { View } from 'react-native';
+import { useTheme } from 'react-native-paper';
+import { Pressable } from 'react-native';
 
 const Tab = createBottomTabNavigator();
 
