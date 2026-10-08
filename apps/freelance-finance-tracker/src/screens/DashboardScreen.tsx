@@ -52,7 +52,7 @@ export default function DashboardScreen() {
   if (loading) {
     return (
       <Screen>
-        <ActivityIndicator />
+        <ActivityIndicator accessibilityLabel="Loading dashboard" />
         <Text>Loading dashboard…</Text>
       </Screen>
     );
