@@ -8,9 +8,10 @@ let db: any = null;
 function getDB() {
   if (db) return db;
   if (Platform.OS === 'web') {
-    // No SQLite on web; use AsyncStorage fallback (handled in functions).
+    // No SQLite on web; use AsyncStorage fallback.
     return null;
   }
+  // Dynamically require expo-sqlite only on native platforms.
   const SQLite = require('expo-sqlite');
   db = SQLite.openDatabase('finance.db');
   // Initialize tables
@@ -61,7 +62,7 @@ export async function addReceipt(r: any): Promise<void> {
 }
 export async function listReceipts(): Promise<any[]> {
   if (Platform.OS === 'web') {
-    const { getItemAsync, setItemAsync } = require('@react-native-async-storage/async-storage');
+    const { getItemAsync } = require('@react-native-async-storage/async-storage');
     const json = await getItemAsync('receipts');
     return json ? JSON.parse(json) : [];
   }

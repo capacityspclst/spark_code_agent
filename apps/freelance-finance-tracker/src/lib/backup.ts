@@ -10,8 +10,8 @@ import { addMileage } from './records';
 function getTextEncoder() {
   if (typeof TextEncoder !== 'undefined') return TextEncoder;
   // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const { TextEncoder } = require('util');
-  return TextEncoder;
+  const { TextEncoder: EncoderClass } = require('util');
+  return EncoderClass;
 }
 
 export async function exportCSV(): Promise<string> {
@@ -41,8 +41,8 @@ export async function createBackup(passphrase: string): Promise<string> {
   const payload = JSON.stringify({ receipts, mileage, checksum: 'ok' });
   const salt = new Uint8Array([1, 2, 3, 4]);
   const key = await deriveKey(passphrase, salt);
-  const encoder = getTextEncoder();
-  const enc = await encrypt(new encoder().encode(payload), key);
+  const Encoder = getTextEncoder();
+  const enc = await encrypt(new Encoder().encode(payload), key);
   const data = JSON.stringify({ salt: Array.from(salt), ciphertext: Array.from(enc.ciphertext) });
   const uri = `${(FileSystem as any).cacheDirectory}backup_${Date.now()}.backup`;
   await FileSystem.writeAsStringAsync(uri, data);

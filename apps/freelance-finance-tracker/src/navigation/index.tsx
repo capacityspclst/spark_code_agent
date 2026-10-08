@@ -36,7 +36,7 @@ const Navigation: React.FC = () => {
     return (
       <Screen>
         <ActivityIndicator />
-        <Text>Loading…</Text>
+        <Text>Loading...</Text>
       </Screen>
     );
   }

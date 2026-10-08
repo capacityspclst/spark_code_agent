@@ -1,17 +1,18 @@
 // src/screens/PolicyScreen.tsx
 import React, { useState } from 'react';
-import { StyleSheet, Pressable } from 'react-native';
+import { Pressable } from 'react-native';
 import { Screen } from '../components/ui/Screen';
-import { Text } from 'react-native-paper';
+import { Text, useTheme } from 'react-native-paper';
 import { setPolicyAcceptance, POLICY_VERSION } from '../lib/policy';
 import { useNavigation } from '@react-navigation/native';
 import { PrimaryButton } from '../components/ui/PrimaryButton';
-import { Text as RNText } from 'react-native';
 
 export default function PolicyScreen() {
   const navigation = useNavigation<any>();
   const [checked, setChecked] = useState(false);
   const [saving, setSaving] = useState(false);
+  const theme = useTheme();
+  const spacing = (theme as any).spacing || {};
 
   const handleContinue = async () => {
     setSaving(true);
@@ -25,29 +26,27 @@ export default function PolicyScreen() {
 
   return (
     <Screen>
-      <Text variant="headlineMedium" style={{ marginBottom: 16 }}>Terms of Use and Privacy Policy</Text>
-      <Text variant="bodyMedium" style={{ marginBottom: 24 }}>
+      <Text variant="headlineMedium" style={{ marginBottom: spacing.md ?? 16 }}>
+        Terms of Use and Privacy Policy
+      </Text>
+      <Text variant="bodyMedium" style={{ marginBottom: spacing.lg ?? 24 }}>
         Track receipts and mileage locally \u2013 your data never leaves the device.
       </Text>
       <Pressable
-        style={styles.checkboxRow}
+        style={{ flexDirection: 'row', alignItems: 'center', marginBottom: spacing.sm ?? 8 }}
         onPress={toggle}
         accessibilityRole="checkbox"
         accessibilityState={{ checked }}
         accessibilityLabel="I agree to the Terms of Use and Privacy Policy."
       >
-        <RNText style={styles.box}>{checked ? '\u2611' : '\u2610'}</RNText>
-        <RNText style={styles.label}>I agree to the Terms of Use and Privacy Policy.</RNText>
+        <Text variant="bodyLarge" style={{ marginRight: spacing.sm ?? 8 }}>
+          {checked ? '\u2611' : '\u2610'}
+        </Text>
+        <Text variant="bodyMedium">I agree to the Terms of Use and Privacy Policy.</Text>
       </Pressable>
-      <PrimaryButton onPress={handleContinue} disabled={!checked || saving} loading={saving} style={{ marginTop: 24 }}>
+      <PrimaryButton onPress={handleContinue} disabled={!checked || saving} loading={saving} style={{ marginTop: spacing.lg ?? 24 }}>
         Continue
       </PrimaryButton>
     </Screen>
   );
 }
-
-const styles = StyleSheet.create({
-  checkboxRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
-  box: { fontSize: 24, marginRight: 8 },
-  label: { fontSize: 16 },
-});
