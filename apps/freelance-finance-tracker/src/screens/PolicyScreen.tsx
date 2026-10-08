@@ -38,6 +38,7 @@ export default function PolicyScreen() {
         accessibilityRole="checkbox"
         accessibilityState={{ checked }}
         accessibilityLabel="I agree to the Terms of Use and Privacy Policy."
+        aria-checked={checked}
         style={{ flexDirection: 'row', alignItems: 'center', marginBottom: spacing.sm ?? 8 }}
       >
         <Text variant="bodyLarge" style={{ marginRight: spacing.sm ?? 8 }}>
