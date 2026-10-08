@@ -9,6 +9,12 @@ module.exports = {
   deleteItemAsync: async (key) => {
     delete store[key];
   },
-  // For completeness
+  // Alias methods used by expo-secure-store implementations
+  getValueWithKeyAsync: async (key) => {
+    return store[key] ?? null;
+  },
+  setValueWithKeyAsync: async (key, value) => {
+    store[key] = value;
+  },
   isAvailableAsync: async () => true,
 };

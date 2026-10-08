@@ -3,7 +3,7 @@ import React from 'react';
 import { Provider as PaperProvider } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { appTheme } from './theme';
-import Navigation from './navigation'; // import folder directly resolves to index.tsx
+import Navigation from './navigation'; // default export resolves to navigation component
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 const paperSettings = {
