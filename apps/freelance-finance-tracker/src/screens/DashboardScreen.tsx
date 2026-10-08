@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, Snackbar } from 'react-native-paper';
+import { ActivityIndicator, Snackbar, Text } from 'react-native-paper';
 import { FlatList, View } from 'react-native';
 import { useNavigation, useRoute, NavigationProp, RouteProp } from '@react-navigation/native';
 import { EmptyState, PrimaryButton, Screen, SummaryCard } from '../components/ui';
@@ -8,9 +8,10 @@ import { Receipt } from '../lib/models';
 import { getAllReceipts } from '../lib/receiptStore';
 import { computeTotals } from '../lib/finance';
 import ReceiptCard from '../components/ui/ReceiptCard';
+import { consumeSnack } from '../lib/uiState';
 
 type DashboardRouteParams = {
-  snack?: string;
+  // no longer needed param
 };
 
 export default function DashboardScreen() {
@@ -25,26 +26,20 @@ export default function DashboardScreen() {
     const recs = await getAllReceipts(getStore());
     setReceipts(recs);
     setLoading(false);
+    const pending = consumeSnack();
+    if (pending) setSnack(pending);
   };
 
   useEffect(() => {
-    const unsubscribe = navigation.addListener('focus', () => {
-      load();
-      if (route.params?.snack) {
-        setSnack(route.params.snack);
-        // clear param to avoid repeat when navigating back
-        navigation.setParams({ snack: undefined } as any);
-      }
-    });
+    const unsubscribe = navigation.addListener('focus', load);
     return unsubscribe;
-  }, [navigation, route.params]);
+  }, [navigation]);
 
   if (loading) {
     return <ActivityIndicator style={{ flex: 1 }} accessibilityLabel="Loading" />;
   }
 
   const totals = computeTotals(receipts);
-
   const empty = receipts.length === 0;
 
   return (
@@ -63,6 +58,8 @@ export default function DashboardScreen() {
             <SummaryCard label="Income" value={`$${totals.income.toFixed(2)}`} />
             <SummaryCard label="Expenses" value={`$${totals.expenses.toFixed(2)}`} />
           </View>
+          {/* Recent activity header */}
+          <Text variant="titleMedium" style={{ marginTop: 8, marginBottom: 4 }}>Recent activity</Text>
           <FlatList
             data={receipts.slice(0, 5)}
             keyExtractor={(item) => item.id}

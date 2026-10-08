@@ -10,9 +10,11 @@ interface Props { label: string; checked: boolean; onChange: (checked: boolean) 
 export default function CheckboxField({ label, checked, onChange }: Props) {
   return (
     <Pressable
-      accessibilityRole="checkbox"
-      accessibilityState={{ checked }}
+      role="checkbox"
+      aria-checked={checked}
+      aria-label={label}
       accessibilityLabel={label}
+      accessibilityState={{ checked }}
       onPress={() => onChange(!checked)}
       style={({ pressed }) => [styles.row, pressed && styles.pressed]}
     >

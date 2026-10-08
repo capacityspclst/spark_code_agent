@@ -5,7 +5,7 @@ import { PrimaryButton, Screen, FormField, ChoiceField } from '../components/ui'
 import { addReceipt } from '../lib/receiptStore';
 import { getStore } from '../lib/storage';
 import { Receipt, ReceiptType } from '../lib/models';
-import { Snackbar } from 'react-native-paper';
+import { setPendingSnack } from '../lib/uiState';
 
 export default function ReceiptEntryScreen() {
   const navigation = useNavigation<NavigationProp<any>>();
@@ -43,8 +43,9 @@ export default function ReceiptEntryScreen() {
     };
     try {
       await addReceipt(getStore(), receipt);
-      // navigate immediately, passing snack message
-      navigation.navigate('Dashboard', { snack: 'Receipt saved' });
+      setPendingSnack('Receipt saved');
+      // Navigate to Dashboard tab
+      navigation.navigate('Dashboard');
     } catch (e) {
       setError('Unable to save receipt. Please try again.');
     } finally {
@@ -65,7 +66,7 @@ export default function ReceiptEntryScreen() {
           options={[{ value: 'expense', label: 'Expense' }, { value: 'income', label: 'Income' }]}
         />
         <FormField label="Notes" value={notes} onChangeText={setNotes} multiline />
-        {error ? <Snackbar visible={true} onDismiss={() => setError('')} duration={3000}>{error}</Snackbar> : null}
+        {error ? <FormField label="" value={error} onChangeText={() => {}} error={true} /> : null}
         <PrimaryButton label="Save receipt" onPress={onSave} loading={saving} disabled={saving} />
       </View>
     </Screen>
