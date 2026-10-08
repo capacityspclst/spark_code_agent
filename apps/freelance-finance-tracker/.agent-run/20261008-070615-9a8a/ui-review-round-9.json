@@ -1,0 +1,168 @@
+{
+  "verdict": "fail",
+  "summary": "The UI implementation diverges from the DESIGN.md in several critical ways. The dashboard never exits its loading state, preventing users from ever seeing the empty\u2011state or the financial summary \u2013 the primary flow is broken. The Policy screen does not surface the updated\u2011policy banner, leaving a required state unhandled. The shared Screen wrapper is missing the accessibility landmark (`accessibilityRole=\"main\"`), making the app inaccessible for assistive technology. Empty\u2011state handling is missing on the Receipts and Mileage screens. The BottomTabNavigator\u2019s custom tab button does not provide proper accessibility labels or guaranteed 44\u00d744 touch targets, and the Screen component uses the unsupported `gap` style, breaking the 8\u2011px spacing system. These issues collectively stop the app from meeting the design, accessibility, and interaction specifications.",
+  "findings": [
+    {
+      "severity": "high",
+      "file": "src/screens/DashboardScreen.tsx",
+      "issue": "DashboardScreen never clears its loading flag after fetching data, so the UI stays on \"Loading dashboard\u2026\" and never renders the EmptyState or SummaryCards. The empty\u2011state title/description also does not match the spec (\"No activity yet\" etc.).",
+      "fix": "Update the data\u2011fetch logic to set `loading = false` once the DB query resolves. Add handling for the empty case: when there are no receipts or mileage entries, render the `EmptyState` component with title \"No activity yet\" and description \"Add a receipt or mileage entry to see your financial overview.\" Ensure the FAB (56\u202fpx circular, primary background) is displayed in the empty state and navigates to the appropriate form screen.",
+      "source": "designer"
+    },
+    {
+      "severity": "high",
+      "file": "src/screens/PolicyScreen.tsx",
+      "issue": "When the stored policy version differs from `POLICY_VERSION`, the UI does not display the required version\u2011update banner (\"Policy has been updated to version\u202f{VERSION} \u2013 please review.\"). This leaves the \"Updated version\" state unimplemented.",
+      "fix": "Compare the persisted `PolicyAcceptance.version` with `POLICY_VERSION`. If they differ, render a `Banner` (or Paper `Banner`) at the top of the screen with the specified text, using the theme\u2019s `primaryContainer` and `onPrimaryContainer` colors for contrast. Ensure the banner is dismissible after the user taps Continue.",
+      "source": "designer"
+    },
+    {
+      "severity": "high",
+      "file": "src/components/ui/Screen.tsx",
+      "issue": "The Screen wrapper does not expose the required accessibility landmark; it lacks `accessibilityRole=\"main\"`. This prevents screen readers from identifying the main content region, making the app inaccessible.",
+      "fix": "Add `accessibilityRole=\"main\"` (and optionally an `accessibilityLabel` derived from the screen title) to the outermost `SafeAreaView` or a wrapping `View`. Example: `<SafeAreaView style={styles.safeArea} accessibilityRole=\"main\">`.",
+      "source": "designer"
+    },
+    {
+      "severity": "high",
+      "file": "src/screens/ReceiptsScreen.tsx",
+      "issue": "The screen does not render an `EmptyState` when `listReceipts()` returns an empty array, leaving the empty\u2011state for receipts unhandled.",
+      "fix": "After loading receipts, check if the array is empty. If so, render `<EmptyState title=\"No receipts\" description=\"Tap the + button to add your first receipt.\" actionLabel=\"Add receipt\" onAction={() => navigation.navigate('ReceiptForm')} />`. Ensure the component uses the design\u2011token spacing and typography.",
+      "source": "designer"
+    },
+    {
+      "severity": "high",
+      "file": "src/screens/MileageScreen.tsx",
+      "issue": "The mileage screen lacks handling for the empty\u2011state (\"No mileage entries\"), so users never see the required empty UI.",
+      "fix": "Detect an empty mileage list and render `<EmptyState title=\"No mileage entries\" description=\"Tap the + button to log your first trip.\" actionLabel=\"Add mileage\" onAction={() => navigation.navigate('MileageForm')} />`. Use the shared `EmptyState` component and keep spacing consistent with `theme.spacing`.",
+      "source": "designer"
+    },
+    {
+      "severity": "high",
+      "file": "src/components/ui/BottomTabNavigator.tsx",
+      "issue": "CustomTabBarButton does not supply an `accessibilityLabel` for each tab and does not guarantee a minimum 44\u00d744\u202fpx touch target, violating accessibility requirements for navigation.",
+      "fix": "Pass `accessibilityLabel={route.name}` (or a localized string) to the `Pressable`. Add a style that pads the pressable area (e.g., `padding: 10` or `minWidth: 44, minHeight: 44`) so the visible hit\u2011target meets the 44\u202fpx minimum. Ensure the colors for active/inactive states use the theme tokens.",
+      "source": "designer"
+    },
+    {
+      "severity": "high",
+      "file": "src/components/ui/Screen.tsx",
+      "issue": "The component uses the unsupported `gap` style property, which is ignored on native platforms and breaks the 8\u2011px vertical rhythm defined in the design tokens.",
+      "fix": "Remove `gap: 8` and replace it with explicit margin or padding values drawn from `theme.spacing.sm` (e.g., `marginBottom: theme.spacing.sm`). Apply these spacing values to child containers to maintain the required vertical rhythm.",
+      "source": "designer"
+    },
+    {
+      "severity": "high",
+      "viewport": "phone",
+      "issue": "The screen is unstyled with browser-default typography and spacing. The title is large but the body text is small and cramped, with no clear visual hierarchy or type scale. The checkbox and button are not styled or aligned properly, and the layout is unbalanced with significant empty space below.",
+      "fix": "Apply a consistent type scale with clear hierarchy (h1 for title, body for text). Style the checkbox and button with appropriate padding, weight, and alignment. Use a grid to align elements and balance the layout.",
+      "screen": "policy",
+      "source": "vision"
+    },
+    {
+      "severity": "high",
+      "viewport": "desktop",
+      "issue": "The desktop layout is stretched and appears as a tiny phone-sized version without proper scaling or layout adaptation. The content is not centered or aligned to the grid, and the padding is minimal, making the screen feel cramped and unprofessional.",
+      "fix": "Scale the layout to fit the desktop viewport. Use a proper grid system to align elements and add appropriate padding and spacing. Center the content and avoid stretching the layout.",
+      "screen": "policy",
+      "source": "vision"
+    },
+    {
+      "severity": "medium",
+      "viewport": "both",
+      "issue": "The primary action (Continue button) is not visually emphasized. It is centered but lacks any styling (like a border, background, or hover state) to make it stand out as the main action.",
+      "fix": "Style the Continue button with a clear background color, border, and hover state to make it the primary action. Consider using a larger size or icon to draw attention.",
+      "screen": "policy",
+      "source": "vision"
+    },
+    {
+      "severity": "medium",
+      "viewport": "phone",
+      "issue": "The checkbox is not styled and appears as a simple box with no visual feedback. The text is not aligned properly with the checkbox, and the layout is unbalanced with significant empty space below the button.",
+      "fix": "Style the checkbox with a clear border and hover state. Align the text with the checkbox using a consistent grid. Reduce the empty space below the button to improve the layout.",
+      "screen": "policy",
+      "source": "vision"
+    },
+    {
+      "severity": "high",
+      "screen": "policy",
+      "source": "vision",
+      "issue": "visual quality 3/10 on 'policy' (needs 8+): The screen is unstyled and minimal, resembling browser defaults rather than a polished product. It lacks visual hierarchy, spacing, and alignment, making it feel incomplete and unprofessional. The primary action is present but not emphasized, and the typography is inconsistent with no clear type scale. The layout is cramped and unbalanced, especially on desktop, where it appears stretched and lacks proper use of space.",
+      "fix": "Address this screen's findings until it looks polished and professional."
+    },
+    {
+      "severity": "high",
+      "viewport": "both",
+      "issue": "The screen is a plain loading state with no visual hierarchy, branding, or guidance. It looks like a browser-default loading indicator with no designed layout or context.",
+      "fix": "Design a branded, purposeful loading state that communicates what\u2019s happening and guides the user. Include a subtle animation, a branded background, and a clear message. Use the space to hint at the dashboard\u2019s purpose (e.g., 'Your financial summary is loading...').",
+      "screen": "dashboard empty",
+      "source": "vision"
+    },
+    {
+      "severity": "high",
+      "viewport": "both",
+      "issue": "The screen is visually empty and unengaging. There is no visual grouping, spacing, or alignment that suggests a structured layout. It appears as a blank canvas with only a loading message.",
+      "fix": "Add subtle visual structure: a branded background, a loading spinner with a clear message, and spacing that guides the eye. Use the empty space to hint at the dashboard\u2019s purpose (e.g., 'Your financial summary is loading...').",
+      "screen": "dashboard empty",
+      "source": "vision"
+    },
+    {
+      "severity": "high",
+      "viewport": "both",
+      "issue": "The bottom tab bar is functional but appears disconnected from the loading state. It lacks visual emphasis or context, making it feel like an afterthought.",
+      "fix": "Integrate the tab bar into the loading state. Use a subtle animation or visual cue to indicate the app is loading and the user can navigate. Consider adding a loading indicator within the tab bar or a brief message like 'Dashboard loading \u2014 you can navigate to other sections'.",
+      "screen": "dashboard empty",
+      "source": "vision"
+    },
+    {
+      "severity": "high",
+      "viewport": "both",
+      "issue": "The loading message 'Loading dashboard...' is too small, centered, and lacks visual hierarchy. It doesn\u2019t guide the user or convey confidence.",
+      "fix": "Increase the size and weight of the loading message. Use a bold, branded font. Add a subtle animation or progress indicator. Consider adding a hint like 'Your financial summary is loading \u2014 tap the tab to navigate elsewhere'.",
+      "screen": "dashboard empty",
+      "source": "vision"
+    },
+    {
+      "severity": "high",
+      "viewport": "both",
+      "issue": "There is no empty state guidance or call to action. The user has no idea what to do next or how to proceed.",
+      "fix": "Design an empty state that guides the user. For example, 'No activity yet. Add a receipt or mileage entry to get started.' with a prominent FAB or button. This should be visible even during loading to reduce user uncertainty.",
+      "screen": "dashboard empty",
+      "source": "vision"
+    },
+    {
+      "severity": "high",
+      "viewport": "both",
+      "issue": "The screen is visually unpolished and lacks any brand identity or visual language. It looks like a browser-default loading state.",
+      "fix": "Apply a consistent brand aesthetic: use a branded background color, typography, and iconography. Add subtle animations or micro-interactions to make the loading state feel alive and engaging.",
+      "screen": "dashboard empty",
+      "source": "vision"
+    },
+    {
+      "severity": "high",
+      "screen": "dashboard empty",
+      "source": "vision",
+      "issue": "visual quality 3/10 on 'dashboard empty' (needs 8+): The screen is minimally styled and lacks visual hierarchy, guidance, and polish. It resembles a browser-default loading state with no designed layout, branding, or user guidance. The only interaction is the bottom tab bar, which is functional but not integrated into the loading state. This is not a polished product; it looks unprofessional and would not inspire confidence in a paying user.",
+      "fix": "Address this screen's findings until it looks polished and professional."
+    }
+  ],
+  "lighthouse": [
+    {
+      "accessibility": 100,
+      "bestPractices": 100,
+      "performance": 74
+    }
+  ],
+  "vision_scores": [
+    {
+      "screen": "policy",
+      "score": 3.0,
+      "summary": "The screen is unstyled and minimal, resembling browser defaults rather than a polished product. It lacks visual hierarchy, spacing, and alignment, making it feel incomplete and unprofessional. The primary action is present but not emphasized, and the typography is inconsistent with no clear type scale. The layout is cramped and unbalanced, especially on desktop, where it appears stretched and lacks proper use of space."
+    },
+    {
+      "screen": "dashboard empty",
+      "score": 3.0,
+      "summary": "The screen is minimally styled and lacks visual hierarchy, guidance, and polish. It resembles a browser-default loading state with no designed layout, branding, or user guidance. The only interaction is the bottom tab bar, which is functional but not integrated into the loading state. This is not a polished product; it looks unprofessional and would not inspire confidence in a paying user."
+    }
+  ]
+}
