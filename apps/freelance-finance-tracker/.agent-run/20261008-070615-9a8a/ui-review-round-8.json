@@ -1,0 +1,187 @@
+{
+  "verdict": "fail",
+  "summary": "The UI generally follows the design language, but several critical gaps prevent the primary flow from working and break accessibility/consistency requirements. The Dashboard never shows the empty\u2011state title \"No activity yet\", causing the acceptance test to fail and leaving users with a blank screen when no data exists. The PolicyScreen never renders the required error UI or the version\u2011update banner, so the app cannot inform the user of SecureStore failures or policy updates. Accessibility roles, focus handling, and design\u2011token usage are inconsistent: the Screen wrapper lacks `accessibilityRole=\"main\"`, hard\u2011coded numeric spacing bypasses the theme spacing tokens, unsupported `gap` style is used, and button hit\u2011targets are not guaranteed to meet the 44\u202f\u00d7\u202f44\u202fpx minimum. These issues range from high\u2011severity (flow break) to medium/low (token misuse, styling gaps).",
+  "findings": [
+    {
+      "severity": "high",
+      "file": "src/screens/DashboardScreen.tsx",
+      "issue": "EmptyState is not rendered when there are no receipts or mileage entries, and the copy \"No activity yet\" is missing, causing the primary flow to break (test step 6).",
+      "fix": "Add logic to detect an empty data set and render the <EmptyState> component with title \"No activity yet\" and description \"Add a receipt or mileage entry to get started.\" Ensure the FAB is still visible and navigation works after the empty state is shown.",
+      "source": "designer"
+    },
+    {
+      "severity": "high",
+      "file": "src/screens/PolicyScreen.tsx",
+      "issue": "The UI does not display the error state \"Failed to load policy. Please restart the app.\" when SecureStore throws, nor does it show the version\u2011update banner required when a newer policy version exists.",
+      "fix": "Wrap the SecureStore call in a try/catch and set error state. Render a centered red Text with the error message and a retry button. When `acceptance.version !== POLICY_VERSION`, display a banner: \"Policy has been updated to version\u202f{VERSION} \u2013 please review.\"",
+      "source": "designer"
+    },
+    {
+      "severity": "high",
+      "file": "src/components/ui/Screen.tsx",
+      "issue": "The required `accessibilityRole=\"main\"` landmark is missing, violating the accessibility spec.",
+      "fix": "Add `accessibilityRole=\"main\"` to the topmost <SafeAreaView> or <ScrollView> element, e.g., `<SafeAreaView accessibilityRole=\"main\" ...>`.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/components/ui/Screen.tsx",
+      "issue": "Hard\u2011coded spacing values (padding: 16, margin, gap) are used instead of the theme spacing tokens, and the unsupported `gap` style property does not work in React Native.",
+      "fix": "Replace numeric values with `theme.spacing.md` or other token values via `useTheme()`. Remove `gap` and use margin/padding on child components to achieve the same spacing.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/components/ui/PrimaryButton.tsx",
+      "issue": "Button does not enforce the minimum touch target size (44\u202f\u00d7\u202f44\u202fpx) or the required minWidth/minHeight (64\u202f\u00d7\u202f48\u202fpx).",
+      "fix": "Add a style prop with `minWidth: 64, minHeight: 48, paddingHorizontal: 12` and ensure the hit area meets 44\u202f\u00d7\u202f44\u202fpx (e.g., wrap Button in a Pressable with extra invisible padding).",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/components/ui/SummaryCard.tsx",
+      "issue": "Card internal padding and marginBottom do not follow the spec (12\u202fpx internal padding, 16\u202fpx bottom margin).",
+      "fix": "Add `style={{ padding: theme.spacing.sm, marginBottom: theme.spacing.lg }}` to the Card component, matching the design tokens.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/components/ui/BottomTabNavigator.tsx",
+      "issue": "Custom tab bar button does not provide visible focus styling or proper accessibilityState for selected tabs.",
+      "fix": "Implement focus-visible styling (e.g., outline) and include `accessibilityState={{ selected: isFocused }}`. Add style changes on focus/press to meet WCAG focus requirements.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/components/ui/FormField.tsx",
+      "issue": "FormField does not use `autoComplete` props, lacks `accessibilityHint` linking to HelperText, and does not display a red error icon alongside the error message.",
+      "fix": "Pass `autoComplete` values appropriate for each field, add `accessibilityHint` describing the error, and render an error icon (e.g., AlertCircle) before the HelperText when `error` is true.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "src/components/ui/EmptyState.tsx",
+      "issue": "Container lacks an accessibility role (e.g., region) and does not use theme spacing tokens for margins.",
+      "fix": "Add `accessibilityRole=\"region\"` to the container View and replace hard\u2011coded margins with `theme.spacing` values.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "src/components/ui/Screen.tsx",
+      "issue": "Background color is set via inline style; the component does not use the `background` token from the theme consistently across nested views.",
+      "fix": "Apply theme.colors.background to all major containers via a shared style or ThemeProvider, ensuring consistent background color usage.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "src/components/ui/PrimaryButton.tsx",
+      "issue": "Button does not forward the `style` prop to the underlying Paper Button for custom spacing or color overrides.",
+      "fix": "Spread the `style` prop onto the <Button> component, e.g., `<Button ... style={[defaultStyle, style]}>`.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "src/components/ui/BottomTabNavigator.tsx",
+      "issue": "Icons are rendered with `aria-hidden` which is not a React Native prop; should use `accessible={false}`.",
+      "fix": "Replace `aria-hidden` with `accessible={false}` on icon components to properly hide them from screen readers.",
+      "source": "designer"
+    },
+    {
+      "severity": "high",
+      "viewport": "phone",
+      "issue": "The screen uses browser defaults: unstyled text, no type scale, no consistent spacing, and no visual hierarchy. The checkbox and button are unstyled and lack affordance.",
+      "fix": "Apply a consistent type scale with readable sizes (e.g., 24pt for headings, 16pt for body). Use a grid system for alignment and spacing. Style the checkbox and button with clear visual cues (border, background, hover states).",
+      "screen": "policy",
+      "source": "vision"
+    },
+    {
+      "severity": "high",
+      "viewport": "phone",
+      "issue": "The layout is sparse and unbalanced. Text is centered with no alignment or padding, and the button is centered without any visual weight or context.",
+      "fix": "Use a consistent grid. Align the text block and button to the left or center with appropriate padding. Add visual hierarchy through spacing and typography to guide the user.",
+      "screen": "policy",
+      "source": "vision"
+    },
+    {
+      "severity": "high",
+      "viewport": "phone",
+      "issue": "The typography is minimal and unbalanced. The title is large, but the body text is too small and lacks line height. The button text is too small and lacks weight.",
+      "fix": "Apply a type scale: title 24pt, body 16pt with 1.5x line height. Use bold or larger size for the button text to make it stand out.",
+      "screen": "policy",
+      "source": "vision"
+    },
+    {
+      "severity": "high",
+      "viewport": "phone",
+      "issue": "The checkbox is unstyled and lacks visual feedback. The button is unstyled and lacks affordance.",
+      "fix": "Style the checkbox with a border and checkmark. Style the button with a background, border, and hover state. Add a subtle shadow or elevation.",
+      "screen": "policy",
+      "source": "vision"
+    },
+    {
+      "severity": "high",
+      "viewport": "phone",
+      "issue": "The screen has no visual hierarchy. The title, body, checkbox, and button are all the same size and weight, making it hard to understand the primary action.",
+      "fix": "Use typography to create hierarchy: title larger and bolder, body smaller and lighter, button larger and bolder. Use spacing to separate elements.",
+      "screen": "policy",
+      "source": "vision"
+    },
+    {
+      "severity": "high",
+      "viewport": "phone",
+      "issue": "The screen is unstyled and appears to be built with browser defaults. It lacks any design language or brand identity.",
+      "fix": "Apply a consistent design language with a color palette, typography, and spacing. Use a grid system for alignment and spacing.",
+      "screen": "policy",
+      "source": "vision"
+    },
+    {
+      "severity": "high",
+      "screen": "policy",
+      "source": "vision",
+      "issue": "visual quality 4/10 on 'policy' (needs 8+): The screen is functional but lacks polish. It uses browser defaults with no designed layout, has no visual hierarchy, and appears unstyled and unprofessional. The typography is minimal and unbalanced, and the spacing is sparse and inconsistent. It fails to meet the standard for a polished, commercial product.",
+      "fix": "Address this screen's findings until it looks polished and professional."
+    },
+    {
+      "severity": "high",
+      "viewport": "phone",
+      "issue": "The screen is entirely blank \u2014 no UI elements, text, or layout are visible. This is not a functional or presentable screen.",
+      "fix": "Implement the empty state as specified in the design spec: display the message 'No activity yet. Add a receipt or mileage entry to get started.' and include the 'Add receipt' FAB.",
+      "screen": "dashboard empty",
+      "source": "vision"
+    },
+    {
+      "severity": "high",
+      "viewport": "desktop",
+      "issue": "The screen is entirely blank \u2014 no UI elements, text, or layout are visible. This is not a functional or presentable screen.",
+      "fix": "Implement the empty state as specified in the design spec: display the message 'No activity yet. Add a receipt or mileage entry to get started.' and include the 'Add receipt' FAB.",
+      "screen": "dashboard empty",
+      "source": "vision"
+    },
+    {
+      "severity": "high",
+      "screen": "dashboard empty",
+      "source": "vision",
+      "issue": "visual quality 1/10 on 'dashboard empty' (needs 8+): The screen is completely blank \u2014 no UI elements, no text, no layout. This is not a usable or presentable screen for any user. It violates every design principle: no visual hierarchy, no primary action, no typography, no spacing, no grouping, no color, no form, no navigation, no empty state guidance, and no use of space. It appears to be a placeholder or an error state that was not implemented or rendered.",
+      "fix": "Address this screen's findings until it looks polished and professional."
+    }
+  ],
+  "lighthouse": [
+    {
+      "accessibility": 100,
+      "bestPractices": 100,
+      "performance": 74
+    }
+  ],
+  "vision_scores": [
+    {
+      "screen": "policy",
+      "score": 4.0,
+      "summary": "The screen is functional but lacks polish. It uses browser defaults with no designed layout, has no visual hierarchy, and appears unstyled and unprofessional. The typography is minimal and unbalanced, and the spacing is sparse and inconsistent. It fails to meet the standard for a polished, commercial product."
+    },
+    {
+      "screen": "dashboard empty",
+      "score": 1.0,
+      "summary": "The screen is completely blank \u2014 no UI elements, no text, no layout. This is not a usable or presentable screen for any user. It violates every design principle: no visual hierarchy, no primary action, no typography, no spacing, no grouping, no color, no form, no navigation, no empty state guidance, and no use of space. It appears to be a placeholder or an error state that was not implemented or rendered."
+    }
+  ]
+}
