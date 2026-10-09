@@ -1,0 +1,622 @@
+{
+  "run_id": "20261009-072608-0390",
+  "task": "Build a new local-first freelance finance tracker phone app with Expo (React Native) for iOS and Android. Privacy is the product: all of the user's data stays on their device. There is no server, no accounts, no sign-up or login, no analytics, tracking or crash reporting, and the app never sends user data anywhere. Must-haves: (1) Policy agreement gate: on first launch, and whenever the policy version changes, the user must read the Terms of Use and Privacy Policy and tick \"I agree\" before anything else in the app is reachable; acceptance (policy version and date) is stored on the device. The policy says plainly that data stays on the device and the developer never receives it, that the user is responsible for their own backups, and that the app is not tax, legal or financial advice. (2) Receipts: photograph with the camera (photo-library fallback) and record amount, date, category, type (expense by default, or income) and notes; photos are kept in the app's private storage. (3) Mileage log: date, miles and purpose, with the deduction at a configurable rate per mile (default: the current IRS standard business rate, labeled \"verify for your tax year\"). (4) Dashboard: income, expenses, mileage deduction and estimated tax at a configurable rate (never negative), recent activity, and every primary action one tap away. (5) Exports: tax-ready CSV and PDF generated on the device and shared through the share sheet. (6) Encrypted on-device storage: the database is encrypted at rest with a key kept in the device keychain/keystore (expo-secure-store). (7) Backup and restore: export one encrypted backup file containing all records and photos, protected by a passphrase the user chooses (strong key derivation and authenticated encryption from an audited JavaScript library such as @noble/ciphers and @noble/hashes), shared wherever the user chooses (Files, iCloud Drive, Google Drive); restore from such a file with the passphrase after a clear confirmation, with an integrity check and a friendly message for a wrong passphrase or damaged file. Cloud-provider sync is out of scope for now. (8) Optional app lock with Face ID, Touch ID or fingerprint (expo-local-authentication), OFF by default and switchable in Settings. (9) Settings: app lock, mileage rate, tax rate, backup and restore, view the policy, and delete all data (with confirmation). The app must be visually appealing, polished and very easy to use: React Native Paper (Material 3) with a theme and shared components, generous spacing, a clear visual hierarchy, friendly empty states and a bottom tab bar to every main area. Use the current Expo SDK (look up versions with npm view; never guess). Includes unit and integration tests of the on-device logic.",
+  "app": "apps/freelance-finance-tracker",
+  "new_app": true,
+  "success": false,
+  "tests_passed": true,
+  "validation_passed": false,
+  "validation": "npm install (.) ok, expo dependency versions (.) ok, expo export (.) ok, expo web export (.) ok, ui renders (.) ok, ui styles applied (.) ok, accessibility, serious or critical (.) ok, responsive layout on a phone (.) ok, ui primary flow (.) FAIL, typescript (tsc) ok, json syntax ok, scanner suppressions ok, semgrep (security errors) ok, trivy secrets ok, trivy dependency vulnerabilities (high/critical, fixable) ok, trivy misconfigurations (high/critical) ok, trivy dependency vulnerabilities (other) warn, planned files present ok",
+  "review": {
+    "verdict": "revise",
+    "issues": [
+      "The UI primary flow validation fails at step 65 \"upload button \\\"Select backup file\\\"\" because the current WebFileInput component uses the experimental `window.showOpenFilePicker` API, which does not trigger a Playwright `filechooser` event. The UI validator expects a standard `<input type=\"file\">` element that opens the file chooser when the button is clicked. Update `src/components/ui/WebFileInput.tsx` to use a hidden `<input type=\"file\">` element triggered by the button press. Example fix:\n```tsx\nimport React, { useRef } from 'react';\nimport { Platform } from 'react-native';\nimport PrimaryButton from './PrimaryButton';\n\nexport default function WebFileInput({\n  label,\n  onFileSelected,\n}: {\n  label: string;\n  onFileSelected: (content: string) => void;\n}) {\n  const fileInputRef = useRef<HTMLInputElement>(null);\n\n  const handlePress = () => {\n    if (Platform.OS === 'web') {\n      fileInputRef.current?.click();\n    } else {\n      // Native fallback \u2013 no file picker needed for UI flow.\n    }\n  };\n\n  const handleChange = async (e: React.ChangeEvent<HTMLInputElement>) => {\n    const file = e.target.files?.[0];\n    if (!file) return;\n    try {\n      const text = await file.text();\n      onFileSelected(text);\n    } catch {\n      // ignore errors\n    }\n  };\n\n  return (\n    <>\n      <PrimaryButton label={label} variant=\"secondary\" onPress={handlePress} />\n      {Platform.OS === 'web' && (\n        <input\n          type=\"file\"\n          ref={fileInputRef}\n          style={{ display: 'none' }}\n          onChange={handleChange}\n        />\n      )}\n    </>\n  );\n}\n```\nThis change ensures the button labeled \"Select backup file\" opens a native file chooser, satisfying the UI flow test.\n"
+    ],
+    "feedback": "All acceptance tests currently pass, but the UI primary flow check fails due to the file upload component not triggering a file chooser event. Replace the experimental API with a hidden file input as described to make the UI flow validation succeed."
+  },
+  "review_rounds": 6,
+  "seconds": 24826.1,
+  "agents": {
+    "coder": {
+      "calls": 254,
+      "prompt_tokens": 14184648,
+      "completion_tokens": 267647,
+      "seconds": 14937.079467535019
+    },
+    "designer": {
+      "calls": 6,
+      "prompt_tokens": 165526,
+      "completion_tokens": 23033,
+      "seconds": 1053.0692636966705
+    },
+    "vision": {
+      "calls": 81,
+      "prompt_tokens": 290352,
+      "completion_tokens": 22791,
+      "seconds": 1115.3606762886047
+    },
+    "reviewer": {
+      "calls": 31,
+      "prompt_tokens": 1033349,
+      "completion_tokens": 37008,
+      "seconds": 1837.8997340202332
+    },
+    "escalation": {
+      "calls": 39,
+      "prompt_tokens": 2455678,
+      "completion_tokens": 42292,
+      "seconds": 577.4530954360962
+    },
+    "docs": {
+      "calls": 2,
+      "prompt_tokens": 59518,
+      "completion_tokens": 5967,
+      "seconds": 243.2652449607849
+    },
+    "retro": {
+      "calls": 1,
+      "prompt_tokens": 4058,
+      "completion_tokens": 4245,
+      "seconds": 128.6832275390625
+    }
+  },
+  "stalled": [
+    "phase 1 milestone 4 (M4: Encrypted backup & restore) did not finish in 6 rounds"
+  ],
+  "security": {
+    "verdict": "skipped",
+    "summary": "Skipped until tests and validation pass.",
+    "findings": [],
+    "assurance": {
+      "blocking_open": 0,
+      "open": 0,
+      "deployment_actions": 0,
+      "fixed": 0
+    },
+    "ledger": []
+  },
+  "deployment_guide": {
+    "written": true,
+    "missing_sections": [],
+    "app_type": "mobile app (Expo / React Native)"
+  },
+  "ui": {
+    "verdict": "fail",
+    "summary": "The app largely follows the DESIGN.md specification \u2013 all screens and their required states exist, navigation via the bottom tab bar and FAB provides access to every primary action, headings and landmarks are correctly used, and the accessibility audit reports an A\u2011score of 98 with zero axe violations. Design tokens are leveraged in most components, and the mobile\u2011first layout (390\u202fdp width, 16\u202fdp horizontal padding, 8\u202fdp vertical rhythm) is respected. However, a critical regression blocks the primary restore\u2011backup flow: the \"Select backup file\" button never triggers a file picker, breaking the end\u2011to\u2011end data\u2011restore path. Several medium\u2011severity gaps remain \u2013 backup\u2011passphrase validation is not enforced, focus\u2011visible outlines are missing on many interactive components, a few UI elements still use hard\u2011coded colors/sizes instead of the theme, and temporary backup files are not cleaned up. Low\u2011severity security concerns (missing CSP header on the web build and encryption key stored in localStorage) are also noted. These issues should be addressed before the app is deemed production\u2011ready.",
+    "findings": [
+      {
+        "severity": "high",
+        "file": "src/screens/RestoreScreen.tsx (and platform\u2011specific variants)",
+        "issue": "The \"Select backup file\" button never opens a file chooser on web, causing the Restore flow to time\u2011out (step 65). The flow is required by the spec and its failure prevents users from restoring backups.",
+        "fix": "Replace the current button with a proper `<input type=\"file\" />` element (or use expo\u2011document\u2011picker with web support). Ensure the onPress handler programmatically clicks the hidden file input and handles the selected file via FileReader. Add appropriate `accept` attribute and test the flow on both web and native.",
+        "source": "designer"
+      },
+      {
+        "severity": "medium",
+        "file": "src/screens/BackupPassphraseScreen.tsx",
+        "issue": "Backup passphrase UI hints at a minimum of 8 characters but the validation logic does not enforce this; the \"Create backup\" button can be enabled with a weak or mismatching passphrase.",
+        "fix": "Add client\u2011side validation that checks both fields for a length >=\u202f8 and matching values before enabling the button. Show a `HelperText` error when the requirement is not met, and disable the button with a visible disabled style.",
+        "source": "designer"
+      },
+      {
+        "severity": "medium",
+        "file": "src/components/ui/PrimaryButton.tsx (and other button wrappers)",
+        "issue": "Buttons lack a visible focus outline on native platforms (focus\u2011visible style is only applied on web). This violates WCAG\u202f2.1\u202f\u00a72.4.7 for keyboard focus indication.",
+        "fix": "Add a `style` prop that applies a 2\u202fdp `outline` using `theme.colors.outline` when `props.focused` (or via `onFocus`/`onBlur` state) on both web and native. Ensure the touch target remains \u2265\u202f44\u202f\u00d7\u202f44\u202fdp.",
+        "source": "designer"
+      },
+      {
+        "severity": "medium",
+        "file": "src/components/ui/EmptyState.tsx, src/components/ui/SummaryCard.tsx, other layout components",
+        "issue": "Some components use hard\u2011coded spacing (e.g., `marginBottom: 16` or `padding: 12`) instead of the `theme.spacing` token, which deviates from the design\u2011token\u2011only rule and makes the 8\u202fdp vertical rhythm inconsistent.",
+        "fix": "Refactor all static margin/padding values to use `theme.spacing * n` (or `theme.roundness` for border\u2011radius). Update the StyleSheet definitions to reference the token object.",
+        "source": "designer"
+      },
+      {
+        "severity": "medium",
+        "file": "src/screens/ReceiptEntryScreen.tsx (and MileageEntryScreen)",
+        "issue": "The Save button is disabled until the form is valid, but the disabled state provides no visual cue (colour or opacity) and no accessible `aria-disabled` description, which can confuse users and may be considered a silently disabled submit.",
+        "fix": "Apply a distinct disabled style (e.g., reduced opacity, `theme.colors.disabled` background) and set `accessibilityState={{ disabled: true }}` on the button. Add a helper text explaining why the button is disabled (e.g., \"All fields must be completed.\").",
+        "source": "designer"
+      },
+      {
+        "severity": "medium",
+        "file": "src/lib/storage/device.web.ts",
+        "issue": "The encryption key for the web fallback is persisted in `localStorage`, violating the local\u2011first security model and exposing encrypted data to any script with access to storage.",
+        "fix": "Either disable the web build for production or replace the storage mechanism with an in\u2011memory key derived from a user\u2011provided passphrase for the session. If persistence is required, store only a key\u2011derivation salt and never the raw key.",
+        "source": "designer"
+      },
+      {
+        "severity": "low",
+        "file": "public/index.html (or app.json web config)",
+        "issue": "The web build does not include a Content\u2011Security\u2011Policy header, leaving the SPA vulnerable to XSS if a future DOM injection occurs.",
+        "fix": "Add a CSP meta tag to `public/index.html` (or configure the static host to send an HTTP CSP header) that restricts scripts to `'self'` and disallows `unsafe-inline`.",
+        "source": "designer"
+      },
+      {
+        "severity": "low",
+        "file": "src/screens/BackupScreen.tsx",
+        "issue": "Backup files are written to a static cache path (`cacheDirectory/backup.bak`) and are not deleted after the share sheet completes, resulting in leftover encrypted files on the device.",
+        "fix": "Generate a unique temporary filename for each backup, invoke `FileSystem.deleteAsync` after `Sharing.shareAsync` resolves, and handle any errors gracefully.",
+        "source": "designer"
+      },
+      {
+        "severity": "medium",
+        "viewport": "phone",
+        "issue": "Form design lacks labels above fields (as per spec, this is a policy screen, not an entry form, but the design should still follow form principles).",
+        "fix": "Add labels above each field or use placeholder text if labels aren't applicable.",
+        "screen": "policy_gate",
+        "source": "vision"
+      },
+      {
+        "severity": "medium",
+        "viewport": "phone",
+        "issue": "No error states shown for checkbox or button \u2014 the screen only shows a disabled button, which is insufficient for a polished product.",
+        "fix": "Show validation message (e.g., 'Please agree to terms') when checkbox is unchecked.",
+        "screen": "policy_gate",
+        "source": "vision"
+      },
+      {
+        "severity": "medium",
+        "viewport": "phone",
+        "issue": "The 'Accept' button is centered and lacks visual emphasis \u2014 it should be the primary action and stand out more.",
+        "fix": "Increase button size, add a subtle shadow or border, and make the text bold.",
+        "screen": "policy_gate",
+        "source": "vision"
+      },
+      {
+        "severity": "medium",
+        "viewport": "desktop",
+        "issue": "Content is tightly aligned to the left edge with no right padding or margin \u2014 feels cramped and unpolished for desktop.",
+        "fix": "Add generous horizontal padding (e.g., 24px) on both sides to create breathing room.",
+        "screen": "policy_gate",
+        "source": "vision"
+      },
+      {
+        "severity": "medium",
+        "viewport": "desktop",
+        "issue": "No vertical spacing between sections \u2014 the policy text block and checkbox are too close together.",
+        "fix": "Add 16\u201324px vertical spacing between the policy block and checkbox to improve readability.",
+        "screen": "policy_gate",
+        "source": "vision"
+      },
+      {
+        "severity": "low",
+        "viewport": "both",
+        "issue": "The 'Tick the box above to continue' message is redundant \u2014 it\u2019s implied by the disabled button.",
+        "fix": "Remove or replace with a more concise message like 'Agree to continue'.",
+        "screen": "policy_gate",
+        "source": "vision"
+      },
+      {
+        "severity": "high",
+        "screen": "policy_gate",
+        "source": "vision",
+        "issue": "visual quality 7/10 on 'policy_gate' (needs 8+): The policy gate screen is clean and functional, with clear visual hierarchy and a single primary action. Typography is readable and consistent, spacing is generous, and alignment is clean. However, it lacks polish in form design (no labels above fields, no error states shown, no helpful hints) and feels minimalistic without brand or visual personality. On desktop, it\u2019s not optimized for the larger canvas \u2014 elements are too close to the edges and lack spacing that would make it feel premium.",
+        "fix": "Address this screen's findings until it looks polished and professional."
+      },
+      {
+        "severity": "low",
+        "viewport": "desktop",
+        "issue": "Slight misalignment of the 'Add receipt' and 'Add mileage' buttons relative to the centered icon and text; buttons appear slightly offset right from the vertical center.",
+        "fix": "Center the buttons vertically and horizontally relative to the icon and text block for consistent alignment across both viewports.",
+        "screen": "dashboard_empty",
+        "source": "vision"
+      },
+      {
+        "severity": "medium",
+        "viewport": "phone",
+        "issue": "The 'Add photo' button is a link-style text button without a clear affordance or icon, which may confuse users expecting a standard button or image picker UI.",
+        "fix": "Replace with a styled button that includes an icon (e.g., camera) to clearly indicate its function as a photo upload control.",
+        "screen": "receipt_entry",
+        "source": "vision"
+      },
+      {
+        "severity": "medium",
+        "viewport": "phone",
+        "issue": "The 'Save receipt' button is centered horizontally but not vertically aligned with the form fields, creating an asymmetrical layout.",
+        "fix": "Vertically center the button within the form container to improve visual balance and alignment.",
+        "screen": "receipt_entry",
+        "source": "vision"
+      },
+      {
+        "severity": "low",
+        "viewport": "both",
+        "issue": "The 'Type' toggle buttons have inconsistent padding and spacing between the two options, breaking the visual rhythm of the form.",
+        "fix": "Apply consistent padding and spacing to both toggle buttons to match the spacing of other form fields.",
+        "screen": "receipt_entry",
+        "source": "vision"
+      },
+      {
+        "severity": "low",
+        "viewport": "phone",
+        "issue": "The 'Add receipt' header is too large and lacks a visual hierarchy with the form fields below it, making the form feel less structured.",
+        "fix": "Reduce the header size slightly and add a subtle separator or margin to visually separate it from the form fields below.",
+        "screen": "receipt_entry",
+        "source": "vision"
+      },
+      {
+        "severity": "medium",
+        "viewport": "desktop",
+        "issue": "The 'Add receipt' and 'Add mileage' buttons are slightly misaligned with the activity card on desktop; the buttons appear to be floating slightly to the right of the card's right edge, breaking the visual grouping.",
+        "fix": "Adjust button positioning to align flush with the card's right edge or adjust the card's width to accommodate the buttons within its bounds.",
+        "screen": "dashboard_populated",
+        "source": "vision"
+      },
+      {
+        "severity": "low",
+        "viewport": "desktop",
+        "issue": "The snackbar 'Receipt saved' overlaps slightly with the 'Add mileage' button on desktop, creating a visual clutter point.",
+        "fix": "Increase the vertical padding of the snackbar or adjust its position to ensure it does not visually interfere with the buttons.",
+        "screen": "dashboard_populated",
+        "source": "vision"
+      },
+      {
+        "severity": "medium",
+        "viewport": "both",
+        "issue": "The screen is visually sparse and lacks visual hierarchy or engagement cues beyond the card. The title 'Receipts' is large but not styled to stand out as a primary heading, and there's no subtle visual feedback for interaction.",
+        "fix": "Add a subtle background gradient or shadow to the card, and consider using a slightly bolder or more distinct typography for the title to establish hierarchy.",
+        "screen": "receipts_loaded",
+        "source": "vision"
+      },
+      {
+        "severity": "medium",
+        "viewport": "both",
+        "issue": "The empty state is minimal and doesn't guide the user to the next step. It's just a card with text, lacking any visual cue or button to add a receipt.",
+        "fix": "Add a clear, prominent 'Add receipt' button with an icon and a subtle animation or hover effect to encourage action.",
+        "screen": "receipts_loaded",
+        "source": "vision"
+      },
+      {
+        "severity": "low",
+        "viewport": "desktop",
+        "issue": "The desktop layout is stretched and doesn't utilize the available space. The card is centered with large empty space around it, which feels underutilized and lacks visual interest.",
+        "fix": "Use a grid or column layout to arrange multiple receipts. Add subtle visual cues like dividers or background patterns to fill the space and guide the eye.",
+        "screen": "receipts_loaded",
+        "source": "vision"
+      },
+      {
+        "severity": "low",
+        "viewport": "phone",
+        "issue": "The card is too large and takes up most of the screen, leaving little room for interaction or navigation. The bottom tab bar is visible but not clearly integrated with the card.",
+        "fix": "Reduce the card's padding and margin to make it feel more compact. Add subtle visual cues like a border or shadow to make the card feel more integrated with the screen.",
+        "screen": "receipts_loaded",
+        "source": "vision"
+      },
+      {
+        "severity": "high",
+        "screen": "receipts_loaded",
+        "source": "vision",
+        "issue": "visual quality 7/10 on 'receipts_loaded' (needs 8+): The screen is clean and functional, with clear visual hierarchy and consistent spacing. The typography is readable and appropriately scaled. However, it lacks visual polish and engagement cues that would elevate it to a polished, premium product. The empty state is minimal and could be more inviting. On desktop, the layout is stretched and lacks thoughtful use of space.",
+        "fix": "Address this screen's findings until it looks polished and professional."
+      },
+      {
+        "severity": "low",
+        "viewport": "phone",
+        "issue": "The 'Add photo' button is slightly too wide for the content, creating unnecessary horizontal padding.",
+        "fix": "Adjust the button width to match the text content, or add minimal padding to prevent the text from appearing cramped.",
+        "screen": "receipt_entry_photo",
+        "source": "vision"
+      },
+      {
+        "severity": "low",
+        "viewport": "phone",
+        "issue": "The 'Save receipt' button is well-sized, but the vertical spacing between the 'Notes' field and the button could be slightly increased for better visual breathing room.",
+        "fix": "Increase the padding below the 'Notes' field to improve spacing and reduce visual density.",
+        "screen": "receipt_entry_photo",
+        "source": "vision"
+      },
+      {
+        "severity": "low",
+        "viewport": "desktop",
+        "issue": "The form fields are aligned left, but the spacing between fields is not consistently proportional to the desktop viewport width.",
+        "fix": "Adjust field spacing to be more proportional to the desktop width, using a grid-based layout to ensure even distribution and visual harmony.",
+        "screen": "receipt_entry_photo",
+        "source": "vision"
+      },
+      {
+        "severity": "medium",
+        "viewport": "phone",
+        "issue": "The two FAB buttons ('Add receipt' and 'Add mileage') overlap the right edge of the recent activity cards, visually cutting off content and creating a cramped feel.",
+        "fix": "Adjust FAB position or reduce button width to prevent overlap with card content. Consider using a floating action button with a dropdown menu instead of two separate buttons.",
+        "screen": "dashboard_with_two_receipts",
+        "source": "vision"
+      },
+      {
+        "severity": "medium",
+        "viewport": "desktop",
+        "issue": "The snackbar ('Receipt saved') partially obscures the 'Add mileage' FAB button, making it less accessible and visually cluttered.",
+        "fix": "Position the snackbar to avoid overlapping interactive elements. Consider animating it to slide in from the bottom without covering the FAB.",
+        "screen": "dashboard_with_two_receipts",
+        "source": "vision"
+      },
+      {
+        "severity": "high",
+        "screen": "dashboard_with_two_receipts",
+        "source": "vision",
+        "issue": "visual quality 7/10 on 'dashboard_with_two_receipts' (needs 8+): Polished, clean dashboard with clear visual hierarchy and consistent spacing. Primary actions are accessible via FAB and bottom nav. Typography is readable, and color contrast is sufficient. Minor issues: FAB buttons overlap recent activity cards on phone, and the snackbar partially obscures the FAB on desktop. No critical usability or design flaws.",
+        "fix": "Address this screen's findings until it looks polished and professional."
+      },
+      {
+        "severity": "low",
+        "viewport": "both",
+        "issue": "The title 'Mileage' is at the top, but the primary action 'Add mileage' is centered below the message, creating a slight visual disconnect from the top-level hierarchy.",
+        "fix": "Consider aligning the title and primary action vertically, or use a subtle visual grouping (e.g., a container) to unify the header and action area.",
+        "screen": "mileage_empty",
+        "source": "vision"
+      },
+      {
+        "severity": "low",
+        "viewport": "both",
+        "issue": "The helper text 'Tap the + button to log your first mileage entry.' is centered, which is acceptable, but the mention of a '+' button not being visible on screen may confuse users.",
+        "fix": "Add a subtle visual cue (e.g., a small + icon next to the text) or rephrase to 'Tap the button below to log your first mileage entry.' to clarify the interaction.",
+        "screen": "mileage_empty",
+        "source": "vision"
+      },
+      {
+        "severity": "low",
+        "viewport": "desktop",
+        "issue": "The 'Add mileage' button is centered horizontally, but the surrounding content is not fully utilizing the available horizontal space, leaving empty whitespace on the left and right.",
+        "fix": "Adjust the button's horizontal alignment to be left-aligned or center-aligned with the content block, or add padding to the container to better utilize the desktop width.",
+        "screen": "mileage_empty",
+        "source": "vision"
+      },
+      {
+        "severity": "medium",
+        "viewport": "phone",
+        "issue": "No visual hierarchy or emphasis on the primary action. The 'Save mileage' button is blue, but there's no size, weight, or spacing differentiation to make it stand out as the main call to action.",
+        "fix": "Increase button size, add bold weight to text, and increase vertical spacing above and below the button to visually anchor it as the primary action.",
+        "screen": "mileage_entry",
+        "source": "vision"
+      },
+      {
+        "severity": "medium",
+        "viewport": "phone",
+        "issue": "Form fields are not touch-friendly. Input fields are too narrow for thumb-tap on a phone, and there's no visual indicator of field focus or selection state.",
+        "fix": "Increase field width to 80-90% of screen width, add rounded corners, and implement a subtle focus ring or underline when tapped.",
+        "screen": "mileage_entry",
+        "source": "vision"
+      },
+      {
+        "severity": "medium",
+        "viewport": "phone",
+        "issue": "Typography lacks scale and hierarchy. All labels and text use the same size and weight, making it hard to distinguish the heading from the fields.",
+        "fix": "Use a type scale: heading (bold, larger), field labels (medium, lighter), placeholder text (lighter, smaller).",
+        "screen": "mileage_entry",
+        "source": "vision"
+      },
+      {
+        "severity": "medium",
+        "viewport": "phone",
+        "issue": "No error state or validation feedback shown. The design spec mentions validation errors, but this screen shows no error indicators or helper text.",
+        "fix": "Add placeholder text or helper text under each field indicating required input. Implement error states with red borders and descriptive messages.",
+        "screen": "mileage_entry",
+        "source": "vision"
+      },
+      {
+        "severity": "low",
+        "viewport": "both",
+        "issue": "Desktop version is a stretched phone layout. The form elements are scaled up but not re-arranged for desktop, resulting in a cramped, unprofessional appearance.",
+        "fix": "Re-layout the form for desktop: use a two-column grid, increase spacing, and allow for larger input fields. Avoid stretching the phone layout.",
+        "screen": "mileage_entry",
+        "source": "vision"
+      },
+      {
+        "severity": "high",
+        "screen": "mileage_entry",
+        "source": "vision",
+        "issue": "visual quality 7/10 on 'mileage_entry' (needs 8+): The screen is clean and functional, with a clear primary action and good spacing. However, it lacks visual hierarchy, consistent typography, and touch-friendly design elements that would elevate it to a polished, commercial-grade product.",
+        "fix": "Address this screen's findings until it looks polished and professional."
+      },
+      {
+        "severity": "low",
+        "viewport": "phone",
+        "issue": "The 'Mileage saved' snackbar partially overlaps the 'Add mileage' button on the phone view.",
+        "fix": "Adjust the snackbar's position or duration to avoid overlapping critical UI elements.",
+        "screen": "dashboard_with_mileage",
+        "source": "vision"
+      },
+      {
+        "severity": "low",
+        "viewport": "desktop",
+        "issue": "The 'Add receipt' and 'Add mileage' buttons are visually identical in size and color, lacking differentiation for user clarity.",
+        "fix": "Use subtle visual cues (e.g., icon, border, or hover state) to distinguish the two actions on desktop.",
+        "screen": "dashboard_with_mileage",
+        "source": "vision"
+      },
+      {
+        "severity": "medium",
+        "viewport": "both",
+        "issue": "All buttons are visually identical in style and size, making it hard to distinguish primary actions from secondary ones. The toggle switch is the only element with a different visual treatment.",
+        "fix": "Use a visual hierarchy: make the primary action (e.g., 'Export' or 'Backup & restore') more prominent through size, color, or placement. Consider using a different button style or icon for critical actions.",
+        "screen": "settings",
+        "source": "vision"
+      },
+      {
+        "severity": "medium",
+        "viewport": "both",
+        "issue": "Typography lacks a clear scale. The title 'Settings' and button text are similar in weight and size, reducing visual hierarchy. There's no emphasis on the toggle label or button labels.",
+        "fix": "Establish a type scale: use a larger, bolder font for the title, medium weight for toggle labels, and smaller, lighter weight for button text. Consider adding subtle spacing or color to differentiate elements.",
+        "screen": "settings",
+        "source": "vision"
+      },
+      {
+        "severity": "low",
+        "viewport": "both",
+        "issue": "The toggle switch is slightly misaligned with the text on the left, and the button borders are not perfectly aligned with the container edges.",
+        "fix": "Adjust the toggle switch's position to align with the left edge of its container. Ensure all buttons have consistent padding and alignment with the container edges.",
+        "screen": "settings",
+        "source": "vision"
+      },
+      {
+        "severity": "low",
+        "viewport": "phone",
+        "issue": "The buttons are not touch-friendly: they are too close to the edges and lack sufficient padding for safe tapping on a small screen.",
+        "fix": "Increase the padding around each button to ensure safe touch targets. Add a minimum of 8px padding on all sides for phone screens.",
+        "screen": "settings",
+        "source": "vision"
+      },
+      {
+        "severity": "low",
+        "viewport": "desktop",
+        "issue": "The layout on desktop is not optimized. The buttons are too close together vertically and do not utilize the available space effectively.",
+        "fix": "Increase vertical spacing between buttons on desktop. Consider adding a subtle divider or using a grid layout to better utilize the available space.",
+        "screen": "settings",
+        "source": "vision"
+      },
+      {
+        "severity": "high",
+        "screen": "settings",
+        "source": "vision",
+        "issue": "visual quality 7/10 on 'settings' (needs 8+): Polished, clean interface with consistent spacing and clear hierarchy. The design is functional and meets basic usability standards for a settings screen. However, it lacks visual distinction between primary actions and secondary options, and the typography scale feels minimalistic without strong hierarchy.",
+        "fix": "Address this screen's findings until it looks polished and professional."
+      },
+      {
+        "severity": "low",
+        "viewport": "both",
+        "issue": "The primary button text 'Create encrypted backup' is blue, which may not clearly indicate it's a primary action (as opposed to a link or secondary action) without additional visual hierarchy (like weight or background).",
+        "fix": "Apply a subtle background color or elevation to the button to make it visually distinct as the primary action.",
+        "screen": "backup",
+        "source": "vision"
+      },
+      {
+        "severity": "low",
+        "viewport": "both",
+        "issue": "The title 'Backup' is bold, but the subtitle 'Backup & restore' in the header is not styled to indicate hierarchy, which could make the screen feel less structured.",
+        "fix": "Style the header subtitle 'Backup & restore' with a lighter weight or smaller size to visually subordinate it to the main title.",
+        "screen": "backup",
+        "source": "vision"
+      },
+      {
+        "severity": "low",
+        "viewport": "both",
+        "issue": "The primary action button 'Restore from backup' is centered, but there's no visual indicator that it's the only action or the next step.",
+        "fix": "Add subtle visual emphasis (e.g., a thin underline, slight shadow, or icon) to reinforce it as the primary action.",
+        "screen": "backup_success",
+        "source": "vision"
+      },
+      {
+        "severity": "low",
+        "viewport": "both",
+        "issue": "The title 'Backup' and subtitle 'Backup ready to share' are not aligned to the same baseline, creating a slight visual misalignment.",
+        "fix": "Adjust the subtitle to align with the title's baseline for visual harmony.",
+        "screen": "backup_success",
+        "source": "vision"
+      },
+      {
+        "severity": "low",
+        "viewport": "both",
+        "issue": "The 'Backup' title is not bolded, reducing its visual weight compared to the primary button.",
+        "fix": "Bold the title to establish a clear visual hierarchy with the primary action.",
+        "screen": "backup_success",
+        "source": "vision"
+      },
+      {
+        "severity": "high",
+        "screen": "backup_success",
+        "source": "vision",
+        "issue": "visual quality 7/10 on 'backup_success' (needs 8+): Polished, minimal, and functional backup screen. Clear hierarchy with primary action centered. Typography and spacing are clean and consistent. No critical issues, but lacks visual polish and brand presence to reach 8.",
+        "fix": "Address this screen's findings until it looks polished and professional."
+      }
+    ],
+    "lighthouse": [
+      {
+        "accessibility": 98,
+        "bestPractices": 100,
+        "performance": 57
+      }
+    ],
+    "screenshots": [
+      "apps/freelance-finance-tracker/.agent-run/20261009-072608-0390/screenshots/app/screenshot-phone.png",
+      "apps/freelance-finance-tracker/.agent-run/20261009-072608-0390/screenshots/app/screenshot-phone-full.png",
+      "apps/freelance-finance-tracker/.agent-run/20261009-072608-0390/screenshots/app/screenshot-desktop.png",
+      "apps/freelance-finance-tracker/.agent-run/20261009-072608-0390/screenshots/app/screenshot-desktop-full.png",
+      "apps/freelance-finance-tracker/.agent-run/20261009-072608-0390/screenshots/app/flow-phone-01-policy-gate.png",
+      "apps/freelance-finance-tracker/.agent-run/20261009-072608-0390/screenshots/app/flow-phone-02-dashboard-empty.png",
+      "apps/freelance-finance-tracker/.agent-run/20261009-072608-0390/screenshots/app/flow-phone-03-receipt-entry.png",
+      "apps/freelance-finance-tracker/.agent-run/20261009-072608-0390/screenshots/app/flow-phone-04-dashboard-populated.png",
+      "apps/freelance-finance-tracker/.agent-run/20261009-072608-0390/screenshots/app/flow-phone-05-receipts-loaded.png",
+      "apps/freelance-finance-tracker/.agent-run/20261009-072608-0390/screenshots/app/flow-phone-06-receipt-entry-photo.png",
+      "apps/freelance-finance-tracker/.agent-run/20261009-072608-0390/screenshots/app/flow-phone-07-dashboard-with-two-receipts.png",
+      "apps/freelance-finance-tracker/.agent-run/20261009-072608-0390/screenshots/app/flow-phone-08-mileage-empty.png",
+      "apps/freelance-finance-tracker/.agent-run/20261009-072608-0390/screenshots/app/flow-phone-09-mileage-entry.png",
+      "apps/freelance-finance-tracker/.agent-run/20261009-072608-0390/screenshots/app/flow-phone-10-dashboard-with-mileage.png",
+      "apps/freelance-finance-tracker/.agent-run/20261009-072608-0390/screenshots/app/flow-phone-11-settings.png",
+      "apps/freelance-finance-tracker/.agent-run/20261009-072608-0390/screenshots/app/flow-phone-12-export.png",
+      "apps/freelance-finance-tracker/.agent-run/20261009-072608-0390/screenshots/app/flow-phone-13-settings.png",
+      "apps/freelance-finance-tracker/.agent-run/20261009-072608-0390/screenshots/app/flow-phone-14-backup.png",
+      "apps/freelance-finance-tracker/.agent-run/20261009-072608-0390/screenshots/app/flow-phone-15-backup-passphrase-modal.png",
+      "apps/freelance-finance-tracker/.agent-run/20261009-072608-0390/screenshots/app/flow-phone-16-backup-success.png",
+      "apps/freelance-finance-tracker/.agent-run/20261009-072608-0390/screenshots/app/flow-phone-17-restore-passphrase-modal.png",
+      "apps/freelance-finance-tracker/.agent-run/20261009-072608-0390/screenshots/app/flow-desktop-01-policy-gate.png",
+      "apps/freelance-finance-tracker/.agent-run/20261009-072608-0390/screenshots/app/flow-desktop-02-dashboard-empty.png",
+      "apps/freelance-finance-tracker/.agent-run/20261009-072608-0390/screenshots/app/flow-desktop-03-receipt-entry.png",
+      "apps/freelance-finance-tracker/.agent-run/20261009-072608-0390/screenshots/app/flow-desktop-04-dashboard-populated.png",
+      "apps/freelance-finance-tracker/.agent-run/20261009-072608-0390/screenshots/app/flow-desktop-05-receipts-loaded.png",
+      "apps/freelance-finance-tracker/.agent-run/20261009-072608-0390/screenshots/app/flow-desktop-06-receipt-entry-photo.png",
+      "apps/freelance-finance-tracker/.agent-run/20261009-072608-0390/screenshots/app/flow-desktop-07-dashboard-with-two-receipts.png",
+      "apps/freelance-finance-tracker/.agent-run/20261009-072608-0390/screenshots/app/flow-desktop-08-mileage-empty.png",
+      "apps/freelance-finance-tracker/.agent-run/20261009-072608-0390/screenshots/app/flow-desktop-09-mileage-entry.png",
+      "apps/freelance-finance-tracker/.agent-run/20261009-072608-0390/screenshots/app/flow-desktop-10-dashboard-with-mileage.png",
+      "apps/freelance-finance-tracker/.agent-run/20261009-072608-0390/screenshots/app/flow-desktop-11-settings.png",
+      "apps/freelance-finance-tracker/.agent-run/20261009-072608-0390/screenshots/app/flow-desktop-12-export.png",
+      "apps/freelance-finance-tracker/.agent-run/20261009-072608-0390/screenshots/app/flow-desktop-13-settings.png",
+      "apps/freelance-finance-tracker/.agent-run/20261009-072608-0390/screenshots/app/flow-desktop-14-backup.png",
+      "apps/freelance-finance-tracker/.agent-run/20261009-072608-0390/screenshots/app/flow-desktop-15-backup-passphrase-modal.png",
+      "apps/freelance-finance-tracker/.agent-run/20261009-072608-0390/screenshots/app/flow-desktop-16-backup-success.png",
+      "apps/freelance-finance-tracker/.agent-run/20261009-072608-0390/screenshots/app/flow-desktop-17-restore-passphrase-modal.png"
+    ]
+  },
+  "retro": {
+    "observations": [
+      "validator 'ui primary flow (.)' blocked 6 of 6 rounds",
+      "coder hit its turn limit in 2 of 6 rounds ([1, 5])",
+      "vision scores flat across the run: first rounds [7.8, 7.8, 7.0], last rounds [7.1, 6.9, 7.8]",
+      "slowest round 6 took 83 min; average 68 min"
+    ],
+    "went_well": [
+      "All unit and integration tests passed in every round, confirming that core business logic and data handling were correct.",
+      "The designer delivered a complete ui_flow.json and DESIGN.md within 6 calls, giving the coder a clear navigation map.",
+      "Vision model scores remained stable (average ~7.0) across the run, showing consistent visual quality of the UI mock\u2011ups.",
+      "Static reviewers caught high\u2011severity security issues and disallowed raw HTML components, keeping the codebase on a secure baseline.",
+      "Round and coder turn limits prevented unbounded token usage; only two turn\u2011limit hits occurred despite a large number of calls."
+    ],
+    "improvements": [
+      {
+        "title": "Make UI primary\u2011flow validator tolerant and more diagnostic for file\u2011picker and export actions",
+        "evidence": "Rounds\u202f1\u20116 all failed on validator \"ui primary flow (.)\". Round\u202f1 &\u202f6: \"upload button 'Select backup file' failed: page.waitForEvent: Timeout 10000ms\". Rounds\u202f3\u20115: \"click button 'Export'\" produced \"Maximum call stack size exceeded\". Round\u202f6: validator noted use of experimental `window.showOpenFilePicker` which does not fire Playwright's `filechooser` event.",
+        "change": "Modify ui_check.mjs to (a) recognize Expo DocumentPicker/WebFileInput patterns and treat a successful `DocumentPicker.getDocumentAsync` as a valid file\u2011chooser event, (b) add a fallback detection for a visible `<input type='file'>` element, and (c) surface the exact component identifier (file, line, accessibilityLabel) with a clear \"expected\u2011behavior vs. observed\" diff in the failure report.",
+        "expected_effect": "Coder can implement a compliant file\u2011picker and export button in one focused edit, eliminating repeated UI\u2011flow failures and cutting the number of rounds needed to clear validator\u202f\"ui primary flow\".",
+        "priority": "high"
+      },
+      {
+        "title": "Add static validator for circular exports and recursive component registration",
+        "evidence": "Round\u202f5 error: \"Got an invalid value for 'component' prop for the screen 'Restore'. It must be a React component\u2026 infinite\u2011recursive getter\" caused by `src/screens/RestoreScreen.web.tsx` re\u2011exporting its own default and `src/navigation/index.tsx` registering that as a screen. This circular export triggered UI validator failures at step\u202f46.",
+        "change": "Extend validate.py with a new check named `detect_circular_exports` that parses ES6 export statements, flags re\u2011exports that resolve to the same file (or create import cycles) and reports the offending file/line. Include this check in the static\u2011validation pipeline before UI validation runs.",
+        "expected_effect": "Circular import bugs are caught early, preventing runtime navigation crashes and the subsequent UI\u2011flow validator blocks, thus saving coder iterations.",
+        "priority": "high"
+      },
+      {
+        "title": "Introduce pre\u2011coding dependency vulnerability guard",
+        "evidence": "Round\u202f3 security scan reported high\u2011severity unfixed vulnerabilities in `braces@3.0.3`, `node-forge@1.4.0`, `sprintf-js@1.0.3` and a medium\u2011severity issue in `uuid@7.0.3`. Because security findings are blocking, the coder later had to replace or upgrade these packages, adding extra work.",
+        "change": "Add a pre\u2011run step in the planner phase that runs `npm audit` (or uses a curated CVE whitelist) and produces a \"Dependency Constraints\" document. Update the planner prompt to require selection of only vetted packages and disallow known vulnerable ones, offering alternatives (e.g., use `@noble/ciphers` instead of `node-forge`). Also add a static validator rule that flags imports of disallowed packages.",
+        "expected_effect": "Vulnerable dependencies are avoided from the start, eliminating later security\u2011scanner blocks and reducing the need for mid\u2011run refactoring.",
+        "priority": "medium"
+      },
+      {
+        "title": "Refine reviewer prompt to require precise, actionable fix instructions",
+        "evidence": "Reviewer feedback was sometimes vague: e.g., round\u202f2 \"remove the unused WebFileInput.web.tsx and replace the <button>...\" but the coder still left problematic picker logic; round\u202f5 mentioned an \"infinite\u2011recursive getter\" without showing the exact code change needed.",
+        "change": "Update the reviewer prompt to mandate that each issue include (a) exact file path and line numbers, (b) a minimal before/after code snippet that resolves the failure, and (c) a brief rationale linking the snippet to the validator error. Enforce this format in the reviewer output.",
+        "expected_effect": "Coder receives unambiguous, line\u2011level guidance, reducing guesswork and the number of revision rounds needed to satisfy validators.",
+        "priority": "medium"
+      },
+      {
+        "title": "Enhance coder turn\u2011limit feedback with a prioritized issue summary",
+        "evidence": "Coder hit its turn limit in rounds\u202f1 and\u202f5, after which the only feedback was a generic \"revise\" flag. No concise list of remaining blockers was presented, leading to scattered edits and high token consumption (\u224814\u202fM prompt tokens).",
+        "change": "When the coder turn\u2011limit guard triggers, automatically generate a \"Turn\u2011Limit Report\" that lists (1) all failing validators, (2) the specific UI steps or files causing each failure, and (3) a suggested order of remediation. Attach this report to the feedback message sent to the coder for the next round.",
+        "expected_effect": "Coder can focus on the most critical blockers in a structured way, avoid sprawling changes, reduce token usage, and converge faster.",
+        "priority": "low"
+      }
+    ]
+  }
+}
