@@ -8,6 +8,7 @@ import { Receipt, ReceiptType } from '../lib/models';
 import { Snackbar } from 'react-native-paper';
 import { setPendingSnack } from '../lib/uiState';
 import ReceiptImagePicker from '../components/ui/ReceiptImagePicker';
+import { v4 as uuidv4 } from 'uuid';
 
 export default function ReceiptEntryScreen() {
   const navigation = useNavigation<NavigationProp<any>>();
@@ -37,7 +38,7 @@ export default function ReceiptEntryScreen() {
     setError('');
     setSaving(true);
     const receipt: Receipt = {
-      id: `${Date.now()}-${Math.random()}`,
+      id: uuidv4(),
       amount: Number(amount),
       date,
       category,

@@ -10,6 +10,9 @@ import PolicyScreen from '../screens/PolicyScreen';
 import ReceiptEntryScreen from '../screens/ReceiptEntryScreen';
 import MileageScreen from '../screens/MileageScreen';
 import MileageEntryScreen from '../screens/MileageEntryScreen';
+import AppLockScreen from '../screens/AppLockScreen';
+import TaxSettingsScreen from '../screens/TaxSettingsScreen';
+import ExportScreen from '../screens/ExportScreen';
 import { theme } from '../theme';
 
 const Tab = createBottomTabNavigator();
@@ -42,7 +45,7 @@ function Tabs() {
 
 const navTheme = { ...DefaultTheme, colors: { ...DefaultTheme.colors, background: theme.colors.background, primary: theme.colors.primary } };
 
-/** Main app after the policy is accepted: tabs, plus the policy as a read-only page. */
+/** Main app after the policy is accepted: tabs, plus the policy as a read‑only page. */
 export default function Navigation() {
   return (
     <NavigationContainer theme={navTheme}>
@@ -53,6 +56,9 @@ export default function Navigation() {
         </Stack.Screen>
         <Stack.Screen name="ReceiptEntry" options={{ title: 'Add receipt' }} component={ReceiptEntryScreen} />
         <Stack.Screen name="MileageEntry" options={{ title: 'Add mileage' }} component={MileageEntryScreen} />
+        <Stack.Screen name="AppLock" options={{ title: 'App lock' }} component={AppLockScreen} />
+        <Stack.Screen name="TaxSettings" options={{ title: 'Tax settings' }} component={TaxSettingsScreen} />
+        <Stack.Screen name="Export" options={{ title: 'Export data' }} component={ExportScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );

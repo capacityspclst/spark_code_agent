@@ -3,24 +3,39 @@ import { Card } from 'react-native-paper';
 import { PrimaryButton, Screen, SettingSwitch } from '../components/ui';
 import { getStore } from '../lib/storage';
 import { theme } from '../theme';
+import { getAppLockEnabled } from '../lib/settings';
+import { useNavigation, NavigationProp } from '@react-navigation/native';
 
-const LOCK_KEY = 'settings.appLock';
-
-/** Example settings screen: a stored on/off setting (off by default) and a link to the policy. */
+/** Settings screen with links to sub‑screens. */
 export default function SettingsScreen({ onViewPolicy }: { onViewPolicy: () => void }) {
+  const navigation = useNavigation<NavigationProp<any>>();
   const [lock, setLock] = useState(false);
+
   useEffect(() => {
-    getStore().get<boolean>(LOCK_KEY).then((v) => setLock(v ?? false));
+    // Load current app lock setting.
+    (async () => {
+      const v = await getAppLockEnabled();
+      setLock(v);
+    })();
   }, []);
-  const toggle = async (value: boolean) => {
-    setLock(value);
-    await getStore().set(LOCK_KEY, value);
+
+  const goTo = (screen: string) => {
+    navigation.navigate(screen as any);
   };
+
   return (
     <Screen title="Settings">
-      <Card mode="outlined" style={{ backgroundColor: theme.colors.surface }}>
-        <SettingSwitch label="App lock" description="Ask for Face ID or fingerprint when the app opens" value={lock} onChange={toggle} />
+      <Card mode="outlined" style={{ backgroundColor: theme.colors.surface, marginBottom: 12 }}>
+        <SettingSwitch
+          label="App lock"
+          description="Require biometric authentication on launch"
+          value={lock}
+          onChange={setLock}
+        />
       </Card>
+      <PrimaryButton label="App lock" variant="secondary" onPress={() => goTo('AppLock')} />
+      <PrimaryButton label="Tax settings" variant="secondary" onPress={() => goTo('TaxSettings')} />
+      <PrimaryButton label="Export" variant="secondary" onPress={() => goTo('Export')} />
       <PrimaryButton label="View Terms and Privacy Policy" variant="secondary" onPress={onViewPolicy} />
     </Screen>
   );

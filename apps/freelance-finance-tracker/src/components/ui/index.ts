@@ -6,3 +6,4 @@ export { default as EmptyState } from './EmptyState';
 export { default as ChoiceField } from './ChoiceField';
 export { default as CheckboxField } from './CheckboxField';
 export { default as SettingSwitch } from './SettingSwitch';
+export { default as ExportButton } from './ExportButton';
