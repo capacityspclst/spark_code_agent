@@ -3,21 +3,33 @@ import { View } from 'react-native';
 import { ActivityIndicator, Snackbar } from 'react-native-paper';
 import { Screen, PrimaryButton, FormField } from '../components/ui';
 import { useNavigation, NavigationProp } from '@react-navigation/native';
-import WebFileInput from '../components/ui/WebFileInput';
+import * as DocumentPicker from 'expo-document-picker';
+import * as FileSystem from 'expo-file-system';
 import { restoreBackup } from '../lib/backup';
 import { getStore } from '../lib/storage';
 
-/** Restore screen – selects a backup file and restores it. Works for both web and native. */
-export default function RestoreScreen() {
+/** Restore screen – selects a backup file and restores it. */
+export default function RestoreScreenShared() {
   const navigation = useNavigation<NavigationProp<any>>();
   const [loading, setLoading] = useState(false);
   const [snack, setSnack] = useState<string>('');
   const [backupBlob, setBackupBlob] = useState<string>('');
   const [passphrase, setPassphrase] = useState<string>('');
 
-  const handleFileSelected = (content: string) => {
-    setBackupBlob(content);
-    setSnack('');
+  const pickFile = async () => {
+    try {
+      const result: any = await DocumentPicker.getDocumentAsync({ type: '*/*' });
+      if (!result.canceled && result.assets && result.assets[0]?.uri) {
+        const uri = result.assets[0].uri;
+        const content = uri.startsWith('file://') || uri.startsWith('content://')
+          ? await FileSystem.readAsStringAsync(uri)
+          : await (await fetch(uri)).text();
+        setBackupBlob(content);
+        setSnack('');
+      }
+    } catch {
+      setSnack('Failed to pick file');
+    }
   };
 
   const onRestore = async () => {
@@ -41,7 +53,7 @@ export default function RestoreScreen() {
     <Screen title="Restore backup">
       <View style={{ gap: 12 }}>
         <PrimaryButton label="Back" variant="secondary" onPress={() => navigation.goBack()} />
-        <WebFileInput label="Select backup file" onFileSelected={handleFileSelected} />
+        <PrimaryButton label="Select backup file" variant="secondary" onPress={pickFile} disabled={loading} />
         <FormField label="Backup passphrase" value={passphrase} onChangeText={setPassphrase} secureTextEntry />
         {loading && <ActivityIndicator accessibilityLabel="Restoring data" />}
         <PrimaryButton label="Restore" variant="primary" onPress={onRestore} disabled={loading} />

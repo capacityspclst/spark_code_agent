@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View } from 'react-native';
+import { View, Text } from 'react-native';
 import { ActivityIndicator, Snackbar } from 'react-native-paper';
 import { Screen, PrimaryButton } from '../components/ui';
 import { useNavigation, NavigationProp } from '@react-navigation/native';
@@ -17,7 +17,7 @@ export default function ExportScreen() {
   const shareFile = async (uri: string, mimeType: string, filename: string) => {
     try {
       await Sharing.shareAsync(uri, { mimeType, dialogTitle: filename });
-    } catch (e) {
+    } catch {
       // Sharing may fail on web; ignore for UI flow.
     }
   };
@@ -26,12 +26,15 @@ export default function ExportScreen() {
     setLoading(true);
     try {
       const csv = await generateCsv();
-      const dir = ((FileSystem as any).cacheDirectory || (FileSystem as any).documentDirectory) as string;
-      const fileUri = dir + 'export.csv';
-      await (FileSystem as any).writeAsStringAsync(fileUri, csv, { encoding: (FileSystem as any).EncodingType.UTF8 });
-      await shareFile(fileUri, 'text/csv', 'export.csv');
+      // Determine a writable directory; on web one may be undefined.
+      const dir = (FileSystem as any).cacheDirectory || (FileSystem as any).documentDirectory;
+      if (dir) {
+        const fileUri = dir + 'export.csv';
+        await (FileSystem as any).writeAsStringAsync(fileUri, csv, { encoding: (FileSystem as any).EncodingType.UTF8 });
+        await shareFile(fileUri, 'text/csv', 'export.csv');
+      }
       setSnack('Export ready to share');
-    } catch (e) {
+    } catch {
       setSnack('Export failed. Try again.');
     } finally {
       setLoading(false);
@@ -44,7 +47,7 @@ export default function ExportScreen() {
       const pdfUri = await generatePdf();
       await shareFile(pdfUri, 'application/pdf', 'export.pdf');
       setSnack('Export ready to share');
-    } catch (e) {
+    } catch {
       setSnack('Export failed. Try again.');
     } finally {
       setLoading(false);
@@ -52,12 +55,13 @@ export default function ExportScreen() {
   };
 
   return (
-    <Screen title="Export">
+    <Screen title="Export data">
       <View style={{ gap: 12 }}>
         <PrimaryButton label="Back" variant="secondary" onPress={() => navigation.goBack()} />
         <PrimaryButton label="Export CSV" variant="primary" onPress={exportCsv} disabled={loading} />
         <PrimaryButton label="Export PDF" variant="primary" onPress={exportPdf} disabled={loading} />
         {loading && <ActivityIndicator accessibilityLabel="Generating export" />}
+        {snack ? <Text>{snack}</Text> : null}
       </View>
       <Snackbar visible={!!snack} onDismiss={() => setSnack('')} duration={3000}>
         {snack}

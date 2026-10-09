@@ -17,6 +17,7 @@ import BackupScreen from '../screens/BackupScreen';
 import BackupPassphraseScreen from '../screens/BackupPassphraseScreen';
 import RestoreScreen from '../screens/RestoreScreen';
 import BackupSuccessScreen from '../screens/BackupSuccessScreen';
+import DeleteAllDataScreen from '../screens/DeleteAllDataScreen';
 import { theme } from '../theme';
 
 const Tab = createBottomTabNavigator();
@@ -34,9 +35,10 @@ function SettingsStackScreen() {
       <SettingsStack.Screen name="Export" component={ExportScreen} options={{ title: 'Export data' }} />
       <SettingsStack.Screen name="Backup" component={BackupScreen} options={{ title: 'Backup & restore' }} />
       <SettingsStack.Screen name="backup_passphrase_modal" component={BackupPassphraseScreen} options={{ title: 'Create backup' }} />
-      <SettingsStack.Screen name="Restore" component={RestoreScreen} options={{ title: 'Restore backup' }} />
+      <SettingsStack.Screen name="restore_passphrase_modal" component={RestoreScreen} options={{ title: 'Restore backup' }} />
       <SettingsStack.Screen name="AppLock" component={AppLockScreen} options={{ title: 'App lock' }} />
       <SettingsStack.Screen name="TaxSettings" component={TaxSettingsScreen} options={{ title: 'Tax settings' }} />
+      <SettingsStack.Screen name="DeleteAllData" component={DeleteAllDataScreen} options={{ title: 'Delete all data' }} />
     </SettingsStack.Navigator>
   );
 }
@@ -107,7 +109,6 @@ export default function Navigation() {
         <Stack.Screen name="BackupSuccess" component={BackupSuccessScreen} options={{ title: 'Backup' }} />
         <Stack.Screen name="ReceiptEntry" options={{ title: 'Add receipt' }} component={ReceiptEntryScreen} />
         <Stack.Screen name="MileageEntry" options={{ title: 'Add mileage' }} component={MileageEntryScreen} />
-        <Stack.Screen name="Export" component={ExportScreen} options={{ title: 'Export data' }} />
         {/* Other modal screens can be added here if needed */}
       </Stack.Navigator>
     </NavigationContainer>

@@ -4,7 +4,6 @@ import { PrimaryButton, Screen, SettingSwitch } from '../components/ui';
 import { theme } from '../theme';
 import { getAppLockEnabled, setAppLockEnabled } from '../lib/settings';
 import { useNavigation, NavigationProp } from '@react-navigation/native';
-import { Alert } from 'react-native';
 import { getStore } from '../lib/storage';
 
 /** Settings screen with links to sub‑screens and actions. */
@@ -24,22 +23,8 @@ export default function SettingsScreen({ onViewPolicy }: { onViewPolicy?: () => 
     await setAppLockEnabled(value);
   };
 
-  const deleteAllData = async () => {
-    Alert.alert(
-      'Delete all data?',
-      'This action cannot be undone.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: async () => {
-            const store = getStore();
-            await store.clearAll();
-          },
-        },
-      ],
-    );
+  const deleteAllData = () => {
+    navigation.navigate('DeleteAllData' as any);
   };
 
   return (

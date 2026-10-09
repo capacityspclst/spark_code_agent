@@ -10,7 +10,7 @@ export default function BackupSuccessScreen() {
     <Screen title="Backup">
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', gap: 12 }}>
         <Text variant="titleMedium">Backup ready to share</Text>
-        <PrimaryButton label="Restore from backup" variant="primary" onPress={() => navigation.navigate('Restore')} />
+        <PrimaryButton label="Restore from backup" variant="primary" onPress={() => navigation.navigate('restore_passphrase_modal')} />
       </View>
     </Screen>
   );

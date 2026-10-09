@@ -1,1 +1,1 @@
-export { default } from './RestoreScreen';
+export { default } from './RestoreScreenShared';
