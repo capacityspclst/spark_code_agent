@@ -13,14 +13,30 @@ import MileageEntryScreen from '../screens/MileageEntryScreen';
 import AppLockScreen from '../screens/AppLockScreen';
 import TaxSettingsScreen from '../screens/TaxSettingsScreen';
 import ExportScreen from '../screens/ExportScreen';
+import BackupScreen from '../screens/BackupScreen';
+import RestoreScreen from '../screens/RestoreScreen';
 import { theme } from '../theme';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
+const SettingsStack = createNativeStackNavigator();
 
 // Tab icons are decorative: the tab's label names it (aria-hidden keeps axe from flagging an unlabelled image).
 const tabIcon = (name: React.ComponentProps<typeof MaterialCommunityIcons>['name']) =>
   ({ color, size }: { color: string; size: number }) => <MaterialCommunityIcons name={name} color={color} size={size} aria-hidden />;
+
+function SettingsStackScreen() {
+  return (
+    <SettingsStack.Navigator initialRouteName="SettingsMain">
+      <SettingsStack.Screen name="SettingsMain" component={SettingsScreen} options={{ headerShown: false }} />
+      <SettingsStack.Screen name="Export" component={ExportScreen} options={{ title: 'Export data' }} />
+      <SettingsStack.Screen name="Backup" component={BackupScreen} options={{ title: 'Backup & restore' }} />
+      <SettingsStack.Screen name="Restore" component={RestoreScreen} options={{ title: 'Restore backup' }} />
+      <SettingsStack.Screen name="AppLock" component={AppLockScreen} options={{ title: 'App lock' }} />
+      <SettingsStack.Screen name="TaxSettings" component={TaxSettingsScreen} options={{ title: 'Tax settings' }} />
+    </SettingsStack.Navigator>
+  );
+}
 
 function Tabs() {
   return (
@@ -33,12 +49,48 @@ function Tabs() {
         tabBarLabelStyle: { fontSize: 12, fontWeight: '500' },
       }}
     >
-      <Tab.Screen name="Dashboard" component={DashboardScreen} options={{ tabBarIcon: tabIcon('view-dashboard-outline') }} />
-      <Tab.Screen name="Receipts" component={ReceiptsScreen} options={{ tabBarIcon: tabIcon('receipt-outline') }} />
-      <Tab.Screen name="Mileage" component={MileageScreen} options={{ tabBarIcon: tabIcon('run') }} />
-      <Tab.Screen name="Settings" options={{ tabBarIcon: tabIcon('cog-outline') }}>
-        {({ navigation }) => <SettingsScreen onViewPolicy={() => navigation.getParent()?.navigate('Policy')} />}
-      </Tab.Screen>
+      <Tab.Screen
+        name="Dashboard"
+        component={DashboardScreen}
+        options={{
+          tabBarIcon: tabIcon('view-dashboard-outline'),
+          tabBarLabel: 'Dashboard',
+          tabBarAccessibilityLabel: 'Dashboard',
+        }}
+      />
+      <Tab.Screen
+        name="Receipts"
+        component={ReceiptsScreen}
+        options={{
+          tabBarIcon: tabIcon('receipt-outline'),
+          tabBarLabel: 'Receipts',
+          tabBarAccessibilityLabel: 'Receipts',
+        }}
+      />
+      <Tab.Screen
+        name="Mileage"
+        component={MileageScreen}
+        options={{
+          tabBarIcon: tabIcon('run'),
+          tabBarLabel: 'Mileage',
+          tabBarAccessibilityLabel: 'Mileage',
+        }}
+      />
+      <Tab.Screen
+        name="Settings"
+        component={SettingsStackScreen}
+        options={{
+          tabBarIcon: tabIcon('cog-outline'),
+          tabBarLabel: 'Settings',
+          tabBarAccessibilityLabel: 'Settings',
+        }}
+        listeners={({ navigation }) => ({
+          tabPress: e => {
+            // Reset Settings stack to its main screen when the tab is pressed
+            navigation.navigate('Settings', { screen: 'SettingsMain' });
+          },
+        })}
+      />
     </Tab.Navigator>
   );
 }
@@ -56,9 +108,7 @@ export default function Navigation() {
         </Stack.Screen>
         <Stack.Screen name="ReceiptEntry" options={{ title: 'Add receipt' }} component={ReceiptEntryScreen} />
         <Stack.Screen name="MileageEntry" options={{ title: 'Add mileage' }} component={MileageEntryScreen} />
-        <Stack.Screen name="AppLock" options={{ title: 'App lock' }} component={AppLockScreen} />
-        <Stack.Screen name="TaxSettings" options={{ title: 'Tax settings' }} component={TaxSettingsScreen} />
-        <Stack.Screen name="Export" options={{ title: 'Export data' }} component={ExportScreen} />
+        {/* Other modal screens can be added here if needed */}
       </Stack.Navigator>
     </NavigationContainer>
   );

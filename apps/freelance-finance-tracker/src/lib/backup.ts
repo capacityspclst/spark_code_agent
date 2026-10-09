@@ -1,7 +1,7 @@
 import { getStore } from './storage';
 import { getAllReceipts } from './receiptStore';
 import { getAllMileageEntries } from './mileageStore';
-import { deriveKey, encrypt, toBase64, fromBase64, utf8, fromUtf8 } from './crypto';
+import { deriveKey, encrypt, decrypt, toBase64, fromBase64, utf8, fromUtf8 } from './crypto';
 import type { Receipt, MileageEntry } from './models';
 import * as FileSystem from 'expo-file-system';
 import * as Sharing from 'expo-sharing';

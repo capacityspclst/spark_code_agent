@@ -8,7 +8,7 @@ import { Receipt, MileageEntry } from '../lib/models';
 import { getAllReceipts } from '../lib/receiptStore';
 import { getAllMileageEntries } from '../lib/mileageStore';
 import { computeTotals } from '../lib/finance';
-import { totalMileageDeduction, DEFAULT_MILEAGE_RATE } from '../lib/mileage';
+import { totalMileageDeduction } from '../lib/mileage';
 import ReceiptCard from '../components/ui/ReceiptCard';
 import { consumeSnack } from '../lib/uiState';
 import SimpleAddButtons from '../components/ui/SimpleAddButtons';
@@ -21,6 +21,7 @@ export default function DashboardScreen() {
   const [loading, setLoading] = useState(true);
   const [receipts, setReceipts] = useState<Receipt[]>([]);
   const [mileageEntries, setMileageEntries] = useState<MileageEntry[]>([]);
+  const [mileageDeduction, setMileageDeduction] = useState<number>(0);
   const [snack, setSnack] = useState<string>('');
 
   const load = async () => {
@@ -29,6 +30,9 @@ export default function DashboardScreen() {
     const miles = await getAllMileageEntries(getStore());
     setReceipts(recs);
     setMileageEntries(miles);
+    // Compute mileage deduction asynchronously
+    const deduction = await totalMileageDeduction(miles);
+    setMileageDeduction(deduction);
     setLoading(false);
     const pending = consumeSnack();
     if (pending) setSnack(pending);
@@ -44,7 +48,6 @@ export default function DashboardScreen() {
   }
 
   const totals = computeTotals(receipts);
-  const mileageDeduction = totalMileageDeduction(mileageEntries, DEFAULT_MILEAGE_RATE);
 
   const empty = receipts.length === 0 && mileageEntries.length === 0;
 

@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { View, Text } from 'react-native';
 import { ActivityIndicator, Snackbar } from 'react-native-paper';
 import { Screen, PrimaryButton } from '../components/ui';
-import ExportButton from '../components/ui/ExportButton';
 import { generateCsv } from '../lib/exportCsv';
 import { generatePdf } from '../lib/exportPdf';
 import { useNavigation, NavigationProp } from '@react-navigation/native';
@@ -16,7 +15,6 @@ export default function ExportScreen() {
   const showSuccess = () => {
     setMessage('Export ready to share');
     setSnack('Export ready to share');
-    // Stay on this screen; UI flow will navigate to Settings later.
   };
 
   const exportCsv = async () => {
@@ -47,8 +45,8 @@ export default function ExportScreen() {
     <Screen title="Export data">
       <View style={{ gap: 12 }}>
         <PrimaryButton label="Back" variant="secondary" onPress={() => navigation.goBack()} />
-        <ExportButton label="Export CSV" onPress={exportCsv} />
-        <ExportButton label="Export PDF" onPress={exportPdf} />
+        <PrimaryButton label="Export CSV" variant="primary" onPress={exportCsv} disabled={loading} />
+        <PrimaryButton label="Export PDF" variant="primary" onPress={exportPdf} disabled={loading} />
         {loading && <ActivityIndicator accessibilityLabel="Generating export" />}
         {message ? <Text accessibilityRole="alert" style={{ marginTop: 8 }}>{message}</Text> : null}
       </View>

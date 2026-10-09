@@ -8,7 +8,7 @@ import { Alert } from 'react-native';
 import { getStore } from '../lib/storage';
 
 /** Settings screen with links to sub‑screens and actions. */
-export default function SettingsScreen({ onViewPolicy }: { onViewPolicy: () => void }) {
+export default function SettingsScreen({ onViewPolicy }: { onViewPolicy?: () => void }) {
   const navigation = useNavigation<NavigationProp<any>>();
   const [lock, setLock] = useState(false);
 
@@ -21,14 +21,9 @@ export default function SettingsScreen({ onViewPolicy }: { onViewPolicy: () => v
   }, []);
 
   const goTo = (screen: string) => {
-    const parent = navigation.getParent?.();
-    if (parent) {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any
-      (parent as any).navigate(screen as any);
-    } else {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any
-      (navigation as any).navigate(screen as any);
-    }
+    // Within the Settings stack, navigate directly.
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any
+    (navigation as any).navigate(screen as any);
   };
 
   const toggleLock = async (value: boolean) => {
@@ -69,7 +64,7 @@ export default function SettingsScreen({ onViewPolicy }: { onViewPolicy: () => v
       <PrimaryButton label="Export" variant="secondary" onPress={() => goTo('Export')} />
       <PrimaryButton label="Backup & restore" variant="secondary" onPress={() => goTo('Backup')} />
       <PrimaryButton label="Delete all data" variant="secondary" onPress={deleteAllData} />
-      <PrimaryButton label="View Terms and Privacy Policy" variant="secondary" onPress={onViewPolicy} />
+      <PrimaryButton label="View Terms and Privacy Policy" variant="secondary" onPress={onViewPolicy ?? (() => {})} />
     </Screen>
   );
 }
