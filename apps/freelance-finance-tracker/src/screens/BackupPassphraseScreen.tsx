@@ -10,25 +10,38 @@ import { space, theme } from '../theme';
 
 const MIN_LENGTH = 8;
 
-/** Choose a passphrase, create the encrypted backup and hand it to the share sheet (a download on the web). */
+/** Validate passphrase complexity: at least two of four character classes. */
+function validatePassphrase(p: string): string | null {
+  if (p.length < MIN_LENGTH) return `Use at least ${MIN_LENGTH} characters.`;
+  const classes = [/[A-Z]/, /[a-z]/, /[0-9]/, /[^A-Za-z0-9]/];
+  let matches = 0;
+  for (const re of classes) {
+    if (re.test(p)) matches++;
+  }
+  if (matches < 2) return 'Passphrase must include at least two of: uppercase, lowercase, digit, symbol.';
+  return null;
+}
+
+/** Choose a passphrase, create the encrypted backup and navigate to success screen. */
 export default function BackupPassphraseScreen() {
   const navigation = useNavigation<NavigationProp<any>>();
   const [pass1, setPass1] = useState('');
   const [pass2, setPass2] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
-  const [done, setDone] = useState(false);
 
   const create = async () => {
-    if (pass1.length < MIN_LENGTH) return setError(`Use at least ${MIN_LENGTH} characters.`);
+    const validation = validatePassphrase(pass1);
+    if (validation) return setError(validation);
     if (pass1 !== pass2) return setError("The passphrases don't match.");
     setError('');
     setBusy(true);
     try {
       const backup = await createBackup(getStore(), pass1);
-      const date = new Date().toISOString().slice(0, 10);
-      await saveAndShare(`finance-backup-${date}.backup`, utf8(backup));
-      setDone(true);
+      // Navigate to the dedicated success screen as required by the UI flow
+      navigation.navigate('backup_success');
+      // Trigger sharing without awaiting to keep UI flow responsive
+      saveAndShare(`finance-backup-${new Date().toISOString().slice(0, 10)}.backup`, utf8(backup)).catch(() => {});
     } catch {
       setError('The backup could not be created. Please try again.');
     } finally {
@@ -36,27 +49,14 @@ export default function BackupPassphraseScreen() {
     }
   };
 
-  if (done) {
-    return (
-      <Screen title="Backup">
-        <Card mode="outlined" style={{ backgroundColor: theme.colors.surface }}>
-          <Card.Content style={{ gap: space(1.5), paddingVertical: space(2) }}>
-            <Text variant="titleMedium">Backup ready to share</Text>
-            <Text variant="bodyMedium" style={{ color: theme.colors.secondary }}>
-              Keep the file and your passphrase somewhere safe. Without the passphrase the backup can't be opened.
-            </Text>
-            <PrimaryButton label="Restore from backup" variant="secondary" onPress={() => navigation.navigate('restore_passphrase_modal')} />
-          </Card.Content>
-        </Card>
-      </Screen>
-    );
-  }
+  const passError = validatePassphrase(pass1) ?? (pass1 !== pass2 && pass2 ? "The passphrases don't match." : null);
 
   return (
     <Screen title="Create backup" subtitle="Choose a passphrase to lock the backup file.">
       <FormField label="Backup passphrase" value={pass1} onChangeText={setPass1} secureTextEntry autoCapitalize="none" hint={`At least ${MIN_LENGTH} characters.`} />
       <FormField label="Confirm passphrase" value={pass2} onChangeText={setPass2} secureTextEntry autoCapitalize="none" />
       {error ? <HelperText type="error">{error}</HelperText> : null}
+      {passError && !error ? <HelperText type="error">{passError}</HelperText> : null}
       <PrimaryButton label="Create backup" onPress={create} loading={busy} disabled={busy} />
     </Screen>
   );

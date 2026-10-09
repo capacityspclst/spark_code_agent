@@ -5,9 +5,22 @@ import { getAllMileageEntries } from './mileageStore';
 import { getStore } from './storage';
 import type { Receipt, MileageEntry } from './models';
 
-/** Simple HTML template for PDF export. Escapes user content to avoid XSS. */
+/** Escape user-provided text for safe HTML insertion. */
+function htmlEscape(str: any): string {
+  if (str === undefined || str === null) return '';
+  let s = String(str);
+  // Replace &, <, >, ", ' with HTML entities
+  s = s.replace(/&/g, '&amp;')
+       .replace(/</g, '&lt;')
+       .replace(/>/g, '&gt;')
+       .replace(/"/g, '&quot;')
+       .replace(/'/g, '&#39;');
+  return s;
+}
+
+/** Simple HTML template for PDF export. Escapes user content to avoid XSS and HTML injection. */
 function buildHtml(receipts: Receipt[], mileage: MileageEntry[]): string {
-  const esc = (s: any) => (s !== undefined && s !== null ? String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;') : '');
+  const esc = htmlEscape;
   let rows = '';
   receipts.forEach(r => {
     rows += `<tr><td>Receipt</td><td>${esc(r.amount)}</td><td>${esc(r.date)}</td><td>${esc(r.category)}</td><td>${esc(r.type)}</td><td>${esc(r.notes)}</td></tr>`;

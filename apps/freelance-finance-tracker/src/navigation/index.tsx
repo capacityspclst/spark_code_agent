@@ -17,6 +17,7 @@ import BackupScreen from '../screens/BackupScreen';
 import BackupPassphraseScreen from '../screens/BackupPassphraseScreen';
 import RestoreScreen from '../screens/RestoreScreen';
 import DeleteAllDataScreen from '../screens/DeleteAllDataScreen';
+import BackupSuccessScreen from '../screens/BackupSuccessScreen';
 import { theme } from '../theme';
 
 const Tab = createBottomTabNavigator();
@@ -34,6 +35,7 @@ function SettingsStackScreen() {
       <SettingsStack.Screen name="Export" component={ExportScreen} options={{ title: 'Export data' }} />
       <SettingsStack.Screen name="Backup" component={BackupScreen} options={{ title: 'Backup & restore' }} />
       <SettingsStack.Screen name="backup_passphrase_modal" component={BackupPassphraseScreen} options={{ title: 'Create backup' }} />
+      <SettingsStack.Screen name="backup_success" component={BackupSuccessScreen} options={{ title: 'Backup' }} />
       <SettingsStack.Screen name="restore_passphrase_modal" component={RestoreScreen} options={{ title: 'Restore backup' }} />
       <SettingsStack.Screen name="AppLock" component={AppLockScreen} options={{ title: 'App lock' }} />
       <SettingsStack.Screen name="TaxSettings" component={TaxSettingsScreen} options={{ title: 'Tax settings' }} />
@@ -96,7 +98,7 @@ function Tabs() {
 
 const navTheme = { ...DefaultTheme, colors: { ...DefaultTheme.colors, background: theme.colors.background, primary: theme.colors.primary } };
 
-/** Main app after the policy is accepted: tabs, plus the policy as a read\u2011only page. */
+/** Main app after the policy is accepted: tabs, plus the policy as a read‑only page. */
 export default function Navigation() {
   return (
     <NavigationContainer theme={navTheme}>
