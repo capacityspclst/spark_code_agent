@@ -25,8 +25,8 @@ export async function generatePdf(): Promise<string> {
   const mileage = await getAllMileageEntries(store);
   const html = buildHtml(receipts, mileage);
   const { uri } = await Print.printToFileAsync({ html });
-  // Move to document directory with .pdf extension.
-  const dest = FileSystem.documentDirectory + 'export.pdf';
+  // Move to cache directory with .pdf extension.
+  const dest = (FileSystem as any).cacheDirectory + 'export.pdf';
   await FileSystem.moveAsync({ from: uri, to: dest });
   return dest;
 }

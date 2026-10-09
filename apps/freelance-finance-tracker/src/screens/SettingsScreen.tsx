@@ -20,7 +20,8 @@ export default function SettingsScreen({ onViewPolicy }: { onViewPolicy: () => v
   }, []);
 
   const goTo = (screen: string) => {
-    navigation.navigate(screen as any);
+    // Navigate in the parent stack if possible.
+    navigation.getParent?.()?.navigate(screen as any);
   };
 
   return (
