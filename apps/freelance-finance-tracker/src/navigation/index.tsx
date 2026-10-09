@@ -87,12 +87,7 @@ function Tabs() {
           tabBarLabel: 'Settings',
           tabBarAccessibilityLabel: 'Settings',
         }}
-        listeners={({ navigation }) => ({
-          tabPress: e => {
-            // Reset Settings stack to its main screen when the tab is pressed
-            navigation.navigate('Settings', { screen: 'SettingsMain' });
-          },
-        })}
+        // Removed recursive tabPress listener that caused navigation loops.
       />
     </Tab.Navigator>
   );
@@ -100,7 +95,7 @@ function Tabs() {
 
 const navTheme = { ...DefaultTheme, colors: { ...DefaultTheme.colors, background: theme.colors.background, primary: theme.colors.primary } };
 
-/** Main app after the policy is accepted: tabs, plus the policy as a read‑only page. */
+/** Main app after the policy is accepted: tabs, plus the policy as a read\u2011only page. */
 export default function Navigation() {
   return (
     <NavigationContainer theme={navTheme}>
@@ -112,6 +107,7 @@ export default function Navigation() {
         <Stack.Screen name="BackupSuccess" component={BackupSuccessScreen} options={{ title: 'Backup' }} />
         <Stack.Screen name="ReceiptEntry" options={{ title: 'Add receipt' }} component={ReceiptEntryScreen} />
         <Stack.Screen name="MileageEntry" options={{ title: 'Add mileage' }} component={MileageEntryScreen} />
+        <Stack.Screen name="Export" component={ExportScreen} options={{ title: 'Export data' }} />
         {/* Other modal screens can be added here if needed */}
       </Stack.Navigator>
     </NavigationContainer>

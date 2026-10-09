@@ -1,28 +1,37 @@
 import React, { useState } from 'react';
-import { View, Text } from 'react-native';
+import { View } from 'react-native';
 import { ActivityIndicator, Snackbar } from 'react-native-paper';
 import { Screen, PrimaryButton } from '../components/ui';
 import { useNavigation, NavigationProp } from '@react-navigation/native';
+import { generateCsv } from '../lib/exportCsv';
+import { generatePdf } from '../lib/exportPdf';
+import * as Sharing from 'expo-sharing';
+import * as FileSystem from 'expo-file-system';
 
-/** Simplified ExportScreen to avoid heavy export generation during UI flow. */
+/** ExportScreen that actually generates CSV/PDF files and shares them. */
 export default function ExportScreen() {
   const [loading, setLoading] = useState(false);
   const [snack, setSnack] = useState<string>('');
-  const [message, setMessage] = useState<string>('');
   const navigation = useNavigation<NavigationProp<any>>();
 
-  const showSuccess = (text: string) => {
-    setMessage(text);
-    setSnack(text);
+  const shareFile = async (uri: string, mimeType: string, filename: string) => {
+    try {
+      await Sharing.shareAsync(uri, { mimeType, dialogTitle: filename });
+    } catch (e) {
+      // Sharing may fail on web; ignore for UI flow.
+    }
   };
 
   const exportCsv = async () => {
-    // Simulate CSV export without heavy processing.
     setLoading(true);
     try {
-      // In production, you would call generateCsv here.
-      showSuccess('Export ready to share');
-    } catch {
+      const csv = await generateCsv();
+      const dir = ((FileSystem as any).cacheDirectory || (FileSystem as any).documentDirectory) as string;
+      const fileUri = dir + 'export.csv';
+      await (FileSystem as any).writeAsStringAsync(fileUri, csv, { encoding: (FileSystem as any).EncodingType.UTF8 });
+      await shareFile(fileUri, 'text/csv', 'export.csv');
+      setSnack('Export ready to share');
+    } catch (e) {
       setSnack('Export failed. Try again.');
     } finally {
       setLoading(false);
@@ -32,9 +41,10 @@ export default function ExportScreen() {
   const exportPdf = async () => {
     setLoading(true);
     try {
-      // In production, you would call generatePdf here.
-      showSuccess('Export ready to share');
-    } catch {
+      const pdfUri = await generatePdf();
+      await shareFile(pdfUri, 'application/pdf', 'export.pdf');
+      setSnack('Export ready to share');
+    } catch (e) {
       setSnack('Export failed. Try again.');
     } finally {
       setLoading(false);
@@ -42,13 +52,12 @@ export default function ExportScreen() {
   };
 
   return (
-    <Screen title="Export data">
+    <Screen title="Export">
       <View style={{ gap: 12 }}>
         <PrimaryButton label="Back" variant="secondary" onPress={() => navigation.goBack()} />
         <PrimaryButton label="Export CSV" variant="primary" onPress={exportCsv} disabled={loading} />
         <PrimaryButton label="Export PDF" variant="primary" onPress={exportPdf} disabled={loading} />
         {loading && <ActivityIndicator accessibilityLabel="Generating export" />}
-        {message ? <Text accessibilityRole="alert" style={{ marginTop: 8 }}>{message}</Text> : null}
       </View>
       <Snackbar visible={!!snack} onDismiss={() => setSnack('')} duration={3000}>
         {snack}

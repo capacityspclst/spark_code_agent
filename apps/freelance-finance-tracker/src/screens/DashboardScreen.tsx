@@ -9,6 +9,7 @@ import { getAllReceipts } from '../lib/receiptStore';
 import { getAllMileageEntries } from '../lib/mileageStore';
 import { computeTotals } from '../lib/finance';
 import { totalMileageDeduction } from '../lib/mileage';
+import { getTaxRate } from '../lib/settings';
 import ReceiptCard from '../components/ui/ReceiptCard';
 import { consumeSnack } from '../lib/uiState';
 import SimpleAddButtons from '../components/ui/SimpleAddButtons';
@@ -22,17 +23,22 @@ export default function DashboardScreen() {
   const [receipts, setReceipts] = useState<Receipt[]>([]);
   const [mileageEntries, setMileageEntries] = useState<MileageEntry[]>([]);
   const [mileageDeduction, setMileageDeduction] = useState<number>(0);
+  const [tax, setTax] = useState<number>(0);
   const [snack, setSnack] = useState<string>('');
 
   const load = async () => {
     setLoading(true);
-    const recs = await getAllReceipts(getStore());
-    const miles = await getAllMileageEntries(getStore());
+    const store = getStore();
+    const recs = await getAllReceipts(store);
+    const miles = await getAllMileageEntries(store);
     setReceipts(recs);
     setMileageEntries(miles);
-    // Compute mileage deduction asynchronously
     const deduction = await totalMileageDeduction(miles);
     setMileageDeduction(deduction);
+    const taxRate = await getTaxRate(store);
+    const totals = computeTotals(recs);
+    const taxable = Math.max(0, totals.income - totals.expenses - deduction);
+    setTax(taxable * taxRate);
     setLoading(false);
     const pending = consumeSnack();
     if (pending) setSnack(pending);
@@ -65,7 +71,7 @@ export default function DashboardScreen() {
             <SummaryCard label="Income" value={`$${totals.income.toFixed(2)}`} />
             <SummaryCard label="Expenses" value={`$${totals.expenses.toFixed(2)}`} />
             <SummaryCard label="Mileage deduction" value={`$${mileageDeduction.toFixed(2)}`} />
-            <SummaryCard label="Estimated tax" value="$0.00" />
+            <SummaryCard label="Estimated tax" value={`$${tax.toFixed(2)}`} />
           </View>
           <Text variant="titleMedium" style={{ marginTop: 8, marginBottom: 4 }}>Recent activity</Text>
           <FlatList

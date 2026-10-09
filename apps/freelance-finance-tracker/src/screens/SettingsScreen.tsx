@@ -13,18 +13,11 @@ export default function SettingsScreen({ onViewPolicy }: { onViewPolicy?: () => 
   const [lock, setLock] = useState(false);
 
   useEffect(() => {
-    // Load current app lock setting.
     (async () => {
       const v = await getAppLockEnabled();
       setLock(v);
     })();
   }, []);
-
-  const goTo = (screen: string) => {
-    // Within the Settings stack, navigate directly.
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any
-    (navigation as any).navigate(screen as any);
-  };
 
   const toggleLock = async (value: boolean) => {
     setLock(value);
@@ -59,10 +52,10 @@ export default function SettingsScreen({ onViewPolicy }: { onViewPolicy?: () => 
           onChange={toggleLock}
         />
       </Card>
-      <PrimaryButton label="App lock" variant="secondary" onPress={() => goTo('AppLock')} />
-      <PrimaryButton label="Tax settings" variant="secondary" onPress={() => goTo('TaxSettings')} />
-      <PrimaryButton label="Export" variant="secondary" onPress={() => goTo('Export')} />
-      <PrimaryButton label="Backup & restore" variant="secondary" onPress={() => goTo('Backup')} />
+      <PrimaryButton label="App lock" variant="secondary" onPress={() => navigation.navigate('AppLock')} />
+      <PrimaryButton label="Tax settings" variant="secondary" onPress={() => navigation.navigate('TaxSettings')} />
+      <PrimaryButton label="Export" variant="secondary" onPress={() => navigation.navigate('Export')} />
+      <PrimaryButton label="Backup & restore" variant="secondary" onPress={() => navigation.navigate('Backup')} />
       <PrimaryButton label="Delete all data" variant="secondary" onPress={deleteAllData} />
       <PrimaryButton label="View Terms and Privacy Policy" variant="secondary" onPress={onViewPolicy ?? (() => {})} />
     </Screen>

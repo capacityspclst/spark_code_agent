@@ -3,16 +3,27 @@ import { randomBytes } from '../crypto';
 import type { KeyProvider, RawStore } from './types';
 import { createMemoryRawStore } from './memory';
 
-// Simple key provider that generates a random key each session.
+// Persistent key for the session.
+let cachedKey: Uint8Array | null = null;
+
+/** Simple key provider that generates a random key once per session. */
 export function createDeviceKeyProvider(): KeyProvider {
   return {
     async getKey() {
-      return randomBytes(32); // 256-bit key
+      if (!cachedKey) {
+        cachedKey = randomBytes(32); // 256-bit key
+      }
+      return cachedKey;
     },
   };
 }
 
+let rawStoreInstance: RawStore | null = null;
+
+/** Return a persistent in‑memory raw store for the whole session. */
 export function createDeviceRawStore(): RawStore {
-  // Use the same in‑memory raw store used for tests.
-  return createMemoryRawStore();
+  if (!rawStoreInstance) {
+    rawStoreInstance = createMemoryRawStore();
+  }
+  return rawStoreInstance;
 }
