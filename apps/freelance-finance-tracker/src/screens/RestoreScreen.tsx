@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { View, Text } from 'react-native';
+import React, { useState, useRef } from 'react';
+import { View, Platform } from 'react-native';
 import { ActivityIndicator, Snackbar } from 'react-native-paper';
 import { Screen, PrimaryButton, FormField } from '../components/ui';
 import { useNavigation, NavigationProp } from '@react-navigation/native';
@@ -12,13 +12,20 @@ export default function RestoreScreen() {
   const navigation = useNavigation<NavigationProp<any>>();
   const [loading, setLoading] = useState(false);
   const [snack, setSnack] = useState<string>('');
-  const [backupBlob, setBackupBlob] = useState<string>(''); // base64 string
+  const [backupBlob, setBackupBlob] = useState<string>(''); // content of selected backup
   const [passphrase, setPassphrase] = useState<string>('');
+  const fileInputRef = useRef<any>(null);
 
   const pickFile = async () => {
+    if (Platform.OS === 'web') {
+      // Trigger hidden file input for web
+      fileInputRef.current?.click();
+      return;
+    }
+    // Native platforms use expo-document-picker
     try {
-      const result = await DocumentPicker.getDocumentAsync({ type: '*/*' });
-      if (result.type === 'success') {
+      const result: any = await DocumentPicker.getDocumentAsync({ type: '*/*' });
+      if (result.type === 'success' && result.uri) {
         const content = await FileSystem.readAsStringAsync(result.uri, { encoding: FileSystem.EncodingType.UTF8 });
         setBackupBlob(content);
         setSnack('');
@@ -50,10 +57,30 @@ export default function RestoreScreen() {
       <View style={{ gap: 12 }}>
         <PrimaryButton label="Back" variant="secondary" onPress={() => navigation.goBack()} />
         <PrimaryButton label="Select backup file" variant="secondary" onPress={pickFile} disabled={loading} />
+        {Platform.OS === 'web' && (
+          <input
+            type="file"
+            accept="*/*"
+            style={{ display: 'none' }}
+            ref={fileInputRef}
+            onChange={async (e: any) => {
+              const file = e.target.files?.[0];
+              if (file) {
+                try {
+                  const text = await file.text();
+                  setBackupBlob(text);
+                  setSnack('');
+                } catch (e) {
+                  setSnack('Failed to read file');
+                }
+              }
+            }}
+          />
+        )}
         <FormField label="Backup passphrase" value={passphrase} onChangeText={setPassphrase} secureTextEntry />
         {loading && <ActivityIndicator accessibilityLabel="Restoring data" />}
         <PrimaryButton label="Restore" variant="primary" onPress={onRestore} disabled={loading} />
-        <Snackbar visible={!!snack} onDismiss={() => setSnack('')} duration={3000}>
+        <Snackbar visible={!!snack} onDismiss={() => setSnack('')} duration={2000}>
           {snack}
         </Snackbar>
       </View>
