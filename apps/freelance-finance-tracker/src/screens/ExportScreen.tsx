@@ -13,21 +13,17 @@ export default function ExportScreen() {
   const [message, setMessage] = useState<string>('');
   const navigation = useNavigation<NavigationProp<any>>();
 
-  const showSuccess = (navigateToSettings: boolean) => {
+  const showSuccess = () => {
     setMessage('Export ready to share');
     setSnack('Export ready to share');
-    if (navigateToSettings) {
-      // Navigate back to Settings tab via the Main stack
-      navigation.navigate('Main' as any, { screen: 'Settings' } as any);
-    }
+    // Stay on this screen; UI flow will navigate to Settings later.
   };
 
   const exportCsv = async () => {
     try {
       setLoading(true);
       await generateCsv();
-      // Stay on Export screen after CSV export.
-      showSuccess(false);
+      showSuccess();
     } catch (e) {
       setSnack('Export failed. Try again.');
     } finally {
@@ -39,8 +35,7 @@ export default function ExportScreen() {
     try {
       setLoading(true);
       await generatePdf();
-      // After PDF export, return to Settings tab.
-      showSuccess(true);
+      showSuccess();
     } catch (e) {
       setSnack('Export failed. Try again.');
     } finally {
