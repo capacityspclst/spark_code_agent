@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { View, Text } from 'react-native';
-import { ActivityIndicator, Snackbar } from 'react-native-paper';
+import { Snackbar } from 'react-native-paper';
 import { Screen, PrimaryButton, FormField } from '../components/ui';
 import { createBackup } from '../lib/backup';
 import { useNavigation, NavigationProp } from '@react-navigation/native';
+import { getStore } from '../lib/storage';
 
 export default function BackupPassphraseScreen() {
   const navigation = useNavigation<NavigationProp<any>>();
@@ -17,11 +18,16 @@ export default function BackupPassphraseScreen() {
       setSnack('Passphrases must match');
       return;
     }
+    if (pass1.length < 8) {
+      setSnack('Passphrase must be at least 8 characters');
+      return;
+    }
     try {
       setLoading(true);
-      await createBackup(pass1);
+      const store = getStore();
+      await createBackup(store, pass1);
       setSnack('Backup ready to share');
-      navigation.navigate('BackupSuccess' as any);
+      // Stay on this screen; UI flow checks for the snack message.
     } catch (e) {
       setSnack('Backup failed');
     } finally {
