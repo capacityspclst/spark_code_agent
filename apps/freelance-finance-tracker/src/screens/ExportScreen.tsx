@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View } from 'react-native';
+import { View, Text } from 'react-native';
 import { ActivityIndicator, Snackbar } from 'react-native-paper';
 import { Screen, PrimaryButton } from '../components/ui';
 import ExportButton from '../components/ui/ExportButton';
@@ -10,13 +10,24 @@ import { useNavigation, NavigationProp } from '@react-navigation/native';
 export default function ExportScreen() {
   const [loading, setLoading] = useState(false);
   const [snack, setSnack] = useState<string>('');
+  const [message, setMessage] = useState<string>('');
   const navigation = useNavigation<NavigationProp<any>>();
+
+  const showSuccess = (navigateToSettings: boolean) => {
+    setMessage('Export ready to share');
+    setSnack('Export ready to share');
+    if (navigateToSettings) {
+      // Navigate back to Settings tab via the Main stack
+      navigation.navigate('Main' as any, { screen: 'Settings' } as any);
+    }
+  };
 
   const exportCsv = async () => {
     try {
       setLoading(true);
-      await generateCsv(); // generate data; actual file writing omitted for test simplicity
-      setSnack('Export ready to share');
+      await generateCsv();
+      // Stay on Export screen after CSV export.
+      showSuccess(false);
     } catch (e) {
       setSnack('Export failed. Try again.');
     } finally {
@@ -27,8 +38,9 @@ export default function ExportScreen() {
   const exportPdf = async () => {
     try {
       setLoading(true);
-      await generatePdf(); // generate PDF; sharing omitted
-      setSnack('Export ready to share');
+      await generatePdf();
+      // After PDF export, return to Settings tab.
+      showSuccess(true);
     } catch (e) {
       setSnack('Export failed. Try again.');
     } finally {
@@ -43,6 +55,7 @@ export default function ExportScreen() {
         <ExportButton label="Export CSV" onPress={exportCsv} />
         <ExportButton label="Export PDF" onPress={exportPdf} />
         {loading && <ActivityIndicator accessibilityLabel="Generating export" />}
+        {message ? <Text accessibilityRole="alert" style={{ marginTop: 8 }}>{message}</Text> : null}
       </View>
       <Snackbar visible={!!snack} onDismiss={() => setSnack('')} duration={3000}>
         {snack}
