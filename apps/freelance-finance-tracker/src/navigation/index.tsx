@@ -14,6 +14,7 @@ import AppLockScreen from '../screens/AppLockScreen';
 import TaxSettingsScreen from '../screens/TaxSettingsScreen';
 import ExportScreen from '../screens/ExportScreen';
 import BackupScreen from '../screens/BackupScreen';
+import BackupPassphraseScreen from '../screens/BackupPassphraseScreen';
 import RestoreScreen from '../screens/RestoreScreen';
 import { theme } from '../theme';
 
@@ -31,6 +32,7 @@ function SettingsStackScreen() {
       <SettingsStack.Screen name="SettingsMain" component={SettingsScreen} options={{ headerShown: false }} />
       <SettingsStack.Screen name="Export" component={ExportScreen} options={{ title: 'Export data' }} />
       <SettingsStack.Screen name="Backup" component={BackupScreen} options={{ title: 'Backup & restore' }} />
+      <SettingsStack.Screen name="backup_passphrase_modal" component={BackupPassphraseScreen} options={{ title: 'Create backup' }} />
       <SettingsStack.Screen name="Restore" component={RestoreScreen} options={{ title: 'Restore backup' }} />
       <SettingsStack.Screen name="AppLock" component={AppLockScreen} options={{ title: 'App lock' }} />
       <SettingsStack.Screen name="TaxSettings" component={TaxSettingsScreen} options={{ title: 'Tax settings' }} />
