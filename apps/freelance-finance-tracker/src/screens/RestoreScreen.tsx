@@ -3,38 +3,28 @@ import { View } from 'react-native';
 import { ActivityIndicator, Snackbar } from 'react-native-paper';
 import { Screen, PrimaryButton, FormField } from '../components/ui';
 import { useNavigation, NavigationProp } from '@react-navigation/native';
-import { restoreBackup } from '../lib/backup';
-import { getStore } from '../lib/storage';
 import * as DocumentPicker from 'expo-document-picker';
 import * as FileSystem from 'expo-file-system';
+import { restoreBackup } from '../lib/backup';
+import { getStore } from '../lib/storage';
 
 /** Restore screen – selects a backup file and restores it. */
 export default function RestoreScreen() {
   const navigation = useNavigation<NavigationProp<any>>();
   const [loading, setLoading] = useState(false);
   const [snack, setSnack] = useState<string>('');
-  const [backupBlob, setBackupBlob] = useState<string>(''); // selected backup content
+  const [backupBlob, setBackupBlob] = useState<string>('');
   const [passphrase, setPassphrase] = useState<string>('');
 
   const pickFile = async () => {
     try {
-      // expo-document-picker works on native and web, opening a native file chooser.
       const result: any = await DocumentPicker.getDocumentAsync({ type: '*/*' });
-      if (result.type === 'success') {
-        let content: string;
-        if (result.uri) {
-          // Native platforms: read file directly.
-          content = await FileSystem.readAsStringAsync(result.uri, {
-            encoding: FileSystem.EncodingType.UTF8,
-          });
-        } else if (result.assets && result.assets[0]?.uri) {
-          // Web platform provides a blob URL.
-          const response = await fetch(result.assets[0].uri);
-          const blob = await response.blob();
-          content = await blob.text();
-        } else {
-          throw new Error('Unable to read backup file');
-        }
+      // expo-document-picker returns { canceled: boolean, assets?: [{ uri: string }] }
+      if (!result.canceled && result.assets && result.assets[0]?.uri) {
+        const uri = result.assets[0].uri;
+        const content = uri.startsWith('file://') || uri.startsWith('content://')
+          ? await FileSystem.readAsStringAsync(uri)
+          : await (await fetch(uri)).text();
         setBackupBlob(content);
         setSnack('');
       }

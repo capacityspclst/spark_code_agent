@@ -25,14 +25,16 @@ export async function createBackup(store: Store, passphrase: string): Promise<st
   combined.set(encrypted, salt.length);
   const b64 = toBase64(combined);
 
-  // Write to filesystem and invoke share sheet – ignore errors in test environments
+  // Write to filesystem and invoke share sheet – ignore errors in CI
   try {
     const FileSystem = (await import('expo-file-system')) as any;
     const Sharing = (await import('expo-sharing')) as any;
     const fileUri = FileSystem.cacheDirectory + 'backup.bak';
-    await FileSystem.writeAsStringAsync(fileUri, b64, { encoding: FileSystem.EncodingType.UTF8 });
+    await FileSystem.writeAsStringAsync(fileUri, b64);
     await Sharing.shareAsync(fileUri, { mimeType: 'application/octet-stream', dialogTitle: 'Backup' });
-  } catch { /* no‑op in CI */ }
+  } catch {
+    // no‑op in CI / if sharing fails
+  }
 
   return b64;
 }
