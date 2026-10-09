@@ -1,1 +1,0 @@
-// Placeholder component removed to avoid raw HTML usage. Not used in the app.

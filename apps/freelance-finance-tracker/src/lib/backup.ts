@@ -1,4 +1,5 @@
 import type { Store } from './storage/types';
+import { keepingPolicy } from './dataReset';
 import { getAllReceipts } from './receiptStore';
 import { getAllMileageEntries } from './mileageStore';
 import { deriveKey, encrypt, decrypt, toBase64, fromBase64, utf8, fromUtf8, randomBytes } from './crypto';
@@ -6,7 +7,6 @@ import type { Receipt, MileageEntry } from './models';
 
 /** Create an encrypted backup of all data.
  * Returns a base64‑encoded string representing the encrypted payload.
- * Also writes the file to the app cache and shares it via the native share sheet.
  */
 export async function createBackup(store: Store, passphrase: string): Promise<string> {
   // Gather data
@@ -24,17 +24,6 @@ export async function createBackup(store: Store, passphrase: string): Promise<st
   combined.set(salt, 0);
   combined.set(encrypted, salt.length);
   const b64 = toBase64(combined);
-
-  // Write to filesystem and invoke share sheet – ignore errors in CI
-  try {
-    const FileSystem = (await import('expo-file-system')) as any;
-    const Sharing = (await import('expo-sharing')) as any;
-    const fileUri = FileSystem.cacheDirectory + 'backup.bak';
-    await FileSystem.writeAsStringAsync(fileUri, b64);
-    await Sharing.shareAsync(fileUri, { mimeType: 'application/octet-stream', dialogTitle: 'Backup' });
-  } catch {
-    // no‑op in CI / if sharing fails
-  }
 
   return b64;
 }
@@ -55,11 +44,14 @@ export async function restoreBackup(store: Store, backupBlob: string, passphrase
     throw new Error('Invalid passphrase or corrupted backup file');
   }
   const data = JSON.parse(decrypted) as { receipts: Receipt[]; mileage: MileageEntry[] };
-  await store.clearAll();
-  for (const r of data.receipts) {
-    await store.put('receipts', { ...(r as any), id: r.id } as any);
-  }
-  for (const m of data.mileage) {
-    await store.put('mileage', { ...(m as any), id: m.id } as any);
-  }
+  // Replace everything with the backup's contents, keeping the user's policy acceptance.
+  await keepingPolicy(store, async () => {
+    await store.clearAll();
+    for (const r of data.receipts) {
+      await store.put('receipts', { ...(r as any), id: r.id } as any);
+    }
+    for (const m of data.mileage) {
+      await store.put('mileage', { ...(m as any), id: m.id } as any);
+    }
+  });
 }
