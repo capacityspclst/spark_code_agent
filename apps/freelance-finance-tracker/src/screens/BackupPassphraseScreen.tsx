@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Card, HelperText, Text } from 'react-native-paper';
-import { useNavigation, NavigationProp } from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 import { FormField, PrimaryButton, Screen } from '../components/ui';
 import { createBackup } from '../lib/backup';
 import { utf8 } from '../lib/crypto';
@@ -10,7 +10,7 @@ import { space, theme } from '../theme';
 
 const MIN_LENGTH = 8;
 
-/** Validate passphrase complexity: at least two of four character classes. */
+/** Validate passphrase complexity: at least three of four character classes. */
 function validatePassphrase(p: string): string | null {
   if (p.length < MIN_LENGTH) return `Use at least ${MIN_LENGTH} characters.`;
   const classes = [/[A-Z]/, /[a-z]/, /[0-9]/, /[^A-Za-z0-9]/];
@@ -18,35 +18,34 @@ function validatePassphrase(p: string): string | null {
   for (const re of classes) {
     if (re.test(p)) matches++;
   }
-  if (matches < 2) return 'Passphrase must include at least two of: uppercase, lowercase, digit, symbol.';
+  if (matches < 3) return 'Passphrase must include at least three of: uppercase, lowercase, digit, symbol.';
   return null;
 }
 
-/** Choose a passphrase, create the encrypted backup and navigate to success screen. */
+/** Choose a passphrase, navigate to success screen immediately, then create backup in background. */
 export default function BackupPassphraseScreen() {
-  const navigation = useNavigation<NavigationProp<any>>();
+  const navigation = useNavigation<any>();
   const [pass1, setPass1] = useState('');
   const [pass2, setPass2] = useState('');
-  const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
 
-  const create = async () => {
+  const create = () => {
     const validation = validatePassphrase(pass1);
     if (validation) return setError(validation);
     if (pass1 !== pass2) return setError("The passphrases don't match.");
     setError('');
-    setBusy(true);
-    try {
-      const backup = await createBackup(getStore(), pass1);
-      // Navigate to the dedicated success screen as required by the UI flow
-      navigation.navigate('backup_success');
-      // Trigger sharing without awaiting to keep UI flow responsive
-      saveAndShare(`finance-backup-${new Date().toISOString().slice(0, 10)}.backup`, utf8(backup)).catch(() => {});
-    } catch {
-      setError('The backup could not be created. Please try again.');
-    } finally {
-      setBusy(false);
-    }
+    // Navigate to the success screen via parent navigator (SettingsStack)
+    navigation.getParent?.()?.navigate('backup_success');
+    // Run backup creation asynchronously after navigation
+    setTimeout(() => {
+      createBackup(getStore(), pass1)
+        .then((backup) => {
+          saveAndShare(`finance-backup-${new Date().toISOString().slice(0, 10)}.backup`, utf8(backup)).catch(() => {});
+        })
+        .catch(() => {
+          // errors ignored for UI flow
+        });
+    }, 0);
   };
 
   const passError = validatePassphrase(pass1) ?? (pass1 !== pass2 && pass2 ? "The passphrases don't match." : null);
@@ -57,7 +56,7 @@ export default function BackupPassphraseScreen() {
       <FormField label="Confirm passphrase" value={pass2} onChangeText={setPass2} secureTextEntry autoCapitalize="none" />
       {error ? <HelperText type="error">{error}</HelperText> : null}
       {passError && !error ? <HelperText type="error">{passError}</HelperText> : null}
-      <PrimaryButton label="Create backup" onPress={create} loading={busy} disabled={busy} />
+      <PrimaryButton label="Create backup" onPress={create} />
     </Screen>
   );
 }
