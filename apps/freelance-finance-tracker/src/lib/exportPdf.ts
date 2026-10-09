@@ -9,7 +9,7 @@ import type { Receipt, MileageEntry } from './models';
 function htmlEscape(str: any): string {
   if (str === undefined || str === null) return '';
   let s = String(str);
-  // Replace &, <, >, " and ' with HTML entities
+  // Replace &, <, >, ", ' with HTML entities
   s = s.replace(/&/g, '&amp;')
        .replace(/</g, '&lt;')
        .replace(/>/g, '&gt;')
@@ -18,7 +18,7 @@ function htmlEscape(str: any): string {
   return s;
 }
 
-/** Simple HTML template for PDF export. Escapes user content to avoid XSS. */
+/** Simple HTML template for PDF export. Escapes user content to avoid XSS and HTML injection. */
 function buildHtml(receipts: Receipt[], mileage: MileageEntry[]): string {
   const esc = htmlEscape;
   let rows = '';

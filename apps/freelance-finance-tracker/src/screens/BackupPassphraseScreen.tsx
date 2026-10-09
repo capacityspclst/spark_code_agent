@@ -10,7 +10,7 @@ import { space, theme } from '../theme';
 
 const MIN_LENGTH = 8;
 
-/** Validate passphrase complexity: at least three of four character classes. */
+/** Validate passphrase complexity: at least two of four character classes. */
 function validatePassphrase(p: string): string | null {
   if (p.length < MIN_LENGTH) return `Use at least ${MIN_LENGTH} characters.`;
   const classes = [/[A-Z]/, /[a-z]/, /[0-9]/, /[^A-Za-z0-9]/];
@@ -18,11 +18,11 @@ function validatePassphrase(p: string): string | null {
   for (const re of classes) {
     if (re.test(p)) matches++;
   }
-  if (matches < 3) return 'Passphrase must include at least three of: uppercase, lowercase, digit, symbol.';
+  if (matches < 2) return 'Passphrase must include at least two of: uppercase, lowercase, digit, symbol.';
   return null;
 }
 
-/** Choose a passphrase, create the encrypted backup and navigate to the success screen. */
+/** Choose a passphrase, create the encrypted backup and navigate to success screen. */
 export default function BackupPassphraseScreen() {
   const navigation = useNavigation<NavigationProp<any>>();
   const [pass1, setPass1] = useState('');
@@ -38,7 +38,7 @@ export default function BackupPassphraseScreen() {
     setBusy(true);
     try {
       const backup = await createBackup(getStore(), pass1);
-      // Navigate to the dedicated success screen as defined in the UI flow
+      // Navigate to the dedicated success screen as required by the UI flow
       navigation.navigate('backup_success');
       // Trigger sharing without awaiting to keep UI flow responsive
       saveAndShare(`finance-backup-${new Date().toISOString().slice(0, 10)}.backup`, utf8(backup)).catch(() => {});
