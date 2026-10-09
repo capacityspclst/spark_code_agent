@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, Snackbar, Text } from 'react-native-paper';
 import { FlatList, View } from 'react-native';
 import { useNavigation, useRoute, NavigationProp, RouteProp } from '@react-navigation/native';
-import { EmptyState, PrimaryButton, Screen, SummaryCard } from '../components/ui';
+import { EmptyState, Screen, SummaryCard } from '../components/ui';
 import { getStore } from '../lib/storage';
 import { Receipt, MileageEntry } from '../lib/models';
 import { getAllReceipts } from '../lib/receiptStore';
@@ -11,11 +11,9 @@ import { computeTotals } from '../lib/finance';
 import { totalMileageDeduction, DEFAULT_MILEAGE_RATE } from '../lib/mileage';
 import ReceiptCard from '../components/ui/ReceiptCard';
 import { consumeSnack } from '../lib/uiState';
-import FABAdd from '../components/ui/FABAdd';
+import SimpleAddButtons from '../components/ui/SimpleAddButtons';
 
-type DashboardRouteParams = {
-  // no longer needed param
-};
+type DashboardRouteParams = {};
 
 export default function DashboardScreen() {
   const navigation = useNavigation<NavigationProp<any>>();
@@ -57,8 +55,6 @@ export default function DashboardScreen() {
           icon="inbox-outline"
           title="Nothing here yet"
           body="Add a receipt or mileage entry to start tracking your finances."
-          actionLabel="Add receipt"
-          onAction={() => navigation.navigate('ReceiptEntry')}
         />
       ) : (
         <View style={{ gap: 16 }}>
@@ -66,10 +62,8 @@ export default function DashboardScreen() {
             <SummaryCard label="Income" value={`$${totals.income.toFixed(2)}`} />
             <SummaryCard label="Expenses" value={`$${totals.expenses.toFixed(2)}`} />
             <SummaryCard label="Mileage deduction" value={`$${mileageDeduction.toFixed(2)}`} />
-            {/* Placeholder for Estimated tax */}
             <SummaryCard label="Estimated tax" value="$0.00" />
           </View>
-          {/* Recent activity header */}
           <Text variant="titleMedium" style={{ marginTop: 8, marginBottom: 4 }}>Recent activity</Text>
           <FlatList
             data={receipts.slice(0, 5)}
@@ -81,7 +75,7 @@ export default function DashboardScreen() {
       <Snackbar visible={!!snack} onDismiss={() => setSnack('')} duration={3000}>
         {snack}
       </Snackbar>
-      <FABAdd />
+      <SimpleAddButtons />
     </Screen>
   );
 }
