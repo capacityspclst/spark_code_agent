@@ -8,33 +8,25 @@ import { getStore } from '../lib/storage';
 import * as DocumentPicker from 'expo-document-picker';
 import * as FileSystem from 'expo-file-system';
 
-/** Restore screen – selects a backup file and restores it. */
+/** Restore screen for native platforms (iOS/Android) */
 export default function RestoreScreen() {
   const navigation = useNavigation<NavigationProp<any>>();
   const [loading, setLoading] = useState(false);
   const [snack, setSnack] = useState<string>('');
-  const [backupBlob, setBackupBlob] = useState<string>(''); // selected backup content
+  const [backupBlob, setBackupBlob] = useState<string>('');
   const [passphrase, setPassphrase] = useState<string>('');
 
   const pickFile = async () => {
     try {
-      // expo-document-picker works on native and web, opening a native file chooser.
-      const result: any = await DocumentPicker.getDocumentAsync({ type: '*/*' });
-      if (result.type === 'success') {
-        let content: string;
-        if (result.uri) {
-          // Native platforms: read file directly.
-          content = await FileSystem.readAsStringAsync(result.uri, {
-            encoding: FileSystem.EncodingType.UTF8,
-          });
-        } else if (result.assets && result.assets[0]?.uri) {
-          // Web platform provides a blob URL.
-          const response = await fetch(result.assets[0].uri);
-          const blob = await response.blob();
-          content = await blob.text();
-        } else {
-          throw new Error('Unable to read backup file');
-        }
+      const result: any = await DocumentPicker.getDocumentAsync({
+        type: '*/*',
+        copyToCacheDirectory: true,
+        multiple: false,
+      });
+      if (result.type === 'success' && result.uri) {
+        const content = await FileSystem.readAsStringAsync(result.uri, {
+          encoding: FileSystem.EncodingType.UTF8,
+        });
         setBackupBlob(content);
         setSnack('');
       }

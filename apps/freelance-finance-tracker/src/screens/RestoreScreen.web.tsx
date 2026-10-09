@@ -5,42 +5,38 @@ import { Screen, PrimaryButton, FormField } from '../components/ui';
 import { useNavigation, NavigationProp } from '@react-navigation/native';
 import { restoreBackup } from '../lib/backup';
 import { getStore } from '../lib/storage';
-import * as DocumentPicker from 'expo-document-picker';
-import * as FileSystem from 'expo-file-system';
+import { theme } from '../theme';
 
-/** Restore screen – selects a backup file and restores it. */
+/** Web implementation of RestoreScreen using a button that triggers a hidden file input. */
 export default function RestoreScreen() {
   const navigation = useNavigation<NavigationProp<any>>();
   const [loading, setLoading] = useState(false);
   const [snack, setSnack] = useState<string>('');
-  const [backupBlob, setBackupBlob] = useState<string>(''); // selected backup content
+  const [backupBlob, setBackupBlob] = useState<string>('');
   const [passphrase, setPassphrase] = useState<string>('');
 
-  const pickFile = async () => {
-    try {
-      // expo-document-picker works on native and web, opening a native file chooser.
-      const result: any = await DocumentPicker.getDocumentAsync({ type: '*/*' });
-      if (result.type === 'success') {
-        let content: string;
-        if (result.uri) {
-          // Native platforms: read file directly.
-          content = await FileSystem.readAsStringAsync(result.uri, {
-            encoding: FileSystem.EncodingType.UTF8,
-          });
-        } else if (result.assets && result.assets[0]?.uri) {
-          // Web platform provides a blob URL.
-          const response = await fetch(result.assets[0].uri);
-          const blob = await response.blob();
-          content = await blob.text();
-        } else {
-          throw new Error('Unable to read backup file');
+  const pickFile = () => {
+    // Create hidden file input and trigger click.
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '*/*';
+    input.style.display = 'none';
+    input.onchange = async (e: Event) => {
+      const target = e.target as HTMLInputElement;
+      const file = target.files?.[0];
+      if (file) {
+        try {
+          const text = await file.text();
+          setBackupBlob(text);
+          setSnack('');
+        } catch {
+          setSnack('Failed to read file');
         }
-        setBackupBlob(content);
-        setSnack('');
       }
-    } catch {
-      setSnack('Failed to pick file');
-    }
+      document.body.removeChild(input);
+    };
+    document.body.appendChild(input);
+    input.click();
   };
 
   const onRestore = async () => {
@@ -64,7 +60,21 @@ export default function RestoreScreen() {
     <Screen title="Restore backup">
       <View style={{ gap: 12 }}>
         <PrimaryButton label="Back" variant="secondary" onPress={() => navigation.goBack()} />
-        <PrimaryButton label="Select backup file" variant="secondary" onPress={pickFile} disabled={loading} />
+        <button
+          type="button"
+          onClick={pickFile}
+          style={{
+            padding: 8,
+            borderWidth: 1,
+            borderColor: theme.colors.outline,
+            borderRadius: theme.roundness,
+            color: theme.colors.onSurface,
+            backgroundColor: theme.colors.surface,
+            cursor: 'pointer',
+          }}
+        >
+          Select backup file
+        </button>
         <FormField label="Backup passphrase" value={passphrase} onChangeText={setPassphrase} secureTextEntry />
         {loading && <ActivityIndicator accessibilityLabel="Restoring data" />}
         <PrimaryButton label="Restore" variant="primary" onPress={onRestore} disabled={loading} />
