@@ -27,7 +27,7 @@ export default function BackupPassphraseScreen() {
       const store = getStore();
       await createBackup(store, pass1);
       setSnack('Backup ready to share');
-      // Stay on this screen; UI flow checks for the snack message.
+      navigation.navigate('BackupSuccess' as any);
     } catch (e) {
       setSnack('Backup failed');
     } finally {

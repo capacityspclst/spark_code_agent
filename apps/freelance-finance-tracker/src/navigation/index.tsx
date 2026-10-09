@@ -16,6 +16,7 @@ import ExportScreen from '../screens/ExportScreen';
 import BackupScreen from '../screens/BackupScreen';
 import BackupPassphraseScreen from '../screens/BackupPassphraseScreen';
 import RestoreScreen from '../screens/RestoreScreen';
+import BackupSuccessScreen from '../screens/BackupSuccessScreen';
 import { theme } from '../theme';
 
 const Tab = createBottomTabNavigator();
@@ -108,6 +109,7 @@ export default function Navigation() {
         <Stack.Screen name="Policy" options={{ title: 'Terms and Privacy Policy' }}>
           {() => <PolicyScreen readOnly onAccept={() => {}} />}
         </Stack.Screen>
+        <Stack.Screen name="BackupSuccess" component={BackupSuccessScreen} options={{ title: 'Backup' }} />
         <Stack.Screen name="ReceiptEntry" options={{ title: 'Add receipt' }} component={ReceiptEntryScreen} />
         <Stack.Screen name="MileageEntry" options={{ title: 'Add mileage' }} component={MileageEntryScreen} />
         {/* Other modal screens can be added here if needed */}
