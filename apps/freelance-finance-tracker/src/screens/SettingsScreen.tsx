@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Card } from 'react-native-paper';
 import { PrimaryButton, Screen, SettingSwitch } from '../components/ui';
-import { getStore } from '../lib/storage';
 import { theme } from '../theme';
 import { getAppLockEnabled } from '../lib/settings';
 import { useNavigation, NavigationProp } from '@react-navigation/native';
@@ -20,8 +19,16 @@ export default function SettingsScreen({ onViewPolicy }: { onViewPolicy: () => v
   }, []);
 
   const goTo = (screen: string) => {
-    // Navigate in the parent stack if possible.
-    navigation.getParent?.()?.navigate(screen as any);
+    const parent = navigation.getParent?.();
+    if (parent) {
+      // Navigate on the parent stack (Export, AppLock, TaxSettings are defined there)
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any
+      (parent as any).navigate(screen as any);
+    } else {
+      // Fallback: navigate on the current navigator
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any
+      (navigation as any).navigate(screen as any);
+    }
   };
 
   return (
