@@ -14,11 +14,32 @@ import ExportScreen from './src/screens/ExportScreen';
 import { theme } from './src/theme';
 import { getToken } from './src/auth';
 import Header from './src/components/Header';
+import { Provider as PaperProvider, MD3LightTheme } from 'react-native-paper';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 
 const AnyTabNavigator = Tab.Navigator as any;
+
+// Build Paper theme from our design tokens
+const paperTheme = {
+  ...MD3LightTheme,
+  roundness: theme.radii.md,
+  colors: {
+    ...MD3LightTheme.colors,
+    primary: theme.colors.primary,
+    onPrimary: theme.colors.onPrimary,
+    secondary: theme.colors.secondary,
+    background: theme.colors.background,
+    surface: theme.colors.surface,
+    error: theme.colors.error,
+    // add other overrides as needed
+  },
+};
+
+// hide icons from screen readers
+const paperSettings = { icon: (props: any) => <MaterialCommunityIcons {...props} aria-hidden={true} /> };
 
 function MainTabs() {
   return (
@@ -28,11 +49,10 @@ function MainTabs() {
       detachInactiveScreens={true}
       screenOptions={{
         headerShown: false,
-        tabBarStyle: { backgroundColor: theme.colors.background, height: 56 }, // use background token
-        tabBarActiveTintColor: theme.colors.primary, // primary for contrast
+        tabBarStyle: { backgroundColor: theme.colors.background, height: 56 },
+        tabBarActiveTintColor: theme.colors.primary,
         tabBarInactiveTintColor: theme.colors.secondary,
         tabBarShowLabel: false,
-        tabBarLabelStyle: { fontSize: 12 },
         tabBarButton: (props: BottomTabBarButtonProps) => {
           const { onPress, accessibilityState, accessibilityLabel, style, children } = props as any;
           const focused = accessibilityState?.selected;
@@ -49,7 +69,6 @@ function MainTabs() {
             </Pressable>
           );
         },
-        tabBarLabel: undefined,
         unmountOnBlur: true,
       }}
     >
@@ -57,7 +76,6 @@ function MainTabs() {
         name="Dashboard"
         component={DashboardScreen}
         options={{
-          title: 'Dashboard',
           tabBarIcon: ({ color }) => <FontAwesome name="home" size={24} color={color} />, 
           tabBarAccessibilityLabel: 'Dashboard',
         }}
@@ -66,7 +84,6 @@ function MainTabs() {
         name="ReceiptCapture"
         component={ReceiptCaptureScreen}
         options={{
-          title: 'Add Receipt',
           tabBarIcon: ({ color }) => <FontAwesome name="camera" size={24} color={color} />, 
           tabBarAccessibilityLabel: 'Add Receipt',
         }}
@@ -75,7 +92,6 @@ function MainTabs() {
         name="Mileage"
         component={MileageEntryScreen}
         options={{
-          title: 'Mileage',
           tabBarIcon: ({ color }) => <FontAwesome name="car" size={24} color={color} />, 
           tabBarAccessibilityLabel: 'Mileage',
         }}
@@ -84,7 +100,6 @@ function MainTabs() {
         name="Export"
         component={ExportScreen}
         options={{
-          title: 'Export',
           tabBarIcon: ({ color }) => <FontAwesome name="download" size={24} color={color} />, 
           tabBarAccessibilityLabel: 'Export',
         }}
@@ -124,12 +139,14 @@ export default function App() {
   }
 
   return (
-    <NavigationContainer>
-      <Stack.Navigator screenOptions={{ headerShown:false }} initialRouteName={initialRoute === 'Main' ? 'Main' : 'Auth'}>
-        <Stack.Screen name="Auth" component={AuthStack} />
-        <Stack.Screen name="Main" component={MainWithHeader} />
-      </Stack.Navigator>
-    </NavigationContainer>
+    <PaperProvider theme={paperTheme} settings={paperSettings}>
+      <NavigationContainer>
+        <Stack.Navigator screenOptions={{ headerShown:false }} initialRouteName={initialRoute === 'Main' ? 'Main' : 'Auth'}>
+          <Stack.Screen name="Auth" component={AuthStack} />
+          <Stack.Screen name="Main" component={MainWithHeader} />
+        </Stack.Navigator>
+      </NavigationContainer>
+    </PaperProvider>
   );
 }
 

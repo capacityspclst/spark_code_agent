@@ -4,7 +4,7 @@ export const theme = {
     // Brand
     primary: '#0066FF',          // CTA & active tab
     primaryVariant: '#004C99',   // pressed primary
-    accent: '#FF9500',           // secondary CTA
+    accent: '#FF9800',           // secondary CTA (corrected)
     accentPressed: '#E68A00',    // pressed accent (10 % darker)
     onAccent: '#212121',        // text/icon on accent
     // Surfaces

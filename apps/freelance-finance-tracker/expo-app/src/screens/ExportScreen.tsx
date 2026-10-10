@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { View, Text, ActivityIndicator, StyleSheet, Alert, Button as RNButton, Platform } from 'react-native';
+import { View, Text, ActivityIndicator, StyleSheet, Alert } from 'react-native';
 import axios from 'axios';
 import { getToken } from '../auth';
 import { API_URL } from '../config';
 import { theme } from '../theme';
+import PrimaryButton from '../components/ui/PrimaryButton';
 
 export default function ExportScreen() {
   const [loading, setLoading] = useState(false);
@@ -16,7 +17,6 @@ export default function ExportScreen() {
       await axios.get(`${API_URL}/export/${type}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      // In a real app we would write the file and share it, but for test purposes we just show success.
       setMessage('Report ready to share.');
     } catch (e) {
       Alert.alert('Export failed. Please try again.');
@@ -29,22 +29,8 @@ export default function ExportScreen() {
   return (
     <View style={styles.container}>
       <Text style={styles.heading}>Export your data</Text>
-      <RNButton
-        title="Export CSV"
-        onPress={() => handleExport('csv')}
-        disabled={loading}
-        color={theme.colors.primary}
-        accessibilityLabel="Export CSV"
-        testID="export-csv-button"
-      />
-      <RNButton
-        title="Export PDF"
-        onPress={() => handleExport('pdf')}
-        disabled={loading}
-        color={theme.colors.primary}
-        accessibilityLabel="Export PDF"
-        testID="export-pdf-button"
-      />
+      <PrimaryButton title="Export CSV" onPress={() => handleExport('csv')} accessibilityLabel="Export CSV" disabled={loading} />
+      <PrimaryButton title="Export PDF" onPress={() => handleExport('pdf')} accessibilityLabel="Export PDF" disabled={loading} />
       {loading && (
         <ActivityIndicator size="large" color={theme.colors.primary} style={{ marginTop: theme.spacing.md }} />
       )}

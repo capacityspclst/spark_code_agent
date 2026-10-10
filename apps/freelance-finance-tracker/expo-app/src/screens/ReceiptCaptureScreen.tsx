@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, ActivityIndicator, Alert, StyleSheet, Image, ScrollView, Platform, Pressable } from 'react-native';
+import { View, Text, ActivityIndicator, Alert, StyleSheet, Image, ScrollView, Platform, Pressable } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import axios from 'axios';
 import { useNavigation } from '@react-navigation/native';
 import { getToken } from '../auth';
 import { API_URL } from '../config';
 import { theme } from '../theme';
-import PrimaryButton from '../components/PrimaryButton';
+import PrimaryButton from '../components/ui/PrimaryButton';
+import FormField from '../components/ui/FormField';
 
 export default function ReceiptCaptureScreen() {
   const navigation = useNavigation<any>();
@@ -41,11 +42,6 @@ export default function ReceiptCaptureScreen() {
     if (!result.canceled) {
       setImage(result);
     }
-  };
-
-  const handlePlaceholderPress = async () => {
-    // Open image library as fallback (covers both web and native)
-    await pickImage();
   };
 
   const handleSave = async () => {
@@ -124,10 +120,9 @@ export default function ReceiptCaptureScreen() {
       <View style={styles.form}>
         <Text style={styles.heading}>New receipt</Text>
         {image && <Image source={{ uri: image.assets[0].uri }} style={styles.image} />}
-        {/* Placeholder when no image selected */}
         {!image && (
           <Pressable
-            onPress={handlePlaceholderPress}
+            onPress={pickImage}
             accessibilityRole="button"
             accessibilityLabel="Tap to take a photo or choose from library"
             style={styles.placeholderContainer}
@@ -135,57 +130,16 @@ export default function ReceiptCaptureScreen() {
             <Text style={styles.placeholderText}>Tap to take a photo or choose from library</Text>
           </Pressable>
         )}
-        {/* Keep explicit actions for native platforms */}
         {Platform.OS !== 'web' && (
           <>
             <PrimaryButton title="Take photo" onPress={takePhoto} accessibilityLabel="Take photo" />
             <PrimaryButton title="Choose from library" onPress={pickImage} accessibilityLabel="Choose from library" />
           </>
         )}
-        <Text style={styles.fieldLabel} nativeID="amount-label">Amount (USD)</Text>
-        <TextInput
-          nativeID="amount-input"
-          testID="amount-input"
-          placeholder="Amount (USD)"
-          value={amount}
-          onChangeText={setAmount}
-          style={styles.input}
-          accessibilityLabel="Amount (USD)"
-          accessibilityLabelledBy="amount-label"
-        />
-        <Text style={styles.fieldLabel} nativeID="date-label">Date</Text>
-        <TextInput
-          nativeID="date-input"
-          testID="date-input"
-          placeholder="Date"
-          value={date}
-          onChangeText={setDate}
-          style={styles.input}
-          accessibilityLabel="Date"
-          accessibilityLabelledBy="date-label"
-        />
-        <Text style={styles.fieldLabel} nativeID="category-label">Category</Text>
-        <TextInput
-          nativeID="category-input"
-          testID="category-input"
-          placeholder="Category"
-          value={category}
-          onChangeText={setCategory}
-          style={styles.input}
-          accessibilityLabel="Category"
-          accessibilityLabelledBy="category-label"
-        />
-        <Text style={styles.fieldLabel} nativeID="notes-label">Notes (optional)</Text>
-        <TextInput
-          nativeID="notes-input"
-          testID="notes-input"
-          placeholder="Notes (optional)"
-          value={notes}
-          onChangeText={setNotes}
-          style={styles.input}
-          accessibilityLabel="Notes (optional)"
-          accessibilityLabelledBy="notes-label"
-        />
+        <FormField label="Amount (USD)" value={amount} onChangeText={setAmount} accessibilityLabel="Amount (USD)" placeholder="e.g., 45.67" />
+        <FormField label="Date" value={date} onChangeText={setDate} accessibilityLabel="Date" placeholder="Select date" />
+        <FormField label="Category" value={category} onChangeText={setCategory} accessibilityLabel="Category" placeholder="e.g., Office supplies" />
+        <FormField label="Notes (optional)" value={notes} onChangeText={setNotes} accessibilityLabel="Notes (optional)" placeholder="Add any extra details…" />
         {loading ? (
           <ActivityIndicator size="large" color={theme.colors.primary} />
         ) : (
@@ -207,8 +161,6 @@ const styles = StyleSheet.create({
   text: { ...theme.typography.body, marginBottom: theme.spacing.md },
   heading: { ...theme.typography.h2, color: theme.colors.onSurface, marginBottom: theme.spacing.md },
   form: { marginTop: theme.spacing.md },
-  fieldLabel: { ...theme.typography.body, color: theme.colors.onSurface, marginBottom: theme.spacing.xs, marginTop: theme.spacing.sm },
-  input: { backgroundColor: theme.colors.surface, padding: theme.spacing.sm, borderRadius: theme.radii.sm, borderWidth: 1, borderColor: theme.colors.secondary, marginBottom: theme.spacing.sm },
   image: { width: 200, height: 200, marginBottom: theme.spacing.sm },
   placeholderContainer: {
     borderWidth: 1,
