@@ -1,0 +1,108 @@
+{
+  "verdict": "pass",
+  "summary": "The biometric lock bypass has been fixed by re\u2011authenticating on every AppState resume. No new critical or high code issues were introduced. Remaining open issues are mostly medium\u2011severity code hardening gaps and two high\u2011severity dependency vulnerabilities (braces and node\u2011forge) that must be addressed at deployment time.",
+  "findings": [
+    {
+      "id": "medium-backup-passphrase-policy",
+      "severity": "medium",
+      "where": "code",
+      "file": "src/screens/BackupPassphraseScreen.tsx",
+      "issue": "The backup UI accepts any non\u2011empty passphrase; there is no enforcement of minimum length or character\u2011class complexity, making encrypted backups vulnerable to brute\u2011force attacks.",
+      "fix": "Add client\u2011side validation requiring \u22658 characters and at least three of four character classes (upper, lower, digit, symbol). Disable the \"Create backup\" button until the policy is satisfied and show clear validation errors."
+    },
+    {
+      "id": "medium-web-key-storage",
+      "severity": "medium",
+      "where": "code",
+      "file": "src/lib/storage/device.web.ts",
+      "issue": "On the optional web fallback the encryption key is persisted in `localStorage`, which is readable by any script on the same origin and not a secure vault.",
+      "fix": "Remove raw key persistence from `localStorage`. Derive the encryption key from the user\u2011provided passphrase each session (or store it encrypted in IndexedDB). Ensure no plain\u2011text key ever ends up in persistent web storage."
+    },
+    {
+      "id": "medium-temp-backup-file-deletion",
+      "severity": "medium",
+      "where": "code",
+      "file": "src/lib/backup.ts",
+      "issue": "After creating an encrypted backup, the temporary file used for `expo-sharing` is never removed, leaving the encrypted blob (and possibly a plaintext temporary file) on the device filesystem.",
+      "fix": "After a successful `shareAsync` call, invoke `FileSystem.deleteAsync(tmpPath, { idempotent: true })`. Optionally overwrite the file before deletion for extra safety."
+    },
+    {
+      "id": "medium-input-validation-numeric",
+      "severity": "medium",
+      "where": "code",
+      "file": "src/screens/ReceiptEntryScreen.tsx",
+      "issue": "Numeric inputs (amount, mileage, mileage rate, tax rate) permit negative numbers, non\u2011numeric strings, or excessively large values, which can corrupt calculations or cause overflow errors.",
+      "fix": "Add client\u2011side validation: amount >\u202f0 and limited to \u22649 digits with two decimal places; mileage\u202f\u2265\u202f0 and \u22641\u202f000\u202f000; rates\u202f>\u202f0 and \u22641\u202f000\u202f000. Show `HelperText` errors and disable the Save button until validation passes."
+    },
+    {
+      "id": "medium-image-size-validation-2026-00001",
+      "severity": "medium",
+      "where": "code",
+      "file": "src/lib/photoPicker.ts",
+      "issue": "Photo picker allows arbitrarily large images; a malicious user could capture extremely high\u2011resolution photos that exhaust device storage and cause the app to become unusable.",
+      "fix": "Limit image selection by setting `quality`, `maxWidth`, and `maxHeight` in the ImagePicker options. After selection, use `FileSystem.getInfoAsync` to check file size and reject or downscale images larger than a safe threshold (e.g., 5\u202fMB)."
+    },
+    {
+      "id": "medium-key-persistence-after-data-delete",
+      "severity": "medium",
+      "where": "code",
+      "file": "src/lib/dataReset.ts",
+      "issue": "\"Delete all data\" clears the SQLite tables but leaves the encryption key stored in `expo-secure-store`. Persisted keys could be used to recover any leftover encrypted remnants.",
+      "fix": "When wiping all data, also delete the encryption key from SecureStore (`SecureStore.deleteItemAsync(KEY_NAME)`). Optionally overwrite the database file before deletion."
+    },
+    {
+      "id": "medium-record-count-limit",
+      "severity": "medium",
+      "where": "code",
+      "file": "src/lib/storage/store.ts",
+      "issue": "The app imposes no practical limit on the number of receipt or mileage records, allowing a malicious user to fill device storage with thousands of entries, causing crashes or denial\u2011of\u2011service.",
+      "fix": "Introduce configurable caps (e.g., max\u202f10\u202f000 receipts, max\u202f5\u202f000 mileage entries) and enforce them in the add\u2011record functions. Show a user\u2011friendly \"limit reached\" UI and provide options to archive or delete older records."
+    },
+    {
+      "id": "medium-export-throttling",
+      "severity": "medium",
+      "where": "code",
+      "file": "src/lib/exportCsv.ts",
+      "issue": "CSV and PDF export functions can be invoked repeatedly without rate\u2011limiting, allowing rapid taps to spawn many async export jobs that consume CPU, memory, and temporary storage, effectively a denial\u2011of\u2011service.",
+      "fix": "Disable Export buttons while an export is in progress and enforce a minimum interval (e.g., one export per 5\u202fseconds). Implement a debounce/throttle wrapper around the export actions and provide user feedback if a request is throttled."
+    }
+  ],
+  "deployment_actions": [
+    {
+      "id": "high-deps-braces-2026-93687",
+      "severity": "high",
+      "where": "deployment",
+      "file": "package-lock.json",
+      "issue": "`braces` v3.0.3 is vulnerable to a DoS via deeply nested regex patterns (CVE\u20112026\u201193687) and has no patched version yet.",
+      "fix": "Monitor the `braces` project for a patched release (>=3.0.4) and upgrade when available. If `braces` is only a build\u2011time dependency, consider removing it or replacing the dependent library with one that does not pull in `braces`."
+    },
+    {
+      "id": "high-deps-node-forge-2026-85393",
+      "severity": "high",
+      "where": "deployment",
+      "file": "package-lock.json",
+      "issue": "`node-forge` v1.4.0 contains a signature\u2011forgery vulnerability in RSA PKCS#1 v1.5 verification (CVE\u20112026\u201185393) and is pulled in transitively via `expo-crypto`.",
+      "fix": "Track an upstream fix (>=1.5.0) and upgrade when released, or replace `expo-crypto`/`node\u2011forge` with modern audited libraries such as `@noble/*` which are already used for backup encryption."
+    },
+    {
+      "id": "deployment-csp-header",
+      "severity": "medium",
+      "where": "deployment",
+      "file": "public/index.html",
+      "issue": "The optional web build does not send a Content\u2011Security\u2011Policy header or meta tag, leaving the fallback vulnerable to injection attacks if ever served on the web.",
+      "fix": "Configure the hosting platform to send a CSP header (e.g., `default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:;`) or add a meta tag in `public/index.html` with the same policy."
+    },
+    {
+      "id": "medium-deps-sprintf-js-2026-97058",
+      "severity": "medium",
+      "where": "deployment",
+      "file": "package-lock.json",
+      "issue": "`sprintf-js` v1.0.3 is vulnerable to DoS via unbounded precision specifiers (CVE\u20112026\u201197058) and is pulled in transitively.",
+      "fix": "Upgrade to `sprintf-js` >=\u202f1.1.2 when available, or remove the dependency if it is not required by the app."
+    }
+  ],
+  "fixed": [
+    "app-lock-resume-bypass"
+  ],
+  "stalled": []
+}
