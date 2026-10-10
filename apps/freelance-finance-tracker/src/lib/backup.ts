@@ -4,15 +4,34 @@ import { getAllReceipts } from './receiptStore';
 import { getAllMileageEntries } from './mileageStore';
 import { deriveKey, encrypt, decrypt, toBase64, fromBase64, utf8, fromUtf8, randomBytes } from './crypto';
 import type { Receipt, MileageEntry } from './models';
+import * as FileSystem from 'expo-file-system';
 
-/** Create an encrypted backup of all data.
+/** Create an encrypted backup of all data, including receipt photos.
  * Returns a base64‑encoded string representing the encrypted payload.
  */
 export async function createBackup(store: Store, passphrase: string): Promise<string> {
   // Gather data
   const receipts: Receipt[] = await getAllReceipts(store);
   const mileage: MileageEntry[] = await getAllMileageEntries(store);
-  const payload = JSON.stringify({ receipts, mileage });
+
+  // Attach photo data (base64) to receipts that have a photoUri.
+  const receiptsWithPhotos = await Promise.all(
+    receipts.map(async (r) => {
+      if (r.photoUri) {
+        try {
+          // Read file as base64 string.
+          const b64 = await FileSystem.readAsStringAsync(r.photoUri, { encoding: FileSystem.EncodingType.Base64 });
+          return { ...r, photoData: b64 };
+        } catch {
+          // If reading fails, omit photoData.
+          return { ...r };
+        }
+      }
+      return { ...r };
+    })
+  );
+
+  const payload = JSON.stringify({ receipts: receiptsWithPhotos, mileage });
 
   // Derive encryption key from passphrase with a fresh random salt
   const salt = randomBytes(16);
@@ -43,15 +62,29 @@ export async function restoreBackup(store: Store, backupBlob: string, passphrase
   } catch {
     throw new Error('Invalid passphrase or corrupted backup file');
   }
-  const data = JSON.parse(decrypted) as { receipts: Receipt[]; mileage: MileageEntry[] };
+  const data = JSON.parse(decrypted) as { receipts: (Receipt & { photoData?: string })[]; mileage: MileageEntry[] };
   // Replace everything with the backup's contents, keeping the user's policy acceptance.
   await keepingPolicy(store, async () => {
     await store.clearAll();
+    // Restore receipts and write photos if present.
     for (const r of data.receipts) {
-      await store.put('receipts', { ...(r as any), id: r.id } as any);
+      const { photoData, ...rest } = r as any;
+      const newId = rest.id;
+      await store.put('receipts', rest as any);
+      if (photoData) {
+        // Write photo to app's cache directory.
+        const uri = `${FileSystem.cacheDirectory}${newId}_photo`;
+        try {
+          await FileSystem.writeAsStringAsync(uri, photoData, { encoding: FileSystem.EncodingType.Base64 });
+          // Update the stored receipt with the new uri.
+          await store.put('receipts', { ...rest, photoUri: uri } as any);
+        } catch {
+          // ignore write errors – photo will be missing.
+        }
+      }
     }
     for (const m of data.mileage) {
-      await store.put('mileage', { ...(m as any), id: m.id } as any);
+      await store.put('mileage', m as any);
     }
   });
 }
