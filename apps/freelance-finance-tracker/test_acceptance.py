@@ -11,8 +11,10 @@ The script:
    a positive integer, only milestones ``1`` … ``N`` are generated and
    executed.
 3. Installs npm dependencies if ``node_modules`` is missing.
-4. Executes Jest with ``--ci`` and, when a milestone limit is given,
-   passes ``-t '^(M1|M2|…): '`` so only the requested milestones run.
+4. Executes Jest with ``--ci``.  When a milestone limit is given, passes
+   ``-t '^(M1|M2|…): '`` so only the requested milestones run.  The command
+   now runs **all** Jest tests (acceptance and unit tests) to verify the new
+   hardening behavior in addition to the existing checks.
 5. Prints a short pass/fail summary and exits with the Jest exit code.
 
 The generated tests exercise only pure‑logic modules (policy gate,
@@ -20,7 +22,6 @@ receipt & mileage stores, finance calculations, settings, CSV export,
 and encrypted backup/restore) using the in‑memory store provided by the
 template.
 """
-
 import os
 import sys
 import subprocess
@@ -31,7 +32,7 @@ import textwrap
 # Paths & configuration
 # ----------------------------------------------------------------------
 PROJECT_ROOT = Path(__file__).resolve().parent
-TESTS_DIR = PROJECT_ROOT / "__tests__" / "acceptance"
+TESTS_DIR = PROJECT_ROOT / " __tests__" / "acceptance"
 
 # ----------------------------------------------------------------------
 # Test definitions per milestone
@@ -258,14 +259,110 @@ MILESTONE_TESTS = {
             ),
         )
     ],
+    # New milestone 5 – hardening unit‑style checks
+    5: [
+        (
+            "m5.test.ts",
+            textwrap.dedent(
+                """\
+                import { validateBackupPassphrase } from '../../src/lib/validation';
+                import { 
+                  validateReceiptAmount, 
+                  validateMileageMiles, 
+                  validateMileageRate, 
+                  validateTaxRate 
+                } from '../../src/lib/validation';
+                import { validateBackupStructure } from '../../src/lib/backup';
+                import { createStore, createMemoryRawStore, createMemoryKeyProvider } from '../../src/lib/storage/memory';
+                import { acceptPolicy, isPolicyAccepted } from '../../src/lib/policy';
+                import { clearAllData } from '../../src/lib/dataReset';
+                
+                describe('M5: backup passphrase validation', () => {
+                  it('rejects passphrases shorter than 12 characters', () => {
+                    expect(validateBackupPassphrase('short')).toBe('Passphrase must be at least 12 characters');
+                    expect(validateBackupPassphrase('exactly12!!')).toBeNull();
+                  });
+                });
+                
+                describe('M5: numeric field validation', () => {
+                  it('validates receipt amount correctly', () => {
+                    expect(validateReceiptAmount(0)).toBe('Amount must be > 0');
+                    expect(validateReceiptAmount(-5)).toBe('Amount must be > 0');
+                    expect(validateReceiptAmount(1000001)).toBe('Amount must be ≤ 1,000,000');
+                    expect(validateReceiptAmount(12.345)).toBe('Amount can have at most 2 decimal places');
+                    expect(validateReceiptAmount(99.99)).toBeNull();
+                  });
+                  it('validates mileage miles correctly', () => {
+                    expect(validateMileageMiles(0)).toBe('Miles must be > 0');
+                    expect(validateMileageMiles(-10)).toBe('Miles must be > 0');
+                    expect(validateMileageMiles(10001)).toBe('Miles must be ≤ 10,000');
+                    expect(validateMileageMiles(250)).toBeNull();
+                  });
+                  it('validates mileage rate correctly', () => {
+                    expect(validateMileageRate(-0.1)).toBe('Mileage rate must be between 0 and 5');
+                    expect(validateMileageRate(5.1)).toBe('Mileage rate must be between 0 and 5');
+                    expect(validateMileageRate(3)).toBeNull();
+                  });
+                  it('validates tax rate correctly', () => {
+                    expect(validateTaxRate(-1)).toBe('Tax rate must be between 0 and 100');
+                    expect(validateTaxRate(101)).toBe('Tax rate must be between 0 and 100');
+                    expect(validateTaxRate(22)).toBeNull();
+                  });
+                });
+                
+                describe('M5: backup format validation', () => {
+                  const validBackup = {
+                    version: 1,
+                    receipts: [{ id: 'r1', amount: 100, date: '2023-01-01', category: 'Supplies', type: 'expense', notes: '' }],
+                    mileage: [{ id: 'm1', date: '2023-01-02', miles: 50, purpose: 'Travel' }],
+                  };
+                  const invalidBackup = {
+                    version: 1,
+                    receipts: [{ id: 'r1', amount: 'bad', date: 123, category: null, type: 'expense', notes: '' }],
+                    mileage: 'not-an-array',
+                  };
+                  it('accepts a well‑formed backup', () => {
+                    expect(validateBackupStructure(validBackup)).toBeNull();
+                  });
+                  it('rejects a malformed backup', () => {
+                    expect(validateBackupStructure(invalidBackup)).not.toBeNull();
+                  });
+                });
+                
+                describe('M5: data reset preserves policy acceptance', () => {
+                  it('clears data but keeps policy acceptance flag', async () => {
+                    const store = createStore(createMemoryRawStore(), createMemoryKeyProvider());
+                    await acceptPolicy(store);
+                    // simulate some data
+                    const dummy = { id: 'x', amount: 10, date: '2023-01-01', category: 'Test', type: 'expense', notes: '' };
+                    // (Assume receiptStore is used to store data)
+                    const { addReceipt } = await import('../../src/lib/receiptStore');
+                    await addReceipt(store, dummy);
+                    
+                    // perform full reset
+                    await clearAllData(store);
+                    
+                    // policy should still be accepted
+                    expect(await isPolicyAccepted(store)).toBe(true);
+                    // receipts should be gone
+                    const { getAllReceipts } = await import('../../src/lib/receiptStore');
+                    const receipts = await getAllReceipts(store);
+                    expect(receipts).toHaveLength(0);
+                  });
+                });
+                """
+            ),
+        )
+    ],
 }
 
-
+# ----------------------------------------------------------------------
+# Helper functions
+# ----------------------------------------------------------------------
 def write_test_file(path: Path, content: str) -> None:
     """Write a test file, ensuring its parent directory exists."""
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(content, encoding="utf-8")
-
 
 def generate_tests(limit: int | None) -> None:
     """Create Jest test files for the requested milestones."""
@@ -275,12 +372,11 @@ def generate_tests(limit: int | None) -> None:
         for filename, content in files:
             write_test_file(TESTS_DIR / filename, content)
 
-
 def ensure_node_modules() -> None:
     """Run `npm install` if the `node_modules` directory is absent."""
     if (PROJECT_ROOT / "node_modules").is_dir():
         return
-    print("⚙️  node_modules not found – installing dependencies with `npm install`...")
+    print("\u2699\ufe0f  node_modules not found – installing dependencies with `npm install`...")
     try:
         subprocess.run(
             ["npm", "install"],
@@ -291,18 +387,18 @@ def ensure_node_modules() -> None:
             timeout=600,
         )
     except subprocess.CalledProcessError as exc:
-        print(f"❌ npm install failed (exit code {exc.returncode})")
+        print(f"\u274c npm install failed (exit code {exc.returncode})")
         sys.exit(1)
-
 
 def run_jest(limit: int | None) -> int:
     """Execute Jest, optionally filtering by milestone."""
-    jest_cmd = ["npx", "jest", "--ci", "__tests__/acceptance"]
+    # Run all Jest tests (acceptance + unit) so the new hardening checks are exercised.
+    jest_cmd = ["npx", "jest", "--ci"]
     if limit is not None:
         allowed = "|".join(f"M{i}" for i in range(1, limit + 1))
         pattern = f"^({allowed}): "
         jest_cmd.extend(["-t", pattern])
-    print(f"🚀 Running Jest: {' '.join(jest_cmd)}")
+    print(f"\ud83d\ude80 Running Jest: {' '.join(jest_cmd)}")
     result = subprocess.run(
         jest_cmd,
         cwd=PROJECT_ROOT,
@@ -313,7 +409,6 @@ def run_jest(limit: int | None) -> int:
     )
     print(result.stdout)
     return result.returncode
-
 
 def main() -> None:
     # Determine which milestones to run
@@ -326,7 +421,7 @@ def main() -> None:
                 raise ValueError()
         except ValueError:
             print(
-                "⚠️  Invalid ACCEPTANCE_MILESTONE – must be a positive integer.",
+                "\u26a0\ufe0f  Invalid ACCEPTANCE_MILESTONE – must be a positive integer.",
                 file=sys.stderr,
             )
             sys.exit(2)
@@ -337,15 +432,14 @@ def main() -> None:
     # 2️⃣ Ensure npm dependencies are installed
     ensure_node_modules()
 
-    # 3️⃣ Run Jest
+    # 3️⃣ Run Jest (all tests, filtered by milestone if requested)
     exit_code = run_jest(limit)
 
     if exit_code == 0:
-        print("✅ All acceptance tests passed.")
+        print("\u2705 All acceptance tests passed.")
     else:
-        print(f"❌ Acceptance tests failed (exit code {exit_code}).")
+        print(f"\u274c Acceptance tests failed (exit code {exit_code}).")
     sys.exit(exit_code)
-
 
 if __name__ == "__main__":
     main()
