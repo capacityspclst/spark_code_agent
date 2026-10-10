@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
-import { StyleSheet, View } from 'react-native';
-import { FAB, Portal } from 'react-native-paper';
+import { StyleSheet, View, Pressable, Text } from 'react-native';
+import { Modal, Text as PaperText } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { theme, space } from '../../theme';
 import { useNavigation, NavigationProp } from '@react-navigation/native';
+import PrimaryButton from './PrimaryButton';
 
-/** FAB that opens mini-FABs for adding a receipt or mileage entry.
- * The main FAB has an accessible label "Add".
- * Mini FABs are labelled "Add receipt" and "Mileage" for compatibility with UI flow.
+/**
+ * Simple FAB that opens a modal with two options: Add receipt and Mileage.
+ * Implemented with Pressable to avoid nested interactive elements.
  */
 export default function FABAdd() {
   const navigation = useNavigation<NavigationProp<any>>();
@@ -25,63 +26,42 @@ export default function FABAdd() {
     setOpen(false);
   };
 
-  const receiptIcon = ({ size, color }: { size: number; color: string }) => (
-    <MaterialCommunityIcons name="receipt" size={size} color={color} aria-hidden />
-  );
-  const mileageIcon = ({ size, color }: { size: number; color: string }) => (
-    <MaterialCommunityIcons name="run" size={size} color={color} aria-hidden />
-  );
-
   return (
     <>
-      {/* Mini FABs rendered in a separate portal */}
-      {open && (
-        <Portal>
-          <View style={styles.miniContainer} pointerEvents="box-none">
-            <FAB
-              style={styles.miniFab}
-              small
-              icon={receiptIcon}
-              accessibilityLabel="Add receipt"
-              accessibilityRole="button"
-              onPress={goToReceipt}
-              color={theme.colors.onSecondary}
-              theme={{ colors: { accent: theme.colors.secondary } }}
-            />
-            <FAB
-              style={styles.miniFab}
-              small
-              icon={mileageIcon}
-              accessibilityLabel="Mileage"
-              accessibilityRole="button"
-              onPress={goToMileage}
-              color={theme.colors.onSecondary}
-              theme={{ colors: { accent: theme.colors.secondary } }}
-            />
-          </View>
-        </Portal>
-      )}
       {/* Main FAB */}
-      <Portal>
-        <View style={styles.container} pointerEvents="box-none">
-          <FAB
-            style={styles.fab}
-            icon="plus"
-            accessibilityLabel="Add"
-            accessibilityRole="button"
-            onPress={toggle}
-            color={theme.colors.onSecondary}
-            theme={{ colors: { accent: theme.colors.secondary } }}
-          />
-        </View>
-      </Portal>
+      <View style={styles.container} pointerEvents="box-none">
+        <Pressable
+          onPress={toggle}
+          accessibilityLabel="Add"
+          accessibilityRole="button"
+          style={styles.fab}
+        >
+          <MaterialCommunityIcons name="plus" size={24} color={theme.colors.onSecondary} />
+        </Pressable>
+      </View>
+      {/* Modal with options */}
+      <Modal visible={open} onDismiss={toggle} contentContainerStyle={styles.modal}>
+        <PaperText variant="titleMedium" style={{ marginBottom: 8 }}>
+          Add entry
+        </PaperText>
+        <PrimaryButton label="Add receipt" variant="primary" onPress={goToReceipt} style={styles.button} />
+        <PrimaryButton label="Mileage" variant="primary" onPress={goToMileage} style={styles.button} />
+      </Modal>
     </>
   );
 }
 
 const styles = StyleSheet.create({
   container: { position: 'absolute', bottom: space(2), right: space(2), alignItems: 'center' },
-  fab: { elevation: 4 },
-  miniContainer: { position: 'absolute', bottom: space(10), right: space(2), alignItems: 'center' },
-  miniFab: { marginBottom: 8 },
+  fab: {
+    backgroundColor: theme.colors.secondary,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 4,
+  },
+  modal: { backgroundColor: 'white', padding: 20, margin: 20, borderRadius: 8 },
+  button: { marginTop: 8 },
 });
