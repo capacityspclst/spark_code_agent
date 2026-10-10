@@ -1,0 +1,110 @@
+{
+  "verdict": "pass",
+  "summary": "The latest source snapshot shows that the previously reported CSV\u2011formula injection and PDF\u2011HTML injection flaws have been remedied \u2013 tests for proper sanitisation now exist. All other previously reported issues remain unaddressed. Dependency vulnerabilities (braces, node\u2011forge, sprintf\u2011js) and the missing CSP header for the optional web build are still open deployment\u2011level findings. In\u2011app concerns such as weak backup\u2011passphrase policy, insecure web key storage, lingering temporary backup files, lack of numeric validation, unrestricted image size, and retention of the encryption key after a full data wipe also persist. New medium\u2011severity concerns were identified: (1) no practical limit on the number of stored receipts/mileage entries, which could exhaust device storage, and (2) no throttling/queue for CSV/PDF export generation, allowing a denial\u2011of\u2011service via rapid repeated exports.",
+  "findings": [
+    {
+      "id": "medium-backup-passphrase-policy",
+      "severity": "medium",
+      "where": "code",
+      "file": "src/screens/BackupPassphraseScreen.tsx",
+      "issue": "The backup UI accepts any non\u2011empty passphrase; there is no enforcement of length or character\u2011class complexity, making the encrypted backup vulnerable to brute\u2011force attacks.",
+      "fix": "Add validation that requires a passphrase of at least 8 characters and at least three of the four character classes (uppercase, lowercase, digits, symbols). Disable the \"Create backup\" button until the policy is satisfied and show a clear validation error."
+    },
+    {
+      "id": "medium-web-key-storage",
+      "severity": "medium",
+      "where": "code",
+      "file": "src/lib/storage/device.web.ts",
+      "issue": "On the optional web fallback the encryption key is persisted in `localStorage`, which is accessible to any script in the same origin and therefore not a secure vault.",
+      "fix": "Remove the `localStorage` persistence of the raw key. Derive the encryption key from the user\u2011provided passphrase each session (or store it encrypted in IndexedDB). Ensure no plain\u2011text key ever ends up in `localStorage`."
+    },
+    {
+      "id": "medium-temp-backup-file-deletion",
+      "severity": "medium",
+      "where": "code",
+      "file": "src/lib/backup.ts",
+      "issue": "After creating an encrypted backup, the temporary file used for `expo-sharing` is never removed, leaving the encrypted blob (and possibly a plaintext temporary file) on the device filesystem.",
+      "fix": "After a successful `shareAsync` call, invoke `FileSystem.deleteAsync(tmpPath, { idempotent: true })`. Optionally overwrite the file before deletion for extra safety."
+    },
+    {
+      "id": "medium-input-validation-numeric",
+      "severity": "medium",
+      "where": "code",
+      "file": "src/screens/ReceiptEntryScreen.tsx",
+      "issue": "Numeric inputs (amount, mileage, mileage rate, tax rate) permit negative numbers, non\u2011numeric strings, or excessively large values, which can corrupt calculations or cause overflow errors.",
+      "fix": "Add client\u2011side validation: amount must be > 0 and limited to, e.g., 9 digits with two decimal places; mileage \u2265 0; rates > 0; enforce an upper bound (e.g., <\u202f1\u202f000\u202f000). Show `HelperText` errors and disable the Save button until validation passes."
+    },
+    {
+      "id": "medium-image-size-validation-2026-00001",
+      "severity": "medium",
+      "where": "code",
+      "file": "src/lib/photoPicker.ts",
+      "issue": "Photo picker allows arbitrarily large images; a malicious user could capture extremely high\u2011resolution photos that exhaust device storage and cause the app to become unusable.",
+      "fix": "Limit the image size/quality when invoking `ImagePicker.launchCameraAsync`/`launchImageLibraryAsync` (set `quality`, `allowsEditing`, or `maxWidth`/`maxHeight`). After selection, check the file size via `FileSystem.getInfoAsync` and reject or downscale images exceeding a safe threshold (e.g., 5\u202fMB)."
+    },
+    {
+      "id": "medium-key-persistence-after-data-delete",
+      "severity": "medium",
+      "where": "code",
+      "file": "src/lib/dataReset.ts",
+      "issue": "\"Delete all data\" clears the SQLite tables but leaves the encryption key stored in `expo-secure-store`. If any encrypted remnants remain, the retained key could be used to recover them.",
+      "fix": "When wiping data, also delete the encryption key from SecureStore (`SecureStore.deleteItemAsync(KEY_NAME)`). Optionally overwrite the database file before deletion."
+    },
+    {
+      "id": "medium-record-count-limit",
+      "severity": "medium",
+      "where": "code",
+      "file": "src/lib/storage/store.ts",
+      "issue": "The app imposes no practical limit on the number of receipt or mileage records a user can create. An adversarial user could fill the device storage with thousands of entries, causing the app to become unusable or crash (resource exhaustion).",
+      "fix": "Introduce configurable caps (e.g., max 10,000 receipts, max 5,000 mileage entries) and enforce them in the add\u2011record functions. Show a user\u2011friendly error when the limit is reached and provide a UI to archive or delete older records."
+    },
+    {
+      "id": "medium-export-throttling",
+      "severity": "medium",
+      "where": "code",
+      "file": "src/lib/exportCsv.ts",
+      "issue": "CSV and PDF export functions can be invoked repeatedly without any rate\u2011limiting or queuing. Rapid repeated taps could spawn many async export jobs, consuming CPU, memory, and temporary storage, effectively a denial\u2011of\u2011service.",
+      "fix": "Add a debounce/throttle wrapper around the export actions (e.g., disable the Export buttons while an export is in progress and enforce a minimum interval, such as one export per 5\u202fseconds). Optionally queue subsequent requests and provide user feedback if the limit is reached."
+    }
+  ],
+  "deployment_actions": [
+    {
+      "id": "deployment-csp-header",
+      "severity": "medium",
+      "where": "deployment",
+      "file": "public/index.html",
+      "issue": "The optional web build does not send a Content\u2011Security\u2011Policy header or meta tag, leaving the fallback vulnerable to injection attacks if ever served on the web.",
+      "fix": "Configure the hosting platform to send a CSP header or add a meta tag in `public/index.html`, e.g.: `<meta http\u2011equiv=\"Content\u2011Security\u2011Policy\" content=\"default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:;\">`."
+    },
+    {
+      "id": "high-deps-braces-2026-93687",
+      "severity": "high",
+      "where": "deployment",
+      "file": "package-lock.json",
+      "issue": "`braces` v3.0.3 is vulnerable to a DoS via deeply nested regex patterns (CVE\u20112026\u201193687) and has no patched version yet.",
+      "fix": "Monitor for an updated release; when available, upgrade to >=\u202f3.0.4. If `braces` is only a build\u2011time dependency, consider removing it or replacing the dependent library with one that does not pull in `braces`."
+    },
+    {
+      "id": "high-deps-node-forge-2026-85393",
+      "severity": "high",
+      "where": "deployment",
+      "file": "package-lock.json",
+      "issue": "`node-forge` v1.4.0 contains a signature\u2011forgery vulnerability in RSA PKCS#1 v1.5 verification (CVE\u20112026\u201185393) and is a transitive dependency of `expo-crypto`.",
+      "fix": "Track an upstream fix (\u2265\u202f1.5.0) or replace `expo-crypto`/`node-forge` with a modern audited library such as `@noble/*` (already used for backup encryption). Ensure the replacement provides the needed cryptographic primitives."
+    },
+    {
+      "id": "medium-deps-sprintf-js-2026-97058",
+      "severity": "medium",
+      "where": "deployment",
+      "file": "package-lock.json",
+      "issue": "`sprintf-js` v1.0.3 is vulnerable to DoS via unbounded precision specifiers (CVE\u20112026\u201197058). It is pulled in transitively.",
+      "fix": "Upgrade to >=\u202f1.1.2 when released, or remove the dependency if it is not required."
+    }
+  ],
+  "fixed": [
+    "high-csv-injection",
+    "high-pdf-html-injection",
+    "medium-deps-uuid-2026-41907"
+  ],
+  "stalled": []
+}

@@ -1,0 +1,149 @@
+{
+  "verdict": "fail",
+  "summary": "Overall the app follows the design spec reasonably well \u2013 it uses the theme tokens, the navigation structure is present, and there are no axe violations. However the primary user flow is broken: after saving a receipt the expected \"Receipt saved\" snackbar never appears (or uses the wrong text), causing the acceptance test to fail. In addition there are a few token and accessibility gaps (undefined success color, missing focus-visible styles on buttons, missing accessibilityLabel on the bottom tab bar, prop naming mismatch on EmptyState, and placeholder photo text), which prevent the UI from being fully polished and accessible.",
+  "findings": [
+    {
+      "severity": "high",
+      "file": "src/screens/ReceiptEntryScreen.tsx",
+      "issue": "The success snackbar is either not rendered or uses a different message after a receipt is saved, so the UI flow can\u2019t find the expected \"Receipt saved\" text. This breaks the primary flow and prevents user feedback.",
+      "fix": "After a successful receipt save, trigger the Paper Snackbar with the exact message \"Receipt saved\" (matching the spec) and ensure it\u2019s visible and announced for accessibility. Verify that the navigation back to the dashboard doesn\u2019t hide the snackbar prematurely.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/components/ui/SummaryCard.tsx",
+      "issue": "The component references `theme.colors.success` for the \"positive\" tone, but the theme does not define a `success` color token, resulting in an undefined style.",
+      "fix": "Add a `success` color to `src/theme.ts` (and the CSS fallback) or replace the reference with an existing token such as `theme.colors.primary` or a dedicated `positive` color from the palette.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/components/ui/PrimaryButton.tsx",
+      "issue": "PrimaryButton does not implement a visible focus style for web (focus\u2011visible outline), which is required for WCAG compliance and the spec\u2019s visible focus requirement.",
+      "fix": "Add a `style` prop that applies a 2\u202fdp outline using `theme.colors.outline` when the button receives focus (e.g., via `onFocus` / `onBlur` state or CSS `:focus-visible`).",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/navigation/index.tsx",
+      "issue": "Bottom navigation is not explicitly given an `accessibilityLabel` or `role=\"navigation\"`, which means screen readers may not identify it as the primary navigation landmark.",
+      "fix": "Pass `accessibilityLabel=\"Bottom navigation\"` and `accessibilityRole=\"navigation\"` (or `role=\"navigation\"`) to the `BottomNavigation` component.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "src/components/ui/EmptyState.tsx",
+      "issue": "The component expects a prop named `body` for the description, while the design spec references `description`. This mismatch can cause copy errors when the component is used.",
+      "fix": "Rename the prop to `description` (and update its usage) or accept both names to maintain compatibility with the spec.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "src/components/ui/ReceiptCard.tsx",
+      "issue": "Photo attachment is shown as placeholder text \"[photo attached]\" without an actual image component or proper accessibility labeling.",
+      "fix": "Render the receipt photo with an `<Image>` component and provide `accessibilityLabel=\"Receipt photo\"`. If no image is available, keep the placeholder text but style it using design tokens.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "src/components/ui/SettingSwitch.tsx",
+      "issue": "The switch component is not shown, but the spec requires an accessible label and proper touch target. Ensure the custom switch includes an associated `<Text>` label and a 44\u202f\u00d7\u202f44\u202fdp hit area.",
+      "fix": "Wrap the `Switch` together with a `<Text>` label, set `accessibilityLabel` to the label text, and make sure the surrounding `Pressable` meets the 44\u202fdp requirement.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "src/components/ui/ChoiceField.tsx",
+      "issue": "The `SegmentedButtons` component does not apply a visible focus outline on web, which is required for the visible focus state.",
+      "fix": "Add a custom style that applies a 2\u202fdp outline (using `theme.colors.outline`) when a segment receives focus, or enable Paper\u2019s focus styling via the `theme` configuration.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "viewport": "both",
+      "issue": "The 'Accept' button is a plain, unstyled gray button with no visual feedback or state indication (e.g., hover, press, or disabled state).",
+      "fix": "Apply a branded button style with clear hover/press states and visual feedback to match the product\u2019s premium feel.",
+      "screen": "policy_gate",
+      "source": "vision"
+    },
+    {
+      "severity": "medium",
+      "viewport": "both",
+      "issue": "The checkbox is minimal and lacks visual feedback or styling, making it feel like a browser default.",
+      "fix": "Style the checkbox with consistent brand colors and add a subtle hover/press state to enhance interactivity.",
+      "screen": "policy_gate",
+      "source": "vision"
+    },
+    {
+      "severity": "medium",
+      "viewport": "desktop",
+      "issue": "The desktop layout appears as a scaled-down version of the phone layout, with no use of the full canvas or improved spacing for the larger screen.",
+      "fix": "Re-layout for desktop to utilize the full width, add appropriate padding, and improve spacing to feel intentional and premium.",
+      "screen": "policy_gate",
+      "source": "vision"
+    },
+    {
+      "severity": "low",
+      "viewport": "both",
+      "issue": "The 'Tick the box above to continue' instruction is redundant and feels like a placeholder or accessibility hint.",
+      "fix": "Remove the instruction text or replace it with a more elegant, contextual cue (e.g., 'Tap to agree').",
+      "screen": "policy_gate",
+      "source": "vision"
+    },
+    {
+      "severity": "high",
+      "screen": "policy_gate",
+      "source": "vision",
+      "issue": "visual quality 7/10 on 'policy_gate' (needs 8+): The policy gate screen is clean, well-structured, and visually consistent across both phone and desktop views. It clearly establishes the primary action (Accept) and uses a clear visual hierarchy. Typography is readable and well-spaced. However, it lacks polish in key areas: the button is unstyled (gray, no hover/press state), the checkbox is minimal, and the layout feels slightly under-designed for a premium product. The desktop version doesn't leverage the larger canvas effectively, appearing as a scaled-down phone layout.",
+      "fix": "Address this screen's findings until it looks polished and professional."
+    },
+    {
+      "severity": "low",
+      "viewport": "phone",
+      "issue": "The 'Add photo' button is too close to the top edge, leaving minimal padding above the form.",
+      "fix": "Add consistent top padding (e.g., 24px) to align with the form's vertical rhythm and provide breathing room.",
+      "screen": "receipt_entry",
+      "source": "vision"
+    },
+    {
+      "severity": "low",
+      "viewport": "phone",
+      "issue": "The 'Save receipt' button is slightly too wide for the screen, causing a tiny horizontal overflow on some devices.",
+      "fix": "Adjust button width to fit within 390px, or use a fixed width with safe margins to prevent overflow.",
+      "screen": "receipt_entry",
+      "source": "vision"
+    },
+    {
+      "severity": "low",
+      "viewport": "desktop",
+      "issue": "The form elements are not scaled proportionally to the desktop viewport; they appear cramped and lack padding on the sides.",
+      "fix": "Increase horizontal padding around the form (e.g., 48px left/right) and adjust field widths to utilize desktop space without crowding.",
+      "screen": "receipt_entry",
+      "source": "vision"
+    }
+  ],
+  "lighthouse": [
+    {
+      "accessibility": 98,
+      "bestPractices": 100,
+      "performance": 57
+    }
+  ],
+  "vision_scores": [
+    {
+      "screen": "policy_gate",
+      "score": 7.0,
+      "summary": "The policy gate screen is clean, well-structured, and visually consistent across both phone and desktop views. It clearly establishes the primary action (Accept) and uses a clear visual hierarchy. Typography is readable and well-spaced. However, it lacks polish in key areas: the button is unstyled (gray, no hover/press state), the checkbox is minimal, and the layout feels slightly under-designed for a premium product. The desktop version doesn't leverage the larger canvas effectively, appearing as a scaled-down phone layout."
+    },
+    {
+      "screen": "dashboard_empty",
+      "score": 8.0,
+      "summary": "Polished, clean, and intuitive empty state with clear primary actions. Visual hierarchy is strong, typography is readable and consistent, spacing is generous, and the layout is well-balanced on both phone and desktop. No critical issues found."
+    },
+    {
+      "screen": "receipt_entry",
+      "score": 8.0,
+      "summary": "Polished, modern form with clear hierarchy and touch-friendly controls. Strong primary action, consistent spacing, and clean typography. Minor spacing tweaks could elevate it to exceptional."
+    }
+  ]
+}

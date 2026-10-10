@@ -1,0 +1,165 @@
+{
+  "verdict": "fail",
+  "summary": "Overall the app follows the design spec and passes basic Axe and Lighthouse checks, but the primary user flow (saving a receipt) is broken and a few design\u2011token mismatches cause visual and runtime errors. The most critical issues prevent the core \"add entry\" flow from completing and could surface as crashes or missing UI feedback. Secondary issues are missing accessibility refinements and a stray theme reference (`theme.colors.success`).",
+  "findings": [
+    {
+      "severity": "high",
+      "file": "src/screens/ReceiptEntryScreen.tsx",
+      "issue": "After a successful save the UI never shows the \"Receipt saved\" snackbar and does not navigate back to the Dashboard, causing the acceptance test to time\u2011out at step\u202f15.",
+      "fix": "In the receipt\u2011save handler, after the store operation succeeds, call `announceForAccessibility('Receipt saved')`, set a state flag that renders `<Snackbar visible={true} onDismiss={...}>Receipt saved</Snackbar>`, and then programmatically navigate to the Dashboard (e.g. using `navigation.navigate('Dashboard')`). Ensure the Snackbar component is part of the render tree and that the `loading` prop on the save button is cleared.",
+      "source": "designer"
+    },
+    {
+      "severity": "high",
+      "file": "src/components/ui/SummaryCard.tsx",
+      "issue": "`theme.colors.success` is referenced for the \"positive\" tone, but the theme definition does not include a `success` color token, leading to `undefined` CSS values or runtime errors.",
+      "fix": "Add a `success` entry to `theme.colors` (e.g. a green shade that meets contrast) in `src/theme.ts`, or replace the reference with an existing token such as `theme.colors.primary` or a new custom token `colorPositive`.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/components/ui/EmptyState.tsx",
+      "issue": "The decorative icon (`<Avatar.Icon>`) lacks `aria-hidden`/`accessible={false}`, so screen readers may announce the icon name, violating the spec that icons are decorative.",
+      "fix": "Add `accessibilityIgnoresInvertColors` or `accessible={false}` and `aria-hidden` to the `Avatar.Icon` component, e.g. `<Avatar.Icon ... aria-hidden accessible={false} />`.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/components/ui/PrimaryButton.tsx",
+      "issue": "No visible focus indicator is applied when the button receives keyboard focus, which is required by the accessibility spec (2\u202fdp outline using `theme.colors.outline`).",
+      "fix": "Wrap the Paper `Button` in a `Pressable` or use the `Button`'s `style` prop to add a conditional `outlineWidth: 2, outlineColor: theme.colors.outline` when `focused` (use `onFocus`/`onBlur` to toggle a state) or use the `react-native-paper` `Button`\u2019s `rippleColor` and `mode=\"contained\"` with `theme={...}` that defines `roundness` and `borderWidth` for focus.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "src/components/ui/FormField.tsx",
+      "issue": "The placeholder text color defaults to the native component style, not the design token `theme.colors.placeholder` defined in the spec.",
+      "fix": "Pass `placeholderTextColor={theme.colors.placeholder}` to the `TextInput` component.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "src/components/ui/SettingSwitch.tsx",
+      "issue": "The visual representation of the disabled switch does not follow the spec\u2019s color pair (`#212121` on `#E0E0E0`). The current implementation only changes colors for the \"on\" state.",
+      "fix": "Add a `disabled` prop to the component, and when `disabled` is true render the track with `backgroundColor: theme.colors.disabled` and the thumb with `backgroundColor: theme.colors.onDisabled` to match the design tokens.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "src/components/ui/ChoiceField.tsx",
+      "issue": "The label for the segmented buttons is rendered as plain `Text` with `accessibilityRole=\"text\"`. It should be associated with the control using `aria-label` or `accessibilityLabel` for better screen\u2011reader navigation.",
+      "fix": "Replace the label `Text` with a `<Text accessibilityRole=\"label\" accessibilityLabel={label}>` or wrap the whole field in a `<View accessible={true} accessibilityLabel={label}>` so that the label is announced with the segmented buttons.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "viewport": "both",
+      "issue": "The 'Accept' button is visually disabled (grayed out) but not explicitly labeled as such; users might not understand why it's inactive without reading the instruction text below.",
+      "fix": "Add a clear visual state (e.g., 'Disabled' label or a subtle animation) to indicate the button is inactive until the checkbox is checked, reducing ambiguity.",
+      "screen": "policy_gate",
+      "source": "vision"
+    },
+    {
+      "severity": "medium",
+      "viewport": "both",
+      "issue": "The checkbox and its associated text are misaligned with the button below, creating an inconsistent visual hierarchy.",
+      "fix": "Center-align the checkbox and its label vertically with the 'Accept' button to create a cohesive and balanced composition.",
+      "screen": "policy_gate",
+      "source": "vision"
+    },
+    {
+      "severity": "low",
+      "viewport": "both",
+      "issue": "The instruction text 'Tick the box above to continue.' is placed below the button, which is counterintuitive for users accustomed to 'Continue' or 'Next' buttons being above the instruction.",
+      "fix": "Move the instruction text above the button or reposition the button to be directly above the instruction for better visual flow.",
+      "screen": "policy_gate",
+      "source": "vision"
+    },
+    {
+      "severity": "high",
+      "screen": "policy_gate",
+      "source": "vision",
+      "issue": "visual quality 7/10 on 'policy_gate' (needs 8+): The policy gate screen is clean and functional, with a clear visual hierarchy and a single primary action. Typography is readable and consistent, spacing is generous, and alignment is on a grid. However, it lacks polish in form design and visual hierarchy that would elevate it to 8 or 9.",
+      "fix": "Address this screen's findings until it looks polished and professional."
+    },
+    {
+      "severity": "medium",
+      "viewport": "phone",
+      "issue": "Typography lacks a real type scale; heading and body text are similar in weight and size, making hierarchy unclear.",
+      "fix": "Use a proper type scale: bold, larger heading for 'Add receipt', smaller, lighter body text for labels and fields.",
+      "screen": "receipt_entry",
+      "source": "vision"
+    },
+    {
+      "severity": "medium",
+      "viewport": "phone",
+      "issue": "Form fields are too close to each other vertically; insufficient spacing between 'Type' toggle and 'Notes' field.",
+      "fix": "Add consistent vertical spacing (e.g., 16px) between all form elements for better readability and touch targets.",
+      "screen": "receipt_entry",
+      "source": "vision"
+    },
+    {
+      "severity": "low",
+      "viewport": "phone",
+      "issue": "Input fields are too narrow for touch typing; no hint of field purpose or placeholder text.",
+      "fix": "Use wider fields and add placeholder text (e.g., 'Enter amount') to guide users and improve usability.",
+      "screen": "receipt_entry",
+      "source": "vision"
+    },
+    {
+      "severity": "low",
+      "viewport": "phone",
+      "issue": "The 'Save receipt' button is centered and lacks a clear visual hierarchy; it's not the most prominent element.",
+      "fix": "Place the 'Save receipt' button at the bottom of the screen with ample padding above and below, and make it slightly larger or use a stronger color contrast.",
+      "screen": "receipt_entry",
+      "source": "vision"
+    },
+    {
+      "severity": "low",
+      "viewport": "desktop",
+      "issue": "Desktop layout is a stretched phone version with no responsive adjustments; fields are not optimized for mouse interaction or screen real estate.",
+      "fix": "Re-layout for desktop: increase field widths, add horizontal spacing, and consider using a grid system for better alignment and usability.",
+      "screen": "receipt_entry",
+      "source": "vision"
+    },
+    {
+      "severity": "low",
+      "viewport": "both",
+      "issue": "No error states or validation hints shown; fields are empty and lack helpful guidance.",
+      "fix": "Add placeholder text or tooltips to explain required fields (e.g., 'Enter amount in USD') and show inline validation messages on invalid input.",
+      "screen": "receipt_entry",
+      "source": "vision"
+    },
+    {
+      "severity": "high",
+      "screen": "receipt_entry",
+      "source": "vision",
+      "issue": "visual quality 7/10 on 'receipt_entry' (needs 8+): The screen is clean and functional, with a clear primary action and good visual hierarchy. However, it lacks polish in typography, spacing, and form design, and misses opportunities for desktop optimization.",
+      "fix": "Address this screen's findings until it looks polished and professional."
+    }
+  ],
+  "lighthouse": [
+    {
+      "accessibility": 98,
+      "bestPractices": 100,
+      "performance": 57
+    }
+  ],
+  "vision_scores": [
+    {
+      "screen": "policy_gate",
+      "score": 7.0,
+      "summary": "The policy gate screen is clean and functional, with a clear visual hierarchy and a single primary action. Typography is readable and consistent, spacing is generous, and alignment is on a grid. However, it lacks polish in form design and visual hierarchy that would elevate it to 8 or 9."
+    },
+    {
+      "screen": "dashboard_empty",
+      "score": 8.0,
+      "summary": "Polished, modern, and highly usable empty state. Clear visual hierarchy, excellent typography and spacing, consistent grid alignment, and touch-friendly controls. The design feels premium and would not look out of place in a commercial app."
+    },
+    {
+      "screen": "receipt_entry",
+      "score": 7.0,
+      "summary": "The screen is clean and functional, with a clear primary action and good visual hierarchy. However, it lacks polish in typography, spacing, and form design, and misses opportunities for desktop optimization."
+    }
+  ]
+}

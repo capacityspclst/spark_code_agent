@@ -1,0 +1,249 @@
+{
+  "verdict": "fail",
+  "summary": "The current build diverges significantly from the DESIGN.md spec. The core primary flow (FAB \u2192 Receipt) never navigates, causing the acceptance test to time\u2011out. A large number of required screens (Export, Backup, Restore, TaxSettings, DeleteAllDataConfirmation, etc.) and their loading/empty/error states are missing or only partially implemented. Several components misuse or reference undefined design tokens, and key accessibility interaction patterns (focus\u2011visible outlines, proper button labeling, focus trapping in dialogs, disabled\u2011until\u2011valid buttons) are absent. These gaps break the primary user journey, leave copy and state requirements unfulfilled, and reduce WCAG compliance.",
+  "findings": [
+    {
+      "severity": "high",
+      "file": "src/components/ui/FABAdd.tsx",
+      "issue": "The mini\u2011FAB labelled \"Receipt\" does not trigger navigation to the ReceiptEntryScreen; the navigation name \"ReceiptEntry\" is likely wrong or the route is missing, causing the acceptance test to time\u2011out.",
+      "fix": "Confirm the stack navigator defines a route named exactly \"ReceiptEntry\" (or update the navigation call to the correct route). Ensure the route is registered in src/navigation/index.tsx and that the mini\u2011FABs are rendered with a pressable area that registers clicks.",
+      "source": "designer"
+    },
+    {
+      "severity": "high",
+      "file": "src/navigation/index.tsx",
+      "issue": "Screens required by the spec (ExportScreen, BackupScreen, RestoreScreen, TaxSettingsScreen, DeleteAllDataConfirmation dialog) are not registered, making those primary actions inaccessible from the Settings tab.",
+      "fix": "Add the missing screens to the bottom\u2011tab stack or nested stack navigator. Wire each screen to the appropriate route key used by the UI flow (e.g., \"Export\", \"Backup\", \"Restore\", \"TaxSettings\"). Implement the DeleteAllDataConfirmation as a modal dialog with proper focus trapping.",
+      "source": "designer"
+    },
+    {
+      "severity": "high",
+      "file": "src/screens/DashboardScreen.tsx",
+      "issue": "DashboardScreen does not render the required loading, empty, populated, and error states (including the EmptyState component with the exact copy). The error view with a Retry button is missing.",
+      "fix": "Implement conditional rendering based on data\u2011loading status: a centered ActivityIndicator for loading, EmptyState with title \"Nothing here yet\" and description from DESIGN.md for empty, the four SummaryCard components for populated, and a full\u2011screen error view with the exact copy and a Retry button.",
+      "source": "designer"
+    },
+    {
+      "severity": "high",
+      "file": "src/screens/ReceiptEntryScreen.tsx",
+      "issue": "Save receipt button is not disabled until the form is valid, and there is no field\u2011level error handling that shifts focus to the first invalid field as required by the spec.",
+      "fix": "Add validation logic that disables the PrimaryButton until all required fields are valid. Pass error messages to FormField's `error` prop and on validation failure call `ref.focus()` on the first invalid field.",
+      "source": "designer"
+    },
+    {
+      "severity": "high",
+      "file": "src/screens/MileageEntryScreen.tsx",
+      "issue": "Mileage entry screen mirrors ReceiptEntryScreen but lacks the required validation, disabled\u2011until\u2011valid Save button, and error handling for missing fields.",
+      "fix": "Reuse the validation pattern from ReceiptEntryScreen, ensuring the Save mileage button is disabled until miles, date, and purpose are valid, and display HelperText errors under each field.",
+      "source": "designer"
+    },
+    {
+      "severity": "high",
+      "file": "src/screens/SettingsScreen.tsx",
+      "issue": "SettingsScreen does not provide navigation to Export, Backup & Restore, Tax Settings, or Delete All Data screens, nor does it display error Snackbars when loading settings fails.",
+      "fix": "Add ListItem rows for each setting action that navigate to the corresponding screens. Wrap the settings fetch in a try/catch and show a Snackbar with the exact error copy if it fails.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/components/ui/SummaryCard.tsx",
+      "issue": "Uses `theme.colors.success` which is not defined in the design tokens (theme.ts), leading to undefined color values.",
+      "fix": "Replace `theme.colors.success` with a defined token (e.g., `theme.colors.primary` for accent or introduce a `success` color in the theme). Update the theme definition accordingly.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/components/ui/FABAdd.tsx",
+      "issue": "Main FAB accessibilityLabel is generic \"Add\"; the spec expects the primary FAB to convey the action \"Add receipt\" (or similar) for screen\u2011reader clarity.",
+      "fix": "Change `accessibilityLabel` on the main FAB to \"Add receipt or mileage\" (or a clearer description). Optionally provide `aria-describedby` linking to a hidden description of the two options.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/components/ui/PrimaryButton.tsx",
+      "issue": "Focus\u2011visible styling (2\u202fdp outline) required by the spec is not applied on web; Button lacks a custom `style` for focus state.",
+      "fix": "Add a `style` prop that applies `outlineWidth: 2` and `outlineColor: theme.colors.outline` when the button receives focus (use `onFocus`/`onBlur` state or the `focusStyle` prop provided by react\u2011native\u2011paper).",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/components/ui/EmptyState.tsx",
+      "issue": "Prop names (`body`) do not match the DESIGN.md spec (`description`). While functional, it creates a mismatch that can lead to copy errors and makes the component harder to use consistently.",
+      "fix": "Rename the prop to `description` (or accept both) and update all callers to pass the correct prop name. Update component documentation.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/components/ui/ChoiceField.tsx",
+      "issue": "The label is rendered as a Text component with `accessibilityRole=\"text\"`, but it does not have an associated ARIA role linking it to the segmented buttons, reducing form semantics.",
+      "fix": "Wrap the label and SegmentedButtons in a `<View accessibilityRole=\"radiogroup\" aria-label={label}>` or use `accessibilityLabel` on the SegmentedButtons component to associate the label properly.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "src/components/ui/ReceiptImagePicker.tsx",
+      "issue": "The placeholder text for the image preview uses a static size (200\u202fdp) which does not respect the token\u2011based spacing or responsive layout rules.",
+      "fix": "Replace hard\u2011coded dimensions with values derived from the design tokens (e.g., `width: space(25)` if 25\u202f\u00d7\u202f8\u202fdp = 200\u202fdp) and ensure the preview scales on larger screens.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "src/components/ui/Screen.tsx",
+      "issue": "The `subtitle` prop is rendered as a Text with `bodyLarge` but does not apply any spacing token; it uses default gap which may not align to the 8\u202fdp vertical rhythm.",
+      "fix": "Add a `marginTop: space(1)` or adjust the `gap` between title and subtitle using the spacing token to keep the rhythm consistent.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "viewport": "both",
+      "issue": "The 'Accept' button is visually disabled (greyed out) but not styled with a clear disabled state (e.g., opacity, border, or subtle animation) \u2014 it appears as a solid grey button, which can feel unpolished.",
+      "fix": "Apply a standard disabled button style: reduce opacity, add a subtle border or shadow, and ensure the text is not fully opaque. Use a consistent disabled state across the app.",
+      "screen": "policy_gate",
+      "source": "vision"
+    },
+    {
+      "severity": "medium",
+      "viewport": "both",
+      "issue": "The checkbox and its label are not visually grouped or aligned with the button below \u2014 the checkbox is left-aligned while the button is centered, creating a slight visual disconnect.",
+      "fix": "Align the checkbox and its label to the left, and center the button. Use consistent horizontal alignment for all interactive elements.",
+      "screen": "policy_gate",
+      "source": "vision"
+    },
+    {
+      "severity": "low",
+      "viewport": "both",
+      "issue": "The text 'Tick the box above to continue.' is centered and small, but it doesn't clearly indicate it's a hint or instruction \u2014 it could be misread as a required step.",
+      "fix": "Style the hint text with a lighter weight or smaller size, and consider adding an icon or a subtle underline to indicate it's a secondary instruction.",
+      "screen": "policy_gate",
+      "source": "vision"
+    },
+    {
+      "severity": "high",
+      "screen": "policy_gate",
+      "source": "vision",
+      "issue": "visual quality 7/10 on 'policy_gate' (needs 8+): The policy gate screen is clean, minimalist, and functional, with clear visual hierarchy and a single primary action. Typography is readable and consistent, spacing is generous, and alignment is precise. However, it lacks visual polish and subtle design cues that would elevate it to 'polished' status, such as micro-interactions or refined typography hierarchy. It meets the core requirements for a privacy-focused, offline-first app but feels slightly plain.",
+      "fix": "Address this screen's findings until it looks polished and professional."
+    },
+    {
+      "severity": "low",
+      "viewport": "both",
+      "issue": "The 'Add receipt' button is positioned below the empty state text, but a secondary FAB (floating action button) with a '+' icon is placed to the right, creating a slight visual asymmetry in the central area.",
+      "fix": "Align the FAB with the button's vertical center or consider integrating it into the button's design or placement for a more unified composition.",
+      "screen": "dashboard_empty",
+      "source": "vision"
+    },
+    {
+      "severity": "low",
+      "viewport": "phone",
+      "issue": "The 'Add photo' button is a link-style button with blue text, not a styled button with consistent visual weight and padding like the others.",
+      "fix": "Style the 'Add photo' button to match the rounded, outlined style of the other input fields for visual consistency.",
+      "screen": "receipt_entry",
+      "source": "vision"
+    },
+    {
+      "severity": "low",
+      "viewport": "phone",
+      "issue": "The 'Save receipt' button is visually dominant but lacks a subtle state indicator (like a loading spinner or disabled state) to communicate its current status when saving.",
+      "fix": "Add a subtle loading indicator (e.g., spinner or pulsing animation) to the button during save operations to provide feedback.",
+      "screen": "receipt_entry",
+      "source": "vision"
+    },
+    {
+      "severity": "low",
+      "viewport": "desktop",
+      "issue": "The FAB is positioned too close to the right edge and the snackbar, causing slight visual crowding.",
+      "fix": "Adjust the FAB's horizontal padding or margin to create more breathing room on desktop.",
+      "screen": "dashboard_populated",
+      "source": "vision"
+    },
+    {
+      "severity": "low",
+      "viewport": "both",
+      "issue": "The snackbar's height is slightly inconsistent with the FAB's vertical alignment, creating a minor visual misalignment.",
+      "fix": "Align the snackbar's bottom edge with the FAB's bottom edge for consistent visual rhythm.",
+      "screen": "dashboard_populated",
+      "source": "vision"
+    },
+    {
+      "severity": "high",
+      "viewport": "both",
+      "issue": "No primary action button (e.g., 'Add receipt') is visible on the screen. This violates the design spec which requires a clear primary action for adding entries.",
+      "fix": "Add a prominent primary action button (e.g., 'Add receipt') at the top or bottom of the screen, aligned with the design spec's empty state guidance.",
+      "screen": "receipts_loaded",
+      "source": "vision"
+    },
+    {
+      "severity": "high",
+      "viewport": "both",
+      "issue": "The screen shows only one receipt card, but the design spec expects a list of receipts (FlatList). The layout suggests a single item, not a scrollable list, which is misleading for users expecting to browse multiple entries.",
+      "fix": "Implement a FlatList with proper spacing and alignment for multiple receipt cards. Ensure the layout clearly indicates scrollability for more items.",
+      "screen": "receipts_loaded",
+      "source": "vision"
+    },
+    {
+      "severity": "medium",
+      "viewport": "desktop",
+      "issue": "Desktop layout is visually identical to the phone layout, with no optimization for larger screens. The content is not centered or spaced to take advantage of the wider canvas.",
+      "fix": "Expand the layout to utilize the desktop width. Increase spacing between elements, center the card, and add padding to the sides to create a more spacious, premium feel.",
+      "screen": "receipts_loaded",
+      "source": "vision"
+    },
+    {
+      "severity": "medium",
+      "viewport": "phone",
+      "issue": "The receipt card is too narrow and lacks visual hierarchy. The amount is large, but the date and category are not clearly separated or emphasized.",
+      "fix": "Improve the card layout: use a clear visual hierarchy (e.g., amount in bold, date and category in smaller, distinct typography). Add subtle visual separation between fields.",
+      "screen": "receipts_loaded",
+      "source": "vision"
+    },
+    {
+      "severity": "low",
+      "viewport": "both",
+      "issue": "The 'Receipts' title is too large and bold for the context. It should be a secondary heading, not a primary title, and should not compete with the card content.",
+      "fix": "Reduce the size and weight of the 'Receipts' title to a secondary heading. Use a more subtle typography scale to ensure the card content remains the focus.",
+      "screen": "receipts_loaded",
+      "source": "vision"
+    },
+    {
+      "severity": "high",
+      "screen": "receipts_loaded",
+      "source": "vision",
+      "issue": "visual quality 7/10 on 'receipts_loaded' (needs 8+): The screen is clean and functional, with clear visual hierarchy and consistent spacing. However, it lacks depth and polish expected for a premium product, missing key design elements like a primary action button, form controls, and proper desktop layout.",
+      "fix": "Address this screen's findings until it looks polished and professional."
+    }
+  ],
+  "lighthouse": [
+    {
+      "accessibility": 98,
+      "bestPractices": 100,
+      "performance": 57
+    }
+  ],
+  "vision_scores": [
+    {
+      "screen": "policy_gate",
+      "score": 7.0,
+      "summary": "The policy gate screen is clean, minimalist, and functional, with clear visual hierarchy and a single primary action. Typography is readable and consistent, spacing is generous, and alignment is precise. However, it lacks visual polish and subtle design cues that would elevate it to 'polished' status, such as micro-interactions or refined typography hierarchy. It meets the core requirements for a privacy-focused, offline-first app but feels slightly plain."
+    },
+    {
+      "screen": "dashboard_empty",
+      "score": 8.0,
+      "summary": "Polished, modern, and intuitive empty state design. Strong visual hierarchy with clear primary action. Typography is clean and readable. Spacing and alignment are consistent and generous. Color use is minimal and effective. Form design is not present here, but the navigation and empty state are well-executed. Desktop version mirrors phone layout appropriately without stretching or cramming."
+    },
+    {
+      "screen": "receipt_entry",
+      "score": 8.0,
+      "summary": "Polished, modern form with clear visual hierarchy and consistent spacing. Primary action is prominent, fields are well-grouped, and typography is readable. Touch targets are appropriately sized. No major usability or aesthetic flaws visible."
+    },
+    {
+      "screen": "dashboard_populated",
+      "score": 8.0,
+      "summary": "Polished, modern interface with clear visual hierarchy and consistent spacing. The primary action (FAB) is prominent, typography is clean and readable, and the layout is well-structured for both phone and desktop. Minor spacing inconsistencies and a slightly cramped FAB placement on desktop are the only notable issues."
+    },
+    {
+      "screen": "receipts_loaded",
+      "score": 7.0,
+      "summary": "The screen is clean and functional, with clear visual hierarchy and consistent spacing. However, it lacks depth and polish expected for a premium product, missing key design elements like a primary action button, form controls, and proper desktop layout."
+    }
+  ]
+}

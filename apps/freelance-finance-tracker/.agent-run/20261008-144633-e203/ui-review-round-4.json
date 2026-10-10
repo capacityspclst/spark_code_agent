@@ -1,0 +1,287 @@
+{
+  "verdict": "fail",
+  "summary": "Overall the implementation follows the DESIGN.md spec \u2013 the core flow (policy gate \u2192 empty dashboard \u2192 receipt entry \u2192 populated dashboard \u2192 receipts list) works, the design tokens are used for spacing, colors and typography, and the accessibility audit shows no Axe violations. However several critical gaps still exist: undefined design token access (SummaryCard uses a non\u2011existent `theme.colors.success`), missing visible focus outlines on interactive controls (buttons, checkboxes, switches), missing accessibility labels on the BottomNavigation, and incomplete error handling screens (e.g., PolicyGateScreen error view with a Retry button is not present). These issues break the spec\u2019s accessibility and resilience requirements and must be fixed before the product is production\u2011ready.",
+  "findings": [
+    {
+      "severity": "high",
+      "file": "src/components/ui/SummaryCard.tsx",
+      "issue": "The component references `theme.colors.success` which does not exist in the theme definition, causing the color to be undefined and potentially breaking rendering for the 'positive' tone.",
+      "fix": "Add a `success` color to `src/theme.ts` (e.g., `success: '#28A745'`) and reference it via the design tokens, or remove the 'positive' tone branch and use an existing token.",
+      "source": "designer"
+    },
+    {
+      "severity": "high",
+      "file": "src/components/ui/PrimaryButton.tsx",
+      "issue": "No visible focus\u2011visible style (2\u202fdp outline) is applied to the button; keyboard users cannot see when the button is focused, violating the accessibility requirement.",
+      "fix": "Wrap the Button in a Pressable or add a `style` that includes an `outlineWidth: 2` and `outlineColor: theme.colors.outline` when `focused` (using `onFocus`/`onBlur` state) and ensure the outline is visible on web.",
+      "source": "designer"
+    },
+    {
+      "severity": "high",
+      "file": "src/components/ui/CheckboxField.tsx",
+      "issue": "Missing focus\u2011visible visual indicator on the checkbox Pressable; only a pressed opacity change is provided.",
+      "fix": "Add a focus style similar to the button (outline or border) triggered by the `focused` state from Pressable (`onFocus`/`onBlur`).",
+      "source": "designer"
+    },
+    {
+      "severity": "high",
+      "file": "src/components/ui/SettingSwitch.tsx",
+      "issue": "The custom switch lacks a focus\u2011visible outline, making it hard to locate via keyboard navigation; also the thumb size change on activation may not meet the 44\u202f\u00d7\u202f44\u202fdp tap target when rendered on small screens.",
+      "fix": "Add a focus outline to the outer Pressable and ensure the touch target area meets the design token (`layout.touchTarget`).",
+      "source": "designer"
+    },
+    {
+      "severity": "high",
+      "file": "src/navigation/index.tsx",
+      "issue": "BottomNavigation does not set an `accessibilityLabel=\"Bottom navigation\"` as required by the spec, so screen readers cannot identify the navigation landmark.",
+      "fix": "Pass `accessibilityLabel=\"Bottom navigation\"` and `accessibilityRole=\"navigation\"` to the BottomNavigation component or wrap it in a View with those props.",
+      "source": "designer"
+    },
+    {
+      "severity": "high",
+      "file": "src/screens/PolicyScreen.tsx",
+      "issue": "The error state (full\u2011screen view with a Retry button) described in DESIGN.md is missing; only the default acceptance flow is implemented.",
+      "fix": "Implement an error view that shows the message \"Unable to store your acceptance. Please try again.\" and a PrimaryButton labelled \"Retry\" that re\u2011executes the policy acceptance logic.",
+      "source": "designer"
+    },
+    {
+      "severity": "high",
+      "file": "src/screens/DashboardScreen.tsx",
+      "issue": "Error state (full\u2011screen error view with a Retry button) is not implemented; the spec requires this for data load failures.",
+      "fix": "Add a conditional render for an error state that displays the copy \"Failed to load data. Pull down to retry.\" and a PrimaryButton labelled \"Retry\" that triggers a data reload.",
+      "source": "designer"
+    },
+    {
+      "severity": "high",
+      "file": "src/screens/ReceiptEntryScreen.tsx",
+      "issue": "Saving state does not hide the button label and show a spinner as required; the Save button remains static during the async save.",
+      "fix": "Pass `loading={isSaving}` to the PrimaryButton, which makes Paper display a spinner and hide the label. Ensure the button is disabled while loading.",
+      "source": "designer"
+    },
+    {
+      "severity": "high",
+      "file": "src/screens/ReceiptsScreen.tsx",
+      "issue": "Error view for fetch failures (\"Could not fetch receipts. Pull to retry.\") is missing; the screen only renders the list or empty state.",
+      "fix": "Add an error branch that renders a view with the specified message and a PrimaryButton labelled \"Retry\" that retries the fetch.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/components/ui/FormField.tsx",
+      "issue": "HelperText for error messages is not announced via `aria-live=\"assertive\"`, which may prevent screen readers from announcing validation errors promptly.",
+      "fix": "Add `accessibilityLiveRegion=\"assertive\"` to the HelperText component when `error` is present.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/components/ui/PrimaryButton.tsx",
+      "issue": "When the button is disabled, no visual indication (e.g., reduced opacity or disabled color) is applied; defaults rely on Paper but may not match the design token `color-disabled`.",
+      "fix": "Explicitly set `disabled` style using `theme.colors.disabled` for background and `theme.colors.onDisabled` for text when the `disabled` prop is true.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "src/components/ui/EmptyState.tsx",
+      "issue": "The prop name for the description text is `body`, but DESIGN.md calls it `description`. This mismatch may cause confusion in usage.",
+      "fix": "Rename the prop to `description` (or add an alias) and update the component usage accordingly.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "src/components/ui/Screen.tsx",
+      "issue": "The `subtitle` prop is rendered with `style={styles.subtitle}` but not given an `accessibilityRole`. While not required, adding `role=\"text\"` would improve semantic clarity.",
+      "fix": "Add `accessibilityRole=\"text\"` to the subtitle Text component.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "viewport": "both",
+      "issue": "The 'Accept' button is disabled until the checkbox is checked, but there's no visual feedback or animation to indicate this state change. The placeholder text 'Tick the box above to continue' is a fallback message rather than an integrated part of the UI.",
+      "fix": "Add subtle animation or visual cue (e.g., button color change, ripple effect) when the checkbox is checked. Replace the placeholder text with a more integrated message like 'Tap Accept to continue' or remove it entirely if the button state is clear enough.",
+      "screen": "policy_gate",
+      "source": "vision"
+    },
+    {
+      "severity": "low",
+      "viewport": "both",
+      "issue": "The typography lacks a clear type scale; the heading, subheading, and body text are all similar in weight and size, making it hard to distinguish hierarchy.",
+      "fix": "Apply a type scale: use a larger, bolder font for the heading, a medium weight for the subheading, and a lighter weight for body text. Ensure consistent spacing between lines and paragraphs.",
+      "screen": "policy_gate",
+      "source": "vision"
+    },
+    {
+      "severity": "low",
+      "viewport": "both",
+      "issue": "The policy text is presented in a single block without visual grouping or indentation, making it harder to scan.",
+      "fix": "Break the policy text into sections with clear headings and use indentation or spacing to separate paragraphs. Consider using bullet points or icons for key points to improve readability.",
+      "screen": "policy_gate",
+      "source": "vision"
+    },
+    {
+      "severity": "high",
+      "screen": "policy_gate",
+      "source": "vision",
+      "issue": "visual quality 7/10 on 'policy_gate' (needs 8+): The policy gate screen is clean and functional, with clear visual hierarchy and a single primary action. Typography is readable and consistent, spacing is generous, and the layout is well-aligned. However, it lacks visual polish and brand identity, and the button state feedback is minimal. It meets the core requirements for a first launch screen but feels like a placeholder rather than a polished product.",
+      "fix": "Address this screen's findings until it looks polished and professional."
+    },
+    {
+      "severity": "medium",
+      "viewport": "phone",
+      "issue": "The 'Save receipt' button is too large and centered, creating excessive empty space below. This could be optimized for better visual hierarchy and space efficiency.",
+      "fix": "Reduce the button's vertical padding or move it closer to the form fields to improve space utilization.",
+      "screen": "receipt_entry",
+      "source": "vision"
+    },
+    {
+      "severity": "medium",
+      "viewport": "phone",
+      "issue": "The form fields lack visual grouping or sectioning, making it harder to scan for required information.",
+      "fix": "Add subtle dividers or section headers to group related fields (e.g., 'Basic Info' and 'Type') for better visual organization.",
+      "screen": "receipt_entry",
+      "source": "vision"
+    },
+    {
+      "severity": "low",
+      "viewport": "desktop",
+      "issue": "The desktop layout is a stretched version of the phone layout, with no optimization for wider screen. Fields are not aligned to a grid or spaced for desktop usability.",
+      "fix": "Re-layout the form for desktop with wider spacing, aligned fields, and potentially fewer columns to utilize the screen real estate effectively.",
+      "screen": "receipt_entry",
+      "source": "vision"
+    },
+    {
+      "severity": "low",
+      "viewport": "both",
+      "issue": "The form lacks placeholder text or hints in the input fields, which could confuse users about what to enter.",
+      "fix": "Add placeholder text (e.g., 'Enter amount', 'Select category') to guide users and improve usability.",
+      "screen": "receipt_entry",
+      "source": "vision"
+    },
+    {
+      "severity": "high",
+      "screen": "receipt_entry",
+      "source": "vision",
+      "issue": "visual quality 7/10 on 'receipt_entry' (needs 8+): Polished and functional form with clear hierarchy and consistent spacing, but lacks visual polish and brand identity. The layout is clean and touch-friendly on phone, but the desktop version is not optimized for screen real estate.",
+      "fix": "Address this screen's findings until it looks polished and professional."
+    },
+    {
+      "severity": "medium",
+      "viewport": "both",
+      "issue": "Missing Mileage deduction and Estimated tax summary cards, which are required by the design spec.",
+      "fix": "Add the two missing summary cards to the dashboard layout.",
+      "screen": "dashboard_populated",
+      "source": "vision"
+    },
+    {
+      "severity": "medium",
+      "viewport": "both",
+      "issue": "Bottom navigation only shows Dashboard, Receipts, and Settings, but no 'Mileage' tab, contradicting the design spec which requires direct access to Mileage.",
+      "fix": "Add a 'Mileage' tab to the bottom navigation bar.",
+      "screen": "dashboard_populated",
+      "source": "vision"
+    },
+    {
+      "severity": "low",
+      "viewport": "both",
+      "issue": "Typography lacks a clear type scale; headings, body, and labels use similar weights and sizes, reducing visual hierarchy.",
+      "fix": "Implement a consistent type scale with distinct sizes and weights for headings, subheadings, body text, and labels.",
+      "screen": "dashboard_populated",
+      "source": "vision"
+    },
+    {
+      "severity": "low",
+      "viewport": "desktop",
+      "issue": "Desktop layout is stretched horizontally and doesn't utilize the full 1280px width; elements are not aligned to a grid or spaced to take advantage of the larger viewport.",
+      "fix": "Re-layout for desktop with proper alignment to a grid, increased spacing, and use of full width for cards and sections.",
+      "screen": "dashboard_populated",
+      "source": "vision"
+    },
+    {
+      "severity": "high",
+      "screen": "dashboard_populated",
+      "source": "vision",
+      "issue": "visual quality 7/10 on 'dashboard_populated' (needs 8+): Polished, clean interface with clear visual hierarchy and consistent spacing. The dashboard effectively communicates key financial data and recent activity. The snackbar feedback is well-placed. Minor issues include missing Mileage and Estimated tax cards, and the bottom navigation lacks a 'Mileage' tab, which contradicts the design spec. The typography is readable but lacks a distinct type scale. On desktop, the layout is stretched and doesn't use the full width effectively.",
+      "fix": "Address this screen's findings until it looks polished and professional."
+    },
+    {
+      "severity": "high",
+      "viewport": "both",
+      "issue": "The screen is visually empty and lacks a clear primary action or visual hierarchy. The single receipt card is centered with no context or surrounding layout, making it feel like a placeholder.",
+      "fix": "Add a clear visual hierarchy with a header, subheader, or contextual layout around the card. Use consistent spacing and alignment to guide the user's eye.",
+      "screen": "receipts_loaded",
+      "source": "vision"
+    },
+    {
+      "severity": "high",
+      "viewport": "both",
+      "issue": "Typography is minimal and unstyled \u2014 no type scale, no weight variation, no line height or spacing \u2014 making it feel like browser defaults. The heading is too large and the body text is too small and cramped.",
+      "fix": "Apply a real type scale with appropriate weights, sizes, and spacing. Use a clear hierarchy: heading, subheading, body text. Ensure line length is comfortable for reading.",
+      "screen": "receipts_loaded",
+      "source": "vision"
+    },
+    {
+      "severity": "medium",
+      "viewport": "both",
+      "issue": "The card is centered on the screen with no padding or margin, creating a cramped, unbalanced layout. There is no visual grouping or spacing to separate the card from the edges or from the navigation bar.",
+      "fix": "Apply consistent spacing around the card and between elements. Use a grid system to align the card and navigation bar properly.",
+      "screen": "receipts_loaded",
+      "source": "vision"
+    },
+    {
+      "severity": "medium",
+      "viewport": "both",
+      "issue": "The bottom navigation bar is misaligned \u2014 the icons are not centered vertically or horizontally, and the text is too small and poorly spaced. The 'Receipts' tab is highlighted but lacks visual feedback.",
+      "fix": "Center the navigation bar and align icons and text properly. Use consistent icon size, spacing, and color states to indicate active tab.",
+      "screen": "receipts_loaded",
+      "source": "vision"
+    },
+    {
+      "severity": "low",
+      "viewport": "both",
+      "issue": "The receipt card lacks visual cues for its purpose \u2014 no clear primary action, no visual feedback for selection or interaction.",
+      "fix": "Add subtle visual feedback (e.g., hover state, tap effect) and consider adding a 'View details' or 'Edit' action if needed.",
+      "screen": "receipts_loaded",
+      "source": "vision"
+    },
+    {
+      "severity": "high",
+      "screen": "receipts_loaded",
+      "source": "vision",
+      "issue": "visual quality 6/10 on 'receipts_loaded' (needs 8+): The screen is clean and functional but lacks visual hierarchy, spacing, and design polish expected for a premium product. The typography is minimal and unstyled, the card is centered without context, and the bottom navigation is misaligned and visually weak. It feels like a prototype, not a polished product.",
+      "fix": "Address this screen's findings until it looks polished and professional."
+    }
+  ],
+  "lighthouse": [
+    {
+      "accessibility": 98,
+      "bestPractices": 100,
+      "performance": 57
+    }
+  ],
+  "vision_scores": [
+    {
+      "screen": "policy_gate",
+      "score": 7.0,
+      "summary": "The policy gate screen is clean and functional, with clear visual hierarchy and a single primary action. Typography is readable and consistent, spacing is generous, and the layout is well-aligned. However, it lacks visual polish and brand identity, and the button state feedback is minimal. It meets the core requirements for a first launch screen but feels like a placeholder rather than a polished product."
+    },
+    {
+      "screen": "dashboard_empty",
+      "score": 8.0,
+      "summary": "Polished, modern, and highly usable empty state. Clear visual hierarchy, excellent typography, generous spacing, and a well-designed primary action. Desktop layout is appropriately scaled and not stretched. Touch targets are appropriately sized. No browser defaults or layout issues visible."
+    },
+    {
+      "screen": "receipt_entry",
+      "score": 7.0,
+      "summary": "Polished and functional form with clear hierarchy and consistent spacing, but lacks visual polish and brand identity. The layout is clean and touch-friendly on phone, but the desktop version is not optimized for screen real estate."
+    },
+    {
+      "screen": "dashboard_populated",
+      "score": 7.0,
+      "summary": "Polished, clean interface with clear visual hierarchy and consistent spacing. The dashboard effectively communicates key financial data and recent activity. The snackbar feedback is well-placed. Minor issues include missing Mileage and Estimated tax cards, and the bottom navigation lacks a 'Mileage' tab, which contradicts the design spec. The typography is readable but lacks a distinct type scale. On desktop, the layout is stretched and doesn't use the full width effectively."
+    },
+    {
+      "screen": "receipts_loaded",
+      "score": 6.0,
+      "summary": "The screen is clean and functional but lacks visual hierarchy, spacing, and design polish expected for a premium product. The typography is minimal and unstyled, the card is centered without context, and the bottom navigation is misaligned and visually weak. It feels like a prototype, not a polished product."
+    }
+  ]
+}

@@ -1,0 +1,719 @@
+{
+  "verdict": "fail",
+  "summary": "The built UI matches the DESIGN.md spec in almost every respect \u2013 all screens, core states (loading, empty, populated, error) are present, the bottom tab bar and FAB navigation work on both phone and desktop, and the Lighthouse & axe audits show excellent accessibility (98) and no violations. Design tokens are used for the majority of colors, spacing, and typography, and the layout respects the mobile\u2011first 390\u202fdp viewport with no horizontal overflow. However, a few important details are missing or only partially implemented, leading to medium\u2011severity findings. These relate to form validation, security\u2011related sanitisation, and some optional\u2011web fallback behaviours. None of these break the primary user flow or make the app inaccessible, so no high\u2011severity UI\u2011blocking issues were detected.",
+  "findings": [
+    {
+      "severity": "medium",
+      "file": "src/screens/ReceiptEntryScreen.tsx",
+      "issue": "Form validation does not display per\u2011field `HelperText` errors nor shift focus to the first invalid input, contrary to the spec which requires field\u2011level validation messages and focus management.",
+      "fix": "Add validation logic that checks each required field, set the `error` prop on `FormField`, render a `HelperText` component with the appropriate message, and programmatically focus the first invalid input using refs.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/screens/BackupPassphraseScreen.tsx",
+      "issue": "The backup passphrase modal only checks for matching fields; it does not enforce the minimum\u2011length rule (\u2265\u202f8\u202fcharacters) required by the design, and there is no UI feedback if the length requirement is not met.",
+      "fix": "Validate the passphrase length on each change, display a `HelperText` error when <\u202f8 characters, and keep the **Create backup** button disabled until both the length and matching constraints are satisfied.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/lib/exportCsv.ts",
+      "issue": "CSV export concatenates raw user input without sanitising leading characters (`=`, `+`, `-`, `@`), creating a CSV\u2011formula injection risk.",
+      "fix": "Implement a sanitisation step that prefixes a single quote to any value starting with those characters, or wrap every field in double quotes and escape internal quotes before joining rows.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/lib/exportPdf.ts",
+      "issue": "PDF export builds an HTML string by interpolating user\u2011provided data directly, exposing the app to HTML injection attacks in PDF viewers.",
+      "fix": "Escape all user\u2011supplied strings using an HTML\u2011escaping library (e.g., `escape-html`) before inserting them into the PDF template, and consider sanitising or stripping dangerous tags.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/lib/storage/device.web.ts",
+      "issue": "In the optional web fallback the encryption key is persisted in `localStorage`, which is not a secure store and violates the security checklist.",
+      "fix": "Derive the encryption key from the user\u2011supplied passphrase on each session (or store it in IndexedDB with additional encryption) and remove any `localStorage.setItem` calls that keep the raw key.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/lib/backup.ts",
+      "issue": "Temporary files created for the encrypted backup are never deleted after the share sheet is opened, leaving residual data on the device.",
+      "fix": "After a successful `shareAsync` call, invoke `FileSystem.deleteAsync(tmpPath, { idempotent: true })` to clean up the temporary file (and optionally overwrite before deletion).",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/screens/ReceiptEntryScreen.tsx",
+      "issue": "Numeric inputs (amount, mileage rate, tax rate) lack comprehensive validation \u2013 they accept negative numbers, non\u2011numeric strings, and excessively large values.",
+      "fix": "Add client\u2011side validation that enforces positive numbers, limits digit length (e.g., \u2264\u202f9\u202fdigits), and shows `HelperText` errors. Disable the Save button until all numeric fields pass validation.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/lib/photoPicker.ts",
+      "issue": "No size or resolution limits are applied to receipt photos; users could capture extremely large images, potentially exhausting device storage.",
+      "fix": "Configure `expo-image-picker` options (`quality`, `allowsEditing`) to cap image size, and after picking verify the file size via `FileSystem.getInfoAsync`. Downscale images that exceed a safe threshold before saving.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/lib/dataReset.ts",
+      "issue": "The \"Delete all data\" action clears SQLite tables but does not delete the encryption key stored in SecureStore, leaving encrypted remnants potentially recoverable.",
+      "fix": "When performing a full data wipe, also call `SecureStore.deleteItemAsync(KEY_NAME)` to remove the stored key, and optionally overwrite the database file to ensure data cannot be recovered.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "public/index.html",
+      "issue": "The optional web fallback does not include a Content\u2011Security\u2011Policy meta tag, exposing the app to injection attacks when served in a browser.",
+      "fix": "Add a CSP meta tag (or configure the web server to send an HTTP CSP header) restricting sources to `'self'` for scripts, styles, images, etc., as described in the deployment guide.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "viewport": "both",
+      "issue": "The 'Accept' button is disabled and greyed out until the checkbox is checked, which is correct behavior, but the placeholder text 'Tick the box above to continue.' is a low-fidelity hint rather than a designed, integrated UI element.",
+      "fix": "Replace the placeholder text with a subtle visual cue (e.g., a small animation or a disabled state indicator) to better communicate the required action.",
+      "screen": "policy_gate",
+      "source": "vision"
+    },
+    {
+      "severity": "low",
+      "viewport": "both",
+      "issue": "The typography scale is functional but not fully refined \u2014 the heading is bold and large, but the body text lacks a clear visual hierarchy between sections and sub-sections.",
+      "fix": "Add subtle visual hierarchy to the policy text (e.g., bold for section headers, italics or smaller size for supporting text) to improve readability and scannability.",
+      "screen": "policy_gate",
+      "source": "vision"
+    },
+    {
+      "severity": "low",
+      "viewport": "both",
+      "issue": "The checkbox is positioned slightly too far from the text, creating a slight misalignment that breaks the visual rhythm.",
+      "fix": "Adjust the checkbox and text alignment to be perfectly inline, ensuring consistent spacing and visual harmony.",
+      "screen": "policy_gate",
+      "source": "vision"
+    },
+    {
+      "severity": "high",
+      "screen": "policy_gate",
+      "source": "vision",
+      "issue": "visual quality 7/10 on 'policy_gate' (needs 8+): The policy gate screen is clean, well-structured, and meets the core requirements for a polished on-device experience. It uses a clear visual hierarchy, readable typography, and appropriate spacing. However, it lacks some polish and subtle design touches that would elevate it to 8 or 9 \u2014 such as micro-interactions, subtle feedback, or more refined typography treatment \u2014 but it is not broken or crude.",
+      "fix": "Address this screen's findings until it looks polished and professional."
+    },
+    {
+      "severity": "low",
+      "viewport": "both",
+      "issue": "The description text 'Add a receipt or mileage entry to start tracking your finances' is cut off on the phone view, truncating at 'tracking your financ'.",
+      "fix": "Extend the line to fit the full text without truncation.",
+      "screen": "dashboard_empty",
+      "source": "vision"
+    },
+    {
+      "severity": "low",
+      "viewport": "phone",
+      "issue": "The 'Add receipt' and 'Add mileage' buttons are positioned slightly too close to the bottom edge, leaving minimal padding below them.",
+      "fix": "Increase padding below the buttons to ensure comfortable touch target spacing and visual breathing room.",
+      "screen": "dashboard_empty",
+      "source": "vision"
+    },
+    {
+      "severity": "medium",
+      "viewport": "both",
+      "issue": "The card lacks subtle visual hierarchy or depth cues (e.g., shadows, subtle borders, or background gradients) that would make it feel more integrated into the UI or more premium.",
+      "fix": "Add a subtle drop shadow or elevation to the card, and consider a slightly darker background or border to enhance separation from the page background.",
+      "screen": "receipts_loaded",
+      "source": "vision"
+    },
+    {
+      "severity": "medium",
+      "viewport": "both",
+      "issue": "The typography scale is functional but not refined \u2014 the heading 'Receipts' and card content lack a clear typographic hierarchy or scale that would guide the user\u2019s eye.",
+      "fix": "Increase the font size or weight of the heading, and adjust the card content to use a more consistent scale (e.g., use a larger font for the amount, smaller for metadata).",
+      "screen": "receipts_loaded",
+      "source": "vision"
+    },
+    {
+      "severity": "low",
+      "viewport": "both",
+      "issue": "The card is centered with no padding or margin on the left/right, which feels slightly cramped on desktop and could be improved with consistent spacing.",
+      "fix": "Add consistent left/right padding to the card to improve spacing and alignment on desktop.",
+      "screen": "receipts_loaded",
+      "source": "vision"
+    },
+    {
+      "severity": "high",
+      "screen": "receipts_loaded",
+      "source": "vision",
+      "issue": "visual quality 7/10 on 'receipts_loaded' (needs 8+): Polished, clean, and functional interface that meets core usability needs. The layout is well-spaced and aligned, with clear visual hierarchy. However, it lacks visual polish and subtle design cues that would elevate it to 'exceptional' or 'polished' status. No critical flaws, but opportunities for refinement exist.",
+      "fix": "Address this screen's findings until it looks polished and professional."
+    },
+    {
+      "severity": "low",
+      "viewport": "desktop",
+      "issue": "Form fields and buttons are not fully aligned to the left edge; there's a slight horizontal offset, making it look slightly unbalanced.",
+      "fix": "Align all form elements to the left edge for a consistent, clean desktop layout.",
+      "screen": "receipt_entry_photo",
+      "source": "vision"
+    },
+    {
+      "severity": "low",
+      "viewport": "both",
+      "issue": "Input fields have minimal padding inside, making them feel slightly cramped.",
+      "fix": "Increase padding inside input fields for better readability and touch target comfort.",
+      "screen": "receipt_entry_photo",
+      "source": "vision"
+    },
+    {
+      "severity": "medium",
+      "viewport": "desktop",
+      "issue": "The 'Add receipt' and 'Add mileage' buttons are slightly misaligned vertically with the activity cards, and the 'Receipt saved' snackbar overlaps the bottom of the cards, creating a visual inconsistency.",
+      "fix": "Adjust button alignment to match the card grid. Shift the snackbar slightly upward to avoid overlapping content and ensure it sits cleanly above the tab bar.",
+      "screen": "dashboard_with_two_receipts",
+      "source": "vision"
+    },
+    {
+      "severity": "low",
+      "viewport": "desktop",
+      "issue": "The 'Recent activity' section has inconsistent spacing between the cards and the bottom of the screen, making the layout feel slightly cramped.",
+      "fix": "Increase vertical padding between the last activity card and the snackbar to create more breathing room and improve visual hierarchy.",
+      "screen": "dashboard_with_two_receipts",
+      "source": "vision"
+    },
+    {
+      "severity": "low",
+      "viewport": "both",
+      "issue": "The tab bar icons are not consistently sized or spaced; the 'Mileage' icon is larger and more saturated than others, creating visual imbalance.",
+      "fix": "Standardize icon size and saturation across all tab bar icons for visual consistency.",
+      "screen": "mileage_empty",
+      "source": "vision"
+    },
+    {
+      "severity": "low",
+      "viewport": "both",
+      "issue": "The 'Mileage' title at the top is not bolded or styled to match the primary action button, reducing visual hierarchy.",
+      "fix": "Apply bold styling or a slightly larger font weight to the 'Mileage' title to reinforce the screen context.",
+      "screen": "mileage_empty",
+      "source": "vision"
+    },
+    {
+      "severity": "low",
+      "viewport": "desktop",
+      "issue": "The empty state text 'Tap the + button to log your first mileage entry.' is not visually connected to the 'Add mileage' button, making the instruction feel disconnected.",
+      "fix": "Add a subtle visual link (e.g., arrow or underline) from the instruction to the button, or reposition the instruction closer to the button.",
+      "screen": "mileage_empty",
+      "source": "vision"
+    },
+    {
+      "severity": "low",
+      "viewport": "phone",
+      "issue": "Form fields lack visual indicators for required status or validation states.",
+      "fix": "Add subtle asterisks or icons to indicate required fields. Implement visual feedback (e.g., border color change) for validation errors.",
+      "screen": "mileage_entry",
+      "source": "vision"
+    },
+    {
+      "severity": "low",
+      "viewport": "phone",
+      "issue": "Fields are not labeled with placeholder text or hints for context.",
+      "fix": "Add placeholder text or inline hints (e.g., 'MM/DD/YYYY' for Date) to guide users.",
+      "screen": "mileage_entry",
+      "source": "vision"
+    },
+    {
+      "severity": "low",
+      "viewport": "phone",
+      "issue": "No visual feedback on field focus or selection.",
+      "fix": "Add subtle focus states (e.g., border highlight) when fields are tapped.",
+      "screen": "mileage_entry",
+      "source": "vision"
+    },
+    {
+      "severity": "low",
+      "viewport": "both",
+      "issue": "No error handling or validation messages shown for invalid input.",
+      "fix": "Implement inline validation messages below fields when input is invalid.",
+      "screen": "mileage_entry",
+      "source": "vision"
+    },
+    {
+      "severity": "high",
+      "screen": "mileage_entry",
+      "source": "vision",
+      "issue": "visual quality 7/10 on 'mileage_entry' (needs 8+): A clean, functional form with clear visual hierarchy and a prominent primary action. Typography is readable and consistent. Spacing is generous and aligned on a grid. No critical usability issues, but lacks polish in form field styling and could benefit from subtle visual cues to enhance professionalism.",
+      "fix": "Address this screen's findings until it looks polished and professional."
+    },
+    {
+      "severity": "medium",
+      "viewport": "phone",
+      "issue": "The snackbar 'Mileage saved' is positioned over the 'Add mileage' button, partially obscuring it and creating visual clutter. It should appear above or below the button, not overlapping.",
+      "fix": "Reposition the snackbar to appear above or below the 'Add mileage' button, ensuring full visibility and avoiding overlap.",
+      "screen": "dashboard_with_mileage",
+      "source": "vision"
+    },
+    {
+      "severity": "medium",
+      "viewport": "phone",
+      "issue": "The 'Add receipt' and 'Add mileage' buttons are floating action buttons (FABs) that appear to be floating over the recent activity cards. On a phone, this can create visual confusion and reduce clarity about their purpose.",
+      "fix": "Reposition the FABs to be anchored to the bottom right corner of the screen, or use a more conventional placement that doesn't obscure content.",
+      "screen": "dashboard_with_mileage",
+      "source": "vision"
+    },
+    {
+      "severity": "low",
+      "viewport": "phone",
+      "issue": "The 'Add mileage' button is slightly misaligned with the 'Add receipt' button. The 'Add mileage' button is positioned lower and has a different vertical alignment, which breaks visual consistency.",
+      "fix": "Align both buttons vertically so they sit on the same baseline, ensuring visual harmony.",
+      "screen": "dashboard_with_mileage",
+      "source": "vision"
+    },
+    {
+      "severity": "high",
+      "screen": "dashboard_with_mileage",
+      "source": "vision",
+      "issue": "visual quality 7/10 on 'dashboard_with_mileage' (needs 8+): The dashboard is clean and functional with clear visual hierarchy and consistent spacing. It meets the core requirements for a polished product, though some elements like the snackbar placement and button alignment could be refined for perfection.",
+      "fix": "Address this screen's findings until it looks polished and professional."
+    },
+    {
+      "severity": "medium",
+      "viewport": "both",
+      "issue": "The toggle switch for 'App lock' is visually distinct from the buttons below, but its label is not aligned with the toggle's position, creating a slight visual misalignment.",
+      "fix": "Center the toggle switch within its container and align the label text to the left edge of the container for consistent visual alignment.",
+      "screen": "settings",
+      "source": "vision"
+    },
+    {
+      "severity": "medium",
+      "viewport": "both",
+      "issue": "The buttons are not visually differentiated from each other or from the toggle, making them appear generic and lacking brand identity.",
+      "fix": "Apply subtle visual hierarchy to the buttons (e.g., slight variation in border radius, background color, or iconography) to distinguish them from the toggle and from each other.",
+      "screen": "settings",
+      "source": "vision"
+    },
+    {
+      "severity": "medium",
+      "viewport": "both",
+      "issue": "The typography lacks a clear type scale; all button text is the same size and weight, making it feel flat and unstructured.",
+      "fix": "Implement a type scale with a clear hierarchy: use a bold, larger font for the main heading, a slightly smaller weight for the toggle label, and a consistent, readable font size for all button text.",
+      "screen": "settings",
+      "source": "vision"
+    },
+    {
+      "severity": "low",
+      "viewport": "both",
+      "issue": "The spacing between the buttons is consistent, but the padding within the buttons is minimal, making them feel cramped and less touch-friendly on mobile.",
+      "fix": "Increase the padding within the buttons to improve touch targets and make the interface feel more generous and user-friendly.",
+      "screen": "settings",
+      "source": "vision"
+    },
+    {
+      "severity": "low",
+      "viewport": "both",
+      "issue": "The empty space at the bottom of the screen is not utilized effectively, and the screen feels slightly under-designed for desktop.",
+      "fix": "Add subtle visual elements (e.g., a decorative divider or a small icon) to the empty space to make the layout feel more complete and intentional on desktop.",
+      "screen": "settings",
+      "source": "vision"
+    },
+    {
+      "severity": "high",
+      "screen": "settings",
+      "source": "vision",
+      "issue": "visual quality 7/10 on 'settings' (needs 8+): The settings screen is clean and functional, with a clear visual hierarchy and consistent spacing. However, it lacks visual polish and brand identity, and the typography and spacing could be refined for a more premium feel.",
+      "fix": "Address this screen's findings until it looks polished and professional."
+    },
+    {
+      "severity": "low",
+      "viewport": "both",
+      "issue": "The primary button 'Restore from backup' is styled as a link (blue text) rather than a button (solid fill or distinct border), which may not clearly signal its primary action.",
+      "fix": "Style the button with a solid fill or distinct border to visually reinforce it as the primary action.",
+      "screen": "backup_success",
+      "source": "vision"
+    },
+    {
+      "severity": "low",
+      "viewport": "both",
+      "issue": "The 'Backup ready to share' heading is bold, but the supporting text below is not styled to visually subordinate it, reducing hierarchy.",
+      "fix": "Use a lighter weight or smaller size for the supporting text to create a clearer visual hierarchy.",
+      "screen": "backup_success",
+      "source": "vision"
+    },
+    {
+      "severity": "low",
+      "viewport": "desktop",
+      "issue": "The card has generous padding, but the vertical spacing between the card and the bottom tab bar is slightly larger than the horizontal padding on the card, creating an asymmetrical feel.",
+      "fix": "Adjust the vertical spacing to match the horizontal padding for a more balanced composition.",
+      "screen": "backup_success",
+      "source": "vision"
+    },
+    {
+      "severity": "low",
+      "viewport": "both",
+      "issue": "The 'Restore' button is visually dominant but lacks a subtle visual cue (like a hover state or slight elevation) to reinforce its primary action status on desktop.",
+      "fix": "Add a subtle elevation or shadow to the 'Restore' button to enhance its prominence and tactile feedback.",
+      "screen": "restore_passphrase_modal",
+      "source": "vision"
+    },
+    {
+      "severity": "low",
+      "viewport": "phone",
+      "issue": "The 'Backup passphrase' input field has a very small height, making it feel cramped and less accessible for typing.",
+      "fix": "Increase the input field height slightly to improve usability and visual breathing room.",
+      "screen": "restore_passphrase_modal",
+      "source": "vision"
+    },
+    {
+      "severity": "low",
+      "viewport": "both",
+      "issue": "The spacing between the 'Select backup file' button and the 'Backup passphrase' field is slightly inconsistent with the spacing above the button.",
+      "fix": "Adjust vertical spacing to ensure consistent rhythm between all elements in the form.",
+      "screen": "restore_passphrase_modal",
+      "source": "vision"
+    },
+    {
+      "severity": "medium",
+      "screen": "policy_gate",
+      "source": "critic",
+      "issue": "Checkbox + Accept button + helper text block: The commitment controls scroll with the policy text and sit mid-screen with ~300px of dead space beneath them, so the primary action has no fixed, thumb-reachable home and the page looks unfinished at phone size.",
+      "fix": "Restructure PolicyGateScreen as flex column: <ScrollView> containing only title, subtitle and the policy Card (contentContainerStyle paddingHorizontal 16, paddingBottom 24), then a pinned <Surface elevation={2}> action bar outside the ScrollView with paddingHorizontal 16, paddingTop 16, paddingBottom insets.bottom + 16, borderTopWidth StyleSheet.hairlineWidth, borderTopColor theme.colors.outlineVariant. Put the checkbox row, the Button mode=\"contained\" (full width, contentStyle={{height:48}}) and the helper text inside it. Extract as shared <BottomActionBar> in src/components/ui/ since entry forms need the same pinned Save.",
+      "shared": true
+    },
+    {
+      "severity": "medium",
+      "screen": "policy_gate",
+      "source": "critic",
+      "issue": "Screen title \"Terms of Use and Privacy Policy\": Rendered at display size (~40px) it wraps to three lines, eats a third of the viewport, and its top edge starts ~24px from the screen top with no safe-area inset \u2014 on desktop the same text renders much smaller, so the two breakpoints disagree.",
+      "fix": "Use <Text variant=\"headlineMedium\"> (28/36) for the title and <Text variant=\"bodyMedium\" style={{color: theme.colors.onSurfaceVariant}}> for \"Version 1. \u2026\", with 8px between them and 24px below. Wrap all screens in a shared <ScreenContainer> that applies useSafeAreaInsets paddingTop (insets.top + 16) and paddingHorizontal 16, so no screen ever collides with the status bar.",
+      "shared": true
+    },
+    {
+      "severity": "medium",
+      "screen": "policy_gate",
+      "source": "critic",
+      "issue": "\"I have read and agree\u2026\" checkbox row: The box is top-aligned against a two-line label, the gap between box and text is ~48px, and only the 24px box is tappable \u2014 a fragile hit target for the gate's required action.",
+      "fix": "Replace the ad-hoc row with a shared <CheckboxRow>: Pressable (minHeight 48, flexDirection row, alignItems flex-start) wrapping <Checkbox status={\u2026} /> and <Text variant=\"bodyMedium\" style={{flex:1, marginLeft:8, marginTop:2, color: theme.colors.onSurface}}>; onPress toggles. Entire row toggles, label aligns to the first text line.",
+      "shared": true
+    },
+    {
+      "severity": "medium",
+      "screen": "policy_gate",
+      "source": "critic",
+      "issue": "Policy Card content: Section headings and paragraphs use near-identical weight/size rhythm and the card's 24px inner padding plus long measure makes it feel like an undifferentiated wall of text.",
+      "fix": "Card mode=\"outlined\" with <Card.Content style={{paddingVertical:24, paddingHorizontal:16, gap:8}}>; headings <Text variant=\"titleSmall\"> (color onSurface), body <Text variant=\"bodyMedium\" style={{color: theme.colors.onSurfaceVariant}}>, and 24px marginTop before each heading after the first. Drop the card's visible border in favour of backgroundColor theme.colors.surfaceVariant if the page background stays tinted.",
+      "shared": false
+    },
+    {
+      "severity": "medium",
+      "screen": "policy_gate",
+      "source": "critic",
+      "issue": "Disabled \"Accept\" button + \"Tick the box above to continue.\" hint: The disabled button's label is barely legible on the grey fill and the hint below reads as an error message in low-contrast grey, so the state looks broken rather than intentional.",
+      "fix": "Keep Button disabled but render the hint only while unchecked as <HelperText type=\"info\" visible={!checked} style={{textAlign:'center'}}> using variant bodySmall / theme.colors.onSurfaceVariant, with 8px above. In theme.ts raise disabled contrast by setting the Button theme override for onSurfaceDisabled to rgba(onSurface, 0.5) so disabled CTAs stay readable app-wide.",
+      "shared": true
+    },
+    {
+      "severity": "medium",
+      "screen": "policy_gate",
+      "source": "critic",
+      "issue": "Desktop layout (1280x800): Content is locked to a ~510px column anchored to the top, leaving 250px of empty space below the CTA and an unbalanced page.",
+      "fix": "In ScreenContainer add a centred content wrapper: style={{width:'100%', maxWidth:640, alignSelf:'center', paddingHorizontal:24}} and, for single-card gate screens, justifyContent:'center' on the outer flex so the block is vertically centred when content height < viewport.",
+      "shared": true
+    },
+    {
+      "severity": "medium",
+      "screen": "receipts_loaded",
+      "source": "critic",
+      "issue": "Add-receipt FAB (missing on ReceiptsScreen loaded state): The spec's primary action \u2014 tap FAB to add a receipt \u2014 is absent on the loaded list, so the screen is read-only and the empty-state copy ('Tap the + button') is inconsistent.",
+      "fix": "Add a shared <ScreenFab> wrapper rendering Paper's <FAB icon=\"plus\" label=\"Add receipt\" variant=\"primary\" /> positioned absolute bottom: 16 + bottomTabHeight, right: 16, and pad FlatList contentContainerStyle with paddingBottom: 96 so the last card is never covered. Use it on Receipts and Mileage list screens.",
+      "shared": true
+    },
+    {
+      "severity": "medium",
+      "screen": "receipts_loaded",
+      "source": "critic",
+      "issue": "Bottom tab bar labels: Labels 'Dashboard / Receipts / Mileage / Settings' are visually cut off at the bottom edge on phone \u2014 the bar has no safe-area bottom inset and too little height.",
+      "fix": "In the Tab.Navigator screenOptions set tabBarStyle={{ height: 56 + insets.bottom, paddingTop: 8, paddingBottom: 8 + insets.bottom }} using useSafeAreaInsets(), tabBarLabelStyle={{ fontSize: 12, lineHeight: 16, marginTop: 4 }}, and tabBarActiveTintColor: theme.colors.primary / inactive: theme.colors.onSurfaceVariant.",
+      "shared": true
+    },
+    {
+      "severity": "medium",
+      "screen": "receipts_loaded",
+      "source": "critic",
+      "issue": "ReceiptCard content hierarchy: Amount, date, category and note are all near the same size and weight with redundant 'Date:'/'Category:' prefixes, making the card feel like debug output.",
+      "fix": "Restructure to three lines in src/components/ui/ReceiptCard.tsx: line 1 = Text variant=\"titleLarge\" for '$42.10' (onSurface) with the type on the right; line 2 = Text variant=\"bodyMedium\" color onSurfaceVariant reading '2026-10-10 \u00b7 Supplies' (drop the 'Date:'/'Category:' labels); line 3 = Text variant=\"bodySmall\" onSurfaceVariant for the note, marginTop 4. Row gap 4, no extra divider.",
+      "shared": true
+    },
+    {
+      "severity": "medium",
+      "screen": "receipts_loaded",
+      "source": "critic",
+      "issue": "'Expense' type indicator in ReceiptCard: Plain blue text looks like a link and gives no instant income/expense distinction.",
+      "fix": "Replace with <Chip compact mode=\"flat\" textStyle={{fontSize:12}}> using theme.colors.errorContainer/onErrorContainer for Expense and secondaryContainer/onSecondaryContainer for Income, right-aligned on the amount row.",
+      "shared": true
+    },
+    {
+      "severity": "medium",
+      "screen": "receipts_loaded",
+      "source": "critic",
+      "issue": "Screen header 'Receipts': Oversized ~40px bold title with ~48px top padding is inconsistent with Material 3 and eats vertical space; desktop renders it small and unaligned with the card.",
+      "fix": "Use a shared <ScreenHeader title> rendering Text variant=\"headlineMedium\" (onSurface) inside a container with paddingHorizontal: 16, paddingTop: 16, paddingBottom: 8, aligned to the same 16px gutter as the list so title and cards share one left edge.",
+      "shared": true
+    },
+    {
+      "severity": "medium",
+      "screen": "receipts_loaded",
+      "source": "critic",
+      "issue": "List container / card spacing: Single card sits with uneven margins (16 side, ~24 top) and there is no defined gap rule for subsequent cards; on desktop the list is a narrow column floating in a wide empty canvas.",
+      "fix": "Wrap the FlatList in a shared <ScreenContainer> with style={{ width:'100%', maxWidth: 720, alignSelf:'center', paddingHorizontal: 16 }}, set FlatList ItemSeparatorComponent to a 12px spacer and contentContainerStyle paddingTop: 8, and set Card mode=\"elevated\" elevation={1} with contentStyle padding 16.",
+      "shared": true
+    },
+    {
+      "severity": "medium",
+      "screen": "mileage_entry",
+      "source": "critic",
+      "issue": "Screen header \u2014 Appbar title + in-body H1 'Add mileage': The same string appears twice, 150px of vertical space before the first input and no information gained.",
+      "fix": "Drop the in-body <Text variant=\"headlineLarge\"> and keep the Appbar.Header title (Appbar.Content title=\"Add mileage\" titleStyle={{...theme.fonts.titleLarge}}). Replace the heading with a one-line <Text variant=\"bodyMedium\" style={{color: colors.onSurfaceVariant, marginBottom: 24}}>Standard rate 0.67 $/mi</Text> so the top area carries value instead of a duplicate.",
+      "shared": true
+    },
+    {
+      "severity": "medium",
+      "screen": "mileage_entry",
+      "source": "critic",
+      "issue": "TextInput fields (Date, Miles, Purpose) in src/components/ui/FormField: Fields render ~96px tall on phone with the label sitting as static placeholder text; they look like empty containers, and there is no reserved space for HelperText so the layout jumps on validation errors.",
+      "fix": "In the shared FormField use <TextInput mode=\"outlined\" label={...} dense={false} style={{backgroundColor: colors.surface}} outlineColor={colors.outlineVariant} /> so the label floats, and let it use the default 56px height (remove any fixed height/paddingVertical). Always render <HelperText type={error ? 'error':'info'} visible padding=\"none\"> beneath with a fixed 20px line so error text never shifts the form.",
+      "shared": true
+    },
+    {
+      "severity": "medium",
+      "screen": "mileage_entry",
+      "source": "critic",
+      "issue": "Field affordances \u2014 Date / Miles: Date is a plain text box with no way to know it opens a picker; Miles gives no numeric keypad or unit, so a 30-second entry becomes typing work.",
+      "fix": "Date: add right={<TextInput.Icon icon=\"calendar\" onPress={openPicker} />}, make the input showSoftInputOnFocus={false} and open a DatePickerModal; default the value to today. Miles: keyboardType=\"decimal-pad\", right={<TextInput.Affix text=\"mi\" />}, autoFocus on mount. Purpose: add a row of <Chip> presets (Client visit, Supplies run, Delivery) above the field, gap 8.",
+      "shared": false
+    },
+    {
+      "severity": "medium",
+      "screen": "mileage_entry",
+      "source": "critic",
+      "issue": "Primary 'Save mileage' Button: It sits only 8px below the last input, so it reads as a fourth form row, and it is enabled with an empty form, contradicting the spec's disabled-until-valid rule.",
+      "fix": "Separate it with marginTop: 32, set disabled={!isValid} and loading={isSaving} (label hidden while saving). Keep mode=\"contained\" full width with contentStyle={{height: 48}} and labelStyle={theme.fonts.labelLarge}; move it into a shared FormFooter surface pinned above the keyboard (KeyboardAvoidingView + padding bottom = insets.bottom + 16).",
+      "shared": true
+    },
+    {
+      "severity": "medium",
+      "screen": "mileage_entry",
+      "source": "critic",
+      "issue": "Screen content padding and field spacing: Horizontal padding is ~48px on a 390pt phone, shrinking inputs and making the column feel cramped; vertical gaps between fields are an inconsistent ~16/8px mix.",
+      "fix": "In the shared screen container set paddingHorizontal: 16 (phone) and a consistent gap: 16 between fields via a <View style={{gap:16}}> wrapper; first field starts 24px below the Appbar divider.",
+      "shared": true
+    },
+    {
+      "severity": "medium",
+      "screen": "mileage_entry",
+      "source": "critic",
+      "issue": "Desktop (1280) layout: The form floats as naked inputs on a flat background with the heading left-aligned against nothing; no container gives it shape.",
+      "fix": "Wrap the form in <Surface elevation={1} style={{maxWidth: 520, width:'100%', alignSelf:'center', marginTop: 48, padding: 32, borderRadius: theme.roundness*2, backgroundColor: colors.surface}}> and keep the page background at colors.surfaceVariant/background so the card reads as the work area.",
+      "shared": true
+    },
+    {
+      "severity": "medium",
+      "screen": "dashboard_with_mileage",
+      "source": "critic",
+      "issue": "Add receipt / Add mileage FABs: They are rendered as two stacked extended FABs that overlap the recent-activity cards, bleed past the right screen edge, and duplicate the spec's single FAB + mini-FAB pattern.",
+      "fix": "Replace with a single Paper `<FAB.Group open={open} icon={open ? 'close' : 'plus'} actions={[{icon:'receipt', label:'Add receipt'},{icon:'car', label:'Add mileage'}]} fabStyle={{backgroundColor: theme.colors.primary}} />` in a shared `ScreenFab` component, anchored bottom-right with `style={{ right: 16, bottom: 16 + tabBarHeight + insets.bottom }}` so it never clears the screen edge or the tab bar.",
+      "shared": true
+    },
+    {
+      "severity": "medium",
+      "screen": "dashboard_with_mileage",
+      "source": "critic",
+      "issue": "Snackbar ('Mileage saved'): Full-bleed, square, flush to the bottom edge and extending past the right edge; it sits under the FABs instead of above the tab bar.",
+      "fix": "In the shared snackbar wrapper set `wrapperStyle={{ bottom: tabBarHeight + insets.bottom + 16, paddingHorizontal: 16 }}` and `style={{ borderRadius: 8 }}`, use `theme.colors.inverseSurface`/`inverseOnSurface` tokens, and offset the FAB upward by 56 while visible so the two never overlap.",
+      "shared": true
+    },
+    {
+      "severity": "medium",
+      "screen": "dashboard_with_mileage",
+      "source": "critic",
+      "issue": "Bottom tab bar: Labels 'Receipts', 'Mileage', 'Settings' are vertically clipped \u2014 no safe-area bottom padding and the bar height is too small for icon + label.",
+      "fix": "In the shared tab navigator set `tabBarStyle={{ height: 56 + insets.bottom, paddingTop: 8, paddingBottom: insets.bottom + 8, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.colors.outlineVariant }}` and `tabBarLabelStyle={{ fontSize: 12, lineHeight: 16 }}`.",
+      "shared": true
+    },
+    {
+      "severity": "medium",
+      "screen": "dashboard_with_mileage",
+      "source": "critic",
+      "issue": "Recent activity cards: Four left-aligned lines with literal 'Date:' / 'Category:' prefixes and ~24px internal gaps make each row tall, repetitive and low-contrast; the 'Expense' type is plain text at the same size as the data.",
+      "fix": "Restructure `ActivityCard`: row 1 = amount `titleMedium` on the left and a `<Chip compact mode=\"flat\">Expense</Chip>` on the right; row 2 = `bodySmall` onSurfaceVariant meta line '2026-10-10 \u00b7 Supplies'; row 3 = note `bodyMedium` onSurface. Card padding 16, row gap 4, card-to-card gap 8 (down from 24).",
+      "shared": true
+    },
+    {
+      "severity": "medium",
+      "screen": "dashboard_with_mileage",
+      "source": "critic",
+      "issue": "SummaryCard (4 totals): Label and value have almost the same weight hierarchy and the drop shadow makes the cards feel heavy; on desktop four cards stretch to equal huge widths with lots of dead space.",
+      "fix": "In `SummaryCard` use `variant=\"outlined\"` with `borderColor: theme.colors.outlineVariant` and elevation 0, label `labelMedium` in `onSurfaceVariant`, value `headlineSmall` in `onSurface` (use `error` for Expenses, `primary` for Mileage deduction), padding 16, grid gap 8. Cap the desktop content column at `maxWidth: 1040, alignSelf: 'center'`.",
+      "shared": true
+    },
+    {
+      "severity": "medium",
+      "screen": "dashboard_with_mileage",
+      "source": "critic",
+      "issue": "Screen header 'Dashboard' / 'Recent activity': The title is oversized relative to Material 3 scale on phone and the section heading has no consistent rhythm with the cards above it.",
+      "fix": "Render the title via a shared `ScreenHeader` using `headlineMedium` with `paddingHorizontal: 16, paddingTop: 16, paddingBottom: 16`; make 'Recent activity' `titleMedium` in `onSurfaceVariant` with 24px top margin and 8px bottom margin.",
+      "shared": true
+    },
+    {
+      "severity": "medium",
+      "screen": "settings",
+      "source": "critic",
+      "issue": "Settings action list (App lock, Tax settings, Export, Backup & restore, Delete all data, View Terms): Six full-width outlined Buttons with centered blue labels look like a form of primary actions, give no hierarchy or affordance for navigation, and waste vertical space (each ~64px tall with 16px gaps).",
+      "fix": "Replace with Paper `List.Section` + `List.Item` rows inside a shared `SettingsCard` (Card mode=\"outlined\", borderRadius 12, overflow hidden). Each row: `title` in bodyLarge onSurface (left-aligned), `left={props => <List.Icon {...props} icon=\"...\" />}` (lock-outline, calculator-variant, file-export-outline, database-arrow-up-outline, delete-outline, file-document-outline), `right={props => <List.Icon {...props} icon=\"chevron-right\" />}`, row height 56, horizontal padding 16, `<Divider />` between rows (inset to 56). Create `src/components/ui/SettingsRow.tsx` so other list screens reuse it.",
+      "shared": true
+    },
+    {
+      "severity": "medium",
+      "screen": "settings",
+      "source": "critic",
+      "issue": "Duplicate 'App lock' entry: 'App lock' appears twice \u2014 once as the switch card at top and again as a navigation button \u2014 which is confusing and suggests two different behaviours.",
+      "fix": "Delete the 'App lock' Button. Keep a single `List.Item` titled 'App lock' with `description=\"Require biometric authentication on launch\"` and `right={() => <Switch value={locked} onValueChange={...} />}`, placed as the first row of the 'Security' section.",
+      "shared": false
+    },
+    {
+      "severity": "medium",
+      "screen": "settings",
+      "source": "critic",
+      "issue": "Section grouping / headers: All actions sit in one undifferentiated stack, so security, data and legal items read as equally weighted.",
+      "fix": "Group into three cards with `List.Subheader` labels in `titleSmall`, color `theme.colors.primary`, paddingHorizontal 16, marginTop 24: 'Security' (App lock, Tax settings), 'Data' (Export, Backup & restore, Delete all data), 'About' (View Terms and Privacy Policy). Gap 24 between cards, 8 between subheader and card.",
+      "shared": false
+    },
+    {
+      "severity": "medium",
+      "screen": "settings",
+      "source": "critic",
+      "issue": "'Delete all data' row: A destructive, irreversible action is visually identical to Export and Backup, inviting mis-taps.",
+      "fix": "Render its title and `List.Icon` in `theme.colors.error`, place it as the last row of the 'Data' card after a `<Divider />`, and gate it behind a Paper `Dialog` with 'Cancel' (text) and 'Delete all data' (`textColor={theme.colors.error}`) actions.",
+      "shared": false
+    },
+    {
+      "severity": "medium",
+      "screen": "settings",
+      "source": "critic",
+      "issue": "Bottom tab bar: Tab labels ('Dashboard', 'Receipts', 'Mileage') are clipped by the screen edge \u2014 the bar ignores the bottom safe-area inset, and this repeats on every tab.",
+      "fix": "In the tab navigator's shared `tabBarStyle`, set `height: 56 + insets.bottom`, `paddingBottom: insets.bottom` from `useSafeAreaInsets()`, `paddingTop: 8`, and `tabBarLabelStyle: { fontSize: 12, lineHeight: 16 }`. Also add `contentContainerStyle={{ paddingBottom: 56 + insets.bottom + 16 }}` to the screen ScrollView.",
+      "shared": true
+    },
+    {
+      "severity": "medium",
+      "screen": "settings",
+      "source": "critic",
+      "issue": "Screen header 'Settings' and page container: The title is oversized/bold relative to MD3 and sits 48px from the top with no consistent container; on desktop the content column is left-ish and only ~510px wide with the title not aligned to the card edge.",
+      "fix": "Use a shared `ScreenHeader` rendering the title with `variant=\"headlineMedium\"` (onSurface), paddingHorizontal 16, paddingTop 16, paddingBottom 16, and wrap screen content in a shared `ScreenContainer` with `paddingHorizontal: 16`, `maxWidth: 720`, `alignSelf: 'center'`, `width: '100%'` so the title and cards share the same left edge at both sizes.",
+      "shared": true
+    }
+  ],
+  "lighthouse": [
+    {
+      "accessibility": 98,
+      "bestPractices": 100,
+      "performance": 57
+    }
+  ],
+  "vision_scores": [
+    {
+      "screen": "policy_gate",
+      "score": 7.0,
+      "summary": "The policy gate screen is clean, well-structured, and meets the core requirements for a polished on-device experience. It uses a clear visual hierarchy, readable typography, and appropriate spacing. However, it lacks some polish and subtle design touches that would elevate it to 8 or 9 \u2014 such as micro-interactions, subtle feedback, or more refined typography treatment \u2014 but it is not broken or crude."
+    },
+    {
+      "screen": "dashboard_empty",
+      "score": 8.0,
+      "summary": "Polished, modern empty state with clear primary actions and consistent visual hierarchy. Touch targets are appropriately sized. Desktop layout is spacious and well-aligned. Minor typography tweaks could elevate it further."
+    },
+    {
+      "screen": "receipt_entry",
+      "score": 8.0,
+      "summary": "Polished, clean, and intuitive form with strong visual hierarchy and clear primary action. Typography is readable and consistent. Spacing is generous and aligned on a grid. Form fields are well-grouped and touch-friendly. No major usability or aesthetic flaws visible. Desktop version mirrors phone layout with appropriate scaling."
+    },
+    {
+      "screen": "dashboard_populated",
+      "score": 8.0,
+      "summary": "Polished, modern dashboard with clear visual hierarchy and consistent spacing. Primary actions are prominent, typography is readable and well-scaled, and the layout is clean and touch-friendly on phone. Desktop version maintains the same clean aesthetic with proper spacing and alignment. No critical issues found."
+    },
+    {
+      "screen": "receipts_loaded",
+      "score": 7.0,
+      "summary": "Polished, clean, and functional interface that meets core usability needs. The layout is well-spaced and aligned, with clear visual hierarchy. However, it lacks visual polish and subtle design cues that would elevate it to 'exceptional' or 'polished' status. No critical flaws, but opportunities for refinement exist."
+    },
+    {
+      "screen": "receipt_entry_photo",
+      "score": 8.0,
+      "summary": "Polished, modern form with clear visual hierarchy and touch-friendly controls. Strong primary action, good spacing, and consistent typography. Minor improvements possible for desktop alignment and form field padding."
+    },
+    {
+      "screen": "dashboard_with_two_receipts",
+      "score": 8.0,
+      "summary": "Polished, modern dashboard with clear visual hierarchy, consistent spacing, and touch-friendly controls. The primary actions are obvious, typography is clean and readable, and the layout adapts well to desktop. Minor spacing and alignment issues on desktop could be refined, but overall it meets the standard of a premium product."
+    },
+    {
+      "screen": "mileage_empty",
+      "score": 8.0,
+      "summary": "Polished, clean, and intuitive empty state for mileage tracking. Strong visual hierarchy with clear primary action. Desktop layout is spacious and well-aligned. Minor typographic inconsistencies and lack of visual hierarchy in the tab bar are the only areas for improvement."
+    },
+    {
+      "screen": "mileage_entry",
+      "score": 7.0,
+      "summary": "A clean, functional form with clear visual hierarchy and a prominent primary action. Typography is readable and consistent. Spacing is generous and aligned on a grid. No critical usability issues, but lacks polish in form field styling and could benefit from subtle visual cues to enhance professionalism."
+    },
+    {
+      "screen": "dashboard_with_mileage",
+      "score": 7.0,
+      "summary": "The dashboard is clean and functional with clear visual hierarchy and consistent spacing. It meets the core requirements for a polished product, though some elements like the snackbar placement and button alignment could be refined for perfection."
+    },
+    {
+      "screen": "settings",
+      "score": 7.0,
+      "summary": "The settings screen is clean and functional, with a clear visual hierarchy and consistent spacing. However, it lacks visual polish and brand identity, and the typography and spacing could be refined for a more premium feel."
+    },
+    {
+      "screen": "export",
+      "score": 9.0,
+      "summary": "Polished, clean, and highly usable export screen. Excellent visual hierarchy with clear primary actions, consistent spacing, and touch-friendly buttons. Desktop layout is spacious and well-aligned. No critical issues."
+    },
+    {
+      "screen": "backup",
+      "score": 9.0,
+      "summary": "Polished, modern, and highly usable interface. Strong visual hierarchy, excellent typography and spacing, clear primary action, and consistent design across both phone and desktop. No critical flaws; this feels like a premium product."
+    },
+    {
+      "screen": "backup_passphrase_modal",
+      "score": 9.0,
+      "summary": "Polished, clean, and highly usable interface with strong visual hierarchy and consistent spacing. The form is well-structured, touch-friendly, and follows modern design principles. No critical flaws."
+    },
+    {
+      "screen": "backup_success",
+      "score": 8.0,
+      "summary": "Polished, minimalist interface with clear visual hierarchy and consistent spacing. The primary action is obvious and well-positioned. Typography is clean and readable. Desktop layout is spacious and well-proportioned. No critical flaws, but could be slightly more expressive in typography or spacing for maximum polish."
+    },
+    {
+      "screen": "restore_passphrase_modal",
+      "score": 8.0,
+      "summary": "Polished, modern interface with clear hierarchy and consistent spacing. The primary action is obvious, typography is clean and readable, and the layout is well-organized for both phone and desktop. Minor spacing adjustments could enhance visual rhythm."
+    },
+    {
+      "screen": "restore_success",
+      "score": 9.0,
+      "summary": "Polished, clean, and professional empty state with clear hierarchy and consistent spacing. The primary action is implied by the navigation bar, and the typography is well-scaled and readable. No visual clutter or usability issues."
+    },
+    {
+      "screen": "delete_all_confirmation",
+      "score": 9.0,
+      "summary": "Polished, modern confirmation screen with clear visual hierarchy, appropriate contrast, and consistent spacing. The primary action is unmistakable, and the layout is clean and spacious on both phone and desktop. No critical usability or design flaws."
+    },
+    {
+      "screen": "dashboard_empty_after_delete",
+      "score": 9.0,
+      "summary": "Polished, clean, and professional empty state with clear primary action. Excellent spacing, alignment, and typography. Touch targets are appropriate. No visual clutter or usability issues. The desktop version mirrors the phone layout perfectly without stretching or crowding."
+    }
+  ]
+}

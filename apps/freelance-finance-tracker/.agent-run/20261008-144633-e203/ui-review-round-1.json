@@ -1,0 +1,171 @@
+{
+  "verdict": "fail",
+  "summary": "The current build only implements a subset of the spec. Core screens required for the primary flow (Mileage, Export, Backup/Restore, Tax Settings, Delete\u2011All\u2011Data dialog) are missing, several screens do not cover all required states (loading, empty, error, success), and key accessibility requirements are broken \u2013 the policy agreement checkbox lacks aria\u2011checked and does not toggle state, causing the acceptance step and axe audit to fail. Minor token\u2011usage inconsistencies and missing focus\u2011visible styles also exist. These issues prevent the primary user journey from functioning and make the app inaccessible to keyboard and assistive\u2011technology users.",
+  "findings": [
+    {
+      "severity": "high",
+      "file": "src/components/ui/CheckboxField.tsx",
+      "issue": "Custom checkbox component does not emit the required aria\u2011checked attribute on the web, causing an axe \"aria-required-attr\" violation and breaking the UI\u2011flow \"check\" step.",
+      "fix": "Add `aria-checked={checked}` (or ensure `accessibilityState` maps correctly) to the Pressable element and keep `accessibilityRole=\"checkbox\"`. Verify that the attribute appears in the DOM.",
+      "source": "designer"
+    },
+    {
+      "severity": "high",
+      "file": "src/screens/PolicyScreen.tsx",
+      "issue": "The checkbox in the policy gate does not update its internal checked state; clicking it does not change the visual state and the Accept button is not correctly enabled/disabled.",
+      "fix": "Introduce React state (e.g., `const [checked, setChecked] = useState(false)`) and pass `checked` and `onChange={setChecked}` to `CheckboxField`. Disable the Accept button until `checked` is true.",
+      "source": "designer"
+    },
+    {
+      "severity": "high",
+      "file": "src/screens/MileageScreen.tsx",
+      "issue": "MileageScreen is missing entirely, so users cannot view mileage entries.",
+      "fix": "Create `MileageScreen` using the `Screen` wrapper. Implement loading state (ActivityIndicator), empty state with `EmptyState` (title \"No mileage logged\", description, primary button \"Add mileage\"), loaded state (FlatList of `MileageCard`), and error state with a retry button showing the message from DESIGN.md.",
+      "source": "designer"
+    },
+    {
+      "severity": "high",
+      "file": "src/screens/MileageEntryScreen.tsx",
+      "issue": "MileageEntryScreen does not exist, preventing users from adding mileage entries.",
+      "fix": "Add `MileageEntryScreen` mirroring `ReceiptEntryScreen` but without a photo picker. Use `FormField` for date, miles, purpose; include validation helper text, disabled Save button until form is valid, saving spinner, and error snackbar as defined.",
+      "source": "designer"
+    },
+    {
+      "severity": "high",
+      "file": "src/screens/ExportScreen.tsx",
+      "issue": "ExportScreen is missing, making CSV/PDF export impossible.",
+      "fix": "Implement `ExportScreen` with two `PrimaryButton`s labelled \"Export CSV\" and \"Export PDF\". Handle generating state with full\u2011screen `ActivityIndicator` showing \"Generating export\u2026\", then invoke the native share sheet and show a success snackbar, and display an error snackbar on failure.",
+      "source": "designer"
+    },
+    {
+      "severity": "high",
+      "file": "src/screens/BackupScreen.tsx",
+      "issue": "BackupScreen is absent, so users cannot create encrypted backups.",
+      "fix": "Create `BackupScreen` with a \"Create backup\" button. When pressed, show a modal containing two secure `FormField`s for passphrase and confirmation. Enforce matching passphrases (\u22658 chars), disable the create button until valid, show generating spinner with \"Creating encrypted backup\u2026\", then open the share sheet and display a success snackbar or an error snackbar on failure.",
+      "source": "designer"
+    },
+    {
+      "severity": "high",
+      "file": "src/screens/RestoreScreen.tsx",
+      "issue": "RestoreScreen is not present, preventing data restoration.",
+      "fix": "Add `RestoreScreen` with a \"Select backup file\" button, a passphrase modal (`FormField` secure), validation (non\u2011empty passphrase), restoring spinner with \"Restoring data\u2026\", and success/error snackbars per spec.",
+      "source": "designer"
+    },
+    {
+      "severity": "high",
+      "file": "src/screens/DeleteAllDataConfirmation.tsx",
+      "issue": "DeleteAllDataConfirmation dialog does not exist, so users cannot confirm destructive data deletion safely.",
+      "fix": "Implement a `Dialog` component with title \"Delete all data?\", description \"This action cannot be undone.\", Cancel and Delete actions. Show an ActivityIndicator inside the dialog while deletion is in progress and a success snackbar afterward.",
+      "source": "designer"
+    },
+    {
+      "severity": "high",
+      "file": "src/screens/TaxSettingsScreen.tsx",
+      "issue": "TaxSettingsScreen is missing; users cannot edit mileage and tax rates.",
+      "fix": "Create `TaxSettingsScreen` containing two `FormField`s for mileage rate and tax rate, a Save button disabled until a change is made, validation helper text for positive numbers, saving spinner, and error snackbar on failure.",
+      "source": "designer"
+    },
+    {
+      "severity": "high",
+      "file": "src/screens/DashboardScreen.tsx",
+      "issue": "DashboardScreen does not implement the required Empty, Loading, and Error states; the empty state lacks the primary \"Add receipt\" button and the error view lacks a Retry button.",
+      "fix": "Add conditional rendering: show a centered `ActivityIndicator` while loading, show the `EmptyState` component (title \"Nothing here yet\", description, primary button \"Add receipt\") when there are no entries, display an error view with the message \"Failed to load data. Pull down to retry.\" and a Retry button, and display the populated view with four `SummaryCard`s and recent\u2011activity list when data is available.",
+      "source": "designer"
+    },
+    {
+      "severity": "high",
+      "file": "src/screens/ReceiptsScreen.tsx",
+      "issue": "ReceiptsScreen lacks handling for Loading, Empty, and Error states as defined in DESIGN.md.",
+      "fix": "Add a centered `ActivityIndicator` for loading, an `EmptyState` with title \"No receipts recorded\", description, and primary button \"Add receipt\" for the empty case, and an error view with the message \"Could not fetch receipts. Pull to retry.\" and a Retry button. Ensure the loaded state renders a `FlatList` of `ReceiptCard`s.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/components/ui/SettingSwitch.tsx",
+      "issue": "Custom switch uses `role=\"switch\"` and `aria-checked` but does not provide `accessibilityState`, and the web role may not be recognized, reducing accessibility compliance.",
+      "fix": "Replace `role=\"switch\"` with `accessibilityRole=\"switch\"`, add `accessibilityState={{ checked: value }}` and keep `aria-checked={value}` for web. Ensure the label is also announced via `accessibilityLabel`.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/components/ui/PrimaryButton.tsx",
+      "issue": "Button does not provide a visible focus outline on keyboard navigation, violating the \"visible focus\" requirement.",
+      "fix": "Add a focus style (e.g., via `onFocus`/`onBlur` state or using Paper's `theme` to set `outline` style) that renders a 2\u202fdp outline using `theme.colors.outline` when the button receives focus. Ensure the outline is only visible on :focus-visible.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/components/ui/SummaryCard.tsx",
+      "issue": "Uses `theme.colors.success` for the \"positive\" tone, but the design tokens do not define a `success` color, leading to fallback or broken styling.",
+      "fix": "Either add a `success` entry to the color palette in `src/theme.ts` (e.g., a green shade) or replace the usage with an existing token such as `primary` for positive values.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "src/components/ui/SettingSwitch.tsx",
+      "issue": "Hard\u2011coded dimensions for the switch track (52\u202f\u00d7\u202f32\u202fdp) and thumb do not use the spacing or radius tokens, violating token\u2011first styling.",
+      "fix": "Replace numeric literals with token\u2011derived values, e.g., `width: space(6.5)`, `height: space(4)`, `borderRadius: space(2)`.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "src/theme.ts",
+      "issue": "The theme object does not expose a `success` color token referenced elsewhere, and some layout constants (e.g., `layout.touchTarget`) are not derived from the `spacing` base unit.",
+      "fix": "Add a `success` key to `colors` (e.g., `success: '#34A853'`) and ensure all layout dimensions (touch target size, margins, paddings) are computed via the `spacing` base unit to stay consistent with the 8\u202fdp grid.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "viewport": "both",
+      "issue": "The form lacks labels above fields, which is critical for accessibility and usability in a form context.",
+      "fix": "Add clear, descriptive labels above each input field to guide users.",
+      "screen": "policy_gate",
+      "source": "vision"
+    },
+    {
+      "severity": "medium",
+      "viewport": "both",
+      "issue": "There are no helpful hints, placeholder text, or error messages to guide users or indicate required fields.",
+      "fix": "Add placeholder text or hints for each field, and implement validation with clear error messages below fields.",
+      "screen": "policy_gate",
+      "source": "vision"
+    },
+    {
+      "severity": "medium",
+      "viewport": "desktop",
+      "issue": "Desktop layout is a stretched version of the phone layout, not a responsive design that uses the full width and space effectively.",
+      "fix": "Redesign the desktop layout to use the full 1280px width with appropriate spacing and alignment, avoiding stretching or left-hugging elements.",
+      "screen": "policy_gate",
+      "source": "vision"
+    },
+    {
+      "severity": "low",
+      "viewport": "phone",
+      "issue": "The checkbox and 'Accept' button are not visually grouped or aligned with the text above them, making the interaction feel less cohesive.",
+      "fix": "Align the checkbox and button with the text above them for better visual grouping and consistency.",
+      "screen": "policy_gate",
+      "source": "vision"
+    },
+    {
+      "severity": "high",
+      "screen": "policy_gate",
+      "source": "vision",
+      "issue": "visual quality 7/10 on 'policy_gate' (needs 8+): The policy gate screen is clean and functional, with clear visual hierarchy and a single primary action. Typography is readable and consistent, spacing is generous, and the layout is well-aligned. However, it lacks polish in form design (e.g., no labels above fields, no hints or error guidance) and feels like a basic form rather than a premium product. The desktop version is a stretched phone layout, which is suboptimal.",
+      "fix": "Address this screen's findings until it looks polished and professional."
+    }
+  ],
+  "lighthouse": [
+    {
+      "accessibility": 92,
+      "bestPractices": 100,
+      "performance": 57
+    }
+  ],
+  "vision_scores": [
+    {
+      "screen": "policy_gate",
+      "score": 7.0,
+      "summary": "The policy gate screen is clean and functional, with clear visual hierarchy and a single primary action. Typography is readable and consistent, spacing is generous, and the layout is well-aligned. However, it lacks polish in form design (e.g., no labels above fields, no hints or error guidance) and feels like a basic form rather than a premium product. The desktop version is a stretched phone layout, which is suboptimal."
+    }
+  ]
+}

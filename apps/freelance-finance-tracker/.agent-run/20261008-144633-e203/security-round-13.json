@@ -1,0 +1,100 @@
+{
+  "verdict": "pass",
+  "summary": "PDF export XSS has been mitigated by escaping HTML content. All other previously reported issues remain unchanged (still open), and a new low\u2011severity issue was identified: backup files are left on the device after sharing.",
+  "findings": [
+    {
+      "id": "dependency-uuid-medium",
+      "severity": "medium",
+      "where": "code",
+      "file": "package.json",
+      "issue": "uuid 7.0.3 contains an out\u2011of\u2011bounds write vulnerability (CVE\u20112026\u201141907). It is used for generating IDs for receipts/mileage entries.",
+      "fix": "Upgrade uuid to a safe release (>=13.0.1) which includes the fix, or switch to a different UUID generator."
+    },
+    {
+      "id": "insecure-web-key-storage-medium",
+      "severity": "medium",
+      "where": "code",
+      "file": "src/lib/storage/device.web.ts",
+      "issue": "The web fallback stores the 256\u2011bit encryption key and encrypted payloads in plain localStorage. This defeats the at\u2011rest encryption model for any web deployment and allows an attacker with access to the browser storage to decrypt all user data.",
+      "fix": "Either disable the web build for production or replace the fallback with a proper client\u2011side key derivation flow (e.g., ask the user for a passphrase and never persist the raw key). If a web version is required, store the key only in memory and protect it with a user\u2011provided secret."
+    },
+    {
+      "id": "receipt-input-validation-medium",
+      "severity": "medium",
+      "where": "code",
+      "file": "src/screens/ReceiptEntryScreen.tsx",
+      "issue": "Numeric fields such as amount are not validated for type, range, or NaN/Infinity values. Users could enter negative, extremely large, or non\u2011numeric values causing incorrect totals, crashes, or potential DoS.",
+      "fix": "Add client\u2011side validation: enforce amount > 0, parseable as a finite number, limit max digits. Show error helper text on invalid input."
+    },
+    {
+      "id": "mileage-input-validation-medium",
+      "severity": "medium",
+      "where": "code",
+      "file": "src/screens/MileageEntryScreen.tsx",
+      "issue": "Mileage miles and rate are stored without validation. Malformed values (negative miles, non\u2011numeric strings) can corrupt mileage deduction calculations.",
+      "fix": "Validate that miles and rate are non\u2011negative numbers within reasonable bounds before persisting."
+    },
+    {
+      "id": "backup-passphrase-validation-low",
+      "severity": "low",
+      "where": "code",
+      "file": "src/screens/BackupScreen.tsx",
+      "issue": "The UI hints at a minimum 8\u2011character passphrase but enforcement is not guaranteed; weak passphrases make backup encryption vulnerable to brute\u2011force attacks.",
+      "fix": "Implement explicit validation: require a minimum length (e.g., \u22658 characters) and optionally strength checks (mix of character classes) before allowing backup creation."
+    },
+    {
+      "id": "csv-export-injection-medium",
+      "severity": "medium",
+      "where": "code",
+      "file": "src/lib/exportCsv.ts",
+      "issue": "CSV export concatenates user\u2011provided fields (e.g., receipt notes, categories, purpose) directly into the CSV without escaping. When opened in spreadsheet software this can trigger CSV\u2011injection attacks (e.g., formula injection) that may execute commands on the viewer\u2019s machine.",
+      "fix": "Sanitize all CSV fields before writing: escape leading '=', '+', '-', '@' characters, wrap each value in double quotes, double\u2011escape any internal quotes, and optionally limit characters to a safe whitelist. Use a CSV library that handles escaping securely."
+    },
+    {
+      "id": "static-backup-file-leak-low",
+      "severity": "low",
+      "where": "code",
+      "file": "src/lib/backup.ts",
+      "issue": "Backup files are written to a static path (cacheDirectory/backup.bak) and are not deleted after the user shares them, leaving an encrypted backup file on the device that could be accessed by other apps or a malicious actor with device access.",
+      "fix": "Generate a unique temporary filename for each backup and delete the file after the share operation (e.g., using FileSystem.deleteAsync)."
+    }
+  ],
+  "deployment_actions": [
+    {
+      "id": "dependency-node-forge-high",
+      "severity": "high",
+      "where": "deployment",
+      "file": "package.json",
+      "issue": "node\u2011forge 1.4.0 (transitively pulled in) is vulnerable to CVE\u20112026\u201185393 \u2013 a signature forgery vulnerability in RSA PKCS#1 v1.5 verification. If any code in the app (or a future feature) uses RSA signatures, an attacker could forge them.",
+      "fix": "No fixed release exists yet: monitor the advisory and upgrade as soon as one ships; confirm whether the package is only a build-time dependency. Upgrade node\u2011forge to a version where the vulnerability is patched (>=1.5.0) or remove the dependency entirely if not needed."
+    },
+    {
+      "id": "dependency-braces-high",
+      "severity": "high",
+      "where": "deployment",
+      "file": "package.json",
+      "issue": "braces 3.0.3 has CVE\u20112026\u201193687 \u2013 denial\u2011of\u2011service via stack overflow caused by deeply nested patterns. The library is not used directly but is present in the dependency tree.",
+      "fix": "No fixed release exists yet: monitor the advisory and upgrade as soon as one ships; confirm whether the package is only a build-time dependency. Upgrade braces to a non\u2011vulnerable version (>=3.0.4 or later) or prune it from the dependency tree if not required."
+    },
+    {
+      "id": "dependency-sprintf-js-medium",
+      "severity": "medium",
+      "where": "deployment",
+      "file": "package.json",
+      "issue": "sprintf\u2011js 1.0.3 is vulnerable to CVE\u20112026\u201197058 \u2013 denial\u2011of\u2011service via unbounded precision specifiers. Although not used directly, it appears in the lockfile.",
+      "fix": "No fixed release exists yet: monitor the advisory and upgrade as soon as one ships; confirm whether the package is only a build-time dependency. Upgrade sprintf\u2011js to a fixed version (>=1.1.2) or replace its usage with a safer formatting library."
+    },
+    {
+      "id": "missing-csp-header-low",
+      "severity": "low",
+      "where": "deployment",
+      "file": "app.json (or web server config)",
+      "issue": "The web build does not set a Content\u2011Security\u2011Policy header. While the app is a client\u2011side SPA, lacking CSP can allow injected scripts (e.g., from the PDF export issue) to run if any DOM XSS is introduced later.",
+      "fix": "Configure the web server or static host to serve a CSP header that restricts script sources to self and disallows unsafe\u2011inline code. For Expo web builds, add a meta CSP tag in index.html as a fallback."
+    }
+  ],
+  "fixed": [
+    "pdf-export-xss-high"
+  ],
+  "stalled": []
+}
