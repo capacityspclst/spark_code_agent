@@ -11,10 +11,10 @@ export default function PrimaryButton({ label, variant = 'primary', contentStyle
   return (
     <Button
       mode={mode}
+      uppercase={false}
       accessibilityLabel={label}
       contentStyle={[{ minHeight: layout.touchTarget }, contentStyle]}
       {...rest}
-      // Explicitly set children to the label to avoid type mismatches
     >
       {label}
     </Button>
