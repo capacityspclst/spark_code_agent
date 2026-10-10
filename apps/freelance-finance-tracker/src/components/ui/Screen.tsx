@@ -14,9 +14,9 @@ interface Props {
 export default function Screen({ title, subtitle, wide, children }: Props) {
   return (
     <ScrollView style={styles.page} contentContainerStyle={[styles.content, { maxWidth: wide ? layout.maxWideWidth : layout.maxContentWidth }]}>
-      {title ? (
+      {title || subtitle ? (
         <View style={styles.header}>
-          <Text variant="headlineMedium" accessibilityRole="header" style={styles.title}>{title}</Text>
+          {title ? <Text variant="headlineMedium" accessibilityRole="header" style={styles.title}>{title}</Text> : null}
           {subtitle ? <Text variant="bodyLarge" style={styles.subtitle}>{subtitle}</Text> : null}
         </View>
       ) : null}
