@@ -2,16 +2,17 @@
 import { randomBytes } from '../crypto';
 import type { KeyProvider, RawStore } from './types';
 import { createMemoryRawStore } from './memory';
+// Note: Session storage is not used to avoid persisting keys insecurely.
 
-// Persistent key for the session.
 let cachedKey: Uint8Array | null = null;
 
-/** Simple key provider that generates a random key once per session. */
+/** Simple key provider that generates a random key once per app session (in-memory only). */
 export function createDeviceKeyProvider(): KeyProvider {
   return {
     async getKey() {
       if (!cachedKey) {
-        cachedKey = randomBytes(32); // 256-bit key
+        // Generate a fresh 256‑bit key for this session; do not persist to any storage.
+        cachedKey = randomBytes(32);
       }
       return cachedKey;
     },
