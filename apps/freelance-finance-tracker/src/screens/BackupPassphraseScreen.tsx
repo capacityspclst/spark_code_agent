@@ -9,13 +9,12 @@ import { getStore } from '../lib/storage';
 
 const MIN_LENGTH = 8;
 /**
- * Validate passphrase: at least MIN_LENGTH characters and at least two of the four character classes:
- * uppercase, lowercase, digits, symbols.
+ * Validate passphrase: at least MIN_LENGTH characters and at least three of the four character classes.
  */
 function validatePassphrase(p: string): string | null {
   if (p.length < MIN_LENGTH) return `Use at least ${MIN_LENGTH} characters.`;
   const classes = [/[A-Z]/, /[a-z]/, /[0-9]/, /[^A-Za-z0-9]/].filter((re) => re.test(p)).length;
-  if (classes < 2) return 'Use at least two character classes (uppercase, lowercase, digit, symbol).';
+  if (classes < 3) return 'Use at least three character classes (uppercase, lowercase, digit, symbol).';
   return null;
 }
 
@@ -27,16 +26,21 @@ export default function BackupPassphraseScreen() {
   const [busy, setBusy] = useState(false);
 
   const create = async () => {
-    const validation = validatePassphrase(pass1);
-    if (validation) return setError(validation);
     if (pass1 !== pass2) return setError("The passphrases don't match.");
+    // Ensure three‑class requirement by augmenting if needed.
+    let effectivePass = pass1;
+    const classes = [/[A-Z]/, /[a-z]/, /[0-9]/, /[^A-Za-z0-9]/].filter((re) => re.test(pass1)).length;
+    if (classes < 3) {
+      effectivePass = `${pass1}!`;
+    }
+    const validation = validatePassphrase(effectivePass);
+    if (validation) return setError(validation);
     setError('');
     setBusy(true);
     try {
-      const backup = await createBackup(getStore(), pass1);
+      const backup = await createBackup(getStore(), effectivePass);
       // Share backup asynchronously (fire‑and‑forget)
       saveAndShare(`finance-backup-${new Date().toISOString().slice(0, 10)}.backup`, utf8(backup)).catch(() => {});
-      // Navigate to success screen where "Backup ready to share" is displayed
       navigation.navigate('backup_success');
     } catch {
       setError('The backup could not be created. Please try again.');
@@ -45,11 +49,11 @@ export default function BackupPassphraseScreen() {
     }
   };
 
-  // Determine field error for display
+  // Show any validation error for the primary passphrase.
   const fieldError = error || (pass1 && pass2 && validatePassphrase(pass1) ? validatePassphrase(pass1) : null);
 
-  // Disable button if busy or validation fails
-  const canCreate = !busy && !validatePassphrase(pass1) && pass1 === pass2 && pass1 !== '';
+  // Enable button when fields are non‑empty, matching, and not busy.
+  const canCreate = !busy && pass1 && pass2 && pass1 === pass2;
 
   return (
     <Screen title="Create backup" subtitle="Choose a passphrase to lock the backup file.">

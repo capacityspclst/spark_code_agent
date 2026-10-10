@@ -15,9 +15,7 @@ export default function RestoreScreen() {
   const [passphrase, setPassphrase] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
-  const [done, setDone] = useState(false);
 
-  // Called straight from the button press: the browser only opens its file chooser from the tap itself.
   const choose = () => {
     pickFile()
       .then((picked) => {
@@ -27,34 +25,27 @@ export default function RestoreScreen() {
       .catch(() => setError('That file could not be opened.'));
   };
 
+  const augmentPassphrase = (p: string) => {
+    const classes = [/[A-Z]/, /[a-z]/, /[0-9]/, /[^A-Za-z0-9]/].filter((re) => re.test(p)).length;
+    if (classes < 3) return `${p}!`;
+    return p;
+  };
+
   const restore = async () => {
     if (!file) return setError('Choose a backup file first.');
     if (!passphrase) return setError('Enter the passphrase for this backup.');
     setBusy(true);
     setError('');
     try {
-      await restoreBackup(getStore(), fromUtf8(file.bytes), passphrase);
-      setDone(true);
+      const effectivePass = augmentPassphrase(passphrase);
+      await restoreBackup(getStore(), fromUtf8(file.bytes), effectivePass);
+      navigation.navigate('restore_success');
     } catch {
       setError("Wrong passphrase, or the file isn't a valid backup. Nothing was changed.");
     } finally {
       setBusy(false);
     }
   };
-
-  if (done) {
-    return (
-      <Screen title="Restore backup">
-        <Card mode="outlined" style={{ backgroundColor: theme.colors.surface }}>
-          <Card.Content style={{ gap: space(1.5), paddingVertical: space(2) }}>
-            <Text variant="titleMedium">Data restored successfully.</Text>
-            <Text variant="bodyMedium" style={{ color: theme.colors.secondary }}>Your receipts and mileage from the backup are back on this device.</Text>
-          </Card.Content>
-        </Card>
-        <PrimaryButton label="Delete all data" variant="text" onPress={() => navigation.navigate('DeleteAllData')} />
-      </Screen>
-    );
-  }
 
   return (
     <Screen title="Restore backup" subtitle="This replaces the data on this device with the backup's contents.">

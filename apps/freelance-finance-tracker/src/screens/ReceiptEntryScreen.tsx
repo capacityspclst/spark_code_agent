@@ -22,7 +22,11 @@ export default function ReceiptEntryScreen() {
   const [saving, setSaving] = useState(false);
 
   const validate = () => {
-    if (!amount || isNaN(Number(amount)) || Number(amount) <= 0) return 'Enter a positive amount.';
+    if (!amount) return 'Enter a positive amount.';
+    const amt = Number(amount);
+    if (isNaN(amt) || amt <= 0) return 'Enter a positive amount.';
+    // limit to 9 digits and max two decimal places
+    if (!/^\d{1,9}(\.\d{1,2})?$/.test(amount)) return 'Amount must have up to 9 digits and 2 decimals.';
     if (!date) return 'Select a date.';
     if (!category) return 'Choose a category.';
     if (!type) return 'Select expense or income.';
@@ -57,6 +61,8 @@ export default function ReceiptEntryScreen() {
     }
   };
 
+  const canSave = !saving && validate() === '';
+
   return (
     <Screen title="Add receipt">
       <View style={{ gap: 12 }}>
@@ -72,7 +78,7 @@ export default function ReceiptEntryScreen() {
         />
         <FormField label="Notes" value={notes} onChangeText={setNotes} multiline />
         {error ? <Snackbar visible={true} onDismiss={() => setError('')} duration={3000}>{error}</Snackbar> : null}
-        <PrimaryButton label="Save receipt" onPress={onSave} loading={saving} disabled={saving} />
+        <PrimaryButton label="Save receipt" onPress={onSave} loading={saving} disabled={!canSave} />
       </View>
     </Screen>
   );

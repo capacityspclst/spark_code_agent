@@ -18,6 +18,7 @@ import BackupPassphraseScreen from '../screens/BackupPassphraseScreen';
 import RestoreScreen from '../screens/RestoreScreen';
 import DeleteAllDataScreen from '../screens/DeleteAllDataScreen';
 import BackupSuccessScreen from '../screens/BackupSuccessScreen';
+import RestoreSuccessScreen from '../screens/RestoreSuccessScreen';
 import { theme } from '../theme';
 
 const Tab = createBottomTabNavigator();
@@ -37,6 +38,7 @@ function SettingsStackScreen() {
       <SettingsStack.Screen name="backup_passphrase_modal" component={BackupPassphraseScreen} options={{ title: 'Create backup' }} />
       <SettingsStack.Screen name="backup_success" component={BackupSuccessScreen} options={{ title: 'Backup' }} />
       <SettingsStack.Screen name="restore_passphrase_modal" component={RestoreScreen} options={{ title: 'Restore backup' }} />
+      <SettingsStack.Screen name="restore_success" component={RestoreSuccessScreen} options={{ title: 'Restore success' }} />
       <SettingsStack.Screen name="AppLock" component={AppLockScreen} options={{ title: 'App lock' }} />
       <SettingsStack.Screen name="TaxSettings" component={TaxSettingsScreen} options={{ title: 'Tax settings' }} />
       <SettingsStack.Screen name="DeleteAllData" component={DeleteAllDataScreen} options={{ title: 'Delete all data' }} />

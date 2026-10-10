@@ -18,17 +18,18 @@ export default function MileageEntryScreen() {
 
   const validate = () => {
     if (!date) return 'Select a date.';
-    if (!miles || isNaN(Number(miles)) || Number(miles) <= 0) return 'Enter a positive number of miles.';
+    if (!miles) return 'Enter a positive number of miles.';
+    const m = Number(miles);
+    if (isNaN(m) || m <= 0) return 'Enter a positive number of miles.';
+    // limit to 6 digits and up to 2 decimals
+    if (!/^\d{1,6}(\.\d{1,2})?$/.test(miles)) return 'Miles must have up to 6 digits and 2 decimals.';
     if (!purpose) return 'Enter a purpose for the trip.';
     return '';
   };
 
   const onSave = async () => {
     const err = validate();
-    if (err) {
-      setError(err);
-      return;
-    }
+    if (err) { setError(err); return; }
     setError('');
     setSaving(true);
     const entry: MileageEntry = {
@@ -48,6 +49,8 @@ export default function MileageEntryScreen() {
     }
   };
 
+  const canSave = !saving && validate() === '';
+
   return (
     <Screen title="Add mileage">
       <View style={{ gap: 12 }}>
@@ -55,7 +58,7 @@ export default function MileageEntryScreen() {
         <FormField label="Miles" value={miles} onChangeText={setMiles} keyboardType="numeric" />
         <FormField label="Purpose" value={purpose} onChangeText={setPurpose} />
         {error ? <Snackbar visible={true} onDismiss={() => setError('')} duration={3000}>{error}</Snackbar> : null}
-        <PrimaryButton label="Save mileage" onPress={onSave} loading={saving} disabled={saving} />
+        <PrimaryButton label="Save mileage" onPress={onSave} loading={saving} disabled={!canSave} />
       </View>
     </Screen>
   );

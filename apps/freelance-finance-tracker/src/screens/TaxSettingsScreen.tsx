@@ -28,6 +28,8 @@ export default function TaxSettingsScreen() {
     return '';
   };
 
+  const canSave = !saving && validate() === '';
+
   const onSave = async () => {
     const err = validate();
     if (err) { setError(err); return; }
@@ -50,7 +52,7 @@ export default function TaxSettingsScreen() {
         <FormField label="Mileage rate ($/mile)" value={mileageRate} onChangeText={setMileageRateState} placeholder={DEFAULT_MILEAGE_RATE.toString()} keyboardType="numeric" />
         <FormField label="Tax rate (%)" value={taxRate} onChangeText={setTaxRateState} placeholder={DEFAULT_TAX_RATE.toString()} keyboardType="numeric" />
         {error ? <Snackbar visible={true} onDismiss={() => setError('')} duration={3000}>{error}</Snackbar> : null}
-        <PrimaryButton label="Save" onPress={onSave} loading={saving} disabled={saving} />
+        <PrimaryButton label="Save" onPress={onSave} loading={saving} disabled={!canSave} />
       </View>
     </Screen>
   );
