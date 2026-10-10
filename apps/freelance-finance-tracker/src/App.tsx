@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { AppState, AppStateStatus } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { StatusBar } from 'expo-status-bar';
 import { ActivityIndicator, PaperProvider } from 'react-native-paper';
@@ -21,13 +22,14 @@ export default function App() {
   const [gate, setGate] = useState<Gate>('loading');
   const [locked, setLocked] = useState<boolean>(false);
 
+  // Initial policy check
   useEffect(() => {
     getPolicyAcceptance(getStore())
       .then((a) => setGate(policyAccepted(a) ? 'ready' : 'policy'))
       .catch(() => setGate('policy'));
   }, []);
 
-  // Once ready, check app lock setting
+  // Check app lock after policy is ready (initial launch)
   useEffect(() => {
     if (gate === 'ready') {
       (async () => {
@@ -40,11 +42,30 @@ export default function App() {
     }
   }, [gate]);
 
+  // Re‑authenticate whenever the app returns to the foreground
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', async (nextState: AppStateStatus) => {
+      if (nextState === 'active' && gate === 'ready') {
+        const enabled = await getAppLockEnabled();
+        if (enabled) {
+          const ok = await authenticate();
+          setLocked(!ok);
+        } else {
+          setLocked(false);
+        }
+      }
+    });
+    return () => {
+      subscription.remove();
+    };
+  }, [gate]);
+
   const accept = async () => {
     await acceptPolicy(getStore());
     setGate('ready');
   };
 
+  // Show loading while checking policy or when locked after a successful auth check fails
   if (gate === 'loading' || (gate === 'ready' && locked)) {
     return (
       <SafeAreaProvider>

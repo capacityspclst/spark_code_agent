@@ -13,6 +13,7 @@ import { getTaxRate } from '../lib/settings';
 import ReceiptCard from '../components/ui/ReceiptCard';
 import { consumeSnack } from '../lib/uiState';
 import SimpleAddButtons from '../components/ui/SimpleAddButtons';
+import { space } from '../theme';
 
 type DashboardRouteParams = {};
 
@@ -81,9 +82,16 @@ export default function DashboardScreen() {
           />
         </View>
       )}
-      <Snackbar visible={!!snack} onDismiss={() => setSnack('')} duration={3000}>
-        {snack}
-      </Snackbar>
+      {snack ? (
+        <Snackbar
+          visible={true}
+          onDismiss={() => setSnack('')}
+          duration={3000}
+          style={{ bottom: space(14) }}
+        >
+          {snack}
+        </Snackbar>
+      ) : null}
       <SimpleAddButtons />
     </Screen>
   );
