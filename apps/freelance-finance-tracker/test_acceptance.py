@@ -398,7 +398,7 @@ def run_jest(limit: int | None) -> int:
         allowed = "|".join(f"M{i}" for i in range(1, limit + 1))
         pattern = f"^({allowed}): "
         jest_cmd.extend(["-t", pattern])
-    print(f"\ud83d\ude80 Running Jest: {' '.join(jest_cmd)}")
+    print(f"🚀 Running Jest: {' '.join(jest_cmd)}")
     result = subprocess.run(
         jest_cmd,
         cwd=PROJECT_ROOT,
