@@ -3,10 +3,10 @@
 // their local copy. Web: saving downloads the file and picking uses the browser's file chooser (both via the same
 // expo APIs, so the UI flow check can save a backup and hand the same file back to restore it).
 import * as DocumentPicker from 'expo-document-picker';
-import { File, Paths } from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import { Platform } from 'react-native';
 import * as FileSystem from 'expo-file-system';
+import { toBase64 } from './crypto';
 
 /** Save bytes as a file the user can keep: the share sheet on phones, a download on the web. */
 export async function saveAndShare(fileName: string, bytes: Uint8Array, mimeType = 'application/octet-stream'): Promise<void> {
@@ -22,20 +22,22 @@ export async function saveAndShare(fileName: string, bytes: Uint8Array, mimeType
     URL.revokeObjectURL(url);
     return;
   }
-  const file = new File(Paths.cache, fileName);
-  file.create({ overwrite: true });
-  file.write(bytes);
+  const cacheDir = (FileSystem as any).cacheDirectory || '';
+  const fileUri = `${cacheDir}${fileName}`;
+  const base64 = toBase64(bytes);
+  await FileSystem.writeAsStringAsync(fileUri, base64, { encoding: FileSystem.EncodingType.Base64 });
   if (await Sharing.isAvailableAsync()) {
-    await Sharing.shareAsync(file.uri, { mimeType, dialogTitle: fileName });
+    await Sharing.shareAsync(fileUri, { mimeType, dialogTitle: fileName });
   }
   // Clean up the temporary file after sharing (or if sharing not available)
   try {
-    await FileSystem.deleteAsync(file.uri, { idempotent: true });
+    await FileSystem.deleteAsync(fileUri, { idempotent: true });
   } catch {}
 }
 
 /** Let the user pick one file; null if they cancel. Call this directly from a button press: browsers only open a
- * file chooser straight from the tap (no awaits, dialogs or navigation before it). */
+ * file chooser straight from the tap (no awaits, dialogs or navigation before it).
+ */
 export async function pickFile(): Promise<{ name: string; bytes: Uint8Array } | null> {
   const res = await DocumentPicker.getDocumentAsync({ copyToCacheDirectory: true, multiple: false });
   if (res.canceled || !res.assets?.length) return null;
@@ -43,5 +45,7 @@ export async function pickFile(): Promise<{ name: string; bytes: Uint8Array } | 
   if (Platform.OS === 'web' && asset.file) {
     return { name: asset.name, bytes: new Uint8Array(await asset.file.arrayBuffer()) };
   }
-  return { name: asset.name, bytes: await new File(asset.uri).bytes() };
+  const base64 = await FileSystem.readAsStringAsync(asset.uri, { encoding: FileSystem.EncodingType.Base64 });
+  const bytes = Uint8Array.from(atob(base64), c => c.charCodeAt(0));
+  return { name: asset.name, bytes };
 }

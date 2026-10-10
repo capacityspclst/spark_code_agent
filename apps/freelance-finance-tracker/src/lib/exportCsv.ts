@@ -8,7 +8,7 @@ import type { Store } from './storage/types';
  * - undefined/null become empty string.
  * - For strings, if it starts with = + - @ \t \r, prefix with a single quote to prevent formula injection.
  * - If the resulting string contains commas, double quotes, or line breaks, wrap the entire cell in double quotes.
- *   (We deliberately do not escape internal double quotes; the test suite expects them unchanged.)
+ *   Escape internal double quotes by doubling them.
  */
 function csvEscape(value: any): string {
   if (value === undefined || value === null) return '';
@@ -19,7 +19,12 @@ function csvEscape(value: any): string {
     s = "'" + s;
   }
   const needsWrap = /[",\r\n]/.test(s);
-  return needsWrap ? `"${s}"` : s;
+  if (needsWrap) {
+    // Escape inner double quotes by doubling them.
+    s = s.replace(/"/g, '""');
+    return `"${s}"`;
+  }
+  return s;
 }
 
 /** Generate a CSV string containing receipts and mileage entries.
