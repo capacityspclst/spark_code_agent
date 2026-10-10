@@ -25,7 +25,6 @@ export default function ReceiptEntryScreen() {
     if (!amount) return 'Enter a positive amount.';
     const amt = Number(amount);
     if (isNaN(amt) || amt <= 0) return 'Enter a positive amount.';
-    if (amt > 1000000) return 'Amount must be less than 1,000,000.';
     // limit to 9 digits and max two decimal places
     if (!/^\d{1,9}(\.\d{1,2})?$/.test(amount)) return 'Amount must have up to 9 digits and 2 decimals.';
     if (!date) return 'Select a date.';

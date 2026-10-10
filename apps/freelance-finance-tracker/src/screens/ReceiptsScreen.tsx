@@ -6,7 +6,6 @@ import { getStore } from '../lib/storage';
 import { Receipt } from '../lib/models';
 import { getAllReceipts } from '../lib/receiptStore';
 import ReceiptCard from '../components/ui/ReceiptCard';
-import SimpleAddButtons from '../components/ui/SimpleAddButtons';
 
 export default function ReceiptsScreen() {
   const navigation = useNavigation<NavigationProp<any>>();
@@ -43,17 +42,12 @@ export default function ReceiptsScreen() {
           onAction={() => navigation.navigate('ReceiptEntry')}
         />
       ) : (
-        <View>
-          {/* Primary action visible on loaded screen */}
-          <PrimaryButton label="Add receipt" onPress={() => navigation.navigate('ReceiptEntry')} />
-          <FlatList
-            data={receipts}
-            keyExtractor={(item) => item.id}
-            renderItem={({ item }) => <ReceiptCard receipt={item} />}
-          />
-        </View>
+        <FlatList
+          data={receipts}
+          keyExtractor={(item) => item.id}
+          renderItem={({ item }) => <ReceiptCard receipt={item} />}
+        />
       )}
-      <SimpleAddButtons />
     </Screen>
   );
 }
