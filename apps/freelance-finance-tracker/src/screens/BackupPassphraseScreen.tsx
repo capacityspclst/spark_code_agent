@@ -10,19 +10,18 @@ import { theme } from '../theme';
 
 const MIN_LENGTH = 8;
 
-/** Validate passphrase: at least MIN_LENGTH characters. */
+/** Validate passphrase: must be at least MIN_LENGTH characters. */
 function validatePassphrase(p: string): string | null {
   if (p.length < MIN_LENGTH) return `Use at least ${MIN_LENGTH} characters.`;
   return null;
 }
 
-/** Choose a passphrase, create the encrypted backup and navigate to success screen. */
 export default function BackupPassphraseScreen() {
   const navigation = useNavigation<NavigationProp<any>>();
   const [pass1, setPass1] = useState('');
   const [pass2, setPass2] = useState('');
-  const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const [busy, setBusy] = useState(false);
 
   const create = async () => {
     const validation = validatePassphrase(pass1);
@@ -32,10 +31,10 @@ export default function BackupPassphraseScreen() {
     setBusy(true);
     try {
       const backup = await createBackup(getStore(), pass1);
-      // Navigate to the dedicated success screen as required by the UI flow
-      navigation.navigate('backup_success');
-      // Trigger sharing without awaiting to keep UI flow responsive
+      // Share backup asynchronously (fire‑and‑forget)
       saveAndShare(`finance-backup-${new Date().toISOString().slice(0, 10)}.backup`, utf8(backup)).catch(() => {});
+      // Navigate to success screen where "Backup ready to share" is displayed
+      navigation.navigate('backup_success');
     } catch {
       setError('The backup could not be created. Please try again.');
     } finally {
@@ -43,11 +42,7 @@ export default function BackupPassphraseScreen() {
     }
   };
 
-  // Show field‑level error only after a submit attempt (i.e., when `error` is set) or when the user has typed something invalid.
-  const fieldError =
-    error && pass1 && pass1 !== pass2 && validatePassphrase(pass1)
-      ? error
-      : null;
+  const fieldError = error && pass1 && pass1 !== pass2 && validatePassphrase(pass1) ? error : null;
 
   return (
     <Screen title="Create backup" subtitle="Choose a passphrase to lock the backup file.">
@@ -57,7 +52,7 @@ export default function BackupPassphraseScreen() {
         onChangeText={setPass1}
         secureTextEntry
         autoCapitalize="none"
-        hint={`At least ${MIN_LENGTH} characters.`}
+        hint={`At least ${MIN_LENGTH} characters`}
         accessibilityLabel="Backup passphrase"
       />
       <FormField
