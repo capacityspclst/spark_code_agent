@@ -33,10 +33,11 @@ export default function FABAdd() {
   );
 
   return (
-    <Portal>
-      <View style={styles.container} pointerEvents="box-none">
-        {open && (
-          <View style={styles.miniContainer}>
+    <>
+      {/* Mini FABs rendered in a separate portal */}
+      {open && (
+        <Portal>
+          <View style={styles.miniContainer} pointerEvents="box-none">
             <FAB
               style={styles.miniFab}
               small
@@ -58,24 +59,29 @@ export default function FABAdd() {
               theme={{ colors: { accent: theme.colors.secondary } }}
             />
           </View>
-        )}
-        <FAB
-          style={styles.fab}
-          icon="plus"
-          accessibilityLabel="Add"
-          accessibilityRole="button"
-          onPress={toggle}
-          color={theme.colors.onSecondary}
-          theme={{ colors: { accent: theme.colors.secondary } }}
-        />
-      </View>
-    </Portal>
+        </Portal>
+      )}
+      {/* Main FAB */}
+      <Portal>
+        <View style={styles.container} pointerEvents="box-none">
+          <FAB
+            style={styles.fab}
+            icon="plus"
+            accessibilityLabel="Add"
+            accessibilityRole="button"
+            onPress={toggle}
+            color={theme.colors.onSecondary}
+            theme={{ colors: { accent: theme.colors.secondary } }}
+          />
+        </View>
+      </Portal>
+    </>
   );
 }
 
 const styles = StyleSheet.create({
   container: { position: 'absolute', bottom: space(2), right: space(2), alignItems: 'center' },
   fab: { elevation: 4 },
-  miniContainer: { marginBottom: 8, flexDirection: 'column-reverse', alignItems: 'center' },
+  miniContainer: { position: 'absolute', bottom: space(10), right: space(2), alignItems: 'center' },
   miniFab: { marginBottom: 8 },
 });
