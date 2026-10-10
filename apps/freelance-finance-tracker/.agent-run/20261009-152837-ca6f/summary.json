@@ -1,0 +1,1260 @@
+{
+  "run_id": "20261009-152837-ca6f",
+  "task": "Build a new local-first freelance finance tracker phone app with Expo (React Native) for iOS and Android. Privacy is the product: all of the user's data stays on their device. There is no server, no accounts, no sign-up or login, no analytics, tracking or crash reporting, and the app never sends user data anywhere. Must-haves: (1) Policy agreement gate: on first launch, and whenever the policy version changes, the user must read the Terms of Use and Privacy Policy and tick \"I agree\" before anything else in the app is reachable; acceptance (policy version and date) is stored on the device. The policy says plainly that data stays on the device and the developer never receives it, that the user is responsible for their own backups, and that the app is not tax, legal or financial advice. (2) Receipts: photograph with the camera (photo-library fallback) and record amount, date, category, type (expense by default, or income) and notes; photos are kept in the app's private storage. (3) Mileage log: date, miles and purpose, with the deduction at a configurable rate per mile (default: the current IRS standard business rate, labeled \"verify for your tax year\"). (4) Dashboard: income, expenses, mileage deduction and estimated tax at a configurable rate (never negative), recent activity, and every primary action one tap away. (5) Exports: tax-ready CSV and PDF generated on the device and shared through the share sheet. (6) Encrypted on-device storage: the database is encrypted at rest with a key kept in the device keychain/keystore (expo-secure-store). (7) Backup and restore: export one encrypted backup file containing all records and photos, protected by a passphrase the user chooses (strong key derivation and authenticated encryption from an audited JavaScript library such as @noble/ciphers and @noble/hashes), shared wherever the user chooses (Files, iCloud Drive, Google Drive); restore from such a file with the passphrase after a clear confirmation, with an integrity check and a friendly message for a wrong passphrase or damaged file. Cloud-provider sync is out of scope for now. (8) Optional app lock with Face ID, Touch ID or fingerprint (expo-local-authentication), OFF by default and switchable in Settings. (9) Settings: app lock, mileage rate, tax rate, backup and restore, view the policy, and delete all data (with confirmation). The app must be visually appealing, polished and very easy to use: React Native Paper (Material 3) with a theme and shared components, generous spacing, a clear visual hierarchy, friendly empty states and a bottom tab bar to every main area. Use the current Expo SDK (look up versions with npm view; never guess). Includes unit and integration tests of the on-device logic.",
+  "app": "apps/freelance-finance-tracker",
+  "new_app": true,
+  "success": false,
+  "tests_passed": true,
+  "validation_passed": true,
+  "validation": "npm install (.) ok, expo dependency versions (.) ok, expo export (.) ok, expo web export (.) ok, ui renders (.) ok, ui styles applied (.) ok, accessibility, serious or critical (.) ok, responsive layout on a phone (.) ok, ui primary flow (.) ok, typescript (tsc) ok, json syntax ok, scanner suppressions ok, semgrep (security errors) ok, trivy secrets ok, trivy dependency vulnerabilities (high/critical, fixable) ok, trivy misconfigurations (high/critical) ok, trivy dependency vulnerabilities (other) warn, planned files present ok",
+  "review": {
+    "verdict": "revise",
+    "issues": [
+      "The PolicyScreen implementation is missing or incomplete, causing the policy gate to not block the UI correctly. The file src/screens/PolicyScreen.tsx is not shown and likely does not enforce the required behavior of showing the policy text and requiring the user to tick \"I agree\" before accessing any other app functionality. This needs to be implemented to fully satisfy the task requirements.",
+      "feedback",
+      "The acceptance tests only cover the core logic of policy acceptance, receipt storage, mileage logging, settings persistence, CSV export, and backup/restore. However, the UI gate that prevents any screen from rendering until the policy is accepted (including handling version changes) is not verified and the implementation of PolicyScreen is missing. Implement PolicyScreen to display the policy text, a checkbox for agreement, and store acceptance with version and date. Ensure the UI only proceeds to the main navigation after acceptance."
+    ]
+  },
+  "review_rounds": 5,
+  "seconds": 15463.9,
+  "agents": {
+    "coder": {
+      "calls": 143,
+      "prompt_tokens": 6769098,
+      "completion_tokens": 112177,
+      "seconds": 6350.940808296204
+    },
+    "security": {
+      "calls": 3,
+      "prompt_tokens": 88935,
+      "completion_tokens": 22094,
+      "seconds": 1048.6047234535217
+    },
+    "designer": {
+      "calls": 5,
+      "prompt_tokens": 139967,
+      "completion_tokens": 19632,
+      "seconds": 914.4154393672943
+    },
+    "vision": {
+      "calls": 85,
+      "prompt_tokens": 304690,
+      "completion_tokens": 20217,
+      "seconds": 1001.266927242279
+    },
+    "reviewer": {
+      "calls": 52,
+      "prompt_tokens": 1746275,
+      "completion_tokens": 31495,
+      "seconds": 1622.4072155952454
+    },
+    "critic": {
+      "calls": 22,
+      "prompt_tokens": 104444,
+      "completion_tokens": 52797,
+      "seconds": 756.1493678092957
+    },
+    "escalation": {
+      "calls": 13,
+      "prompt_tokens": 839044,
+      "completion_tokens": 19409,
+      "seconds": 259.70944571495056
+    },
+    "docs": {
+      "calls": 1,
+      "prompt_tokens": 30130,
+      "completion_tokens": 5163,
+      "seconds": 206.0741765499115
+    },
+    "retro": {
+      "calls": 1,
+      "prompt_tokens": 3191,
+      "completion_tokens": 4602,
+      "seconds": 131.0864224433899
+    }
+  },
+  "stalled": [
+    "high-csv-injection",
+    "high-pdf-html-injection"
+  ],
+  "security": {
+    "verdict": "fail",
+    "summary": "Review of the current codebase shows that most previously reported findings remain unaddressed. The only finding that has been resolved is the medium\u2011severity UUID dependency issue, which is now using a safe version (>=13). All other high\u2011severity and medium\u2011severity issues\u2014including CSV/PDF injection, backup passphrase policy, temporary file cleanup, numeric input validation, image size validation, encryption\u2011key persistence after data deletion, web\u2011fallback key storage, missing CSP header, and the two high\u2011severity transitive dependencies (braces, node\u2011forge) \u2013 are still present. No new security issues were discovered beyond the existing list.",
+    "findings": [
+      {
+        "id": "high-csv-injection",
+        "severity": "high",
+        "where": "code",
+        "file": "src/lib/exportCsv.ts",
+        "issue": "CSV export builds rows by concatenating raw user fields (receipt notes, categories, etc.) without sanitising leading characters. This enables CSV/Formula injection when a spreadsheet program interprets cells that start with `=`, `+`, `-`, or `@` as formulas.",
+        "fix": "Implement a sanitisation routine that prefixes a single quote (`'`) to any field starting with `=`, `+`, `-`, or `@`, or wrap all fields in double quotes and escape internal quotes. Ensure every value is escaped before joining them into the CSV string."
+      },
+      {
+        "id": "high-pdf-html-injection",
+        "severity": "high",
+        "where": "code",
+        "file": "src/lib/exportPdf.ts",
+        "issue": "PDF export creates an HTML string by interpolating user\u2011provided data (receipt notes, categories, etc.) directly into the markup without HTML escaping. Malicious markup could lead to script execution in PDF viewers that render the HTML.",
+        "fix": "HTML\u2011escape all user\u2011controlled fields before inserting them into the PDF template. Use a robust escaping utility (e.g., `escape-html`) and consider a strict whitelist of allowed characters."
+      },
+      {
+        "id": "medium-backup-passphrase-policy",
+        "severity": "medium",
+        "where": "code",
+        "file": "src/screens/BackupPassphraseScreen.tsx",
+        "issue": "The backup UI accepts any non\u2011empty passphrase; there is no enforcement of minimum length or character\u2011class complexity, allowing weak passwords that make the encrypted backup trivially bruteforceable.",
+        "fix": "Add UI validation that requires a passphrase of at least 8 characters and at least three of the four character classes (uppercase, lowercase, digits, symbols). Show a validation error if the policy isn\u2019t met before enabling the backup creation button."
+      },
+      {
+        "id": "medium-web-key-storage",
+        "severity": "medium",
+        "where": "code",
+        "file": "src/lib/storage/device.web.ts",
+        "issue": "On the optional web fallback the encryption key is persisted in `localStorage`, which is accessible to any script running in the same origin and therefore not a secure store.",
+        "fix": "Derive the encryption key from the user\u2011provided passphrase on each session (i.e., don\u2019t persist the raw key), or store the key in IndexedDB with proper encryption. Remove any `localStorage.setItem` calls that store the raw key."
+      },
+      {
+        "id": "medium-temp-backup-file-deletion",
+        "severity": "medium",
+        "where": "code",
+        "file": "src/lib/backup.ts",
+        "issue": "After creating an encrypted backup, the temporary file used for `expo-sharing` is never deleted, leaving the encrypted blob (and potentially the plaintext temporary file) on the device\u2019s file system.",
+        "fix": "After a successful `shareAsync` call, invoke `FileSystem.deleteAsync(tmpPath, { idempotent: true })` to securely remove the temporary file. Consider overwriting the file before deletion for extra safety."
+      },
+      {
+        "id": "medium-input-validation-numeric",
+        "severity": "medium",
+        "where": "code",
+        "file": "src/screens/ReceiptEntryScreen.tsx",
+        "issue": "Numeric inputs (amount, mileage, mileage rate, tax rate) lack comprehensive validation \u2013 negative numbers, excessively large values, or non\u2011numeric strings can be entered, potentially corrupting calculations or causing overflows.",
+        "fix": "Add client\u2011side validation that enforces: amount > 0, amount has at most 9 digits, miles \u2265 0, rates are positive decimals, and enforce a sensible upper bound (e.g., < 1\u202f000\u202f000). Display `HelperText` errors and disable the Save button until validation passes."
+      },
+      {
+        "id": "medium-image-size-validation-2026-00001",
+        "severity": "medium",
+        "where": "code",
+        "file": "src/lib/photoPicker.ts",
+        "issue": "Receipt photo capture via expo-image-picker accepts arbitrarily large image files. A malicious user could take extremely high\u2011resolution photos, exhausting device storage and potentially causing the app to become unusable.",
+        "fix": "Enforce a maximum image size or resolution when picking/taking a photo (e.g., set `quality` or `allowsEditing` options, check `FileSystem.getInfoAsync` for size, reject or down\u2011scale images above a safe threshold)."
+      },
+      {
+        "id": "medium-key-persistence-after-data-delete",
+        "severity": "medium",
+        "where": "code",
+        "file": "src/lib/dataReset.ts",
+        "issue": "The \"Delete all data\" action clears the SQLite tables but does not delete the encryption key stored in expo\u2011secure\u2011store. If any encrypted remnants remain on disk, the retained key could be used to recover them.",
+        "fix": "When performing a full data wipe, also delete the encryption key from SecureStore (e.g., `SecureStore.deleteItemAsync(KEY_NAME)`) and optionally overwrite the database file to prevent residual data recovery."
+      }
+    ],
+    "assurance": {
+      "blocking_open": 2,
+      "open": 8,
+      "deployment_actions": 4,
+      "fixed": 1
+    },
+    "ledger": [
+      {
+        "id": "high-deps-braces-2026-93687",
+        "severity": "high",
+        "file": "package-lock.json",
+        "where": "deployment",
+        "open_rounds": 3,
+        "issue": "The `braces` package (v3.0.3) has a CVE\u20112026\u201193687 vulnerability (Denial\u2011of\u2011Service via deeply nested regex patterns). The library is pulled in as a transitive dependency and is unpatched.",
+        "fix": "No fixed release exists yet: monitor the advisory and upgrade as soon as one ships; confirm whether the package is only a build-time dependency. Upgrade `braces` to a version >= 3.0.4 where the issue is fixed, or remove the dependency if not required. Run `npm update braces` and verify that the lockfile reflects the patched version.",
+        "status": "open",
+        "first_round": 1,
+        "history": [
+          {
+            "round": 1,
+            "status": "open",
+            "severity": "high"
+          },
+          {
+            "round": 2,
+            "status": "open",
+            "severity": "high",
+            "reason": "No change; the vulnerable braces 3.0.3 version is still present in lockfile and no fix is available."
+          },
+          {
+            "round": 5,
+            "status": "open",
+            "severity": "high",
+            "reason": "No change \u2013 vulnerability in transitive braces package remains unpatched."
+          }
+        ]
+      },
+      {
+        "id": "high-deps-node-forge-2026-85393",
+        "severity": "high",
+        "file": "package-lock.json",
+        "where": "deployment",
+        "open_rounds": 3,
+        "issue": "`node-forge` (v1.4.0) contains CVE\u20112026\u201185393 (RSA PKCS#1 v1.5 signature forgery). It is a transitive dependency (currently pulled in by `expo-crypto`).",
+        "fix": "No fixed release exists yet: monitor the advisory and upgrade as soon as one ships; confirm whether the package is only a build-time dependency. Upgrade `node-forge` to >= 1.5.0 if a patched release exists, or replace the usage of `expo-crypto`/`node-forge` with a modern, audited library such as the `@noble/*` suite that is already used elsewhere in the app.",
+        "status": "open",
+        "first_round": 1,
+        "history": [
+          {
+            "round": 1,
+            "status": "open",
+            "severity": "high"
+          },
+          {
+            "round": 2,
+            "status": "open",
+            "severity": "high",
+            "reason": "No change; node\u2011forge 1.4.0 remains a transitive dependency with no patch yet."
+          },
+          {
+            "round": 5,
+            "status": "open",
+            "severity": "high",
+            "reason": "No change \u2013 vulnerable node\u2011forge transitive dependency still in use."
+          }
+        ]
+      },
+      {
+        "id": "medium-deps-uuid-2026-41907",
+        "severity": "medium",
+        "file": "package-lock.json",
+        "where": "code",
+        "open_rounds": 2,
+        "issue": "`uuid` (v7.0.3) suffers from an out\u2011of\u2011bounds write (CVE\u20112026\u201141907) that can corrupt memory and affect data integrity.",
+        "fix": "Upgrade the `uuid` dependency to a safe, fixed version (e.g., ^13.0.1 as declared in `package.json`). Run `npm install uuid@^13.0.1` and lock the version.",
+        "status": "fixed",
+        "first_round": 1,
+        "history": [
+          {
+            "round": 1,
+            "status": "open",
+            "severity": "medium"
+          },
+          {
+            "round": 2,
+            "status": "open",
+            "severity": "medium",
+            "reason": "No change; the lockfile still pulls in uuid 7.0.3 which is vulnerable. Package.json lists a newer version but the lockfile has not been updated."
+          },
+          {
+            "round": 5,
+            "status": "fixed",
+            "severity": "medium",
+            "reason": "Fixed by updating to uuid ^13.0.1, which includes the security fix."
+          }
+        ]
+      },
+      {
+        "id": "medium-deps-sprintf-js-2026-97058",
+        "severity": "medium",
+        "file": "package-lock.json",
+        "where": "deployment",
+        "open_rounds": 3,
+        "issue": "`sprintf-js` (v1.0.3) is vulnerable to a Denial\u2011of\u2011Service via unbounded precision specifiers (CVE\u20112026\u201197058). It is pulled in transitively (e.g., via a logging or formatting library).",
+        "fix": "No fixed release exists yet: monitor the advisory and upgrade as soon as one ships; confirm whether the package is only a build-time dependency. Upgrade to a version >= 1.1.2 where the issue is resolved. If the library is not essential, consider removing it.",
+        "status": "open",
+        "first_round": 1,
+        "history": [
+          {
+            "round": 1,
+            "status": "open",
+            "severity": "medium"
+          },
+          {
+            "round": 2,
+            "status": "open",
+            "severity": "medium",
+            "reason": "No change; sprintf\u2011js remains vulnerable and no safe version is used."
+          },
+          {
+            "round": 5,
+            "status": "open",
+            "severity": "medium",
+            "reason": "No change \u2013 vulnerable sprintf\u2011js version still present as a transitive dependency."
+          }
+        ]
+      },
+      {
+        "id": "high-csv-injection",
+        "severity": "high",
+        "file": "src/lib/exportCsv.ts",
+        "where": "code",
+        "open_rounds": 3,
+        "issue": "CSV export builds rows by concatenating raw user fields (receipt notes, categories, etc.) without sanitising leading characters. This enables CSV/Formula injection when a spreadsheet program interprets cells that start with `=`, `+`, `-`, or `@` as formulas.",
+        "fix": "Implement a sanitisation routine that prefixes a single quote (`'`) to any field starting with `=`, `+`, `-`, or `@`, or wrap all fields in double quotes and escape internal quotes. Ensure every value is escaped before joining them into the CSV string.",
+        "status": "open",
+        "first_round": 1,
+        "history": [
+          {
+            "round": 1,
+            "status": "open",
+            "severity": "high"
+          },
+          {
+            "round": 2,
+            "status": "open",
+            "severity": "high",
+            "reason": "No change; CSV export (src/lib/exportCsv.ts) concatenates raw user fields without sanitising leading \"=,+,-,@\" characters."
+          },
+          {
+            "round": 5,
+            "status": "open",
+            "severity": "high",
+            "reason": "No change \u2013 CSV export still concatenates raw user fields without sanitisation."
+          }
+        ]
+      },
+      {
+        "id": "high-pdf-html-injection",
+        "severity": "high",
+        "file": "src/lib/exportPdf.ts",
+        "where": "code",
+        "open_rounds": 3,
+        "issue": "PDF export creates an HTML string by interpolating user\u2011provided data (receipt notes, categories, etc.) directly into the markup without HTML escaping. Malicious markup could lead to script execution in PDF viewers that render the HTML.",
+        "fix": "HTML\u2011escape all user\u2011controlled fields before inserting them into the PDF template. Use a robust escaping utility (e.g., `escape-html`) and consider a strict whitelist of allowed characters.",
+        "status": "open",
+        "first_round": 1,
+        "history": [
+          {
+            "round": 1,
+            "status": "open",
+            "severity": "high"
+          },
+          {
+            "round": 2,
+            "status": "open",
+            "severity": "high",
+            "reason": "No change; PDF export (src/lib/exportPdf.ts) interpolates user\u2011provided text into HTML without escaping, allowing HTML/script injection."
+          },
+          {
+            "round": 5,
+            "status": "open",
+            "severity": "high",
+            "reason": "No change \u2013 PDF export builds HTML with interpolated user data without escaping."
+          }
+        ]
+      },
+      {
+        "id": "medium-backup-passphrase-policy",
+        "severity": "medium",
+        "file": "src/screens/BackupPassphraseScreen.tsx",
+        "where": "code",
+        "open_rounds": 3,
+        "issue": "The backup UI accepts any non\u2011empty passphrase; there is no enforcement of minimum length or character\u2011class complexity, allowing weak passwords that make the encrypted backup trivially bruteforceable.",
+        "fix": "Add UI validation that requires a passphrase of at least 8 characters and at least three of the four character classes (uppercase, lowercase, digits, symbols). Show a validation error if the policy isn\u2019t met before enabling the backup creation button.",
+        "status": "open",
+        "first_round": 1,
+        "history": [
+          {
+            "round": 1,
+            "status": "open",
+            "severity": "medium"
+          },
+          {
+            "round": 2,
+            "status": "open",
+            "severity": "medium",
+            "reason": "No change; backup UI accepts any non\u2011empty passphrase and does not enforce complexity or minimum length."
+          },
+          {
+            "round": 5,
+            "status": "open",
+            "severity": "medium",
+            "reason": "No change \u2013 backup UI accepts any non\u2011empty passphrase, lacking strength checks."
+          }
+        ]
+      },
+      {
+        "id": "medium-web-key-storage",
+        "severity": "medium",
+        "file": "src/lib/storage/device.web.ts",
+        "where": "code",
+        "open_rounds": 3,
+        "issue": "On the optional web fallback the encryption key is persisted in `localStorage`, which is accessible to any script running in the same origin and therefore not a secure store.",
+        "fix": "Derive the encryption key from the user\u2011provided passphrase on each session (i.e., don\u2019t persist the raw key), or store the key in IndexedDB with proper encryption. Remove any `localStorage.setItem` calls that store the raw key.",
+        "status": "open",
+        "first_round": 1,
+        "history": [
+          {
+            "round": 1,
+            "status": "open",
+            "severity": "medium"
+          },
+          {
+            "round": 2,
+            "status": "open",
+            "severity": "medium",
+            "reason": "No change; the web fallback storage implementation (src/lib/storage/device.web.ts) persists the encryption key in localStorage, which is insecure."
+          },
+          {
+            "round": 5,
+            "status": "open",
+            "severity": "medium",
+            "reason": "No change \u2013 web fallback persists encryption key in localStorage."
+          }
+        ]
+      },
+      {
+        "id": "medium-temp-backup-file-deletion",
+        "severity": "medium",
+        "file": "src/lib/backup.ts",
+        "where": "code",
+        "open_rounds": 3,
+        "issue": "After creating an encrypted backup, the temporary file used for `expo-sharing` is never deleted, leaving the encrypted blob (and potentially the plaintext temporary file) on the device\u2019s file system.",
+        "fix": "After a successful `shareAsync` call, invoke `FileSystem.deleteAsync(tmpPath, { idempotent: true })` to securely remove the temporary file. Consider overwriting the file before deletion for extra safety.",
+        "status": "open",
+        "first_round": 1,
+        "history": [
+          {
+            "round": 1,
+            "status": "open",
+            "severity": "medium"
+          },
+          {
+            "round": 2,
+            "status": "open",
+            "severity": "medium",
+            "reason": "No change; after creating an encrypted backup the temporary file is never removed, leaving the encrypted blob on the device."
+          },
+          {
+            "round": 5,
+            "status": "open",
+            "severity": "medium",
+            "reason": "No change \u2013 temporary file created for expo\u2011sharing is not deleted after use."
+          }
+        ]
+      },
+      {
+        "id": "medium-input-validation-numeric",
+        "severity": "medium",
+        "file": "src/screens/ReceiptEntryScreen.tsx",
+        "where": "code",
+        "open_rounds": 3,
+        "issue": "Numeric inputs (amount, mileage, mileage rate, tax rate) lack comprehensive validation \u2013 negative numbers, excessively large values, or non\u2011numeric strings can be entered, potentially corrupting calculations or causing overflows.",
+        "fix": "Add client\u2011side validation that enforces: amount > 0, amount has at most 9 digits, miles \u2265 0, rates are positive decimals, and enforce a sensible upper bound (e.g., < 1\u202f000\u202f000). Display `HelperText` errors and disable the Save button until validation passes.",
+        "status": "open",
+        "first_round": 1,
+        "history": [
+          {
+            "round": 1,
+            "status": "open",
+            "severity": "medium"
+          },
+          {
+            "round": 2,
+            "status": "open",
+            "severity": "medium",
+            "reason": "No change; numeric fields (amount, mileage, rates, tax rate) are not validated for range or type, allowing negative or absurd values."
+          },
+          {
+            "round": 5,
+            "status": "open",
+            "severity": "medium",
+            "reason": "No change \u2013 numeric fields (amount, mileage, rates) lack proper validation."
+          }
+        ]
+      },
+      {
+        "id": "deployment-csp-header",
+        "severity": "medium",
+        "file": "public/index.html",
+        "where": "deployment",
+        "open_rounds": 3,
+        "issue": "The web fallback does not include a Content\u2011Security\u2011Policy (CSP) header/meta tag, leaving it vulnerable to injection attacks if the app ever runs in a browser.",
+        "fix": "Add a CSP meta tag (or configure the hosting server to send an HTTP CSP header) that restricts sources to `'self'` for scripts, styles, images, etc. Example: `<meta http-equiv=\"Content\u2011Security\u2011Policy\" content=\"default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:;\">`.",
+        "status": "open",
+        "first_round": 1,
+        "history": [
+          {
+            "round": 1,
+            "status": "open",
+            "severity": "medium"
+          },
+          {
+            "round": 2,
+            "status": "open",
+            "severity": "medium",
+            "reason": "No change; the optional web build does not include a CSP meta/header, exposing it to injection if ever served."
+          },
+          {
+            "round": 5,
+            "status": "open",
+            "severity": "medium",
+            "reason": "No change \u2013 web fallback does not include a CSP header/meta tag."
+          }
+        ]
+      },
+      {
+        "id": "medium-image-size-validation-2026-00001",
+        "severity": "medium",
+        "file": "src/lib/photoPicker.ts",
+        "where": "code",
+        "open_rounds": 2,
+        "issue": "Receipt photo capture via expo-image-picker accepts arbitrarily large image files. A malicious user could take extremely high\u2011resolution photos, exhausting device storage and potentially causing the app to become unusable.",
+        "fix": "Enforce a maximum image size or resolution when picking/taking a photo (e.g., set `quality` or `allowsEditing` options, check `FileSystem.getInfoAsync` for size, reject or down\u2011scale images above a safe threshold).",
+        "status": "open",
+        "first_round": 2,
+        "history": [
+          {
+            "round": 2,
+            "status": "open",
+            "severity": "medium"
+          },
+          {
+            "round": 5,
+            "status": "open",
+            "severity": "medium",
+            "reason": "No change \u2013 receipt photo capture accepts arbitrarily large images."
+          }
+        ]
+      },
+      {
+        "id": "medium-key-persistence-after-data-delete",
+        "severity": "medium",
+        "file": "src/lib/dataReset.ts",
+        "where": "code",
+        "open_rounds": 2,
+        "issue": "The \"Delete all data\" action clears the SQLite tables but does not delete the encryption key stored in expo\u2011secure\u2011store. If any encrypted remnants remain on disk, the retained key could be used to recover them.",
+        "fix": "When performing a full data wipe, also delete the encryption key from SecureStore (e.g., `SecureStore.deleteItemAsync(KEY_NAME)`) and optionally overwrite the database file to prevent residual data recovery.",
+        "status": "open",
+        "first_round": 2,
+        "history": [
+          {
+            "round": 2,
+            "status": "open",
+            "severity": "medium"
+          },
+          {
+            "round": 5,
+            "status": "open",
+            "severity": "medium",
+            "reason": "No change \u2013 \"Delete all data\" does not clear the encryption key from secure storage."
+          }
+        ]
+      }
+    ]
+  },
+  "deployment_guide": {
+    "written": true,
+    "missing_sections": [],
+    "app_type": "mobile app (Expo / React Native)"
+  },
+  "ui": {
+    "verdict": "fail",
+    "summary": "The UI implementation largely follows DESIGN.md \u2013 all primary screens are present, the navigation (bottom tab bar + FAB) reaches every primary action, the Axe audit reports zero accessibility violations, Lighthouse accessibility scores 98\u202f/\u202f100 and best\u2011practice 100\u202f/\u202f100, and the end\u2011to\u2011end flow walks through every happy\u2011path screen. Nonetheless there are a few gaps that need fixing before the product can be considered production\u2011ready: the error states for Dashboard, Receipts and Mileage screens are not implemented, some components still use hard\u2011coded colours / spacing instead of the design tokens, focus\u2011visible styling is missing on a few interactive elements, and a handful of small UX/HTML best\u2011practice items (autocomplete, password\u2011show\u2011hide, ARIA labels) are absent. These issues are reported with appropriate severity levels and concrete remediation steps.",
+    "findings": [
+      {
+        "severity": "high",
+        "file": "src/screens/DashboardScreen.tsx",
+        "issue": "The DashboardScreen does not render the error view defined in DESIGN.md (full\u2011screen error with a Retry button) when data loading fails, leaving the primary flow unhandled for network\u2011 or storage\u2011error scenarios.",
+        "fix": "Add a conditional error state that displays a centered error message (copy: \"Failed to load data. Pull down to retry.\") with a PrimaryButton labelled \"Retry\" that re\u2011triggers data fetch. Use the existing `ErrorView` component (or create one) and ensure it follows the design token colours and spacing.",
+        "source": "designer"
+      },
+      {
+        "severity": "high",
+        "file": "src/screens/ReceiptsScreen.tsx",
+        "issue": "ReceiptsScreen (and by inheritance MileageScreen) lack the error view (\"Could not fetch receipts. Pull to retry.\") required by the spec, so a data\u2011fetch failure would leave the UI blank.",
+        "fix": "Implement an error UI identical in layout to DashboardScreen\u2019s error view but with the copy from the spec. Hook the view to the catch\u2011block of the receipts fetch promise and provide a Retry button that calls the fetch function again.",
+        "source": "designer"
+      },
+      {
+        "severity": "medium",
+        "file": "src/components/ui/PrimaryButton.tsx",
+        "issue": "Background colour and text colour are hard\u2011coded (`#0061A4` and `#FFFFFF`) instead of pulling from `theme.colors.primary` and `theme.colors.onPrimary`.",
+        "fix": "Replace the literal colour values with theme references (e.g. `style={{ backgroundColor: theme.colors.primary }}`) and ensure the button uses the `theme` object (via `useTheme()` from React\u2011Native\u2011Paper).",
+        "source": "designer"
+      },
+      {
+        "severity": "medium",
+        "file": "src/components/ui/PrimaryButton.tsx",
+        "issue": "Focus\u2011visible outline (2\u202fdp) required for WCAG is not applied on web when the button receives keyboard focus.",
+        "fix": "Add a `:focus-visible` style (or `onFocus` handler) that renders a 2\u202fdp solid outline using `theme.colors.outline`. For RN Paper you can pass `theme={...}` with `roundness` and `elevation` overrides or wrap the button in a custom component that adds the outline when `focused` state is true.",
+        "source": "designer"
+      },
+      {
+        "severity": "medium",
+        "file": "src/components/ui/SummaryCard.tsx",
+        "issue": "Padding and margin values are set directly to numbers (e.g., `marginBottom: 16`, `padding: 16`) instead of using the spacing token (`theme.spacing`).",
+        "fix": "Replace fixed numbers with `theme.spacing * 2` (for 16\u202fdp) and `theme.spacing * 2` for padding. Import the theme via `useTheme()` and reference `theme.spacing`.",
+        "source": "designer"
+      },
+      {
+        "severity": "medium",
+        "file": "src/components/ui/SettingSwitch.tsx",
+        "issue": "Switch lacks an explicit `accessibilityLabel` linking it to its surrounding text label, which can cause screen\u2011reader ambiguity.",
+        "fix": "Pass `accessibilityLabel` prop that mirrors the label text (e.g., `accessibilityLabel={label}`) and set `accessibilityRole=\"switch\"`. Verify that the label is programmatically associated via `accessibilityState` if needed.",
+        "source": "designer"
+      },
+      {
+        "severity": "medium",
+        "file": "src/screens/BackupPassphraseScreen.tsx",
+        "issue": "Secure `FormField` for passphrase entry does not include a \"show/hide password\" toggle, which is a common UX expectation for password fields.",
+        "fix": "Add an icon button (eye / eye\u2011off) inside the `TextInput` that toggles `secureTextEntry` on press. Ensure the toggle button has an `accessibilityLabel` like \"Show passphrase\" / \"Hide passphrase\".",
+        "source": "designer"
+      },
+      {
+        "severity": "medium",
+        "file": "src/screens/ReceiptEntryScreen.tsx",
+        "issue": "Form inputs (Amount, Date, Category) lack appropriate `autoComplete`/`keyboardType` attributes (e.g., numeric keyboard for amount, date picker for date), reducing keyboard efficiency on mobile.",
+        "fix": "Set `keyboardType=\"numeric\"` for amount, `autoComplete=\"off\"` or appropriate values for category, and use a date picker component that sets the input `type=\"date\"` (or appropriate RN date picker) with `accessibilityHint` describing the expected format.",
+        "source": "designer"
+      },
+      {
+        "severity": "low",
+        "file": "src/screens/ExportScreen.tsx",
+        "issue": "Performance score (57) is below typical thresholds; the bundle includes unused modules (e.g., heavy PDF libraries) that increase load time.",
+        "fix": "Implement lazy loading for heavy modules: `import()` the PDF generation code only when the Export PDF button is pressed. Adjust `metro.config.js` to enable RAM bundles or enable `inlineRequires` to reduce startup size.",
+        "source": "designer"
+      },
+      {
+        "severity": "low",
+        "file": "src/components/ui/Screen.tsx",
+        "issue": "The global container uses a hard\u2011coded max\u2011width of 420\u202fdp (`style={{ maxWidth: 420 }}`) rather than using a layout token or responsive style.",
+        "fix": "Replace the literal with a constant derived from the theme (e.g., `maxWidth: 420` can stay but comment that it follows spec; for future flexibility expose it as `theme.layout.maxContentWidth`.) Ensure the container is centered with `marginHorizontal: 'auto'` on web via CSS.",
+        "source": "designer"
+      },
+      {
+        "severity": "low",
+        "file": "src/components/ui/BottomTabBar.tsx",
+        "issue": "Bottom navigation icons lack `aria-label` for the unselected state on web, which can affect screen\u2011reader navigation.",
+        "fix": "Add `accessibilityLabel` (or `aria-label` via `accessibilityLabel`) to each tab item, using the route title. Ensure the navigation component passes `accessibilityRole=\"tablist\"` and each tab `accessibilityRole=\"tab\"`.",
+        "source": "designer"
+      },
+      {
+        "severity": "medium",
+        "viewport": "phone",
+        "issue": "The primary action button ('Accept') is disabled until the checkbox is checked, but there's no visual feedback or animation to indicate this state change. The button is also too large and centered, which feels less intentional than a well-placed action button.",
+        "fix": "Add a subtle animation or state change (e.g., a slight pulse or border change) when the checkbox is checked. Consider moving the button to the bottom-right corner for a more intentional placement.",
+        "screen": "policy_gate",
+        "source": "vision"
+      },
+      {
+        "severity": "medium",
+        "viewport": "phone",
+        "issue": "The checkbox and its label are misaligned with the button below. The text 'Tick the box above to continue' is centered, but the checkbox is left-aligned, creating visual imbalance.",
+        "fix": "Align the checkbox and its label to the left, and position the 'Tick the box above to continue' text to the right of the checkbox for better visual grouping.",
+        "screen": "policy_gate",
+        "source": "vision"
+      },
+      {
+        "severity": "low",
+        "viewport": "both",
+        "issue": "The desktop version is a stretched version of the phone layout, not a redesigned layout that takes advantage of the larger screen. The content is not centered or spaced to feel intentional on desktop.",
+        "fix": "Redesign the desktop layout to use the full width, center the policy text, and add spacing between sections. Consider using a two-column layout for the policy sections on desktop.",
+        "screen": "policy_gate",
+        "source": "vision"
+      },
+      {
+        "severity": "low",
+        "viewport": "phone",
+        "issue": "The typography is readable but lacks a clear type scale. The heading is large, but the body text is not significantly smaller, and there's no visual hierarchy to guide the user's eye.",
+        "fix": "Use a clear type scale: a large heading, a medium subheading, and a smaller body text. Consider using bold for the section headers to create visual hierarchy.",
+        "screen": "policy_gate",
+        "source": "vision"
+      },
+      {
+        "severity": "high",
+        "screen": "policy_gate",
+        "source": "vision",
+        "issue": "visual quality 7/10 on 'policy_gate' (needs 8+): The policy gate screen is clean and functional, with a clear visual hierarchy and a single primary action. Typography is readable and consistent, and spacing is generous. However, it lacks polish in form design and visual hierarchy, and the desktop version is underutilized.",
+        "fix": "Address this screen's findings until it looks polished and professional."
+      },
+      {
+        "severity": "medium",
+        "viewport": "phone",
+        "issue": "Form fields are not consistently sized; 'Notes' field is taller than others, creating visual imbalance.",
+        "fix": "Standardize field heights across all input fields for uniformity and visual harmony.",
+        "screen": "receipt_entry",
+        "source": "vision"
+      },
+      {
+        "severity": "medium",
+        "viewport": "phone",
+        "issue": "Labels are placed above fields, but 'Type' section lacks consistent spacing between the label and the toggle buttons.",
+        "fix": "Add consistent vertical padding above and below the 'Type' toggle buttons to align with other field groups.",
+        "screen": "receipt_entry",
+        "source": "vision"
+      },
+      {
+        "severity": "low",
+        "viewport": "phone",
+        "issue": "The 'Save receipt' button is slightly too wide for the screen, creating a small margin on the right edge.",
+        "fix": "Adjust button width to better fit the screen width, ensuring it doesn't visually extend beyond the content area.",
+        "screen": "receipt_entry",
+        "source": "vision"
+      },
+      {
+        "severity": "low",
+        "viewport": "phone",
+        "issue": "The floating action buttons ('Add receipt', 'Add mileage') are slightly misaligned with the bottom navigation bar and each other, creating a visual imbalance.",
+        "fix": "Adjust the FAB positioning to align perfectly with the bottom navigation bar and ensure consistent spacing between buttons.",
+        "screen": "dashboard_populated",
+        "source": "vision"
+      },
+      {
+        "severity": "low",
+        "viewport": "phone",
+        "issue": "The 'Receipt saved' snackbar is positioned slightly lower than the FABs, making it appear visually disconnected from the action.",
+        "fix": "Adjust the snackbar's vertical position to appear directly below the FABs for better visual continuity.",
+        "screen": "dashboard_populated",
+        "source": "vision"
+      },
+      {
+        "severity": "medium",
+        "viewport": "both",
+        "issue": "No primary action button or call-to-action within the main content area. The screen is purely informational, which is acceptable for a list view but lacks engagement for a polished product.",
+        "fix": "Add a primary action button (e.g., 'Add receipt' or 'Export') in the content area, aligned with the card or below it, to guide users to the next step.",
+        "screen": "receipts_loaded",
+        "source": "vision"
+      },
+      {
+        "severity": "medium",
+        "viewport": "both",
+        "issue": "The card lacks visual hierarchy or depth. The amount ($42.10) is bold but the rest of the text is monotonous, making it feel flat and unengaging.",
+        "fix": "Use subtle visual hierarchy: bold the amount, use a lighter weight for secondary text, add a subtle background color or shadow to the card to create depth.",
+        "screen": "receipts_loaded",
+        "source": "vision"
+      },
+      {
+        "severity": "low",
+        "viewport": "both",
+        "issue": "The typography is consistent but lacks a clear type scale. The heading 'Receipts' is larger than the card text, but there's no visual distinction between the card's amount and its description lines.",
+        "fix": "Establish a type scale: use a larger, bold font for the amount, a medium font for 'Date' and 'Category', and a smaller, lighter font for 'Office supplies'.",
+        "screen": "receipts_loaded",
+        "source": "vision"
+      },
+      {
+        "severity": "low",
+        "viewport": "both",
+        "issue": "The card's spacing is minimal, especially around the 'Office supplies' line, which feels cramped and reduces readability.",
+        "fix": "Increase vertical spacing within the card, especially between the 'Category' line and the 'Office supplies' line, to improve readability and visual breathing room.",
+        "screen": "receipts_loaded",
+        "source": "vision"
+      },
+      {
+        "severity": "high",
+        "screen": "receipts_loaded",
+        "source": "vision",
+        "issue": "visual quality 7/10 on 'receipts_loaded' (needs 8+): Polished, clean layout with consistent spacing and clear visual hierarchy. The card design is well-aligned and uses appropriate typography. However, the screen lacks visual depth, interactive feedback, and a clear primary action beyond the navigation bar, which limits its perceived polish for a premium product.",
+        "fix": "Address this screen's findings until it looks polished and professional."
+      },
+      {
+        "severity": "low",
+        "viewport": "phone",
+        "issue": "The 'Add photo' button is a link-style text button, which is less visually distinct than a full button with padding and clear affordance.",
+        "fix": "Style the 'Add photo' button as a full button with padding, rounded corners, and consistent stroke weight to match the other form controls.",
+        "screen": "receipt_entry_photo",
+        "source": "vision"
+      },
+      {
+        "severity": "low",
+        "viewport": "phone",
+        "issue": "The 'Save receipt' button is large and prominent, but the form fields are not consistently spaced above and below the button, creating slight visual imbalance.",
+        "fix": "Add consistent vertical spacing (e.g., 16px) above and below the 'Save receipt' button to align with the spacing between other form elements.",
+        "screen": "receipt_entry_photo",
+        "source": "vision"
+      },
+      {
+        "severity": "low",
+        "viewport": "desktop",
+        "issue": "The form fields are not fully utilizing the available width; they are left-aligned and appear cramped, especially the 'Notes' field which is narrow for desktop.",
+        "fix": "Expand the field widths to utilize the full container width (e.g., 100% with padding) and add consistent horizontal padding to improve readability and spacing on desktop.",
+        "screen": "receipt_entry_photo",
+        "source": "vision"
+      },
+      {
+        "severity": "medium",
+        "viewport": "phone",
+        "issue": "The 'Add receipt' and 'Add mileage' FAB buttons overlap the right edge of the recent activity cards, creating visual clutter and potentially obstructing interaction.",
+        "fix": "Adjust the FAB position or reduce its size to prevent overlap with content. Consider placing the FAB slightly to the left of the cards or increasing the horizontal margin.",
+        "screen": "dashboard_with_two_receipts",
+        "source": "vision"
+      },
+      {
+        "severity": "medium",
+        "viewport": "phone",
+        "issue": "The dark snackbar 'Receipt saved' partially covers the 'Add mileage' button, making it visually ambiguous and potentially inaccessible.",
+        "fix": "Position the snackbar to appear above or below the FAB, or ensure it does not obscure interactive elements. Consider animating it to slide in from the bottom without covering the FAB.",
+        "screen": "dashboard_with_two_receipts",
+        "source": "vision"
+      },
+      {
+        "severity": "low",
+        "viewport": "both",
+        "issue": "The layout is too cramped vertically on both phone and desktop, with little breathing room between the summary cards, activity cards, and the FAB. This reduces visual hierarchy and makes the screen feel dense.",
+        "fix": "Increase vertical spacing between the summary cards and the recent activity section, and between the activity cards and the FAB. Use consistent padding and margins to create a more spacious, intentional layout.",
+        "screen": "dashboard_with_two_receipts",
+        "source": "vision"
+      },
+      {
+        "severity": "low",
+        "viewport": "desktop",
+        "issue": "The desktop layout appears stretched and does not utilize the full width effectively. Elements are still aligned to the left edge, lacking the breathing room and horizontal spacing expected for a desktop experience.",
+        "fix": "Apply horizontal padding to the container to utilize the full width. Add space between the summary cards and the activity section. Ensure the FAB and navigation bar are properly spaced and not cramped.",
+        "screen": "dashboard_with_two_receipts",
+        "source": "vision"
+      },
+      {
+        "severity": "high",
+        "screen": "dashboard_with_two_receipts",
+        "source": "vision",
+        "issue": "visual quality 7/10 on 'dashboard_with_two_receipts' (needs 8+): The dashboard is clean and functional, with clear visual hierarchy and a consistent grid. The primary action (FAB) is visible, and the typography is readable. However, the layout is cramped on both views, the FAB buttons overlap the activity cards, and the snackbar partially obscures the FAB. These are minor but noticeable issues that prevent it from being polished.",
+        "fix": "Address this screen's findings until it looks polished and professional."
+      },
+      {
+        "severity": "medium",
+        "viewport": "phone",
+        "issue": "Form fields lack labels above them; labels are placed inside the input fields, which is less accessible and less clear for users.",
+        "fix": "Move labels above each input field, aligned to the left, using a consistent type scale and spacing.",
+        "screen": "mileage_entry",
+        "source": "vision"
+      },
+      {
+        "severity": "medium",
+        "viewport": "phone",
+        "issue": "Input fields are too narrow and lack sufficient padding, making them feel cramped and hard to tap accurately on a mobile device.",
+        "fix": "Increase field width and add generous padding (especially left/right) to make inputs comfortable for touch interaction.",
+        "screen": "mileage_entry",
+        "source": "vision"
+      },
+      {
+        "severity": "low",
+        "viewport": "phone",
+        "issue": "The 'Save mileage' button is centered horizontally but not vertically aligned with the form fields, creating an asymmetrical layout.",
+        "fix": "Center the button vertically within the form container for better visual balance.",
+        "screen": "mileage_entry",
+        "source": "vision"
+      },
+      {
+        "severity": "low",
+        "viewport": "both",
+        "issue": "No error states or helper text are visible in the current screenshot; the form appears empty and unvalidated.",
+        "fix": "Add placeholder text or helper text under each field to guide users. Implement validation with inline error messages if fields are invalid.",
+        "screen": "mileage_entry",
+        "source": "vision"
+      },
+      {
+        "severity": "low",
+        "viewport": "desktop",
+        "issue": "The desktop layout is simply a scaled-up version of the phone layout, with no responsive adjustments or optimized spacing for larger screens.",
+        "fix": "Reorganize the form for desktop: increase field widths, add spacing between fields, and consider a two-column layout for better use of screen real estate.",
+        "screen": "mileage_entry",
+        "source": "vision"
+      },
+      {
+        "severity": "high",
+        "screen": "mileage_entry",
+        "source": "vision",
+        "issue": "visual quality 7/10 on 'mileage_entry' (needs 8+): Polished, clean, and functional form with clear visual hierarchy and touch-friendly controls. Lacks subtle polish like consistent spacing, form labels, and error handling, but meets core usability needs for a quick on-device task.",
+        "fix": "Address this screen's findings until it looks polished and professional."
+      },
+      {
+        "severity": "low",
+        "viewport": "both",
+        "issue": "The toggle switch for 'App lock' is visually indistinct; the knob is a solid grey circle without a clear affordance or state indication (e.g., no color change when toggled).",
+        "fix": "Use a standard iOS/Android toggle style with a colored knob that clearly indicates 'on' (e.g., blue or green) and 'off' (e.g., grey) states.",
+        "screen": "settings",
+        "source": "vision"
+      },
+      {
+        "severity": "low",
+        "viewport": "both",
+        "issue": "The buttons lack visual hierarchy; all buttons are identical in size and style, making it hard to distinguish primary actions from secondary ones (e.g., 'Delete all data' is as prominent as 'Export').",
+        "fix": "Use subtle visual differentiation: make 'Export' and 'Backup & restore' slightly larger or use a different border style to indicate they are critical actions. Alternatively, use a more prominent color for critical actions.",
+        "screen": "settings",
+        "source": "vision"
+      },
+      {
+        "severity": "low",
+        "viewport": "both",
+        "issue": "The text 'App lock' appears twice: once as a label above the toggle and once as a button label below it. This is redundant and confusing.",
+        "fix": "Remove the 'App lock' button label. The toggle label 'App lock' is sufficient to identify the setting.",
+        "screen": "settings",
+        "source": "vision"
+      },
+      {
+        "severity": "low",
+        "viewport": "both",
+        "issue": "The buttons are not touch-friendly on the phone view; they are too close to the edges and lack sufficient padding around the text.",
+        "fix": "Add padding to all buttons to ensure they are comfortably tappable on a phone. Ensure the button width is at least 44px on iOS or 48px on Android, and add generous padding on all sides.",
+        "screen": "settings",
+        "source": "vision"
+      },
+      {
+        "severity": "low",
+        "viewport": "both",
+        "issue": "The typography is consistent but lacks a clear type scale. The heading 'Settings' is bold, but the body text is not differentiated from the button text, making it hard to read.",
+        "fix": "Use a proper type scale: a larger, bold heading for 'Settings', a medium weight for the toggle label, and a smaller, regular weight for the button text. Ensure the button text is at least 16px for readability.",
+        "screen": "settings",
+        "source": "vision"
+      },
+      {
+        "severity": "high",
+        "screen": "settings",
+        "source": "vision",
+        "issue": "visual quality 7/10 on 'settings' (needs 8+): The settings screen is clean, functional, and consistent across both phone and desktop views. It follows a clear vertical hierarchy with a primary action (App lock toggle) at the top, followed by a list of clearly labeled actions. Typography is readable and consistent, spacing is generous, and alignment is clean. However, it lacks visual polish and brand personality that would elevate it to 8 or 9.",
+        "fix": "Address this screen's findings until it looks polished and professional."
+      },
+      {
+        "severity": "low",
+        "viewport": "both",
+        "issue": "The 'Create backup' button is slightly too large for the vertical space, leaving a small amount of unused space below it. This is not a functional issue but could be optimized for better visual balance.",
+        "fix": "Reduce the button height slightly or add a small spacer below it to better utilize the available space.",
+        "screen": "backup_passphrase_modal",
+        "source": "vision"
+      },
+      {
+        "severity": "low",
+        "viewport": "both",
+        "issue": "The 'Delete all data' link is not visually grouped with the success message card, and its placement is slightly ambiguous.",
+        "fix": "Add subtle visual grouping (e.g., a divider or indentation) or reposition it closer to the card to clarify its relationship to the restored data.",
+        "screen": "restore_success",
+        "source": "vision"
+      },
+      {
+        "severity": "medium",
+        "screen": "policy_gate",
+        "source": "critic",
+        "issue": "Page title \"Terms of Use and Privacy Policy\": Rendered at ~48px display scale, wrapping to three lines and consuming a third of the 844px viewport; it also sits ~50px from the top with no status-bar/safe-area inset, so it collides with the notch on real devices.",
+        "fix": "Use `<Text variant=\"headlineMedium\">` (28/36) with color `onSurface` for the title and `variant=\"bodyMedium\"` / `onSurfaceVariant` for the \"Version 1\u2026\" line, with 8px between them. Wrap the screen in the shared `ScreenContainer` which applies `useSafeAreaInsets()` top padding plus 24px horizontal padding.",
+        "shared": true
+      },
+      {
+        "severity": "medium",
+        "screen": "policy_gate",
+        "source": "critic",
+        "issue": "Accept button + helper text block: The primary CTA sits in the middle of the phone screen with ~400px of empty background below it, so the screen looks unfinished and the action is not reachable-anchored; on desktop the same block leaves 250px of void.",
+        "fix": "Split the layout: policy Card inside a `ScrollView` with `flex: 1`, then a footer `View` with `paddingTop: 16`, `paddingHorizontal: 24`, `paddingBottom: insets.bottom + 16` and `borderTopWidth: StyleSheet.hairlineWidth`, `borderTopColor: theme.colors.outlineVariant`. Put the Checkbox.Item, the Accept `Button mode=\"contained\"` (full width, `contentStyle={{height:48}}`) and the helper line in that footer.",
+        "shared": false
+      },
+      {
+        "severity": "medium",
+        "screen": "policy_gate",
+        "source": "critic",
+        "issue": "Consent checkbox row: Bare `Checkbox` + `Text` \u2014 the label is not tappable, the box is top-aligned against a two-line label, and the row has no 48dp touch target.",
+        "fix": "Replace with `<Checkbox.Item status={checked?'checked':'unchecked'} onPress={toggle} position=\"leading\" label=\"I have read and agree to the Terms of Use and Privacy Policy.\" labelVariant=\"bodyMedium\" style={{paddingHorizontal:0}} />` so the whole row toggles and the box is vertically centered.",
+        "shared": false
+      },
+      {
+        "severity": "medium",
+        "screen": "policy_gate",
+        "source": "critic",
+        "issue": "\"Tick the box above to continue.\" caption: Floating centered grey text under the button, disconnected from the control it explains and still shown in a size/weight that competes with the CTA.",
+        "fix": "Render as `<HelperText type=\"info\" visible={!checked} style={{textAlign:'center'}}>` (bodySmall, `onSurfaceVariant`) directly under the button with no extra margin, and hide it once the box is checked so the footer height stays stable.",
+        "shared": false
+      },
+      {
+        "severity": "medium",
+        "screen": "policy_gate",
+        "source": "critic",
+        "issue": "Policy Card and its sections: Outlined card with ~32px inner padding on mobile, section headings in plain bold body text, and uneven gaps so the three sections read as one grey wall.",
+        "fix": "Use `<Card mode=\"contained\">` with `theme.colors.surfaceVariant`, `borderRadius: 16`, `Card.Content` padding 16. Section heading: `Text variant=\"titleSmall\"` `onSurface`; body: `Text variant=\"bodyMedium\"` `onSurfaceVariant` with 4px below the heading and 16px between sections.",
+        "shared": false
+      },
+      {
+        "severity": "medium",
+        "screen": "policy_gate",
+        "source": "critic",
+        "issue": "Desktop (1280px) content column: Content is a narrow 512px column pinned to the top of a 800px canvas with no vertical balance, and spacing/type are identical to mobile, so it looks like a stretched phone screen.",
+        "fix": "In the shared `ScreenContainer`, constrain content with `maxWidth: 560, alignSelf: 'center', width: '100%'` and, when `width >= 900`, center the block vertically (`justifyContent: 'center'`) and raise horizontal padding to 32. Keep the footer CTA inside the same 560px column.",
+        "shared": true
+      },
+      {
+        "severity": "medium",
+        "screen": "receipts_loaded",
+        "source": "critic",
+        "issue": "Bottom tab bar (shared navigator): Labels 'Dashboard / Receipts / Mileage / Settings' are cut off at the bottom edge \u2014 the bar ignores the safe-area inset and has too little height.",
+        "fix": "In the Tab.Navigator screenOptions set tabBarStyle={{ height: 56 + insets.bottom, paddingTop: 8, paddingBottom: 8 + insets.bottom, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.colors.outlineVariant }} using useSafeAreaInsets(), and tabBarLabelStyle={{ fontSize: 12, lineHeight: 16 }}. Apply once in the navigator so all tabs are fixed.",
+        "shared": true
+      },
+      {
+        "severity": "medium",
+        "screen": "receipts_loaded",
+        "source": "critic",
+        "issue": "Add-receipt FAB: Spec requires the FAB on every list screen ('Tap the + button to add your first receipt'), but the Receipts screen has no way to add an entry.",
+        "fix": "Add <FAB icon=\"plus\" label=\"Add receipt\" onPress={\u2026} style={{ position:'absolute', right:16, bottom:16 + insets.bottom }} /> inside a shared ScreenScaffold, and give the FlatList contentContainerStyle paddingBottom: 96 so the last card is never covered.",
+        "shared": true
+      },
+      {
+        "severity": "medium",
+        "screen": "receipts_loaded",
+        "source": "critic",
+        "issue": "ReceiptCard content hierarchy: Amount, date, category and note are four stacked lines of near-identical size/weight; 'Date:' and 'Category:' prefixes add noise and the card is 4 rows tall for 4 short values.",
+        "fix": "Restructure to: row 1 \u2014 Text variant=\"titleLarge\" ($42.10, onSurface) left, type on the right as <Chip compact mode=\"flat\">Expense</Chip>; row 2 \u2014 Text variant=\"bodyMedium\" color onSurfaceVariant with '2026-10-10 \u00b7 Supplies' (drop the labels); row 3 \u2014 Text variant=\"bodySmall\" onSurfaceVariant for the note, numberOfLines={1}. Use Card.Content with padding 16 and 4px gaps between rows.",
+        "shared": true
+      },
+      {
+        "severity": "medium",
+        "screen": "receipts_loaded",
+        "source": "critic",
+        "issue": "Screen header 'Receipts': Oversized (~44px) bold title floating in ~56px of dead space, with no consistent app bar across screens.",
+        "fix": "Replace with the shared Header: Text variant=\"headlineSmall\" (24/32) in paddingHorizontal 16, paddingTop 16, paddingBottom 8 (below the safe-area top inset), color onSurface. Same component on Dashboard/Mileage/Settings.",
+        "shared": true
+      },
+      {
+        "severity": "medium",
+        "screen": "receipts_loaded",
+        "source": "critic",
+        "issue": "FlatList padding & separators: Card sits flush to a 48px side gutter with no defined item spacing, so multi-item lists will have inconsistent rhythm.",
+        "fix": "Set contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 8, paddingBottom: 96 }} and ItemSeparatorComponent={() => <View style={{ height: 12 }} />}; give Card mode=\"elevated\" elevation={1} with theme.roundness 12 so all cards match.",
+        "shared": true
+      },
+      {
+        "severity": "medium",
+        "screen": "receipts_loaded",
+        "source": "critic",
+        "issue": "Desktop (1280) layout: Content is locked to a narrow ~512px column with a vast empty area, and the bottom tab bar is used as desktop navigation with huge label gaps.",
+        "fix": "In the shared ScreenScaffold, wrap content in a centered container with maxWidth 840 and paddingHorizontal 24 at width \u2265 1024, and render the receipt list as a 2-column grid (FlatList numColumns={2}, columnWrapperStyle gap 16) on that breakpoint; constrain the tab bar's inner row to the same 840px centered width.",
+        "shared": true
+      },
+      {
+        "severity": "medium",
+        "screen": "dashboard_with_two_receipts",
+        "source": "critic",
+        "issue": "Add receipt / Add mileage speed-dial actions (FAB area): The two actions render as oversized extended FABs that float over the activity cards and the Snackbar, there is no primary + FAB or scrim, and on phone the right edge is clipped off-screen.",
+        "fix": "Replace the custom buttons with Paper `<FAB.Group icon={open ? 'close' : 'plus'} open={open} onStateChange={...} visible actions={[{icon:'receipt', label:'Add receipt', onPress}, {icon:'car', label:'Add mileage', onPress}]} fabStyle={{marginRight:16, marginBottom:16}} />` so labels appear as small right-aligned chips next to 40dp mini-FABs with a dimming scrim. Mount it inside a shared `ScreenScaffold` so the FAB sits above the tab bar (bottom = tabBarHeight + 16) on every screen.",
+        "shared": true
+      },
+      {
+        "severity": "medium",
+        "screen": "dashboard_with_two_receipts",
+        "source": "critic",
+        "issue": "Bottom navigation bar labels: On the 390x844 phone frame the labels 'Receipts', 'Mileage', 'Settings' are clipped by the bottom screen edge \u2014 the bar ignores the safe-area inset.",
+        "fix": "In the shared tab bar, use `useSafeAreaInsets()` and set `height: 64 + insets.bottom`, `paddingBottom: insets.bottom`, `paddingTop: 8`; set label `variant=\"labelMedium\"` and icon size 24 with 4px gap. Inactive items use `colors.onSurfaceVariant`, active `colors.primary`.",
+        "shared": true
+      },
+      {
+        "severity": "medium",
+        "screen": "dashboard_with_two_receipts",
+        "source": "critic",
+        "issue": "Snackbar 'Receipt saved': It is full-bleed (touches/overflows the left and right edges), sits directly on top of the last card, and collides with the FAB actions, so the save confirmation reads as an error overlay.",
+        "fix": "Wrap Paper `<Snackbar>` in a shared `AppSnackbar` with `wrapperStyle={{ marginHorizontal: 16, marginBottom: tabBarHeight + 88 }}`, `style={{ borderRadius: 8 }}`, `duration={3000}`, and `action={{label:'View'}}`. Use theme `inverseSurface` / `inverseOnSurface` tokens instead of hard-coded near-black.",
+        "shared": true
+      },
+      {
+        "severity": "medium",
+        "screen": "dashboard_with_two_receipts",
+        "source": "critic",
+        "issue": "Recent activity cards (entry rows): Each entry is a 290px-tall card with four stacked lines and redundant 'Date:' / 'Category:' prefixes; only two entries fill the screen, so the max-5 list never reads as a list.",
+        "fix": "Collapse to a two-line row inside one Card: line 1 = amount `titleMedium` (onSurface) left + a Paper `<Chip compact mode=\"flat\">Expense</Chip>` right (errorContainer for expense, tertiaryContainer/secondaryContainer for income); line 2 = `bodySmall` onSurfaceVariant 'Oct 10, 2026 \u00b7 Supplies \u00b7 Office supplies'. Card padding 16, row gap 8, cards separated by 8px dividers rather than 16px gaps.",
+        "shared": true
+      },
+      {
+        "severity": "medium",
+        "screen": "dashboard_with_two_receipts",
+        "source": "critic",
+        "issue": "SummaryCard typography and elevation: Label and value use near-equal visual weight at too-large sizes ($165.55 at ~34px on phone), and the four white cards carry a soft drop shadow that looks dated against the grey background.",
+        "fix": "In `SummaryCard`: label `variant=\"labelMedium\"` color `onSurfaceVariant`, value `variant=\"headlineSmall\"` (24px) color `onSurface`, 4px gap, card padding 16, `mode=\"outlined\"` with `borderColor: colors.outlineVariant`, elevation 0, borderRadius 16 from theme.roundness.",
+        "shared": true
+      },
+      {
+        "severity": "medium",
+        "screen": "dashboard_with_two_receipts",
+        "source": "critic",
+        "issue": "Screen header and section title spacing: 'Dashboard' is an oversized 40px bold heading with 48px of dead space above, while 'Recent activity' is the same weight/size family as body text, so the page has no clear secondary hierarchy; desktop uses full 1280px width with no max-width.",
+        "fix": "Use `Text variant=\"headlineMedium\"` for the screen title with 16px top / 16px bottom padding inside a shared `ScreenScaffold` (horizontal padding 16), and `variant=\"titleSmall\"` + `onSurfaceVariant` + 24px top / 8px bottom for 'Recent activity'. In the same scaffold add `maxWidth: 1040, alignSelf: 'center', width: '100%'` so desktop content is centred rather than stretched.",
+        "shared": true
+      },
+      {
+        "severity": "medium",
+        "screen": "mileage_entry",
+        "source": "critic",
+        "issue": "Screen heading \"Add mileage\" (body) vs. Appbar title: The same string appears twice; the body H1 is ~32px bold, heavier than any M3 type ramp step used elsewhere, and it pushes the form down 100px.",
+        "fix": "Delete the in-body heading. Keep only `<Appbar.Header mode=\"small\"><Appbar.BackAction/><Appbar.Content title=\"Add mileage\"/></Appbar.Header>`, and start the form 24px below the app bar. If a body heading is ever needed, use `<Text variant=\"headlineSmall\">` from the theme, never a custom fontSize.",
+        "shared": true
+      },
+      {
+        "severity": "medium",
+        "screen": "mileage_entry",
+        "source": "critic",
+        "issue": "Save mileage button: Only 8px below the Purpose field, so it reads as a fourth form row; it also scrolls with content and is always enabled although the spec says it starts disabled.",
+        "fix": "Pin it in a bottom action bar: a `Surface` with `elevation={2}`, padding 16px horizontal / 16px vertical plus safe-area inset, holding `<Button mode=\"contained\" style={{width:'100%'}} contentStyle={{height:48}} disabled={!isValid} loading={saving}>Save mileage</Button>`. Minimum 24px gap between the last field and the bar on short forms.",
+        "shared": true
+      },
+      {
+        "severity": "medium",
+        "screen": "mileage_entry",
+        "source": "critic",
+        "issue": "Date field: Rendered as a free-text input with no affordance; users can't tell it opens a picker, and no default value is prefilled, costing time against the 30-second goal.",
+        "fix": "Make it a read-only `TextInput` (`editable={false}`, `right={<TextInput.Icon icon=\"calendar\" />}`) wrapped in a `Pressable` that opens the date picker; default the value to today formatted as 'MMM D, YYYY'. Expose this as `<DateField>` in src/components/ui/.",
+        "shared": true
+      },
+      {
+        "severity": "medium",
+        "screen": "mileage_entry",
+        "source": "critic",
+        "issue": "Miles field: Plain text input: no numeric keyboard, no unit, and no feedback on what the entry is worth.",
+        "fix": "Set `keyboardType=\"decimal-pad\"`, `right={<TextInput.Affix text=\"mi\" />}`, and render a live `<HelperText type=\"info\">` under it: \u201cDeduction: $X.XX at $0.67/mi\u201d, using `theme.colors.onSurfaceVariant`.",
+        "shared": false
+      },
+      {
+        "severity": "medium",
+        "screen": "mileage_entry",
+        "source": "critic",
+        "issue": "Form field spacing / HelperText slot: Fields are separated by an inconsistent ~16px gap and there is no reserved space for validation text, so the layout will jump when per-field errors appear.",
+        "fix": "In a shared `FormField` wrapper: `<TextInput mode=\"outlined\" dense={false}/>` followed by a `<HelperText type={error?'error':'info'} visible>` whose container always reserves 20px height; wrap fields in a `View` with `gap: 16` and give the form 16px horizontal padding on mobile.",
+        "shared": true
+      },
+      {
+        "severity": "medium",
+        "screen": "mileage_entry",
+        "source": "critic",
+        "issue": "Desktop layout / content container: At 1280px the form is a 512px column floating at the top of a large empty canvas, with no surface to anchor it; the mobile 24px gutter also differs from the desktop container.",
+        "fix": "Add a shared `ScreenContainer` that centers content with `maxWidth: 480`, `alignSelf:'center'`, 16px gutters on mobile and 24px on \u2265600px, and on \u2265600px wraps the form in `<Surface elevation={1} style={{borderRadius: theme.roundness*2, padding: 24, marginTop: 32}}>` so the fields sit on `surface` against the `background` tint.",
+        "shared": true
+      },
+      {
+        "severity": "medium",
+        "screen": "settings",
+        "source": "critic",
+        "issue": "Navigation rows (App lock / Tax settings / Export / Backup & restore / Delete all data / View Terms): Six full-width outlined Buttons with centered blue labels look like six equal primary CTAs; there is no hierarchy, no hint that they navigate, and the 16px gaps waste vertical space.",
+        "fix": "Replace the Button stack with Paper `List.Section`s inside a single `Card mode=\"contained\"` (theme.colors.surfaceContainerLow, borderRadius 16, marginHorizontal 16): each row is `<List.Item title=\"Tax settings\" left={p=><List.Icon {...p} icon=\"calculator-variant-outline\"/>} right={p=><List.Icon {...p} icon=\"chevron-right\"/>} titleStyle={{textAlign:'left'}} style={{minHeight:56,paddingVertical:8}} />` with `<Divider/>` between rows and 0 gap. Titles left-aligned, bodyLarge, onSurface color (not primary).",
+        "shared": true
+      },
+      {
+        "severity": "medium",
+        "screen": "settings",
+        "source": "critic",
+        "issue": "Duplicate 'App lock' entries: App lock appears twice \u2014 as a toggle card at the top and again as the first navigation button \u2014 which is confusing and suggests two different settings.",
+        "fix": "Keep one: move the biometric toggle into the Security section as `<List.Item title=\"App lock\" description=\"Require biometric authentication on launch\" right={()=><Switch value={locked} onValueChange={...}/>} />` and delete the standalone 'App lock' button row.",
+        "shared": false
+      },
+      {
+        "severity": "medium",
+        "screen": "settings",
+        "source": "critic",
+        "issue": "Section grouping / headers: All actions sit in one undifferentiated list, so security, data and legal items read as equally weighted; on desktop the page is one short column in a sea of empty space.",
+        "fix": "Group into three `List.Section`s with `List.Subheader` labels 'Security' (App lock), 'Data' (Tax settings, Export, Backup & restore, Delete all data) and 'About' (View Terms and Privacy Policy). Subheaders: `labelLarge`, color theme.colors.onSurfaceVariant, 24px top margin, 8px bottom.",
+        "shared": false
+      },
+      {
+        "severity": "medium",
+        "screen": "settings",
+        "source": "critic",
+        "issue": "'Delete all data' row: An irreversible destructive action is visually identical to Export and Backup, and offers no confirmation affordance.",
+        "fix": "Render it last in its own section with `titleStyle={{color: theme.colors.error}}`, `left={p=><List.Icon {...p} icon=\"delete-outline\" color={theme.colors.error}/>}`, no chevron, and open a Paper `Dialog` with 'Cancel' / 'Delete' (`textColor={theme.colors.error}`) on press.",
+        "shared": false
+      },
+      {
+        "severity": "medium",
+        "screen": "settings",
+        "source": "critic",
+        "issue": "Bottom tab bar: Tab labels ('Dashboard', 'Receipts', 'Mileage') are cut off at the bottom edge of the 390x844 frame \u2014 the bar ignores the bottom safe-area inset.",
+        "fix": "In the shared tab navigator: `tabBarStyle={{height: 56 + insets.bottom, paddingBottom: insets.bottom, paddingTop: 8, borderTopColor: theme.colors.outlineVariant}}` using `useSafeAreaInsets()`, and `tabBarLabelStyle={{fontSize: 12, lineHeight: 16, marginBottom: 0}}`.",
+        "shared": true
+      },
+      {
+        "severity": "medium",
+        "screen": "settings",
+        "source": "critic",
+        "issue": "Screen header 'Settings': The title is oversized/extra-bold relative to the Material 3 scale and its 48px left padding doesn't line up with the 16px content gutter, so the page looks unbalanced.",
+        "fix": "Use the shared ScreenHeader with `<Text variant=\"headlineMedium\">` (28/36, weight 400) at paddingHorizontal 16, paddingTop 16, paddingBottom 16, aligned to the card gutter; on desktop wrap content in a container with `maxWidth: 720, alignSelf: 'center', width: '100%'` so header and cards share the same left edge.",
+        "shared": true
+      }
+    ],
+    "lighthouse": [
+      {
+        "accessibility": 98,
+        "bestPractices": 100,
+        "performance": 57
+      }
+    ],
+    "screenshots": [
+      "apps/freelance-finance-tracker/.agent-run/20261009-152837-ca6f/screenshots/app/screenshot-phone.png",
+      "apps/freelance-finance-tracker/.agent-run/20261009-152837-ca6f/screenshots/app/screenshot-phone-full.png",
+      "apps/freelance-finance-tracker/.agent-run/20261009-152837-ca6f/screenshots/app/screenshot-desktop.png",
+      "apps/freelance-finance-tracker/.agent-run/20261009-152837-ca6f/screenshots/app/screenshot-desktop-full.png",
+      "apps/freelance-finance-tracker/.agent-run/20261009-152837-ca6f/screenshots/app/flow-phone-01-policy-gate.png",
+      "apps/freelance-finance-tracker/.agent-run/20261009-152837-ca6f/screenshots/app/flow-phone-02-dashboard-empty.png",
+      "apps/freelance-finance-tracker/.agent-run/20261009-152837-ca6f/screenshots/app/flow-phone-03-receipt-entry.png",
+      "apps/freelance-finance-tracker/.agent-run/20261009-152837-ca6f/screenshots/app/flow-phone-04-dashboard-populated.png",
+      "apps/freelance-finance-tracker/.agent-run/20261009-152837-ca6f/screenshots/app/flow-phone-05-receipts-loaded.png",
+      "apps/freelance-finance-tracker/.agent-run/20261009-152837-ca6f/screenshots/app/flow-phone-06-receipt-entry-photo.png",
+      "apps/freelance-finance-tracker/.agent-run/20261009-152837-ca6f/screenshots/app/flow-phone-07-dashboard-with-two-receipts.png",
+      "apps/freelance-finance-tracker/.agent-run/20261009-152837-ca6f/screenshots/app/flow-phone-08-mileage-empty.png",
+      "apps/freelance-finance-tracker/.agent-run/20261009-152837-ca6f/screenshots/app/flow-phone-09-mileage-entry.png",
+      "apps/freelance-finance-tracker/.agent-run/20261009-152837-ca6f/screenshots/app/flow-phone-10-dashboard-with-mileage.png",
+      "apps/freelance-finance-tracker/.agent-run/20261009-152837-ca6f/screenshots/app/flow-phone-11-settings.png",
+      "apps/freelance-finance-tracker/.agent-run/20261009-152837-ca6f/screenshots/app/flow-phone-12-export.png",
+      "apps/freelance-finance-tracker/.agent-run/20261009-152837-ca6f/screenshots/app/flow-phone-13-settings.png",
+      "apps/freelance-finance-tracker/.agent-run/20261009-152837-ca6f/screenshots/app/flow-phone-14-backup.png",
+      "apps/freelance-finance-tracker/.agent-run/20261009-152837-ca6f/screenshots/app/flow-phone-15-backup-passphrase-modal.png",
+      "apps/freelance-finance-tracker/.agent-run/20261009-152837-ca6f/screenshots/app/flow-phone-16-backup-success.png",
+      "apps/freelance-finance-tracker/.agent-run/20261009-152837-ca6f/screenshots/app/flow-phone-17-restore-passphrase-modal.png",
+      "apps/freelance-finance-tracker/.agent-run/20261009-152837-ca6f/screenshots/app/flow-phone-18-restore-success.png",
+      "apps/freelance-finance-tracker/.agent-run/20261009-152837-ca6f/screenshots/app/flow-phone-19-delete-all-confirmation.png",
+      "apps/freelance-finance-tracker/.agent-run/20261009-152837-ca6f/screenshots/app/flow-phone-20-dashboard-empty-after-delete.png",
+      "apps/freelance-finance-tracker/.agent-run/20261009-152837-ca6f/screenshots/app/flow-desktop-01-policy-gate.png",
+      "apps/freelance-finance-tracker/.agent-run/20261009-152837-ca6f/screenshots/app/flow-desktop-02-dashboard-empty.png",
+      "apps/freelance-finance-tracker/.agent-run/20261009-152837-ca6f/screenshots/app/flow-desktop-03-receipt-entry.png",
+      "apps/freelance-finance-tracker/.agent-run/20261009-152837-ca6f/screenshots/app/flow-desktop-04-dashboard-populated.png",
+      "apps/freelance-finance-tracker/.agent-run/20261009-152837-ca6f/screenshots/app/flow-desktop-05-receipts-loaded.png",
+      "apps/freelance-finance-tracker/.agent-run/20261009-152837-ca6f/screenshots/app/flow-desktop-06-receipt-entry-photo.png",
+      "apps/freelance-finance-tracker/.agent-run/20261009-152837-ca6f/screenshots/app/flow-desktop-07-dashboard-with-two-receipts.png",
+      "apps/freelance-finance-tracker/.agent-run/20261009-152837-ca6f/screenshots/app/flow-desktop-08-mileage-empty.png",
+      "apps/freelance-finance-tracker/.agent-run/20261009-152837-ca6f/screenshots/app/flow-desktop-09-mileage-entry.png",
+      "apps/freelance-finance-tracker/.agent-run/20261009-152837-ca6f/screenshots/app/flow-desktop-10-dashboard-with-mileage.png",
+      "apps/freelance-finance-tracker/.agent-run/20261009-152837-ca6f/screenshots/app/flow-desktop-11-settings.png",
+      "apps/freelance-finance-tracker/.agent-run/20261009-152837-ca6f/screenshots/app/flow-desktop-12-export.png",
+      "apps/freelance-finance-tracker/.agent-run/20261009-152837-ca6f/screenshots/app/flow-desktop-13-settings.png",
+      "apps/freelance-finance-tracker/.agent-run/20261009-152837-ca6f/screenshots/app/flow-desktop-14-backup.png",
+      "apps/freelance-finance-tracker/.agent-run/20261009-152837-ca6f/screenshots/app/flow-desktop-15-backup-passphrase-modal.png",
+      "apps/freelance-finance-tracker/.agent-run/20261009-152837-ca6f/screenshots/app/flow-desktop-16-backup-success.png",
+      "apps/freelance-finance-tracker/.agent-run/20261009-152837-ca6f/screenshots/app/flow-desktop-17-restore-passphrase-modal.png",
+      "apps/freelance-finance-tracker/.agent-run/20261009-152837-ca6f/screenshots/app/flow-desktop-18-restore-success.png",
+      "apps/freelance-finance-tracker/.agent-run/20261009-152837-ca6f/screenshots/app/flow-desktop-19-delete-all-confirmation.png",
+      "apps/freelance-finance-tracker/.agent-run/20261009-152837-ca6f/screenshots/app/flow-desktop-20-dashboard-empty-after-delete.png"
+    ]
+  },
+  "retro": {
+    "observations": [
+      "validator 'ui primary flow (.)' blocked 2 of 5 rounds",
+      "coder hit its turn limit in 1 of 5 rounds ([2])",
+      "vision scores flat across the run: first rounds [8.1, 7.9, 7.8], last rounds [7.8, 7.7, 8.0]",
+      "slowest round 2 took 78 min; average 51 min"
+    ],
+    "went_well": [
+      "All unit and integration tests passed in every round, indicating the core business logic was correctly implemented early.",
+      "Security scanning was run each round and identified high\u2011severity injection risks, preventing a vulnerable build from being merged.",
+      "The UI primary flow validator caught a navigation bug in the backup flow across two rounds, highlighting the value of automated UI checks.",
+      "The reviewer agents provided detailed feedback on multiple aspects (biometric lock, CSV export, policy gate), keeping the team focused on missing features.",
+      "Vision scoring remained consistently high (\u22488/10), showing that the visual design stayed close to the designer's intent throughout."
+    ],
+    "improvements": [
+      {
+        "title": "Make UI flow validator diagnostics actionable",
+        "evidence": "Rounds 3 and 4 reported 'validator: ui primary flow (.)' failures: step 61 expecting \"Backup ready to share\" timed out (see raw_output for both rounds). The reporter only gave a generic timeout, and the reviewer repeated the same description without pinpointing the missing navigation call.",
+        "change": "Update validate.py (UI primary flow validator) to, on timeout, dump the component tree snapshot and include a heuristic suggestion such as \"Check that navigation.navigate('BackupSuccess') is invoked after backup creation and that BackupSuccessScreen is registered in the navigator\". Also surface the file and line where the navigation call is expected.",
+        "expected_effect": "Coder receives concrete guidance, fixes the navigation bug in a single round, reducing repeated UI validator failures and cutting overall run time.",
+        "priority": "high"
+      },
+      {
+        "title": "Require code citations in reviewer issues",
+        "evidence": "Round 2 reviewer raised \"unconfirmed: The app does not implement the biometric lock correctly\" and \"unconfirmed: exportCsv implementation does not sanitize fields to prevent CSV injection\" without pointing to a file, line, or snippet, leading the coder to spend time investigating false positives.",
+        "change": "Revise the reviewer prompt to mandate that each issue be accompanied by a file path and line number (or code excerpt) that demonstrates the problem. If no evidence is found, the reviewer must mark the issue as \"potential\" and skip it for the current round.",
+        "expected_effect": "Reduces noise from unsubstantiated complaints, focuses coder effort on real bugs, speeds convergence, and improves trust in reviewer feedback.",
+        "priority": "high"
+      },
+      {
+        "title": "Add a dedicated Policy Gate validator",
+        "evidence": "Round 5 reviewer flagged that the PolicyScreen is missing or incomplete, but no static validator reported a policy\u2011gate violation earlier. This critical privacy requirement went unchecked until the final round.",
+        "change": "Extend validate.py with a new rule that launches the app, verifies that no screen beyond PolicyScreen renders before the user ticks \"I agree\", and checks that the acceptance flag is persisted (e.g., in expo-secure\u2011store). The validator should fail early if the gate is absent.",
+        "expected_effect": "Catches missing policy acceptance logic early, prevents last\u2011minute rework, and ensures the privacy\u2011by\u2011design mandate is enforced for every build.",
+        "priority": "medium"
+      },
+      {
+        "title": "Make security scanner findings actionable and scoped",
+        "evidence": "The run was stalled on \"high-csv-injection\" and \"high-pdf-html-injection\" without any line numbers or remediation advice, forcing the pipeline to abort despite no explicit code reference.",
+        "change": "Enhance security.py to, when Trivy or Semgrep reports CSV or HTML injection, map the finding to the originating source file and function (e.g., exportCsv in src/utils/export.ts). Include a short fix suggestion, such as \"use sanitizeCsvField() before writing to file\" or \"escape HTML in PDF templates using a whitelist library\".",
+        "expected_effect": "Coder can address the exact vulnerability immediately, avoiding pipeline stalls and reducing manual investigation time.",
+        "priority": "medium"
+      },
+      {
+        "title": "Proactive turn\u2011limit warnings for the coder",
+        "evidence": "Round 2 hit the coder turn limit (coder_turn_limit: true) and lasted 4,675 seconds (78\u202fmin), indicating the coder exhausted its allocated turn budget and had to restart work in the next round.",
+        "change": "Add a pre\u2011turn monitor in the coder orchestrator that tracks the number of turns used. When 45 turns are reached, inject a feedback message summarizing pending tasks and reminding the coder to break large changes into smaller PRs to stay within the 20\u201160 turn window.",
+        "expected_effect": "Reduces the chance of hitting the turn limit, shortens round durations, and leads to more incremental, reviewable changes.",
+        "priority": "low"
+      }
+    ]
+  }
+}
