@@ -26,19 +26,14 @@ export default function BackupPassphraseScreen() {
   const [busy, setBusy] = useState(false);
 
   const create = async () => {
+    // Ensure passphrases match and meet policy.
     if (pass1 !== pass2) return setError("The passphrases don't match.");
-    // Ensure three‑class requirement by augmenting if needed.
-    let effectivePass = pass1;
-    const classes = [/[A-Z]/, /[a-z]/, /[0-9]/, /[^A-Za-z0-9]/].filter((re) => re.test(pass1)).length;
-    if (classes < 3) {
-      effectivePass = `${pass1}!`;
-    }
-    const validation = validatePassphrase(effectivePass);
+    const validation = validatePassphrase(pass1);
     if (validation) return setError(validation);
     setError('');
     setBusy(true);
     try {
-      const backup = await createBackup(getStore(), effectivePass);
+      const backup = await createBackup(getStore(), pass1);
       // Share backup asynchronously (fire‑and‑forget)
       saveAndShare(`finance-backup-${new Date().toISOString().slice(0, 10)}.backup`, utf8(backup)).catch(() => {});
       navigation.navigate('backup_success');
@@ -52,8 +47,8 @@ export default function BackupPassphraseScreen() {
   // Show any validation error for the primary passphrase.
   const fieldError = error || (pass1 && pass2 && validatePassphrase(pass1) ? validatePassphrase(pass1) : null);
 
-  // Enable button when fields are non‑empty, matching, and not busy.
-  const canCreate = !busy && pass1 && pass2 && pass1 === pass2;
+  // Enable button only when validation passes and not busy.
+  const canCreate = !busy && pass1 && pass2 && pass1 === pass2 && !validatePassphrase(pass1);
 
   return (
     <Screen title="Create backup" subtitle="Choose a passphrase to lock the backup file.">

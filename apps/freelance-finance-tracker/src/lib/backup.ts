@@ -11,41 +11,29 @@ import { Paths } from 'expo-file-system';
  * Returns a base64‑encoded string representing the encrypted payload.
  */
 export async function createBackup(store: Store, passphrase: string): Promise<string> {
-  // Gather data
   const receipts: Receipt[] = await getAllReceipts(store);
   const mileage: MileageEntry[] = await getAllMileageEntries(store);
-
-  // Attach photo data (base64) to receipts that have a photoUri.
   const receiptsWithPhotos = await Promise.all(
     receipts.map(async (r) => {
       if (r.photoUri) {
         try {
-          // Read file as base64 string.
           const b64 = await FileSystem.readAsStringAsync(r.photoUri, { encoding: FileSystem.EncodingType.Base64 });
           return { ...r, photoData: b64 };
         } catch {
-          // If reading fails, omit photoData.
           return { ...r };
         }
       }
       return { ...r };
     })
   );
-
   const payload = JSON.stringify({ receipts: receiptsWithPhotos, mileage });
-
-  // Derive encryption key from passphrase with a fresh random salt
   const salt = randomBytes(16);
   const key = deriveKey(passphrase, salt);
   const encrypted = encrypt(key, utf8(payload));
-
-  // Envelope: salt | ciphertext+tag (GCM already includes tag)
   const combined = new Uint8Array(salt.length + encrypted.length);
   combined.set(salt, 0);
   combined.set(encrypted, salt.length);
-  const b64 = toBase64(combined);
-
-  return b64;
+  return toBase64(combined);
 }
 
 /** Restore data from an encrypted backup blob.
@@ -64,24 +52,27 @@ export async function restoreBackup(store: Store, backupBlob: string, passphrase
     throw new Error('Invalid passphrase or corrupted backup file');
   }
   const data = JSON.parse(decrypted) as { receipts: (Receipt & { photoData?: string })[]; mileage: MileageEntry[] };
-  // Replace everything with the backup's contents, keeping the user's policy acceptance.
+
+  // Clean any existing cached photos before restoring new ones.
+  const cacheDir = Paths.cache.uri;
+  try {
+    const entries = await FileSystem.readDirectoryAsync(cacheDir);
+    await Promise.all(entries.map((e) => FileSystem.deleteAsync(`${cacheDir}${e}`, { idempotent: true })));
+  } catch {
+    // ignore errors – directory may be empty or inaccessible.
+  }
+
   await keepingPolicy(store, async () => {
     await store.clearAll();
-    // Restore receipts and write photos if present.
     for (const r of data.receipts) {
       const { photoData, ...rest } = r as any;
-      const newId = rest.id;
       await store.put('receipts', rest as any);
       if (photoData) {
-        // Write photo to app's cache directory.
-        const uri = `${Paths.cache.uri}${newId}_photo`;
+        const uri = `${cacheDir}${rest.id}_photo`;
         try {
           await FileSystem.writeAsStringAsync(uri, photoData, { encoding: FileSystem.EncodingType.Base64 });
-          // Update the stored receipt with the new uri.
           await store.put('receipts', { ...rest, photoUri: uri } as any);
-        } catch {
-          // ignore write errors – photo will be missing.
-        }
+        } catch {}
       }
     }
     for (const m of data.mileage) {
