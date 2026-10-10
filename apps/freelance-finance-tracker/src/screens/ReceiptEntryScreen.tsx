@@ -9,6 +9,7 @@ import { Snackbar } from 'react-native-paper';
 import { setPendingSnack } from '../lib/uiState';
 import ReceiptImagePicker from '../components/ui/ReceiptImagePicker';
 import { v4 as uuidv4 } from 'uuid';
+import { validateReceiptAmount } from '../lib/validation';
 
 export default function ReceiptEntryScreen() {
   const navigation = useNavigation<NavigationProp<any>>();
@@ -21,12 +22,10 @@ export default function ReceiptEntryScreen() {
   const [error, setError] = useState<string>('');
   const [saving, setSaving] = useState(false);
 
+  const amountError = validateReceiptAmount(amount);
+
   const validate = () => {
-    if (!amount) return 'Enter a positive amount.';
-    const amt = Number(amount);
-    if (isNaN(amt) || amt <= 0) return 'Enter a positive amount.';
-    // limit to 9 digits and max two decimal places
-    if (!/^\d{1,9}(\.\d{1,2})?$/.test(amount)) return 'Amount must have up to 9 digits and 2 decimals.';
+    if (amountError) return amountError;
     if (!date) return 'Select a date.';
     if (!category) return 'Choose a category.';
     if (!type) return 'Select expense or income.';
@@ -61,13 +60,13 @@ export default function ReceiptEntryScreen() {
     }
   };
 
-  const canSave = !saving && validate() === '';
+  const canSave = !saving && validate() === '' && !amountError;
 
   return (
     <Screen title="Add receipt">
       <View style={{ gap: 12 }}>
         <ReceiptImagePicker photoUri={photoUri} onChange={setPhotoUri} />
-        <FormField label="Amount" value={amount} onChangeText={setAmount} keyboardType="numeric" />
+        <FormField label="Amount" value={amount} onChangeText={setAmount} keyboardType="numeric" error={amountError} />
         <FormField label="Date" value={date} onChangeText={setDate} placeholder="YYYY-MM-DD" />
         <FormField label="Category" value={category} onChangeText={setCategory} />
         <ChoiceField<ReceiptType>

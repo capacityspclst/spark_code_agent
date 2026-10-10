@@ -5,17 +5,14 @@ import { getAllMileageEntries } from './mileageStore';
 import { deriveKey, encrypt, decrypt, toBase64, fromBase64, utf8, fromUtf8, randomBytes } from './crypto';
 import type { Receipt, MileageEntry } from './models';
 import * as FileSystem from 'expo-file-system';
+import { readFileBytes, writeFileBytes } from './files';
+import { validateBackupPassphrase } from './validation';
 
-const MIN_LENGTH = 8;
+const BACKUP_VERSION = 1;
+const MIN_LENGTH = 12;
 /** Validate passphrase policy */
-function validatePassphrase(p: string): string | null {
-  if (p.length < MIN_LENGTH) return `Use at least ${MIN_LENGTH} characters.`;
-  const classes = [/[A-Z]/, /[a-z]/, /[0-9]/, /[^A-Za-z0-9]/].filter((re) => re.test(p)).length;
-  if (classes < 3) return 'Use at least three character classes (uppercase, lowercase, digit, symbol).';
-  return null;
-}
 function enforcePassphrasePolicy(p: string): void {
-  const err = validatePassphrase(p);
+  const err = validateBackupPassphrase(p);
   if (err) throw new Error(`Invalid backup passphrase: ${err}`);
 }
 
@@ -30,7 +27,8 @@ export async function createBackup(store: Store, passphrase: string): Promise<st
     receipts.map(async (r) => {
       if (r.photoUri) {
         try {
-          const b64 = await FileSystem.readAsStringAsync(r.photoUri, { encoding: FileSystem.EncodingType.Base64 });
+          const bytes = await readFileBytes(r.photoUri);
+          const b64 = toBase64(bytes);
           return { ...r, photoData: b64 };
         } catch {
           return { ...r };
@@ -39,7 +37,7 @@ export async function createBackup(store: Store, passphrase: string): Promise<st
       return { ...r };
     })
   );
-  const payload = JSON.stringify({ receipts: receiptsWithPhotos, mileage });
+  const payload = JSON.stringify({ version: BACKUP_VERSION, receipts: receiptsWithPhotos, mileage });
   const salt = randomBytes(16);
   const key = deriveKey(passphrase, salt);
   const encrypted = encrypt(key, utf8(payload));
@@ -47,6 +45,23 @@ export async function createBackup(store: Store, passphrase: string): Promise<st
   combined.set(salt, 0);
   combined.set(encrypted, salt.length);
   return toBase64(combined);
+}
+
+/** Validate the structure of a decrypted backup. */
+function validateBackupStructure(data: any): string | null {
+  if (typeof data !== 'object' || data === null) return 'Backup data is not an object.';
+  if (typeof data.version !== 'number') return 'Missing or invalid version.';
+  if (!Array.isArray(data.receipts)) return 'Receipts should be an array.';
+  if (!Array.isArray(data.mileage)) return 'Mileage should be an array.';
+  for (const r of data.receipts) {
+    if (typeof r.id !== 'string' || typeof r.amount !== 'number' || typeof r.date !== 'string')
+      return 'Invalid receipt entry.';
+  }
+  for (const m of data.mileage) {
+    if (typeof m.id !== 'string' || typeof m.date !== 'string' || typeof m.miles !== 'number')
+      return 'Invalid mileage entry.';
+  }
+  return null;
 }
 
 /** Restore data from an encrypted backup blob.
@@ -64,7 +79,11 @@ export async function restoreBackup(store: Store, backupBlob: string, passphrase
   } catch {
     throw new Error('Invalid passphrase or corrupted backup file');
   }
-  const data = JSON.parse(decrypted) as { receipts: (Receipt & { photoData?: string })[]; mileage: MileageEntry[] };
+  const data = JSON.parse(decrypted) as any;
+
+  // Validate structure before mutating store
+  const structErr = validateBackupStructure(data);
+  if (structErr) throw new Error('Invalid backup format: ' + structErr);
 
   const cacheDir = (FileSystem as unknown as any).cacheDirectory ?? '';
   try {
@@ -80,7 +99,8 @@ export async function restoreBackup(store: Store, backupBlob: string, passphrase
       if (photoData) {
         const uri = `${cacheDir}${rest.id}_photo`;
         try {
-          await FileSystem.writeAsStringAsync(uri, photoData, { encoding: FileSystem.EncodingType.Base64 });
+          const bytes = Uint8Array.from(atob(photoData), c => c.charCodeAt(0));
+          await writeFileBytes(uri, bytes);
           await store.put('receipts', { ...rest, photoUri: uri } as any);
         } catch {}
       }

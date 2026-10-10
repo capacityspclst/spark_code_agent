@@ -6,7 +6,7 @@ import * as DocumentPicker from 'expo-document-picker';
 import * as Sharing from 'expo-sharing';
 import { Platform } from 'react-native';
 import * as FileSystem from 'expo-file-system';
-import { toBase64 } from './crypto';
+import { toBase64, fromBase64 } from './crypto';
 
 /** Save bytes as a file the user can keep: the share sheet on phones, a download on the web. */
 export async function saveAndShare(fileName: string, bytes: Uint8Array, mimeType = 'application/octet-stream'): Promise<void> {
@@ -48,4 +48,32 @@ export async function pickFile(): Promise<{ name: string; bytes: Uint8Array } | 
   const base64 = await FileSystem.readAsStringAsync(asset.uri, { encoding: FileSystem.EncodingType.Base64 });
   const bytes = Uint8Array.from(atob(base64), c => c.charCodeAt(0));
   return { name: asset.name, bytes };
+}
+
+/** Read a file's raw bytes using the new Expo File API (or fallback to readAsStringAsync). */
+export async function readFileBytes(uri: string): Promise<Uint8Array> {
+  // New API: File object with bytes() method – not available in this runtime, so fallback.
+  try {
+    // @ts-ignore new File API may exist
+    const file = new File(uri);
+    // @ts-ignore
+    const data: Uint8Array = await file.bytes();
+    return data;
+  } catch {
+    const base64 = await FileSystem.readAsStringAsync(uri, { encoding: FileSystem.EncodingType.Base64 });
+    return Uint8Array.from(atob(base64), c => c.charCodeAt(0));
+  }
+}
+
+/** Write raw bytes to a file using the new Expo File API (or fallback). */
+export async function writeFileBytes(uri: string, data: Uint8Array): Promise<void> {
+  try {
+    // @ts-ignore new File API may exist
+    const file = new File(uri);
+    // @ts-ignore
+    await file.write(data);
+  } catch {
+    const base64 = toBase64(data);
+    await FileSystem.writeAsStringAsync(uri, base64, { encoding: FileSystem.EncodingType.Base64 });
+  }
 }
