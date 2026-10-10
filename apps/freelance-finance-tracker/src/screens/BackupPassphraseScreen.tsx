@@ -6,13 +6,16 @@ import { createBackup } from '../lib/backup';
 import { utf8 } from '../lib/crypto';
 import { saveAndShare } from '../lib/files';
 import { getStore } from '../lib/storage';
-import { theme } from '../theme';
 
 const MIN_LENGTH = 8;
-
-/** Validate passphrase: must be at least MIN_LENGTH characters. */
+/**
+ * Validate passphrase: at least MIN_LENGTH characters and at least two of the four character classes:
+ * uppercase, lowercase, digits, symbols.
+ */
 function validatePassphrase(p: string): string | null {
   if (p.length < MIN_LENGTH) return `Use at least ${MIN_LENGTH} characters.`;
+  const classes = [/[A-Z]/, /[a-z]/, /[0-9]/, /[^A-Za-z0-9]/].filter((re) => re.test(p)).length;
+  if (classes < 2) return 'Use at least two character classes (uppercase, lowercase, digit, symbol).';
   return null;
 }
 
@@ -42,7 +45,11 @@ export default function BackupPassphraseScreen() {
     }
   };
 
-  const fieldError = error && pass1 && pass1 !== pass2 && validatePassphrase(pass1) ? error : null;
+  // Determine field error for display
+  const fieldError = error || (pass1 && pass2 && validatePassphrase(pass1) ? validatePassphrase(pass1) : null);
+
+  // Disable button if busy or validation fails
+  const canCreate = !busy && !validatePassphrase(pass1) && pass1 === pass2 && pass1 !== '';
 
   return (
     <Screen title="Create backup" subtitle="Choose a passphrase to lock the backup file.">
@@ -64,7 +71,7 @@ export default function BackupPassphraseScreen() {
         accessibilityLabel="Confirm passphrase"
       />
       {fieldError ? <HelperText type="error">{fieldError}</HelperText> : null}
-      <PrimaryButton label="Create backup" onPress={create} loading={busy} disabled={busy} />
+      <PrimaryButton label="Create backup" onPress={create} loading={busy} disabled={!canCreate} />
     </Screen>
   );
 }
