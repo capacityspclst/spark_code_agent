@@ -1,5 +1,6 @@
 import { acceptPolicy, getPolicyAcceptance, policyAccepted } from './policy';
 import type { Store } from './storage/types';
+import * as SecureStore from 'expo-secure-store';
 
 /** Run a destructive store operation (restore, delete all) without losing the user's policy acceptance. */
 export async function keepingPolicy(store: Store, work: () => Promise<void>): Promise<void> {
@@ -10,5 +11,11 @@ export async function keepingPolicy(store: Store, work: () => Promise<void>): Pr
 
 /** "Delete all data": every record and setting goes; the policy acceptance stays. */
 export async function deleteAllData(store: Store): Promise<void> {
-  await keepingPolicy(store, () => store.clearAll());
+  await keepingPolicy(store, async () => {
+    await store.clearAll();
+    // Also delete the encryption key from SecureStore so a full wipe removes all secrets.
+    try {
+      await SecureStore.deleteItemAsync('app.data-key.v1');
+    } catch {}
+  });
 }

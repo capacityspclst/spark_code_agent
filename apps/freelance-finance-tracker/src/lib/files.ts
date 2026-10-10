@@ -6,6 +6,7 @@ import * as DocumentPicker from 'expo-document-picker';
 import { File, Paths } from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import { Platform } from 'react-native';
+import * as FileSystem from 'expo-file-system';
 
 /** Save bytes as a file the user can keep: the share sheet on phones, a download on the web. */
 export async function saveAndShare(fileName: string, bytes: Uint8Array, mimeType = 'application/octet-stream'): Promise<void> {
@@ -27,6 +28,10 @@ export async function saveAndShare(fileName: string, bytes: Uint8Array, mimeType
   if (await Sharing.isAvailableAsync()) {
     await Sharing.shareAsync(file.uri, { mimeType, dialogTitle: fileName });
   }
+  // Clean up the temporary file after sharing (or if sharing not available)
+  try {
+    await FileSystem.deleteAsync(file.uri, { idempotent: true });
+  } catch {}
 }
 
 /** Let the user pick one file; null if they cancel. Call this directly from a button press: browsers only open a
