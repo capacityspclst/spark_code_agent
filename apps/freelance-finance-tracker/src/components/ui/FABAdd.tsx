@@ -7,7 +7,7 @@ import { useNavigation, NavigationProp } from '@react-navigation/native';
 
 /** FAB that opens mini-FABs for adding a receipt or mileage entry.
  * The main FAB has an accessible label "Add".
- * Mini FABs are labelled "Receipt" and "Mileage".
+ * Mini FABs are labelled "Add receipt" and "Mileage" for compatibility with UI flow.
  */
 export default function FABAdd() {
   const navigation = useNavigation<NavigationProp<any>>();
@@ -41,7 +41,7 @@ export default function FABAdd() {
               style={styles.miniFab}
               small
               icon={receiptIcon}
-              accessibilityLabel="Receipt"
+              accessibilityLabel="Add receipt"
               accessibilityRole="button"
               onPress={goToReceipt}
               color={theme.colors.onSecondary}
