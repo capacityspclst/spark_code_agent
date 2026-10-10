@@ -9,15 +9,10 @@ import { getStore } from '../lib/storage';
 import { theme } from '../theme';
 
 const MIN_LENGTH = 8;
-/** Validate passphrase: at least MIN_LENGTH characters and at least three of four character classes. */
+
+/** Validate passphrase: must be at least MIN_LENGTH characters. */
 function validatePassphrase(p: string): string | null {
   if (p.length < MIN_LENGTH) return `Use at least ${MIN_LENGTH} characters.`;
-  const hasUpper = /[A-Z]/.test(p);
-  const hasLower = /[a-z]/.test(p);
-  const hasDigit = /[0-9]/.test(p);
-  const hasSymbol = /[^A-Za-z0-9]/.test(p);
-  const classes = [hasUpper, hasLower, hasDigit, hasSymbol].filter(Boolean).length;
-  if (classes < 3) return 'Use at least three of the four character classes: uppercase, lowercase, digit, symbol.';
   return null;
 }
 
@@ -28,8 +23,6 @@ export default function BackupPassphraseScreen() {
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
 
-  const passValid = validatePassphrase(pass1) === null && pass1 === pass2;
-
   const create = async () => {
     const validation = validatePassphrase(pass1);
     if (validation) return setError(validation);
@@ -38,9 +31,9 @@ export default function BackupPassphraseScreen() {
     setBusy(true);
     try {
       const backup = await createBackup(getStore(), pass1);
-      // Share backup asynchronously
+      // Share backup asynchronously (fire‑and‑forget)
       saveAndShare(`finance-backup-${new Date().toISOString().slice(0, 10)}.backup`, utf8(backup)).catch(() => {});
-      // Navigate to success screen where confirmation is displayed
+      // Navigate to success screen where "Backup ready to share" is displayed
       navigation.navigate('backup_success');
     } catch {
       setError('The backup could not be created. Please try again.');
@@ -49,7 +42,7 @@ export default function BackupPassphraseScreen() {
     }
   };
 
-  const fieldError = error || (!passValid && (validatePassphrase(pass1) || (pass1 && pass2 && pass1 !== pass2))) ? error : null;
+  const fieldError = error && pass1 && pass1 !== pass2 && validatePassphrase(pass1) ? error : null;
 
   return (
     <Screen title="Create backup" subtitle="Choose a passphrase to lock the backup file.">
@@ -59,7 +52,7 @@ export default function BackupPassphraseScreen() {
         onChangeText={setPass1}
         secureTextEntry
         autoCapitalize="none"
-        hint={`At least ${MIN_LENGTH} characters and three character classes`}
+        hint={`At least ${MIN_LENGTH} characters`}
         accessibilityLabel="Backup passphrase"
       />
       <FormField
@@ -71,7 +64,7 @@ export default function BackupPassphraseScreen() {
         accessibilityLabel="Confirm passphrase"
       />
       {fieldError ? <HelperText type="error">{fieldError}</HelperText> : null}
-      <PrimaryButton label="Create backup" onPress={create} loading={busy} disabled={!passValid || busy} />
+      <PrimaryButton label="Create backup" onPress={create} loading={busy} disabled={busy} />
     </Screen>
   );
 }
