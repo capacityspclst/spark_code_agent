@@ -66,7 +66,7 @@ export default function ReceiptEntryScreen() {
     <Screen title="Add receipt">
       <View style={{ gap: 12 }}>
         <ReceiptImagePicker photoUri={photoUri} onChange={setPhotoUri} />
-        <FormField label="Amount" value={amount} onChangeText={setAmount} keyboardType="numeric" error={amountError} />
+        <FormField label="Amount" value={amount} onChangeText={setAmount} keyboardType="numeric" error={amountError ?? undefined} />
         <FormField label="Date" value={date} onChangeText={setDate} placeholder="YYYY-MM-DD" />
         <FormField label="Category" value={category} onChangeText={setCategory} />
         <ChoiceField<ReceiptType>

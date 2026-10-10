@@ -19,3 +19,6 @@ export async function deleteAllData(store: Store): Promise<void> {
     } catch {}
   });
 }
+
+/** Alias for deleteAllData to match expected API in tests */
+export const clearAllData = deleteAllData;

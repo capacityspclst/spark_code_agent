@@ -1,22 +1,28 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { FAB, Portal } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { theme, space } from '../../theme';
 import { useNavigation, NavigationProp } from '@react-navigation/native';
 
-/** Two independent FABs for adding a receipt or mileage entry.
- * Icons are rendered as decorative elements with aria-hidden to avoid nested interactive warnings.
+/** FAB that opens mini-FABs for adding a receipt or mileage entry.
+ * The main FAB has an accessible label "Add".
+ * Mini FABs are labelled "Receipt" and "Mileage".
  */
 export default function FABAdd() {
   const navigation = useNavigation<NavigationProp<any>>();
+  const [open, setOpen] = useState(false);
+
+  const toggle = () => setOpen((prev) => !prev);
 
   const goToReceipt = () => {
     navigation.getParent?.()?.navigate('ReceiptEntry');
+    setOpen(false);
   };
 
   const goToMileage = () => {
     navigation.getParent?.()?.navigate('MileageEntry');
+    setOpen(false);
   };
 
   const receiptIcon = ({ size, color }: { size: number; color: string }) => (
@@ -29,23 +35,36 @@ export default function FABAdd() {
   return (
     <Portal>
       <View style={styles.container} pointerEvents="box-none">
+        {open && (
+          <View style={styles.miniContainer}>
+            <FAB
+              style={styles.miniFab}
+              small
+              icon={receiptIcon}
+              accessibilityLabel="Receipt"
+              accessibilityRole="button"
+              onPress={goToReceipt}
+              color={theme.colors.onSecondary}
+              theme={{ colors: { accent: theme.colors.secondary } }}
+            />
+            <FAB
+              style={styles.miniFab}
+              small
+              icon={mileageIcon}
+              accessibilityLabel="Mileage"
+              accessibilityRole="button"
+              onPress={goToMileage}
+              color={theme.colors.onSecondary}
+              theme={{ colors: { accent: theme.colors.secondary } }}
+            />
+          </View>
+        )}
         <FAB
-          style={[styles.fab, styles.receipt]}
-          small
-          icon={receiptIcon}
-          accessibilityLabel="Add receipt"
+          style={styles.fab}
+          icon="plus"
+          accessibilityLabel="Add"
           accessibilityRole="button"
-          onPress={goToReceipt}
-          color={theme.colors.onSecondary}
-          theme={{ colors: { accent: theme.colors.secondary } }}
-        />
-        <FAB
-          style={[styles.fab, styles.mileage]}
-          small
-          icon={mileageIcon}
-          accessibilityLabel="Add mileage"
-          accessibilityRole="button"
-          onPress={goToMileage}
+          onPress={toggle}
           color={theme.colors.onSecondary}
           theme={{ colors: { accent: theme.colors.secondary } }}
         />
@@ -55,8 +74,8 @@ export default function FABAdd() {
 }
 
 const styles = StyleSheet.create({
-  container: { position: 'absolute', bottom: space(2), right: space(2), flexDirection: 'column', alignItems: 'center' },
-  fab: { marginBottom: space(1), elevation: 4 },
-  receipt: {},
-  mileage: {},
+  container: { position: 'absolute', bottom: space(2), right: space(2), alignItems: 'center' },
+  fab: { elevation: 4 },
+  miniContainer: { marginBottom: 8, flexDirection: 'column-reverse', alignItems: 'center' },
+  miniFab: { marginBottom: 8 },
 });

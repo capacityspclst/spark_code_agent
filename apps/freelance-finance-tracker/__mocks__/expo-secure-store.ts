@@ -1,0 +1,13 @@
+let store: Record<string, string> = {};
+export async function getItemAsync(key: string): Promise<string | null> {
+  return store.hasOwnProperty(key) ? store[key] : null;
+}
+export async function setItemAsync(key: string, value: string): Promise<void> {
+  store[key] = value;
+}
+export async function deleteItemAsync(key: string): Promise<void> {
+  delete store[key];
+}
+export function resetMock(): void {
+  store = {};
+}

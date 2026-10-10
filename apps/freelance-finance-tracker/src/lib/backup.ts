@@ -48,7 +48,7 @@ export async function createBackup(store: Store, passphrase: string): Promise<st
 }
 
 /** Validate the structure of a decrypted backup. */
-function validateBackupStructure(data: any): string | null {
+export function validateBackupStructure(data: any): string | null {
   if (typeof data !== 'object' || data === null) return 'Backup data is not an object.';
   if (typeof data.version !== 'number') return 'Missing or invalid version.';
   if (!Array.isArray(data.receipts)) return 'Receipts should be an array.';
