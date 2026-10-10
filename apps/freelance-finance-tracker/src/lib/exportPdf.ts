@@ -52,3 +52,6 @@ export async function generatePdf(): Promise<string> {
   // Fallback: return a dummy data URI for testing purposes
   return 'data:application/pdf;base64,JVBERi0xLjQK';
 }
+
+// Export htmlEscape for testing purposes
+export { htmlEscape };
