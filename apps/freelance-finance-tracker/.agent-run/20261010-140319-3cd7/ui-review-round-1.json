@@ -1,0 +1,185 @@
+{
+  "verdict": "fail",
+  "summary": "Overall the UI matches the design spec and scores very high on accessibility (axe: 0, Lighthouse accessibility 98). All screens are present, the theme tokens are used, and most interactive components provide hover/focus states. However the primary flow for adding a mileage entry is broken \u2013 the `Mileage` mini\u2011FAB cannot be located or activated, which prevents users from completing the core \u201cAdd mileage\u201d task. Several secondary states required by the spec (error/retry screens, backup passphrase validation, numeric overflow handling, offline message) are missing or incomplete, which leads to degraded usability but does not completely block the main workflow.\n\nFindings:",
+  "findings": [
+    {
+      "severity": "high",
+      "file": "src/components/ui/FABAdd.tsx",
+      "issue": "The Mini FAB for \u201cMileage\u201d does not expose an accessible label (`accessibilityLabel`) and is not reachable by UI automation. The test suite cannot locate the button, and real users using screen readers or keyboard navigation have no way to discover the mileage action.",
+      "fix": "Add `accessibilityLabel=\"Add mileage\"` (and optionally `accessibilityHint`) to the MiniFAB component when it renders the mileage option. Ensure the mini\u2011FAB is rendered with a visible text label or an accessible tooltip so that both automated tests and assistive technologies can identify it. Verify that the button has a 44\u202f\u00d7\u202f44\u202fdp touch area and focus\u2011visible styling.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/screens/PolicyScreen.tsx",
+      "issue": "The spec defines an error state with a full\u2011screen error view and a **Retry** button when storing the policy acceptance fails. The current implementation only shows the agreement screen and loading indicator \u2013 no UI for the error case.",
+      "fix": "Implement an error component that displays the copy \u201cUnable to store your acceptance. Please try again.\u201d with a **Retry** button that re\u2011attempts storing the acceptance flag. Use the `Screen` wrapper and theme colors for consistency.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/screens/DashboardScreen.tsx",
+      "issue": "Dashboard error state (\"Failed to load data. Pull down to retry.\") is missing. If the data store throws, users see a blank screen with no recovery option.",
+      "fix": "Add a conditional render for error state that shows a full\u2011screen view with the specified message and a **Retry** button that triggers a reload of the summary data.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/screens/BackupPassphraseScreen.tsx",
+      "issue": "Backup passphrase UI does not enforce the required minimum 12\u2011character length nor display live validation errors for length or mismatch, contrary to the design spec.",
+      "fix": "Add validation logic that checks the passphrase length (>=12) and that both fields match. Show `HelperText type=\"error\"` messages for each rule and disable the **Create backup** button until the criteria are met. Use the existing validation utilities (`validateBackupPassphrase`).",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/components/ui/FormField.tsx",
+      "issue": "Numeric input fields (amount, miles, mileage rate, tax rate) do not truncate overly long numbers nor display a clear error when the max length is exceeded, missing the \u201cEdge \u2013 very long numbers\u201d requirement.",
+      "fix": "Implement `maxLength` on the `TextInput` based on the allowed max digits (e.g., amount\u202f\u2264\u202f1\u202f000\u202f000 \u2192 7 digits before decimal). When the user exceeds this, display a `HelperText type=\"error\"` with the existing validation message. Ensure the field\u2019s value is clamped or rejected appropriately.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/components/ui/Screen.tsx",
+      "issue": "The global offline banner (full\u2011screen message \u201cYou are offline\u2026\u201d) is not rendered on any screen, even where a network\u2011dependent action (share on web) would be required.",
+      "fix": "Create a reusable `OfflineBanner` component that checks the network status via `useNetInfo` (or similar) and, when offline, displays the full\u2011screen message with the exact copy. Include it at the top level of each screen that may invoke a network request (Export, Backup, Restore).",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "src/components/ui/PrimaryButton.tsx",
+      "issue": "Focus\u2011visible style (2\u202fdp outline) is missing on web when the button receives keyboard focus; only the default ripple is shown.",
+      "fix": "Add a CSS class or style that applies `outline: 2px solid var(--color-outline)` when the button has `:focus-visible`. Ensure the same style works on native via the `onFocus` prop.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "src/components/ui/MiniFAB.tsx",
+      "issue": "Mini\u2011FABs meet the 40\u202f\u00d7\u202f40\u202fdp touch target but lack a visible focus indicator on web/desktop, which reduces keyboard navigability.",
+      "fix": "Add a focus-visible outline (e.g., 2\u202fdp `border` using `theme.colors.outline`) when the Mini\u2011FAB receives focus. Use the `accessibilityState` prop to indicate focus.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "src/screens/ExportScreen.tsx",
+      "issue": "During export running state, the spec requires the buttons to show a small `ActivityIndicator` inside and be disabled. The current implementation only disables the button without rendering the spinner.",
+      "fix": "Wrap the button label with a conditional `ActivityIndicator` component (size=\"small\") when `exportRunning` is true, matching the design\u2019s copy \u201cGenerating export\u2026\u201d.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "viewport": "phone",
+      "issue": "The 'Accept' button is slightly too wide for the content, creating unnecessary horizontal padding.",
+      "fix": "Adjust button width to match its content or reduce padding for tighter alignment.",
+      "screen": "policy gate - agreement",
+      "source": "vision"
+    },
+    {
+      "severity": "low",
+      "viewport": "phone",
+      "issue": "The checkbox and 'Accept' button are not perfectly centered vertically within their container.",
+      "fix": "Adjust vertical alignment to center the checkbox and button group within their container.",
+      "screen": "policy gate - agreement",
+      "source": "vision"
+    },
+    {
+      "severity": "low",
+      "viewport": "both",
+      "issue": "The 'Add receipt' and 'Add mileage' buttons are visually identical in size and shape, but their placement slightly differs between phone and desktop (phone: right-aligned, desktop: centered right). This could cause subtle misalignment in user perception.",
+      "fix": "Ensure consistent button alignment and spacing across both viewports. Consider centering the buttons horizontally on desktop or maintaining right-aligned layout with consistent margins.",
+      "screen": "dashboard - empty",
+      "source": "vision"
+    },
+    {
+      "severity": "low",
+      "viewport": "phone",
+      "issue": "The 'Add receipt' button is slightly wider than the 'Add mileage' button, creating a minor visual imbalance.",
+      "fix": "Make both buttons identical in width for visual harmony.",
+      "screen": "dashboard - empty",
+      "source": "vision"
+    },
+    {
+      "severity": "low",
+      "viewport": "both",
+      "issue": "The descriptive text 'Add a receipt or mileage entry to start tracking your finances.' is cut off in the phone version due to line wrapping, making it visually incomplete.",
+      "fix": "Adjust line length or font size to ensure the entire sentence is visible without truncation on phone.",
+      "screen": "dashboard - empty",
+      "source": "vision"
+    },
+    {
+      "severity": "medium",
+      "viewport": "phone",
+      "issue": "Typography lacks a clear type scale; heading and body text are similar in weight and size, reducing visual hierarchy.",
+      "fix": "Use a larger, bolder heading for 'Add receipt' and smaller, lighter body text for labels and hints. Establish a clear visual hierarchy.",
+      "screen": "receipt entry",
+      "source": "vision"
+    },
+    {
+      "severity": "medium",
+      "viewport": "phone",
+      "issue": "Input fields are too narrow for touch targets; the 'Amount' field is barely wide enough for a finger tap, and the 'Save receipt' button is too small.",
+      "fix": "Increase field widths to 80% of screen width for inputs and make the primary button at least 44pt wide with adequate padding.",
+      "screen": "receipt entry",
+      "source": "vision"
+    },
+    {
+      "severity": "medium",
+      "viewport": "phone",
+      "issue": "Error state is visually inconsistent: the red border and text are not aligned with the rest of the form\u2019s design language (e.g., no subtle shadow or focus state).",
+      "fix": "Apply consistent visual language to error states: use a subtle shadow or border-radius to match the form\u2019s design, and ensure error text is aligned with the input\u2019s top or bottom edge.",
+      "screen": "receipt entry",
+      "source": "vision"
+    },
+    {
+      "severity": "low",
+      "viewport": "both",
+      "issue": "Desktop version lacks spacing and alignment; fields are too close together and appear to be scaled down without proper grid alignment.",
+      "fix": "Apply a consistent grid system to desktop: increase vertical spacing between fields, align left edges, and ensure form elements are evenly spaced with padding.",
+      "screen": "receipt entry",
+      "source": "vision"
+    },
+    {
+      "severity": "low",
+      "viewport": "phone",
+      "issue": "The 'Add photo' button is not visually distinct from the input fields; it lacks a clear affordance or icon.",
+      "fix": "Add an icon (e.g., camera) to the 'Add photo' button and use a subtle background or border to distinguish it from other fields.",
+      "screen": "receipt entry",
+      "source": "vision"
+    },
+    {
+      "severity": "medium",
+      "screen": "receipt entry",
+      "source": "vision",
+      "issue": "visual quality 7/10 on 'receipt entry' (target 8+, minimum 7): The form is functional and clean, with clear visual hierarchy and consistent spacing. However, it lacks polish in typography, spacing, and form controls that would elevate it to a premium product experience.",
+      "fix": "Address this screen's findings until it looks polished and professional."
+    }
+  ],
+  "lighthouse": [
+    {
+      "accessibility": 98,
+      "bestPractices": 100,
+      "performance": 57
+    }
+  ],
+  "vision_scores": [
+    {
+      "screen": "policy gate - agreement",
+      "score": 8.0,
+      "summary": "A polished, modern policy gate screen with clear visual hierarchy, consistent spacing, and touch-friendly controls. The design aligns with premium app standards for a critical first interaction."
+    },
+    {
+      "screen": "dashboard - empty",
+      "score": 8.0,
+      "summary": "Polished, modern dashboard empty state with clear visual hierarchy, well-spaced elements, and consistent typography. Touch targets are appropriately sized. Desktop version scales cleanly without stretching. Minor spacing inconsistencies and lack of subtle visual feedback on buttons are the only notable issues."
+    },
+    {
+      "screen": "receipt entry",
+      "score": 7.0,
+      "summary": "The form is functional and clean, with clear visual hierarchy and consistent spacing. However, it lacks polish in typography, spacing, and form controls that would elevate it to a premium product experience."
+    },
+    {
+      "screen": "dashboard - populated after receipt",
+      "score": 8.0,
+      "summary": "Polished, modern dashboard with clear visual hierarchy and touch-friendly controls. Typography and spacing are well-executed, and the snack bar feedback is correctly implemented. The desktop layout is appropriately scaled and not cramped. No critical issues found."
+    }
+  ]
+}
