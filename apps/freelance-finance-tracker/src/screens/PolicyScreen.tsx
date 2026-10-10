@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { StyleSheet } from 'react-native';
+import { StyleSheet, View, ScrollView } from 'react-native';
 import { Card, Text } from 'react-native-paper';
-import { CheckboxField, PrimaryButton, Screen } from '../components/ui';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { CheckboxField, PrimaryButton } from '../components/ui';
 import { POLICY_VERSION } from '../lib/policy';
 import { space, theme } from '../theme';
+import BottomActionBar from '../components/ui/BottomActionBar';
 
-// Replace with the app's real Terms of Use and Privacy Policy (keep it plain and honest).
 export const POLICY_SECTIONS: { heading: string; body: string }[] = [
   { heading: 'Your data stays on this device', body: 'Everything you enter is stored only on this device, encrypted. We never receive, see or store your data, and the app never sends it anywhere.' },
   { heading: 'Backups are yours', body: 'You are responsible for your own backups. Exported files go only where you choose to save or share them.' },
@@ -14,36 +15,50 @@ export const POLICY_SECTIONS: { heading: string; body: string }[] = [
 
 interface Props { onAccept: () => void; readOnly?: boolean }
 
-/** First screen until the current policy version is accepted; nothing else in the app is reachable before that. */
+/** Policy gate screen with scrollable policy text and a fixed bottom action bar. */
 export default function PolicyScreen({ onAccept, readOnly }: Props) {
   const [agreed, setAgreed] = useState(false);
+
   return (
-    <Screen title="Terms of Use and Privacy Policy" subtitle={`Version ${POLICY_VERSION}. Please read and agree to continue.`}>
-      <Card mode="outlined" style={styles.card}>
-        <Card.Content style={styles.content}>
-          {POLICY_SECTIONS.map((s) => (
-            <React.Fragment key={s.heading}>
-              <Text variant="titleMedium" style={styles.heading}>{s.heading}</Text>
-              <Text variant="bodyMedium" style={styles.body}>{s.body}</Text>
-            </React.Fragment>
-          ))}
-        </Card.Content>
-      </Card>
+    <SafeAreaView style={styles.safe}>
+      <ScrollView contentContainerStyle={styles.scroll}>
+        <Text variant="headlineSmall" style={styles.title} accessibilityRole="header">
+          Terms of Use and Privacy Policy
+        </Text>
+        <Text variant="bodyMedium" style={styles.subtitle}>
+          Version {POLICY_VERSION}. Please read and agree to continue.
+        </Text>
+        <Card mode="outlined" style={styles.card}>
+          <Card.Content style={styles.cardContent}>
+            {POLICY_SECTIONS.map((s) => (
+              <View key={s.heading} style={styles.section}>
+                <Text variant="titleMedium" style={styles.heading}>{s.heading}</Text>
+                <Text variant="bodyMedium" style={styles.body}>{s.body}</Text>
+              </View>
+            ))}
+          </Card.Content>
+        </Card>
+      </ScrollView>
       {readOnly ? null : (
-        <>
+        <BottomActionBar>
           <CheckboxField label="I have read and agree to the Terms of Use and Privacy Policy." checked={agreed} onChange={setAgreed} />
           <PrimaryButton label="Accept" disabled={!agreed} onPress={onAccept} />
-          {!agreed ? <Text variant="bodySmall" style={styles.hint}>Tick the box above to continue.</Text> : null}
-        </>
+          {!agreed && <Text variant="bodySmall" style={styles.hint}>Tick the box above to continue.</Text>}
+        </BottomActionBar>
       )}
-    </Screen>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  card: { backgroundColor: theme.colors.surface },
-  content: { gap: space(1), paddingVertical: space(2) },
-  heading: { fontWeight: '600', marginTop: space(1) },
+  safe: { flex: 1, backgroundColor: theme.colors.background },
+  scroll: { paddingHorizontal: space(2), paddingTop: space(3), paddingBottom: space(2) },
+  title: { fontWeight: '600', marginBottom: space(1) },
+  subtitle: { color: theme.colors.onSurfaceVariant, marginBottom: space(2) },
+  card: { backgroundColor: theme.colors.surface, marginBottom: space(2) },
+  cardContent: { gap: space(1), paddingVertical: space(2) },
+  section: { marginBottom: space(2) },
+  heading: { fontWeight: '600', marginBottom: space(0.5) },
   body: { color: theme.colors.onSurfaceVariant },
   hint: { color: theme.colors.secondary, textAlign: 'center' },
 });
