@@ -1,0 +1,249 @@
+{
+  "verdict": "fail",
+  "summary": "The UI mostly implements the DESIGN.md spec but critical flaws prevent the core user flow. The FAB that launches the receipt/mileage entry cannot be interacted with (high severity) and several secondary states, token usage, and accessibility details are missing or inconsistent (medium/low). Fixing the Add button and aligning the remaining screens with the spec will bring the product to a polished, production\u2011ready state.",
+  "findings": [
+    {
+      "severity": "high",
+      "file": "src/components/ui/FABAdd.tsx",
+      "issue": "The FAB that opens the receipt/mileage mini\u2011FABs is not discoverable by accessibility queries \u2013 it lacks an `accessibilityLabel`/`accessibilityRole=\"button\"` and the test ID used by the UI\u2011flow test. As a result the primary flow times out when trying to click the \"Add\" button, preventing users from adding any entry.",
+      "fix": "Give the FAB a clear `accessibilityLabel=\"Add\"` (or \"Add entry\"), set `accessible={true}` and `accessibilityRole=\"button\"`. Add a stable `testID=\"fab-add\"`. Ensure the mini\u2011FABs also have proper `accessibilityLabel`s (\"Add receipt\", \"Add mileage\") and visible focus outlines (`outline: 2px solid ${theme.colors.outline}`) for web.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/screens/ReceiptEntryScreen.tsx",
+      "issue": "When the user taps **Save receipt**, the spec requires the button label to be hidden and a spinner to appear, but the current implementation keeps the label visible and shows no loading indicator.",
+      "fix": "Add a local `saving` state. While `saving` is true render `<ActivityIndicator size=\"small\" />` inside the button and hide the label (`children={saving ? undefined : 'Save receipt'}`). Disable the button during save.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/screens/MileageEntryScreen.tsx",
+      "issue": "Same missing spinner/label\u2011hide behavior as ReceiptEntryScreen, breaking consistency with the spec.",
+      "fix": "Mirror the fix from ReceiptEntryScreen \u2013 show an ActivityIndicator inside the **Save mileage** button and hide its label while the async save is pending.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/screens/PolicyScreen.tsx",
+      "issue": "The error view text reads \u201cUnable to store acceptance. Please try again.\u201d which deviates from the required copy \u201cUnable to store **your** acceptance. Please try again.\u201d",
+      "fix": "Update the string to match the spec exactly, ensuring the word \u201cyour\u201d is present.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/screens/SettingsScreen.tsx",
+      "issue": "Settings load failures only log to console; no Snackbar with the required message \u201cUnable to load settings.\u201d is displayed.",
+      "fix": "Wrap the settings fetch in a try/catch and on error call the shared Snackbar component with the exact copy.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/components/ui/PrimaryButton.tsx",
+      "issue": "Buttons lack a visible focus style on web; when tabbing they receive only the default outline, which does not use the design token colour (`theme.colors.outline`).",
+      "fix": "Add a `:focus-visible` style that applies `outline: 2px solid ${theme.colors.outline}; outline-offset: 2px;` and ensure the style is included in `public/theme.css`.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/components/ui/FormField.tsx",
+      "issue": "Form fields do not set appropriate `autoComplete` attributes (e.g., amount, date, mileage). The spec calls for autocomplete and keyboard types.",
+      "fix": "Prop\u2011drill an `autoComplete` prop from the screen components to FormField. For numeric fields set `keyboardType=\"numeric\"` and `autoComplete=\"off\"`; for dates use a date picker component that sets `accessibilityLabel` and `autoComplete=\"bday\"` if appropriate.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/screens/BackupPassphraseScreen.tsx",
+      "issue": "The backup passphrase input lacks a show/hide toggle, violating the sign\u2011up/sign\u2011in best\u2011practice checklist for password fields.",
+      "fix": "Add a trailing icon button that toggles `secureTextEntry` on the TextInput, with an accessible label like \u201cShow passphrase\u201d / \u201cHide passphrase\u201d. Update the IconButton to use the secondary theme colours.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/screens/RestoreScreen.tsx",
+      "issue": "The passphrase field also lacks a show/hide toggle and does not focus the field automatically on validation error.",
+      "fix": "Implement the same show/hide toggle as in the backup screen and, on validation error, call `ref.current?.focus()` for the first invalid field.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/components/ui/EmptyState.tsx",
+      "issue": "The component uses hard\u2011coded colour hexes (e.g., `#212121` for text) instead of theme tokens, breaching the design\u2011token rule.",
+      "fix": "Replace all colour literals with references to `theme.colors.onSurface` or the appropriate token. Ensure the CSS class uses `color: var(--color-on-surface);`.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/screens/ExportScreen.tsx",
+      "issue": "When an export is running, the buttons display an internal ActivityIndicator but the surrounding button remains enabled, allowing rapid repeated taps that could trigger duplicate exports.",
+      "fix": "Set `disabled={exportRunning}` on both export buttons while `exportRunning` is true, and ensure the spinner replaces the button's label.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "src/components/ui/SummaryCard.tsx",
+      "issue": "Card elevation is set to 2dp, while the spec defines elevation\u202f1 for all cards.",
+      "fix": "Adjust the elevation prop to use `theme.elevation.level1` (or style `elevation: 1`).",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "src/components/ui/ScreenContainer.tsx",
+      "issue": "Horizontal padding is set to 20dp, deviating from the spec\u2019s 16dp (`spacing * 2`).",
+      "fix": "Replace the hard\u2011coded `paddingHorizontal: 20` with `paddingHorizontal: theme.spacing * 2` (i.e., 16dp).",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "src/components/ui/ScreenHeader.tsx",
+      "issue": "Uses `titleLarge` typography for the screen title; the spec requires `headlineMedium` for the main H1.",
+      "fix": "Swap the Text variant to `headlineMedium` or explicitly set style `{...theme.typography.headlineMedium}`.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "src/components/ui/BottomTabBar.tsx",
+      "issue": "Icons lack `accessibilityLabel` and rely only on visual label, which can cause screen\u2011reader confusion.",
+      "fix": "Add `accessibilityLabel={route.title}` to each BottomNavigation tab icon.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "public/theme.css",
+      "issue": "The CSS file defines colour custom properties but does not expose a variable for `outline` (used for focus rings). As a result focus styles fall back to default browser outline colours.",
+      "fix": "Add `--color-outline: #79747E;` to the root selector and use it in focus\u2011visible styles.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "src/components/ui/BackupButton.tsx",
+      "issue": "Contains a class name `backup-btn` that is not defined in any stylesheet, leaving the button unstyled on web.",
+      "fix": "Either remove the unused class or add the corresponding CSS rule to `public/theme.css`.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "viewport": "phone",
+      "issue": "The primary button 'Add receipt' is centered, but the surrounding empty space below it is excessive, creating a visual imbalance. The 'Dashboard' title at the top is too large relative to the content below, reducing perceived hierarchy.",
+      "fix": "Reduce the vertical padding below the button. Adjust the 'Dashboard' title to a smaller, more appropriate size relative to the body text and button.",
+      "screen": "dashboard - empty",
+      "source": "vision"
+    },
+    {
+      "severity": "low",
+      "viewport": "both",
+      "issue": "The icon above the 'Nothing here yet' text is slightly misaligned with the text baseline and lacks consistent spacing from surrounding elements.",
+      "fix": "Center the icon vertically and align it with the text baseline. Add consistent padding around the icon and text block.",
+      "screen": "dashboard - empty",
+      "source": "vision"
+    },
+    {
+      "severity": "low",
+      "viewport": "desktop",
+      "issue": "The desktop version has a very wide, almost empty canvas. The content is centered, but the lack of left/right padding or subtle visual anchors makes it feel sparse and unbalanced.",
+      "fix": "Add subtle left/right padding or a thin horizontal divider to define the content area. Consider a slightly darker background for the content block to create visual weight.",
+      "screen": "dashboard - empty",
+      "source": "vision"
+    },
+    {
+      "severity": "medium",
+      "viewport": "phone",
+      "issue": "The 'Amount' field has a red border and error text, but the error message is not visually aligned with the field; it's positioned below and slightly offset, breaking visual consistency.",
+      "fix": "Center-align the error message directly under the 'Amount' field, ensuring consistent spacing and alignment with other fields.",
+      "screen": "receipt entry",
+      "source": "vision"
+    },
+    {
+      "severity": "medium",
+      "viewport": "phone",
+      "issue": "The 'Save receipt' button is disabled (grayed out), but there's no visual feedback or animation to indicate why it's disabled (e.g., no hover state or loading indicator).",
+      "fix": "Add a subtle disabled state animation or a small tooltip explaining why the button is disabled (e.g., 'Enter a valid amount').",
+      "screen": "receipt entry",
+      "source": "vision"
+    },
+    {
+      "severity": "medium",
+      "viewport": "phone",
+      "issue": "The 'Add photo' button has a blue link-style text, which looks like a hyperlink rather than a button, and lacks visual affordance for touch targets.",
+      "fix": "Use a solid button style with clear padding and rounded corners to match the other form elements. Avoid using link-style text for primary actions.",
+      "screen": "receipt entry",
+      "source": "vision"
+    },
+    {
+      "severity": "medium",
+      "viewport": "desktop",
+      "issue": "The desktop version is stretched vertically and horizontally, with elements not properly scaled or aligned. The form fields are too close to the top and bottom edges, and the 'Save receipt' button is not centered or proportionally sized.",
+      "fix": "Re-layout the desktop version to use a proper grid system. Increase padding around the form, center the button, and scale all elements proportionally to the viewport (1280x800).",
+      "screen": "receipt entry",
+      "source": "vision"
+    },
+    {
+      "severity": "low",
+      "viewport": "phone",
+      "issue": "The 'Type' toggle between 'Expense' and 'Income' is visually consistent, but the 'Income' option has a slightly different background color (white vs. light blue) which may be confusing or inconsistent with the design system.",
+      "fix": "Use the same background color for both toggle options to maintain visual consistency, or use a subtle indicator (like a dot or icon) to show the active state.",
+      "screen": "receipt entry",
+      "source": "vision"
+    },
+    {
+      "severity": "medium",
+      "screen": "receipt entry",
+      "source": "vision",
+      "issue": "visual quality 7/10 on 'receipt entry' (target 8+, minimum 7): The screen is clean and functional, with a clear primary action and good visual hierarchy. However, it lacks polish in typography, spacing, and form design, and the desktop version is not properly scaled or aligned.",
+      "fix": "Address this screen's findings until it looks polished and professional."
+    },
+    {
+      "severity": "medium",
+      "viewport": "phone",
+      "issue": "The snackbar overlaps the recent activity card slightly, obscuring part of the content. This could be confusing or visually jarring.",
+      "fix": "Adjust the snackbar's position or padding to ensure it doesn't overlap content. Consider a slight vertical offset or animation to avoid covering important information.",
+      "screen": "dashboard - populated after receipt",
+      "source": "vision"
+    },
+    {
+      "severity": "low",
+      "viewport": "phone",
+      "issue": "The 'Receipt saved' snackbar is positioned too far to the right, cutting off the end of the text in the card below it.",
+      "fix": "Center or left-align the snackbar to ensure full text visibility and better visual alignment with the card.",
+      "screen": "dashboard - populated after receipt",
+      "source": "vision"
+    },
+    {
+      "severity": "low",
+      "viewport": "both",
+      "issue": "The 'Recent activity' section title is not visually weighted or styled to match the summary cards above it, creating a slight visual hierarchy gap.",
+      "fix": "Add subtle styling (e.g., bold font, slightly larger size, or a divider) to the 'Recent activity' title to reinforce its section header role.",
+      "screen": "dashboard - populated after receipt",
+      "source": "vision"
+    }
+  ],
+  "lighthouse": [
+    {
+      "accessibility": 98,
+      "bestPractices": 100,
+      "performance": 57
+    }
+  ],
+  "vision_scores": [
+    {
+      "screen": "policy gate - agreement",
+      "score": 8.0,
+      "summary": "Polished, clean, and professional policy gate screen with clear visual hierarchy and appropriate spacing. The design effectively guides the user toward the primary action. Typography is readable and well-scaled. No critical usability or design flaws observed."
+    },
+    {
+      "screen": "dashboard - empty",
+      "score": 8.0,
+      "summary": "Polished, modern, and intuitive empty state with clear primary action and consistent layout. Touch targets are appropriately sized. Desktop version scales well without stretching. Minor spacing and typography tweaks could elevate it to 9."
+    },
+    {
+      "screen": "receipt entry",
+      "score": 7.0,
+      "summary": "The screen is clean and functional, with a clear primary action and good visual hierarchy. However, it lacks polish in typography, spacing, and form design, and the desktop version is not properly scaled or aligned."
+    },
+    {
+      "screen": "dashboard - populated after receipt",
+      "score": 8.0,
+      "summary": "Polished, modern dashboard with clear hierarchy, consistent spacing, and touch-friendly controls. The snackbar feedback is well-integrated and the bottom navigation is intuitive. Minor spacing tweaks could enhance visual balance."
+    }
+  ]
+}
