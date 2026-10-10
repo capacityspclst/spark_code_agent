@@ -1,0 +1,206 @@
+{
+  "verdict": "fail",
+  "summary": "The app generally follows the design spec \u2013 all required screens, states and copy are present, the layout matches the mobile\u2011first grid, and accessibility scores are high (axe\u202f0 violations, Lighthouse\u202faccessibility\u202f98). However a critical navigation bug prevents the user from reaching the Settings screen, breaking the primary flow (the user cannot access Export/Backup/Restore or the Delete\u2011All\u2011Data action). Secondary issues include missing offline\u2011state handling, a few instances of hard\u2011coded colours instead of design tokens, and minor accessibility oversights (focus\u2011visible outlines, autocomplete attributes, and ARIA role on Snackbar). The navigation failure is a show\u2011stopper; the other issues are medium\u2011to\u2011low severity but should be fixed to meet the polished product bar.",
+  "findings": [
+    {
+      "severity": "high",
+      "file": "src/navigation/index.tsx",
+      "issue": "The Settings tab/button is not reachable \u2013 the UI flow test timed out trying to click \"Settings\" on both phone and desktop viewports. This prevents the user from accessing Export, Backup/Restore and Delete\u2011All\u2011Data screens, breaking the primary flow.",
+      "fix": "Add a correctly configured route for Settings in the BottomNavigation routes array, ensure the route key matches the SettingsScreen component, give the tab a proper label and accessibilityLabel, and confirm the component renders without errors. Add an integration test that clicks the Settings tab and verifies navigation.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/screens/ExportScreen.tsx",
+      "issue": "The spec requires an offline full\u2011screen message when network\u2011required actions are attempted, but ExportScreen (and other export/backup screens) do not display the \"You are offline\u2026\" message when NetInfo reports no connection.",
+      "fix": "Import NetInfo (or use expo\u2011network) and render a full\u2011screen overlay with the required copy when offline. Wrap the export buttons in a conditional that disables them and shows the offline view. Apply the same pattern to BackupScreen and RestoreScreen.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/components/ui/MiniFAB.tsx",
+      "issue": "Background colour for MiniFAB is hard\u2011coded to \"#015958\" instead of using the secondary colour from the design tokens. This breaks the token\u2011driven visual language and could cause contrast regressions if the token changes.",
+      "fix": "Replace the hard\u2011coded colour with `theme.colors.secondary` and the icon colour with `theme.colors.onSecondary`. Pull the theme via `useTheme()` from React\u2011Native\u2011Paper and apply it to the FAB style.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "src/components/ui/PrimaryButton.tsx",
+      "issue": "Focus\u2011visible outline (2\u202fdp) defined in the spec is not applied on web; buttons only show a default outline on focus, which may not meet the required visual style.",
+      "fix": "Add a `style` for the `focusVisible` state that sets `outlineWidth: 2`, `outlineColor: theme.colors.outline`, and `outlineStyle: 'solid'`. Ensure the component forwards the `onFocus`/`onBlur` state to trigger the style.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "src/components/ui/FormField.tsx",
+      "issue": "Form inputs lack explicit `autoComplete` attributes (e.g., amount, date, mileage) causing sub\u2011optimal keyboard behaviour on web and missing hints for assistive technology.",
+      "fix": "Pass appropriate `autoComplete` props to the underlying `TextInput` (e.g., `autoComplete=\"off\"` for numeric fields, `autoComplete=\"bday\"` for date). Update the FormField component's props interface to accept and forward this attribute.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "src/components/ui/Snackbar.tsx",
+      "issue": "Snackbar component does not set `role=\"alert\"` or `aria-live=\"assertive\"`, which means screen readers may not announce success/error messages promptly.",
+      "fix": "Add `accessibilityLiveRegion=\"assertive\"` and `accessibilityRole=\"alert\"` to the root view of the Snackbar. Verify that the announcement fires when `visible` changes.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "viewport": "both",
+      "issue": "The 'Accept' button is disabled until the checkbox is checked, which is correct behavior, but the disabled state is not visually distinct enough from the enabled state (e.g., no opacity change or border style difference).",
+      "fix": "Apply a subtle opacity reduction and/or border color change to clearly indicate the disabled state.",
+      "screen": "policy gate - agreement",
+      "source": "vision"
+    },
+    {
+      "severity": "low",
+      "viewport": "phone",
+      "issue": "The checkbox and 'Accept' button are vertically aligned, but the text 'Tick the box to continue.' is positioned below the button, which is slightly off-center and could be misaligned on smaller screens.",
+      "fix": "Center the instructional text horizontally and vertically relative to the checkbox and button group.",
+      "screen": "policy gate - agreement",
+      "source": "vision"
+    },
+    {
+      "severity": "low",
+      "viewport": "desktop",
+      "issue": "The policy text is presented in a single, narrow column, which is not optimal for desktop users who may want to read it in a more comfortable, multi-column format.",
+      "fix": "On desktop, consider a two-column layout for the policy text to improve readability and reduce vertical scrolling.",
+      "screen": "policy gate - agreement",
+      "source": "vision"
+    },
+    {
+      "severity": "medium",
+      "viewport": "phone",
+      "issue": "The 'Amount' field is highlighted with a red border and error text, but the error text is not visually connected to the field (e.g., no icon or consistent spacing).",
+      "fix": "Align the error text to the left of the field and add a small error icon (e.g., !) next to the field label to visually group the error with the field.",
+      "screen": "receipt entry",
+      "source": "vision"
+    },
+    {
+      "severity": "medium",
+      "viewport": "phone",
+      "issue": "The 'Save receipt' button is disabled but lacks visual feedback beyond grey color; no hover or press state is indicated.",
+      "fix": "Add a subtle shadow or elevation change on press, and consider a slight animation when enabled/disabled to reinforce state.",
+      "screen": "receipt entry",
+      "source": "vision"
+    },
+    {
+      "severity": "low",
+      "viewport": "phone",
+      "issue": "The 'Add photo' button is a simple pill-shaped button with no visual indication of its function (e.g., camera icon).",
+      "fix": "Add a small camera icon to the left of the text to clearly indicate the button's purpose.",
+      "screen": "receipt entry",
+      "source": "vision"
+    },
+    {
+      "severity": "low",
+      "viewport": "both",
+      "issue": "The 'Type' toggle is a segmented control but lacks visual feedback on selection (e.g., no indicator on the selected segment).",
+      "fix": "Add a small checkmark or highlight border to the selected segment to reinforce selection state.",
+      "screen": "receipt entry",
+      "source": "vision"
+    },
+    {
+      "severity": "low",
+      "viewport": "phone",
+      "issue": "The 'Notes' field has no placeholder text or hint to guide the user on what to enter.",
+      "fix": "Add a placeholder text like 'Add notes (optional)' to guide the user.",
+      "screen": "receipt entry",
+      "source": "vision"
+    },
+    {
+      "severity": "medium",
+      "screen": "receipt entry",
+      "source": "vision",
+      "issue": "visual quality 7/10 on 'receipt entry' (target 8+, minimum 7): The screen is clean and functional, with clear visual hierarchy and a primary action. Typography is readable and consistent, spacing is generous, and form elements are well-aligned. However, it lacks polish in typography scale, spacing consistency, and visual feedback, which prevent it from being truly exceptional.",
+      "fix": "Address this screen's findings until it looks polished and professional."
+    },
+    {
+      "severity": "low",
+      "viewport": "phone",
+      "issue": "The snackbar overlaps slightly with the recent activity card, obscuring part of the entry details.",
+      "fix": "Adjust the snackbar's position or reduce its height to avoid overlap with the card content.",
+      "screen": "dashboard - populated after receipt",
+      "source": "vision"
+    },
+    {
+      "severity": "low",
+      "viewport": "phone",
+      "issue": "The FAB is positioned slightly too low, partially overlapping the bottom navigation bar.",
+      "fix": "Move the FAB up slightly to ensure it sits fully above the navigation bar.",
+      "screen": "dashboard - populated after receipt",
+      "source": "vision"
+    },
+    {
+      "severity": "low",
+      "viewport": "both",
+      "issue": "The summary cards have inconsistent vertical spacing between them and the 'Recent activity' section.",
+      "fix": "Apply consistent padding and spacing between all cards and sections to improve visual rhythm.",
+      "screen": "dashboard - populated after receipt",
+      "source": "vision"
+    },
+    {
+      "severity": "medium",
+      "viewport": "phone",
+      "issue": "The 'Save mileage' button is not touch-friendly; it's too narrow for a single finger tap, especially on smaller screens. It should be wider and possibly larger to accommodate thumb reach and reduce tap targets.",
+      "fix": "Increase the button width to at least 60% of the screen width or ensure it\u2019s at least 44dp wide with sufficient padding. Consider increasing height to 56dp for better tap target size.",
+      "screen": "mileage entry",
+      "source": "vision"
+    },
+    {
+      "severity": "low",
+      "viewport": "both",
+      "issue": "The 'Miles' input field lacks placeholder text or hint, making it unclear what should be entered. The 'Purpose' field has a placeholder, but 'Miles' does not.",
+      "fix": "Add a placeholder text to the 'Miles' field, e.g., 'Enter number of miles'. This improves clarity for users without requiring interaction.",
+      "screen": "mileage entry",
+      "source": "vision"
+    },
+    {
+      "severity": "low",
+      "viewport": "phone",
+      "issue": "The 'Save mileage' button is positioned too close to the bottom edge of the screen, leaving minimal padding. This can feel cramped on smaller phones and may interfere with thumb reach.",
+      "fix": "Add at least 16dp of padding between the button and the bottom edge of the screen to improve touch target comfort and visual breathing room.",
+      "screen": "mileage entry",
+      "source": "vision"
+    }
+  ],
+  "lighthouse": [
+    {
+      "accessibility": 98,
+      "bestPractices": 100,
+      "performance": 57
+    }
+  ],
+  "vision_scores": [
+    {
+      "screen": "policy gate - agreement",
+      "score": 8.0,
+      "summary": "A polished, modern policy gate screen with clear visual hierarchy, consistent spacing, and touch-friendly controls. The design is clean and professional, aligning with a premium product."
+    },
+    {
+      "screen": "dashboard - empty",
+      "score": 8.0,
+      "summary": "Polished, modern dashboard with clear visual hierarchy and intuitive navigation. The empty state effectively guides users to their first action. Typography is clean and readable, spacing is generous, and alignment is consistent. The FAB is well-placed and touch-friendly. Desktop version maintains the same layout without stretching or cramming. No critical flaws found."
+    },
+    {
+      "screen": "receipt entry",
+      "score": 7.0,
+      "summary": "The screen is clean and functional, with clear visual hierarchy and a primary action. Typography is readable and consistent, spacing is generous, and form elements are well-aligned. However, it lacks polish in typography scale, spacing consistency, and visual feedback, which prevent it from being truly exceptional."
+    },
+    {
+      "screen": "dashboard - populated after receipt",
+      "score": 8.0,
+      "summary": "Polished, modern dashboard with clear visual hierarchy, consistent spacing, and touch-friendly controls. The snackbar feedback and bottom navigation are well-integrated. Minor spacing and alignment tweaks could elevate it to 9."
+    },
+    {
+      "screen": "mileage entry",
+      "score": 8.0,
+      "summary": "Polished, modern mileage entry screen with clear visual hierarchy and consistent spacing. The primary action is prominent, typography is readable, and form elements are well-grouped. Desktop layout is spacious and aligned. Minor improvements could enhance touch-friendliness and visual polish."
+    },
+    {
+      "screen": "dashboard - populated after mileage",
+      "score": 9.0,
+      "summary": "Polished, modern dashboard with clear visual hierarchy, consistent spacing, and touch-friendly controls. The design feels premium and would not look out of place in a well-reviewed commercial app."
+    }
+  ]
+}
