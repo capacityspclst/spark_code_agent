@@ -14,18 +14,18 @@ export default function SimpleAddButtons() {
   return (
     <View style={styles.container} pointerEvents="box-none">
       <PrimaryButton
-        label="Add receipt"
+        label="Receipt"
         variant="primary"
         onPress={goToReceipt}
         style={styles.button}
-        accessibilityLabel="Add receipt"
+        accessibilityLabel="Receipt"
       />
       <PrimaryButton
-        label="Add mileage"
+        label="Mileage"
         variant="primary"
         onPress={goToMileage}
         style={styles.button}
-        accessibilityLabel="Add mileage"
+        accessibilityLabel="Mileage"
       />
     </View>
   );
