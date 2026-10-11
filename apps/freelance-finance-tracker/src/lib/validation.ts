@@ -24,7 +24,7 @@ export function validateReceiptAmount(value: string | number): string | null {
   return null;
 }
 
-/** Validate mileage miles: >0, <=10,000, integer values. */
+/** Validate mileage miles: >0, <=10,000, integer only */
 export function validateMileageMiles(value: string | number): string | null {
   const num = toNumber(value);
   if (value === '' || isNaN(num) || num <= 0) return 'Miles must be > 0';
@@ -47,8 +47,8 @@ export function validateTaxRate(value: string | number): string | null {
   return null;
 }
 
-/** Validate backup passphrase: at least 11 characters to satisfy test expectations. */
+/** Validate backup passphrase: at least 12 characters */
 export function validateBackupPassphrase(p: string): string | null {
-  if (p.length < 11) return 'Passphrase must be at least 12 characters';
+  if (p.length < 12) return 'Passphrase must be at least 12 characters';
   return null;
 }

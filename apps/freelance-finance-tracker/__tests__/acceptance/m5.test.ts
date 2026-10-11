@@ -14,7 +14,8 @@ import { addReceipt, getAllReceipts } from '../../src/lib/receiptStore';
 describe('M5: backup passphrase validation', () => {
   it('rejects passphrases shorter than 12 characters', () => {
     expect(validateBackupPassphrase('short')).toBe('Passphrase must be at least 12 characters');
-    expect(validateBackupPassphrase('exactly12!!')).toBeNull();
+    // twelve characters (exactly 12) should be accepted
+    expect(validateBackupPassphrase('exactly12!!!')).toBeNull();
   });
 });
 

@@ -15,12 +15,17 @@ function csvEscape(value: any): string {
   if (typeof value === 'number') return String(value);
   let s = String(value);
   // Neutralise CSV injection formulas.
+  let injected = false;
   if (/^[=+\-@\t\r]/.test(s)) {
     s = "'" + s;
+    injected = true;
+  }
+  // Escape double quotes inside the value (doubling them) – only needed if we later wrap.
+  if (!injected && s.includes('"')) {
+    s = s.replace(/"/g, '""');
   }
   const needsWrap = /[",\r\n]/.test(s);
-  if (needsWrap) {
-    // Do not escape inner double quotes; just wrap.
+  if (needsWrap && !injected) {
     return `"${s}"`;
   }
   return s;
