@@ -2,7 +2,6 @@ module.exports = function (api) {
   api.cache(true);
   return {
     presets: ['babel-preset-expo'],
-    // No extra plugins needed for tests
-    plugins: [],
+    plugins: ['babel-plugin-dynamic-import-node'],
   };
 };
