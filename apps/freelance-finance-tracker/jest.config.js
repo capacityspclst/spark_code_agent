@@ -1,5 +1,5 @@
 // jest-expo runs tests with React Native's module resolution.
-module.exports = {
+export default {
   preset: 'jest-expo',
   testEnvironment: 'node',
   transform: {
