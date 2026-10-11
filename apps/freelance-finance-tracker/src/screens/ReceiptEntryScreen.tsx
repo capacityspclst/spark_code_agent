@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { View } from 'react-native';
 import { useNavigation, NavigationProp } from '@react-navigation/native';
 import { PrimaryButton, Screen, FormField, ChoiceField } from '../components/ui';
+import { persistPhoto } from '../lib/photos';
 import { addReceipt } from '../lib/receiptStore';
 import { getStore } from '../lib/storage';
 import { Receipt, ReceiptType } from '../lib/models';
@@ -40,8 +41,9 @@ export default function ReceiptEntryScreen() {
     }
     setError('');
     setSaving(true);
+    const id = uuidv4();
     const receipt: Receipt = {
-      id: uuidv4(),
+      id,
       amount: Number(amount),
       date,
       category,
@@ -50,6 +52,8 @@ export default function ReceiptEntryScreen() {
       photoUri,
     };
     try {
+      // Keep the photo in the app's own folder: the picker's copy is temporary.
+      if (photoUri) receipt.photoUri = await persistPhoto(photoUri, id);
       await addReceipt(getStore(), receipt);
       setPendingSnack('Receipt saved');
       navigation.navigate('Main', { screen: 'Dashboard' });

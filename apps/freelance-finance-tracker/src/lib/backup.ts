@@ -4,9 +4,7 @@ import { getAllReceipts } from './receiptStore';
 import { getAllMileageEntries } from './mileageStore';
 import { deriveKey, encrypt, decrypt, toBase64, fromBase64, utf8, fromUtf8, randomBytes } from './crypto';
 import type { Receipt, MileageEntry } from './models';
-import * as FileSystem from 'expo-file-system';
-import * as FileSystemLegacy from 'expo-file-system/legacy';
-import { readFileBytes, writeFileBytes } from './files';
+import { deleteAllPhotos, readPhotoBase64, writePhotoBase64 } from './photos';
 import { validateBackupPassphrase } from './validation';
 
 const BACKUP_VERSION = 1;
@@ -23,16 +21,8 @@ export async function createBackup(store: Store, passphrase: string): Promise<st
   const mileage: MileageEntry[] = await getAllMileageEntries(store);
   const receiptsWithPhotos = await Promise.all(
     receipts.map(async (r) => {
-      if (r.photoUri) {
-        try {
-          const bytes = await readFileBytes(r.photoUri);
-          const b64 = toBase64(bytes);
-          return { ...r, photoData: b64 };
-        } catch {
-          return { ...r };
-        }
-      }
-      return { ...r };
+      const photoData = r.photoUri ? await readPhotoBase64(r.photoUri) : null;
+      return photoData ? { ...r, photoData } : { ...r };
     })
   );
   const payload = JSON.stringify({ version: BACKUP_VERSION, receipts: receiptsWithPhotos, mileage });
@@ -81,27 +71,19 @@ export async function restoreBackup(store: Store, backupBlob: string, passphrase
   const structErr = validateBackupStructure(data);
   if (structErr) throw new Error('Invalid backup format: ' + structErr);
 
-  const cacheDir = (FileSystem as unknown as any).cacheDirectory ?? '';
-  try {
-    // Use legacy API to avoid deprecation warnings
-    const entries = await FileSystemLegacy.readDirectoryAsync(cacheDir);
-    await Promise.all(
-      entries.map((e) => FileSystemLegacy.deleteAsync(`${cacheDir}${e}`, { idempotent: true }))
-    );
-  } catch {}
-
+  // Replace everything: records and the photo folder.
+  await deleteAllPhotos();
   await keepingPolicy(store, async () => {
     await store.clearAll();
     for (const r of data.receipts) {
       const { photoData, ...rest } = r as any;
       await store.put('receipts', rest as any);
       if (photoData) {
-        const uri = `${cacheDir}${rest.id}_photo`;
         try {
-          const bytes = fromBase64(photoData);
-          await writeFileBytes(uri, bytes);
-          await store.put('receipts', { ...rest, photoUri: uri } as any);
-        } catch {}
+          await store.put('receipts', { ...rest, photoUri: await writePhotoBase64(rest.id, photoData) } as any);
+        } catch {
+          // A photo that can't be written: keep the receipt without it.
+        }
       }
     }
     for (const m of data.mileage) {

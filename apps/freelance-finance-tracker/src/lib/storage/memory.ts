@@ -19,7 +19,8 @@ export function createMemoryRawStore(): RawStore & { dump(): string } {
 }
 
 export function createMemoryKeyProvider(key: Uint8Array = randomBytes(KEY_BYTES)): KeyProvider {
-  return { getKey: async () => key };
+  let current = key;
+  return { getKey: async () => current, rotateKey: async () => (current = randomBytes(KEY_BYTES)) };
 }
 
 // Re-export the encrypted Store factory for tests.
