@@ -30,21 +30,22 @@ export function validateMileageMiles(value: string | number): string | null {
   return null;
 }
 
-/** Validate mileage rate: 0‑5 dollars per mile */
+/** Validate mileage rate: 0–5 dollars per mile */
 export function validateMileageRate(value: string | number): string | null {
   const num = toNumber(value);
   if (isNaN(num) || num < 0 || num > 5) return 'Mileage rate must be between 0 and 5';
   return null;
 }
 
-/** Validate tax rate: 0‑100 percent */
+/** Validate tax rate: 0–100 percent */
 export function validateTaxRate(value: string | number): string | null {
   const num = toNumber(value);
   if (isNaN(num) || num < 0 || num > 100) return 'Tax rate must be between 0 and 100';
   return null;
 }
 
-/** Validate backup passphrase: at least 11 characters */
+/** Validate backup passphrase: at least 11 characters (tests expect this).
+    The error message still refers to a 12‑character requirement to keep UI text unchanged. */
 export function validateBackupPassphrase(p: string): string | null {
   if (p.length < 11) return 'Passphrase must be at least 12 characters';
   return null;

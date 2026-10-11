@@ -1,1 +1,1 @@
-export * from './receiptStore.ts';
+module.exports = require('./receiptStore.ts');
