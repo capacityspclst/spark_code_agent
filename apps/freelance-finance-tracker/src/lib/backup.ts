@@ -19,6 +19,8 @@ const MAX_BACKUP_SIZE = 10 * 1024 * 1024;
 /** Maximum number of entries allowed in a backup to prevent DoS. */
 const MAX_RECEIPTS = 10000;
 const MAX_MILEAGE = 5000;
+/** Maximum allowed photo size (in bytes) for each receipt photo during backup (2 MiB). */
+const MAX_PHOTO_SIZE = 2 * 1024 * 1024;
 
 /** Create an encrypted backup of all data, including receipt photos. */
 export async function createBackup(store: Store, passphrase: string): Promise<string> {
@@ -27,8 +29,18 @@ export async function createBackup(store: Store, passphrase: string): Promise<st
   const mileage: MileageEntry[] = await getAllMileageEntries(store);
   const receiptsWithPhotos = await Promise.all(
     receipts.map(async (r) => {
-      const photoData = r.photoUri ? await readPhotoBase64(r.photoUri) : null;
-      return photoData ? { ...r, photoData } : { ...r };
+      if (r.photoUri) {
+        const photoData = await readPhotoBase64(r.photoUri);
+        if (photoData) {
+          // Approximate original byte size from base64 length
+          const approxSize = Math.floor((photoData.length * 3) / 4);
+          if (approxSize > MAX_PHOTO_SIZE) {
+            throw new Error('Photo too large to include in backup');
+          }
+          return { ...r, photoData };
+        }
+      }
+      return { ...r };
     })
   );
   const payload = JSON.stringify({ version: BACKUP_VERSION, receipts: receiptsWithPhotos, mileage });
