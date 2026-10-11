@@ -1,0 +1,71 @@
+{
+  "verdict": "pass",
+  "summary": "All high\u2011severity code findings have been addressed. The data\u2011reset flow now deletes receipt photos, backup creation enforces the 12\u2011character passphrase rule, backup structure is validated before any mutation, and photo restoration writes only to a safe internal directory. Remaining open findings are dependency vulnerabilities, a missing rate\u2011limit on backup passphrase attempts, CSV injection concerns, and a new potential DoS when creating backups from very large receipt photos.",
+  "findings": [
+    {
+      "id": "dependency-uuid-medium",
+      "severity": "medium",
+      "where": "code",
+      "file": "package-lock.json",
+      "issue": "`uuid` 7.0.3 is vulnerable to CVE\u20112026\u201141907 \u2013 out\u2011of\u2011bounds write that can corrupt memory and affect data integrity.",
+      "fix": "Upgrade `uuid` to a safe version (>=\u202f13.0.1, 12.0.1, or 11.1.1). Update imports accordingly and run the test suite."
+    },
+    {
+      "id": "backup-passphrase-bruteforce-medium",
+      "severity": "medium",
+      "where": "code",
+      "file": "src/screens/BackupPassphraseScreen.tsx",
+      "issue": "Failed backup\u2011passphrase attempts are not rate\u2011limited, allowing offline brute\u2011force attacks against the encrypted backup.",
+      "fix": "Implement exponential back\u2011off after each failed restore attempt (1\u202fs, 2\u202fs, 4\u202fs, \u2026) and lock the restore UI after a configurable number of consecutive failures (e.g., 5). Store the failure count in memory and reset on app restart."
+    },
+    {
+      "id": "csv-export-injection-weak-escaping-mediu",
+      "severity": "medium",
+      "where": "code",
+      "file": "src/lib/exportCsv.ts",
+      "issue": "CSV export only prefixes a single quote to fields that start with `=`, `+`, `-`, or `@`. It does not fully escape commas, quotes, newlines, or other special characters, leaving the generated CSV vulnerable to injection attacks in spreadsheet software.",
+      "fix": "Replace the custom CSV generation with a robust library such as `csv-stringify` that implements RFC\u202f4180 escaping (quotes, commas, line\u2011breaks). Ensure all fields are properly escaped before concatenation."
+    },
+    {
+      "id": "backup-creation-photo-size-dos",
+      "severity": "medium",
+      "where": "code",
+      "file": "src/lib/backup.ts",
+      "issue": "Backup creation reads every receipt photo entirely into memory (via readPhotoBase64) without imposing a size limit. A maliciously large photo can cause out\u2011of\u2011memory crashes during backup generation (resource exhaustion).",
+      "fix": "Enforce a maximum per\u2011photo size (e.g., reject or down\u2011scale photos > X\u202fMiB) before converting to base64, or stream the photo data / use incremental encoding to avoid loading the whole file into memory."
+    }
+  ],
+  "deployment_actions": [
+    {
+      "id": "dependency-braces-high",
+      "severity": "high",
+      "where": "deployment",
+      "file": "package-lock.json",
+      "issue": "`braces` 3.0.3 contains CVE\u20112026\u201193687 \u2013 a denial\u2011of\u2011service via stack overflow on deeply nested patterns. The library is present in the production bundle and could be triggered by any glob/regex usage.",
+      "fix": "No fixed release exists yet: monitor the advisory and upgrade as soon as one ships; confirm whether the package is only a build-time dependency. Upgrade `braces` to a version that fixes the CVE (>=\u202f3.0.4) or replace it with a safe alternative. Update the lockfile and run tests."
+    },
+    {
+      "id": "dependency-node-forge-high",
+      "severity": "high",
+      "where": "deployment",
+      "file": "package-lock.json",
+      "issue": "`node\u2011forge` 1.4.0 has CVE\u20112026\u201185393 \u2013 signature forgery vulnerability in RSA PKCS#1 v1.5 verification, potentially allowing forged signatures.",
+      "fix": "No fixed release exists yet: monitor the advisory and upgrade as soon as one ships; confirm whether the package is only a build-time dependency. Remove `node\u2011forge` from dependencies or replace its usage with vetted libraries such as `@noble/*`. If only a transitive dev dependency, prune it. Update package.json and lockfile."
+    },
+    {
+      "id": "dependency-sprintf-js-medium",
+      "severity": "medium",
+      "where": "deployment",
+      "file": "package-lock.json",
+      "issue": "`sprintf\u2011js` 1.0.3 is vulnerable to CVE\u20112026\u201197058 \u2013 denial\u2011of\u2011service via unbounded precision specifiers, which can crash the app with malicious format strings.",
+      "fix": "No fixed release exists yet: monitor the advisory and upgrade as soon as one ships; confirm whether the package is only a build-time dependency. Replace `sprintf\u2011js` with native template literals or a maintained formatting library. If only a transitive dependency, upgrade or prune it."
+    }
+  ],
+  "fixed": [
+    "data-reset-photo-leak-high",
+    "backup-restore-size-dos-medium",
+    "backup-passphrase-min-length-missing-cod",
+    "restore-photo-path-traversal-medium"
+  ],
+  "stalled": []
+}
