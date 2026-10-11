@@ -98,7 +98,7 @@ export async function restoreBackup(store: Store, backupBlob: string, passphrase
       if (photoData) {
         const uri = `${cacheDir}${rest.id}_photo`;
         try {
-          const bytes = Uint8Array.from(atob(photoData), (c) => c.charCodeAt(0));
+          const bytes = fromBase64(photoData);
           await writeFileBytes(uri, bytes);
           await store.put('receipts', { ...rest, photoUri: uri } as any);
         } catch {}

@@ -25,20 +25,13 @@ export default function RestoreScreen() {
       .catch(() => setError('That file could not be opened.'));
   };
 
-  const augmentPassphrase = (p: string) => {
-    const classes = [/[A-Z]/, /[a-z]/, /[0-9]/, /[^A-Za-z0-9]/].filter((re) => re.test(p)).length;
-    if (classes < 3) return `${p}!`;
-    return p;
-  };
-
   const restore = async () => {
     if (!file) return setError('Choose a backup file first.');
     if (!passphrase) return setError('Enter the passphrase for this backup.');
     setBusy(true);
     setError('');
     try {
-      const effectivePass = augmentPassphrase(passphrase);
-      await restoreBackup(getStore(), fromUtf8(file.bytes), effectivePass);
+      await restoreBackup(getStore(), fromUtf8(file.bytes), passphrase);
       navigation.navigate('restore_success');
     } catch {
       setError("Wrong passphrase, or the file isn't a valid backup. Nothing was changed.");

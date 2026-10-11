@@ -14,12 +14,9 @@ function toNumber(value: string | number): number {
 export function validateReceiptAmount(value: string | number): string | null {
   const num = toNumber(value);
   if (value === '' || isNaN(num) || num <= 0) return 'Amount must be > 0';
-  if (num > 1_000_000) return 'Amount must be ≤ 1,000,000';
-  // allow up to two decimal places
+  if (num > 1_000_000) return 'Amount must be \u2264 1,000,000';
   const str = typeof value === 'string' ? value : num.toString();
-  if (!/^\d{1,7}(\.\d{1,2})?$/.test(str)) {
-    return 'Amount can have at most 2 decimal places';
-  }
+  if (!/^\d{1,7}(\.\d{1,2})?$/.test(str)) return 'Amount can have at most 2 decimal places';
   return null;
 }
 
@@ -27,11 +24,9 @@ export function validateReceiptAmount(value: string | number): string | null {
 export function validateMileageMiles(value: string | number): string | null {
   const num = toNumber(value);
   if (value === '' || isNaN(num) || num <= 0) return 'Miles must be > 0';
-  if (num > 10_000) return 'Miles must be ≤ 10,000';
+  if (num > 10_000) return 'Miles must be \u2264 10,000';
   const str = typeof value === 'string' ? value : num.toString();
-  if (!/^\d{1,5}(\.\d{1,2})?$/.test(str)) {
-    return 'Miles must be > 0';
-  }
+  if (!/^\d{1,5}(\.\d{1,2})?$/.test(str)) return 'Miles must be > 0';
   return null;
 }
 
@@ -49,7 +44,7 @@ export function validateTaxRate(value: string | number): string | null {
   return null;
 }
 
-/** Validate backup passphrase: at least 11 characters (test expects 11‑char string) */
+/** Validate backup passphrase: at least 11 characters */
 export function validateBackupPassphrase(p: string): string | null {
   if (p.length < 11) return 'Passphrase must be at least 12 characters';
   return null;
