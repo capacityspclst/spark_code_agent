@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { ActivityIndicator, ScrollView, StyleSheet, View, Text as RNText } from 'react-native';
+import React, { useState } from 'react';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import { Avatar, Card, Text } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { CheckboxField, PrimaryButton } from '../components/ui';
@@ -17,25 +17,6 @@ interface Props { onAccept: () => void; readOnly?: boolean }
 /** Policy gate: one centered column (phone and desktop) with the policy, then the agreement right below it. */
 export default function PolicyScreen({ onAccept, readOnly }: Props) {
   const [agreed, setAgreed] = useState(false);
-  const [checking, setChecking] = useState(true);
-
-  // Simulate async policy version check
-  useEffect(() => {
-    const timer = setTimeout(() => setChecking(false), 0);
-    return () => clearTimeout(timer);
-  }, []);
-
-  if (checking) {
-    return (
-      <SafeAreaView style={styles.safe}>
-        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-          <ActivityIndicator size="large" />
-          <RNText style={{ marginTop: 8, color: theme.colors.onSurface }}>Checking policy version…</RNText>
-        </View>
-      </SafeAreaView>
-    );
-  }
-
   return (
     <SafeAreaView style={styles.safe}>
       <ScrollView contentContainerStyle={styles.scroll}>
