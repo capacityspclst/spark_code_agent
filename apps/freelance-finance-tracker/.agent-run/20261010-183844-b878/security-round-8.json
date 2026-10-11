@@ -1,0 +1,82 @@
+{
+  "verdict": "fail",
+  "summary": "After reviewing the code changes for v1.0 hardening, none of the previously identified issues have been resolved. The new logic addresses passphrase length, backup format validation, temporary file cleanup, and UI validation, but the earlier security concerns\u2014vulnerable dependencies, photo file leakage on data reset, backup path traversal, backup size DOS, brute\u2011force mitigation, CSV injection, and the UUID vulnerability\u2014remain unaddressed. No new security findings were introduced by the changes.",
+  "findings": [
+    {
+      "id": "dependency-uuid-medium",
+      "severity": "medium",
+      "where": "code",
+      "file": "package-lock.json",
+      "issue": "`uuid` (7.0.3) has CVE\u20112026\u201141907 \u2013 out\u2011of\u2011bounds write vulnerability that can corrupt memory and affect data integrity.",
+      "fix": "Upgrade `uuid` to a safe version (>=13.0.1, or 12.0.1/11.0.1) and run the test suite to confirm no breaking changes."
+    },
+    {
+      "id": "data-reset-photo-leak-high",
+      "severity": "high",
+      "where": "code",
+      "file": "src/lib/dataReset.ts",
+      "issue": "The \"Delete all data\" flow deletes the encrypted KV store and the SecureStore encryption key but does not purge receipt photo files that are stored on the device\u2019s file system, leaving potentially sensitive images on the device after a reset.",
+      "fix": "Extend `clearAllData` (or `clearAllData` in `src/lib/dataReset.ts`) to enumerate all stored `photoUri` values (e.g., via the receipt store) and delete the corresponding files using `expo-file-system` (`FileSystem.deleteAsync`) before completing the reset."
+    },
+    {
+      "id": "backup-restore-path-traversal-medium",
+      "severity": "medium",
+      "where": "code",
+      "file": "src/lib/backup.ts",
+      "issue": "During restore, receipt photo data could be written to an attacker\u2011controlled `photoUri` path if the backup payload includes arbitrary URIs, potentially leading to path\u2011traversal or overwriting of files outside the app sandbox.",
+      "fix": "In `restoreBackup`, ignore any `photoUri` from the backup payload and always write restored images to a trusted app\u2011internal directory (e.g., `FileSystem.documentDirectory`). Validate that any target path is confined to this directory before writing."
+    },
+    {
+      "id": "backup-restore-size-dos-medium",
+      "severity": "medium",
+      "where": "code",
+      "file": "src/lib/backup.ts",
+      "issue": "The backup restore process decrypts the entire payload before checking its size, which could be abused with an extremely large backup file to exhaust memory and crash the app.",
+      "fix": "Add a size check on the encrypted backup blob (e.g., reject blobs >10\u202fMiB) before decryption, and enforce a maximum number of receipts/mileage entries in `validateBackupStructure`."
+    },
+    {
+      "id": "backup-passphrase-bruteforce-medium",
+      "severity": "medium",
+      "where": "code",
+      "file": "src/screens/BackupPassphraseScreen.tsx",
+      "issue": "There is no rate\u2011limiting or delay on consecutive failed passphrase attempts during restore, allowing offline brute\u2011force attacks on the encrypted backup.",
+      "fix": "Implement a simple throttling mechanism (e.g., exponential back\u2011off after each failed restore attempt) and/or lock the restore UI for a short period after a configurable number of consecutive failures."
+    },
+    {
+      "id": "csv-export-injection-weak-escaping-mediu",
+      "severity": "medium",
+      "where": "code",
+      "file": "src/lib/exportCsv.ts",
+      "issue": "CSV injection mitigation only prefixes a single quote to fields that start with `=`, `+`, `-`, or `@`. This does not fully escape commas, newlines, or other special characters and may still produce malformed CSV that can be used for injection attacks in spreadsheet software.",
+      "fix": "Replace the custom prefix logic with a robust CSV generation library such as `csv-stringify` that properly escapes all fields according to RFC\u00a04180, ensuring commas, quotes, and line\u2011breaks are handled safely."
+    }
+  ],
+  "deployment_actions": [
+    {
+      "id": "dependency-braces-high",
+      "severity": "high",
+      "where": "deployment",
+      "file": "package-lock.json",
+      "issue": "The `braces` library (version 3.0.3) has CVE\u20112026\u201193687 \u2013 a denial\u2011of\u2011service via stack overflow from deeply nested patterns. The library is present in the lockfile and could be invoked by any code that uses glob/regex utilities.",
+      "fix": "No fixed release exists yet: monitor the advisory and upgrade as soon as one ships; confirm whether the package is only a build-time dependency. Upgrade `braces` to a version where the vulnerability is patched (>=3.0.4) or replace its usage with a safe alternative. If the library is not used directly, remove it from dependencies."
+    },
+    {
+      "id": "dependency-node-forge-high",
+      "severity": "high",
+      "where": "deployment",
+      "file": "package-lock.json",
+      "issue": "`node-forge` (1.4.0) contains CVE\u20112026\u201185393 \u2013 a signature\u2011forgery flaw in RSA PKCS#1 v1.5 verification, which could allow an attacker to craft forged signatures if the library is used for any cryptographic verification.",
+      "fix": "No fixed release exists yet: monitor the advisory and upgrade as soon as one ships; confirm whether the package is only a build-time dependency. Replace `node-forge` with the already\u2011used `@noble/*` libraries for all cryptographic operations, or await an upstream fix and upgrade when available. Ensure no code path still imports `node-forge`."
+    },
+    {
+      "id": "dependency-sprintf-js-medium",
+      "severity": "medium",
+      "where": "deployment",
+      "file": "package-lock.json",
+      "issue": "`sprintf-js` (1.0.3) is vulnerable to CVE\u20112026\u201197058 \u2013 denial\u2011of\u2011service via unbounded precision specifiers, potentially crashing the app if malicious format strings are processed.",
+      "fix": "No fixed release exists yet: monitor the advisory and upgrade as soon as one ships; confirm whether the package is only a build-time dependency. Replace `sprintf-js` with native template literals or a safer formatting library, or upgrade to a fixed version if one becomes available."
+    }
+  ],
+  "fixed": [],
+  "stalled": []
+}
