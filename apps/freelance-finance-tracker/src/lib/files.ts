@@ -25,14 +25,33 @@ export async function saveAndShare(fileName: string, bytes: Uint8Array, mimeType
   const cacheDir = (FileSystem as any).cacheDirectory || '';
   const fileUri = `${cacheDir}${fileName}`;
   const base64 = toBase64(bytes);
-  await FileSystem.writeAsStringAsync(fileUri, base64, { encoding: FileSystem.EncodingType.Base64 });
-  if (await Sharing.isAvailableAsync()) {
-    await Sharing.shareAsync(fileUri, { mimeType, dialogTitle: fileName });
-  }
-  // Clean up the temporary file after sharing (or if sharing not available)
   try {
-    await FileSystem.deleteAsync(fileUri, { idempotent: true });
-  } catch {}
+    // Try new File API first
+    // @ts-ignore may not exist
+    const file = new File(fileUri);
+    // @ts-ignore
+    await file.write(bytes);
+  } catch {
+    // Fallback to legacy writeAsStringAsync
+    await FileSystem.writeAsStringAsync(fileUri, base64, { encoding: FileSystem.EncodingType.Base64 });
+  }
+  try {
+    if (await Sharing.isAvailableAsync()) {
+      await Sharing.shareAsync(fileUri, { mimeType, dialogTitle: fileName });
+    }
+  } finally {
+    // Clean up the temporary file after sharing (or if sharing not available)
+    try {
+      // Try new File API delete if exists
+      // @ts-ignore
+      const file = new File(fileUri);
+      // @ts-ignore
+      await file.delete();
+    } catch {
+      // Fallback to deleteAsync
+      await FileSystem.deleteAsync(fileUri, { idempotent: true });
+    }
+  }
 }
 
 /** Let the user pick one file; null if they cancel. Call this directly from a button press: browsers only open a
@@ -52,7 +71,7 @@ export async function pickFile(): Promise<{ name: string; bytes: Uint8Array } | 
 
 /** Read a file's raw bytes using the new Expo File API (or fallback to readAsStringAsync). */
 export async function readFileBytes(uri: string): Promise<Uint8Array> {
-  // New API: File object with bytes() method – not available in this runtime, so fallback.
+  // New API: File object with bytes() method — not available in this runtime, so fallback.
   try {
     // @ts-ignore new File API may exist
     const file = new File(uri);

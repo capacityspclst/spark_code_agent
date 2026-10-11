@@ -5,20 +5,18 @@ import { getAllMileageEntries } from './mileageStore';
 import { deriveKey, encrypt, decrypt, toBase64, fromBase64, utf8, fromUtf8, randomBytes } from './crypto';
 import type { Receipt, MileageEntry } from './models';
 import * as FileSystem from 'expo-file-system';
+import * as FileSystemLegacy from 'expo-file-system/legacy';
 import { readFileBytes, writeFileBytes } from './files';
 import { validateBackupPassphrase } from './validation';
 
 const BACKUP_VERSION = 1;
-const MIN_LENGTH = 12;
 /** Validate passphrase policy */
 function enforcePassphrasePolicy(p: string): void {
   const err = validateBackupPassphrase(p);
   if (err) throw new Error(`Invalid backup passphrase: ${err}`);
 }
 
-/** Create an encrypted backup of all data, including receipt photos.
- * Returns a base64‑encoded string representing the encrypted payload.
- */
+/** Create an encrypted backup of all data, including receipt photos. */
 export async function createBackup(store: Store, passphrase: string): Promise<string> {
   enforcePassphrasePolicy(passphrase);
   const receipts: Receipt[] = await getAllReceipts(store);
@@ -64,9 +62,7 @@ export function validateBackupStructure(data: any): string | null {
   return null;
 }
 
-/** Restore data from an encrypted backup blob.
- * Throws an error with a friendly message if the passphrase is wrong or the file is corrupted.
- */
+/** Restore data from an encrypted backup blob. */
 export async function restoreBackup(store: Store, backupBlob: string, passphrase: string): Promise<void> {
   const combined = fromBase64(backupBlob);
   if (combined.length < 16) throw new Error('Invalid backup file');
@@ -87,8 +83,11 @@ export async function restoreBackup(store: Store, backupBlob: string, passphrase
 
   const cacheDir = (FileSystem as unknown as any).cacheDirectory ?? '';
   try {
-    const entries = await FileSystem.readDirectoryAsync(cacheDir);
-    await Promise.all(entries.map((e) => FileSystem.deleteAsync(`${cacheDir}${e}`, { idempotent: true })));
+    // Use legacy API to avoid deprecation warnings
+    const entries = await FileSystemLegacy.readDirectoryAsync(cacheDir);
+    await Promise.all(
+      entries.map((e) => FileSystemLegacy.deleteAsync(`${cacheDir}${e}`, { idempotent: true }))
+    );
   } catch {}
 
   await keepingPolicy(store, async () => {
@@ -99,7 +98,7 @@ export async function restoreBackup(store: Store, backupBlob: string, passphrase
       if (photoData) {
         const uri = `${cacheDir}${rest.id}_photo`;
         try {
-          const bytes = Uint8Array.from(atob(photoData), c => c.charCodeAt(0));
+          const bytes = Uint8Array.from(atob(photoData), (c) => c.charCodeAt(0));
           await writeFileBytes(uri, bytes);
           await store.put('receipts', { ...rest, photoUri: uri } as any);
         } catch {}

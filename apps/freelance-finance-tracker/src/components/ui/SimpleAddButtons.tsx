@@ -4,7 +4,7 @@ import PrimaryButton from './PrimaryButton';
 import { theme, space } from '../../theme';
 import { useNavigation, NavigationProp } from '@react-navigation/native';
 
-/** Two independent primary buttons positioned like FABs but using the app's PrimaryButton component to ensure correct theming and contrast. */
+/** Buttons that match the UI flow expectations: separate primary buttons labeled "Receipt" and "Mileage". */
 export default function SimpleAddButtons() {
   const navigation = useNavigation<NavigationProp<any>>();
 
@@ -34,15 +34,18 @@ export default function SimpleAddButtons() {
 const styles = StyleSheet.create({
   container: {
     position: 'absolute',
-    bottom: space(2),
+    // Position above the bottom tab bar (64dp height) with extra spacing.
+    bottom: 80,
     right: space(2),
     flexDirection: 'column',
     alignItems: 'flex-end',
     gap: space(1),
+    // Ensure it sits above other UI layers.
+    elevation: 4,
+    zIndex: 10,
   },
   button: {
     minHeight: 44,
-    // Ensure the button uses the primary color for sufficient contrast
-    // The PrimaryButton component already applies correct theme colors.
+    // PrimaryButton already applies proper theme colors and contrast.
   },
 });
