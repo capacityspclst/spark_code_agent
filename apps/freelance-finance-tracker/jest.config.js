@@ -12,6 +12,5 @@ export default {
   moduleNameMapper: {
     '^expo-sqlite$': '<rootDir>/__mocks__/expo-sqlite.ts',
   },
-  // Ensure experimental VM modules flag is passed to worker processes for dynamic import support
-  nodeOptions: '--experimental-vm-modules',
+  // Note: test script in package.json already adds --experimental-vm-modules
 };
