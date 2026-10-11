@@ -2,44 +2,15 @@ import { getAllReceipts } from './receiptStore';
 import { getAllMileageEntries } from './mileageStore';
 import type { Receipt, MileageEntry } from './models';
 import type { Store } from './storage/types';
-
-/** Escape a cell for CSV output.
- * - Numbers are output as plain numbers.
- * - undefined/null become empty string.
- * - For strings, if it starts with = + - @ \t \r, prefix with a single quote to prevent formula injection.
- * - If the resulting string contains commas, double quotes, or line breaks, wrap the entire cell in double quotes.
- *   (Do NOT escape inner double quotes; they are kept as-is for the test expectations.)
- */
-function csvEscape(value: any): string {
-  if (value === undefined || value === null) return '';
-  if (typeof value === 'number') return String(value);
-  let s = String(value);
-  // Neutralise CSV injection formulas.
-  let injected = false;
-  if (/^[=+\-@\t\r]/.test(s)) {
-    s = "'" + s;
-    injected = true;
-  }
-  // Escape double quotes inside the value (doubling them) – only needed if we later wrap.
-  if (!injected && s.includes('"')) {
-    s = s.replace(/"/g, '""');
-  }
-  const needsWrap = /[",\r\n]/.test(s);
-  if (needsWrap && !injected) {
-    return `"${s}"`;
-  }
-  return s;
-}
+import { stringify } from 'csv-stringify/sync';
 
 /** Generate a CSV string containing receipts and mileage entries.
  * Accepts an optional Store for testing; defaults to the global encrypted store.
- * In case of any error (e.g., missing native modules in test env), returns an empty CSV.
  */
 export async function generateCsv(store?: Store): Promise<string> {
   let s = store;
   if (!s) {
     try {
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
       const { getStore } = require('./storage');
       s = getStore();
     } catch {
@@ -49,30 +20,25 @@ export async function generateCsv(store?: Store): Promise<string> {
   try {
     const receipts: Receipt[] = s ? await getAllReceipts(s) : [];
     const mileage: MileageEntry[] = s ? await getAllMileageEntries(s) : [];
-    const lines: string[] = [];
-    lines.push('id,amount,date,category,type,notes');
+    const records: any[] = [];
+    // Header for receipts
+    records.push(['id', 'amount', 'date', 'category', 'type', 'notes']);
     for (const r of receipts) {
-      const line = [
-        csvEscape(r.id),
-        csvEscape(r.amount),
-        csvEscape(r.date),
-        csvEscape(r.category),
-        csvEscape(r.type),
-        csvEscape(r.notes),
-      ].join(',');
-      lines.push(line);
+      records.push([
+        r.id,
+        r.amount,
+        r.date,
+        r.category,
+        r.type,
+        r.notes,
+      ]);
     }
-    lines.push('id,miles,date,purpose');
+    // Header for mileage
+    records.push(['id', 'miles', 'date', 'purpose']);
     for (const m of mileage) {
-      const line = [
-        csvEscape(m.id),
-        csvEscape(m.miles),
-        csvEscape(m.date),
-        csvEscape(m.purpose),
-      ].join(',');
-      lines.push(line);
+      records.push([m.id, m.miles, m.date, m.purpose]);
     }
-    return lines.join('\n');
+    return stringify(records);
   } catch {
     // Return minimal CSV structure on failure.
     return 'id,amount,date,category,type,notes\nid,miles,date,purpose';
