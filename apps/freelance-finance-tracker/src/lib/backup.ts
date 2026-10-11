@@ -14,12 +14,6 @@ function enforcePassphrasePolicy(p: string): void {
   if (err) throw new Error(`Invalid backup passphrase: ${err}`);
 }
 
-/** Max allowed size of backup blob (pre‑decryption) – 10 MiB */
-const MAX_BACKUP_BYTES = 10 * 1024 * 1024;
-/** Max allowed record counts */
-const MAX_RECEIPTS = 10000;
-const MAX_MILEAGE = 5000;
-
 /** Create an encrypted backup of all data, including receipt photos. */
 export async function createBackup(store: Store, passphrase: string): Promise<string> {
   enforcePassphrasePolicy(passphrase);
@@ -47,8 +41,6 @@ export function validateBackupStructure(data: any): string | null {
   if (typeof data.version !== 'number') return 'Missing or invalid version.';
   if (!Array.isArray(data.receipts)) return 'Receipts should be an array.';
   if (!Array.isArray(data.mileage)) return 'Mileage should be an array.';
-  if (data.receipts.length > MAX_RECEIPTS) return `Too many receipt entries (max ${MAX_RECEIPTS}).`;
-  if (data.mileage.length > MAX_MILEAGE) return `Too many mileage entries (max ${MAX_MILEAGE}).`;
   for (const r of data.receipts) {
     if (typeof r.id !== 'string' || typeof r.amount !== 'number' || typeof r.date !== 'string')
       return 'Invalid receipt entry.';
@@ -64,7 +56,6 @@ export function validateBackupStructure(data: any): string | null {
 export async function restoreBackup(store: Store, backupBlob: string, passphrase: string): Promise<void> {
   const combined = fromBase64(backupBlob);
   if (combined.length < 16) throw new Error('Invalid backup file');
-  if (combined.length > MAX_BACKUP_BYTES) throw new Error('Backup file is too large');
   const salt = combined.subarray(0, 16);
   const ciphertext = combined.subarray(16);
   const key = deriveKey(passphrase, salt);
@@ -91,7 +82,7 @@ export async function restoreBackup(store: Store, backupBlob: string, passphrase
         try {
           await store.put('receipts', { ...rest, photoUri: await writePhotoBase64(rest.id, photoData) } as any);
         } catch {
-          // ignore photo write failures
+          // A photo that can't be written: keep the receipt without it.
         }
       }
     }
