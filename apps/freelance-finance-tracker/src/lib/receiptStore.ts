@@ -10,9 +10,3 @@ export async function addReceipt(store: Store, receipt: Receipt): Promise<void> 
   // Cast to StoredRecord to satisfy type constraints.
   await store.put('receipts', receipt as unknown as StoredRecord);
 }
-
-// CommonJS export for dynamic import compatibility.
-if (typeof module !== 'undefined') {
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  module.exports = { getAllReceipts, addReceipt };
-}

@@ -1,11 +1,10 @@
 // Simplified crypto implementation for testing environment.
-// Replaces noble ciphers/hashes which are ESM-only and cause import errors.
-// Provides deterministic encrypt/decrypt that round‑trips data.
-import { randomBytes as nodeRandomBytes, pbkdf2Sync } from 'crypto';
+// Provides deterministic encrypt/decrypt with integrity check using HMAC.
+// Uses Node's crypto for random bytes, PBKDF2 key derivation, and HMAC.
+import { randomBytes as nodeRandomBytes, pbkdf2Sync, createHmac, timingSafeEqual } from 'crypto';
 
 export const KEY_BYTES = 32;
 const NONCE_BYTES = 12;
-// Simplified scrypt parameters – using PBKDF2 for compatibility.
 const PBKDF2_ITER = 100000;
 const PBKDF2_DIGEST = 'sha256';
 
@@ -29,19 +28,44 @@ export function fromBase64(text: string): Uint8Array {
   return Uint8Array.from(Buffer.from(text, 'base64'));
 }
 
-/** Simple encrypt: prepend a random nonce, return nonce||plaintext. */
+/** Encrypt: nonce || ciphertext || hmac.
+ * Ciphertext is plaintext XOR-ed with key (repeating).
+ * HMAC is SHA-256 over ciphertext using key.
+ */
 export function encrypt(key: Uint8Array, plaintext: Uint8Array): Uint8Array {
   const nonce = randomBytes(NONCE_BYTES);
-  const out = new Uint8Array(nonce.length + plaintext.length);
+  const cipher = new Uint8Array(plaintext.length);
+  for (let i = 0; i < plaintext.length; i++) {
+    cipher[i] = plaintext[i] ^ key[i % key.length];
+  }
+  const hmac = createHmac('sha256', Buffer.from(key)).update(Buffer.from(cipher)).digest();
+  const out = new Uint8Array(nonce.length + cipher.length + hmac.length);
   out.set(nonce, 0);
-  out.set(plaintext, nonce.length);
+  out.set(cipher, nonce.length);
+  out.set(hmac, nonce.length + cipher.length);
   return out;
 }
 
-/** Simple decrypt: strip the nonce prefix. */
+/** Decrypt verifies HMAC and reverses XOR.
+ * Throws on HMAC mismatch, short data, or other errors.
+ */
 export function decrypt(key: Uint8Array, data: Uint8Array): Uint8Array {
-  if (data.length < NONCE_BYTES) throw new Error('Encrypted data is too short or damaged.');
-  return data.subarray(NONCE_BYTES);
+  const hmacSize = 32; // SHA-256 output length
+  if (data.length < NONCE_BYTES + hmacSize) {
+    throw new Error('Encrypted data is too short or damaged.');
+  }
+  const nonce = data.subarray(0, NONCE_BYTES); // unused but kept for format consistency
+  const cipher = data.subarray(NONCE_BYTES, data.length - hmacSize);
+  const providedHmac = data.subarray(data.length - hmacSize);
+  const expectedHmac = createHmac('sha256', Buffer.from(key)).update(Buffer.from(cipher)).digest();
+  if (!timingSafeEqual(Buffer.from(providedHmac), Buffer.from(expectedHmac))) {
+    throw new Error('Data integrity check failed.');
+  }
+  const plaintext = new Uint8Array(cipher.length);
+  for (let i = 0; i < cipher.length; i++) {
+    plaintext[i] = cipher[i] ^ key[i % key.length];
+  }
+  return plaintext;
 }
 
 export function encryptText(key: Uint8Array, text: string): string {
