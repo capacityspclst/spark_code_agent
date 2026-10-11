@@ -1,13 +1,22 @@
-// Crypto utilities compatible with both Node (tests) and React Native (Expo).
-// Implements simple XOR encryption with a deterministic checksum/MAC.
+// Crypto utilities using AES-256-GCM for strong authenticated encryption.
+// Works in Node (tests) via @noble/ciphers and in Expo via the same library (bundled).
+
+import { getRandomBytes } from 'expo-crypto';
+import { Buffer } from 'buffer';
+import { Platform } from 'react-native';
+import * as aes from '@noble/ciphers/aes.js'; // AES implementation with GCM mode
+import { sha256 } from '@noble/hashes/sha256';
 
 export const KEY_BYTES = 32;
-const NONCE_BYTES = 12;
+const NONCE_BYTES = 12; // 96-bit nonce for GCM
 
-/** Random bytes – uses Expo's Crypto if available. */
+/** Random bytes – uses Expo's Crypto on native/web and fallback to Node's crypto for tests. */
 export function randomBytes(length: number): Uint8Array {
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const { getRandomBytes } = require('expo-crypto');
+  if (process.env.NODE_ENV === 'test' || Platform.OS === 'web') {
+    const { randomBytes } = require('crypto'); // Node built‑in
+    return Uint8Array.from(randomBytes(length));
+  }
+  // Expo Crypto provides getRandomBytes on native platforms.
   return Uint8Array.from(getRandomBytes(length));
 }
 
@@ -19,7 +28,7 @@ export function fromUtf8(bytes: Uint8Array): string {
   return new TextDecoder().decode(bytes);
 }
 
-/** Base64 helpers – use Buffer when available, else fallback. */
+/** Base64 helpers – use Buffer when available. */
 function getBuffer(): any {
   if (typeof Buffer !== 'undefined') return Buffer;
   // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -31,56 +40,30 @@ export function toBase64(bytes: Uint8Array): string {
 }
 
 export function fromBase64(text: string): Uint8Array {
-  return Uint8Array.from(getBuffer().from(text, 'base64'));
+  return UintArray.from ? UintArray.from(getBuffer().from(text, 'base64')) : Uint8Array.from(getBuffer().from(text, 'base64'));
 }
 
-/** Compute a simple 4‑byte MAC/checksum based on key and data. */
-function computeMac(key: Uint8Array, data: Uint8Array): Uint8Array {
-  let sum = 0;
-  for (let i = 0; i < data.length; i++) {
-    sum = (sum + (data[i] ^ key[i % key.length])) >>> 0;
-  }
-  const out = new Uint8Array(4);
-  out[0] = (sum >>> 24) & 0xff;
-  out[1] = (sum >>> 16) & 0xff;
-  out[2] = (sum >>> 8) & 0xff;
-  out[3] = sum & 0xff;
-  return out;
-}
-
-/** Encrypt: nonce || ciphertext || MAC. */
+/** Encrypt using AES‑256‑GCM. Output format: nonce || ciphertext || authTag */
 export function encrypt(key: Uint8Array, plaintext: Uint8Array): Uint8Array {
   const nonce = randomBytes(NONCE_BYTES);
-  const cipher = new Uint8Array(plaintext.length);
-  for (let i = 0; i < plaintext.length; i++) {
-    cipher[i] = plaintext[i] ^ key[i % key.length];
-  }
-  const mac = computeMac(key, cipher);
-  const out = new Uint8Array(nonce.length + cipher.length + mac.length);
+  const { encrypt } = aes.gcm(key, nonce);
+  const encrypted = encrypt(plaintext); // ciphertext || authTag
+  const out = new Uint8Array(nonce.length + encrypted.length);
   out.set(nonce, 0);
-  out.set(cipher, nonce.length);
-  out.set(mac, nonce.length + cipher.length);
+  out.set(encrypted, nonce.length);
   return out;
 }
 
-/** Decrypt verifies MAC and reverses XOR. */
+/** Decrypt verifies the GCM tag and returns plaintext. */
 export function decrypt(key: Uint8Array, data: Uint8Array): Uint8Array {
-  const macSize = 4;
-  if (data.length < NONCE_BYTES + macSize) {
+  const authTagSize = 16; // GCM tag length
+  if (data.length < NONCE_BYTES + authTagSize) {
     throw new Error('Encrypted data is too short or damaged.');
   }
-  const cipher = data.subarray(NONCE_BYTES, data.length - macSize);
-  const providedMac = data.subarray(data.length - macSize);
-  const expectedMac = computeMac(key, cipher);
-  const equal = providedMac.length === expectedMac.length && providedMac.every((v, i) => v === expectedMac[i]);
-  if (!equal) {
-    throw new Error('Data integrity check failed.');
-  }
-  const plaintext = new Uint8Array(cipher.length);
-  for (let i = 0; i < cipher.length; i++) {
-    plaintext[i] = cipher[i] ^ key[i % key.length];
-  }
-  return plaintext;
+  const nonce = data.subarray(0, NONCE_BYTES);
+  const ciphertext = data.subarray(NONCE_BYTES);
+  const { decrypt } = aes.gcm(key, nonce);
+  return decrypt(ciphertext);
 }
 
 export function encryptText(key: Uint8Array, text: string): string {
@@ -91,15 +74,19 @@ export function decryptText(key: Uint8Array, text: string): string {
   return fromUtf8(decrypt(key, fromBase64(text)));
 }
 
-/** Derive a key from a passphrase – simple deterministic fallback. */
+/** Derive a key from a passphrase using a simple iterative SHA‑256 KDF. */
 export function deriveKey(passphrase: string, salt: Uint8Array): Uint8Array {
-  const passBytes = utf8(passphrase);
-  const combined = new Uint8Array(passBytes.length + salt.length);
-  combined.set(passBytes);
-  combined.set(salt, passBytes.length);
-  const out = new Uint8Array(KEY_BYTES);
-  for (let i = 0; i < KEY_BYTES; i++) {
-    out[i] = combined[i % combined.length] ^ (i & 0xff);
+  // Combine passphrase and salt.
+  let keyMaterial = new Uint8Array([...utf8(passphrase), ...salt]);
+  // Perform 1000 iterations of SHA‑256 – sufficient for offline derivation in this context.
+  for (let i = 0; i < 1000; i++) {
+    keyMaterial = sha256(keyMaterial);
   }
+  // Truncate or pad to KEY_BYTES.
+  if (keyMaterial.length > KEY_BYTES) {
+    return keyMaterial.subarray(0, KEY_BYTES);
+  }
+  const out = new Uint8Array(KEY_BYTES);
+  out.set(keyMaterial);
   return out;
 }
