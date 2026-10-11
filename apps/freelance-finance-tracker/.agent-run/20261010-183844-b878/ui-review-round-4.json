@@ -1,0 +1,74 @@
+{
+  "verdict": "fail",
+  "summary": "The app fails the core user journey \u2013 after a user checks the policy checkbox and taps Accept the UI never leaves the PolicyGateScreen, so the Dashboard (and its empty\u2011state) never appears. This breaks the primary flow and must be fixed. In addition there are several medium\u2011severity mismatches to the design spec (empty\u2011state copy, missing loading/error views, and lack of error handling on the policy gate) and a handful of low\u2011severity quality issues (hard\u2011coded spacing, missing focus\u2011visible styling, and incomplete accessibility attributes on navigation and buttons).",
+  "findings": [
+    {
+      "severity": "high",
+      "file": "src/screens/PolicyScreen.tsx",
+      "issue": "Accept button does not persist the policy acceptance flag nor navigate to the main app after the user checks the I\u2011agree box. The UI stays on the PolicyGateScreen, causing the primary flow test to timeout.",
+      "fix": "Enable the Accept button only when the checkbox is checked. On press, call `acceptPolicy(store)` and show a loading spinner while the async write completes. Upon success, reset the navigation stack to the main navigator (Dashboard). Add error handling to display the spec\u2011required full\u2011screen error view with \"Unable to store your acceptance. Please try again.\" and a Retry button.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/screens/DashboardScreen.tsx",
+      "issue": "Empty\u2011state title/description do not match the DESIGN.md copy \u2013 the component shows a generic message instead of \"Nothing here yet\" and \"Add a receipt or mileage entry to start tracking your finances.\".",
+      "fix": "Pass the exact strings to the `EmptyState` component: `title=\"Nothing here yet\"`, `description=\"Add a receipt or mileage entry to start tracking your finances.\"`, and `actionLabel=\"Add receipt\"`. Update any hard\u2011coded text in the component to use these props.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/screens/DashboardScreen.tsx",
+      "issue": "The Loading state defined in the spec (centered ActivityIndicator) is missing; the screen jumps straight to empty or populated view, providing no visual feedback while data is being fetched.",
+      "fix": "Introduce a `loading` state flag while fetching totals and recent entries. Render a full\u2011screen `<ActivityIndicator size=\"large\" />` centered (using the theme token for size) when `loading` is true. Hide the empty/ populated view until loading resolves.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/screens/PolicyScreen.tsx",
+      "issue": "Error handling for storage failures is not implemented. The spec requires a full\u2011screen error view with a Retry button when policy acceptance cannot be saved.",
+      "fix": "Wrap the `acceptPolicy` call in a try/catch. On catch, set an `error` state and render a view with the message \"Unable to store your acceptance. Please try again.\" and a `PrimaryButton` labeled \"Retry\" that re\u2011invokes the accept flow.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "src/components/ui/PrimaryButton.tsx",
+      "issue": "Buttons lack a visible focus outline on web, violating the focus\u2011visible requirement and reducing keyboard navigation clarity.",
+      "fix": "Add a `:focus-visible` style that draws a 2dp outline using `theme.colors.outline`. Ensure the outline respects the theme\u2019s radius and color for consistency.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "src/components/ui/Screen.tsx",
+      "issue": "Horizontal padding is hard\u2011coded to 16\u202fdp and other spacing values are literal numbers, bypassing the design tokens (`theme.spacing`).",
+      "fix": "Replace all static spacing values with token\u2011based calculations, e.g., `paddingHorizontal: theme.spacing * 2` (16\u202fdp) and vertical margins with `theme.spacing * n`. Import the theme token via the Paper Provider or a custom hook.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "src/navigation/index.tsx",
+      "issue": "Bottom tab bar does not expose proper accessibility attributes. The navigation container lacks `accessibilityLabel=\"Bottom navigation\"` and individual tabs miss `accessibilityRole=\"tab\"` and state flags.",
+      "fix": "Add `accessibilityLabel=\"Bottom navigation\"` and `role=\"navigation\"` to the `BottomNavigation` component. For each route, set `accessibilityRole=\"tab\"`, `accessibilityState={{ selected: index === state.index }}` and appropriate `accessibilityLabel` derived from the route title.",
+      "source": "designer"
+    }
+  ],
+  "lighthouse": [
+    {
+      "accessibility": 98,
+      "bestPractices": 100,
+      "performance": 57
+    }
+  ],
+  "vision_scores": [
+    {
+      "screen": "policy_gate",
+      "score": 8.0,
+      "summary": "A polished, modern policy gate screen with clear visual hierarchy, consistent spacing, and touch-friendly controls. The typography is well-scaled and readable, and the layout is clean and uncluttered. The primary action is clearly indicated and disabled until the required condition is met. No critical issues found."
+    },
+    {
+      "screen": "dashboard_empty",
+      "score": 9.0,
+      "summary": "A polished, professional onboarding screen with clear visual hierarchy, consistent spacing, and a strong primary action. The typography is well-scaled and readable, and the layout is clean and intentional. No critical issues found."
+    }
+  ]
+}
