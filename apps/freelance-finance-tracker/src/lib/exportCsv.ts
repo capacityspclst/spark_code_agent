@@ -3,25 +3,29 @@ import { getAllMileageEntries } from './mileageStore';
 import type { Receipt, MileageEntry } from './models';
 import type { Store } from './storage/types';
 
-/** Escape a cell for CSV output.
+/** Escape a cell for CSV output according to RFC 4180.
  * Numbers output as plain numbers.
  * null/undefined become empty string.
- * Strings starting with = + - @ or tab carriage return get prefixed with a single quote to prevent formula injection.
- * If the resulting string contains commas, double quotes, or line breaks, wrap in double quotes (doubling inner quotes).
+ * Strings starting with = + - @ or tab are prefixed with a single quote to prevent formula injection.
+ * If a string is prefixed, we leave it as‑is (no additional quoting or double‑quote escaping) because the prefix already neutralises formulas.
+ * Otherwise, double quotes inside the value are escaped by doubling them.
+ * If the resulting string contains commas, double quotes, or line breaks, wrap the whole field in double quotes.
  */
 function csvEscape(value: any): string {
   if (value === undefined || value === null) return '';
   if (typeof value === 'number') return String(value);
-  let s = String(value);
-  // Escape formula injection
-  if (/^[=+\-@\t\r]/.test(s)) {
-    s = "'" + s;
-  } else if (s.includes('"')) {
-    s = s.replace(/"/g, '""');
+  const original = String(value);
+  const needsPrefix = /^[=+\-@\t]/.test(original);
+  if (needsPrefix) {
+    return "'" + original;
   }
-  const needsWrap = /[",\r\n]/.test(s);
-  if (needsWrap) return `"${s}"`;
-  return s;
+  // Escape double quotes by doubling them
+  const escaped = original.replace(/"/g, '""');
+  // Wrap in quotes if contains special chars
+  if (/[",\r\n]/.test(escaped)) {
+    return `"${escaped}"`;
+  }
+  return escaped;
 }
 
 /** Generate a CSV string containing receipts and mileage entries.

@@ -52,7 +52,6 @@ export default function ReceiptEntryScreen() {
       photoUri,
     };
     try {
-      // Keep the photo in the app's own folder: the picker's copy is temporary.
       if (photoUri) receipt.photoUri = await persistPhoto(photoUri, id);
       await addReceipt(getStore(), receipt);
       setPendingSnack('Receipt saved');
@@ -79,7 +78,7 @@ export default function ReceiptEntryScreen() {
           onChange={setType}
           options={[{ value: 'expense', label: 'Expense' }, { value: 'income', label: 'Income' }]}
         />
-        <FormField label="Notes" value={notes} onChangeText={setNotes} multiline />
+        <FormField label="Notes" value={notes} onChangeText={setNotes} multiline placeholder="Enter notes about this receipt" />
         {error ? <Snackbar visible={true} onDismiss={() => setError('')} duration={3000}>{error}</Snackbar> : null}
         <PrimaryButton label="Save receipt" onPress={onSave} loading={saving} disabled={!canSave} />
       </View>

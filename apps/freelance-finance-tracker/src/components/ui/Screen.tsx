@@ -27,7 +27,8 @@ export default function Screen({ title, subtitle, wide, children }: Props) {
 
 const styles = StyleSheet.create({
   page: { flex: 1, backgroundColor: theme.colors.background },
-  content: { width: '100%', alignSelf: 'center', padding: layout.pagePadding, paddingBottom: space(6), gap: space(2) },
+  // Use the design token spacing * 2 (16 dp) for horizontal padding
+  content: { width: '100%', alignSelf: 'center', paddingHorizontal: space(2), paddingBottom: space(6), gap: space(2) },
   header: { gap: space(1), marginBottom: space(1) },
   title: { fontWeight: '700', color: theme.colors.onSurface },
   subtitle: { color: theme.colors.secondary },

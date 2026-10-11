@@ -14,6 +14,12 @@ function enforcePassphrasePolicy(p: string): void {
   if (err) throw new Error(`Invalid backup passphrase: ${err}`);
 }
 
+/** Maximum backup file size before decryption (10 MiB). */
+const MAX_BACKUP_SIZE = 10 * 1024 * 1024;
+/** Maximum number of entries allowed in a backup to prevent DoS. */
+const MAX_RECEIPTS = 10000;
+const MAX_MILEAGE = 5000;
+
 /** Create an encrypted backup of all data, including receipt photos. */
 export async function createBackup(store: Store, passphrase: string): Promise<string> {
   enforcePassphrasePolicy(passphrase);
@@ -41,6 +47,8 @@ export function validateBackupStructure(data: any): string | null {
   if (typeof data.version !== 'number') return 'Missing or invalid version.';
   if (!Array.isArray(data.receipts)) return 'Receipts should be an array.';
   if (!Array.isArray(data.mileage)) return 'Mileage should be an array.';
+  if (data.receipts.length > MAX_RECEIPTS) return `Too many receipts (max ${MAX_RECEIPTS}).`;
+  if (data.mileage.length > MAX_MILEAGE) return `Too many mileage entries (max ${MAX_MILEAGE}).`;
   for (const r of data.receipts) {
     if (typeof r.id !== 'string' || typeof r.amount !== 'number' || typeof r.date !== 'string')
       return 'Invalid receipt entry.';
@@ -55,6 +63,7 @@ export function validateBackupStructure(data: any): string | null {
 /** Restore data from an encrypted backup blob. */
 export async function restoreBackup(store: Store, backupBlob: string, passphrase: string): Promise<void> {
   const combined = fromBase64(backupBlob);
+  if (combined.length > MAX_BACKUP_SIZE) throw new Error('Backup file too large');
   if (combined.length < 16) throw new Error('Invalid backup file');
   const salt = combined.subarray(0, 16);
   const ciphertext = combined.subarray(16);
@@ -82,7 +91,7 @@ export async function restoreBackup(store: Store, backupBlob: string, passphrase
         try {
           await store.put('receipts', { ...rest, photoUri: await writePhotoBase64(rest.id, photoData) } as any);
         } catch {
-          // A photo that can't be written: keep the receipt without it.
+          // keep receipt without photo if write fails
         }
       }
     }

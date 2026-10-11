@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, Image, StyleSheet } from 'react-native';
-import { Button, Text } from 'react-native-paper';
+import { Text } from 'react-native-paper';
+import PrimaryButton from './PrimaryButton';
 import { space, theme } from '../../theme';
 import { pickImageAsync } from '../../lib/photoPicker';
 
@@ -31,14 +32,10 @@ export default function ReceiptImagePicker({ photoUri, onChange }: Props) {
       {uri ? (
         <View style={styles.previewWrap}>
           <Image source={{ uri }} style={styles.preview} accessibilityLabel="Receipt photo" />
-          <Button mode="text" onPress={remove} accessibilityLabel="Remove photo">
-            Remove photo
-          </Button>
+          <PrimaryButton label="Remove photo" variant="text" onPress={remove} />
         </View>
       ) : (
-        <Button mode="outlined" onPress={pick} accessibilityLabel="Add photo">
-          Add photo
-        </Button>
+        <PrimaryButton label="Add photo" variant="primary" onPress={pick} />
       )}
     </View>
   );
