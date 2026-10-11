@@ -12,5 +12,7 @@ export default {
   moduleNameMapper: {
     '^expo-sqlite$': '<rootDir>/__mocks__/expo-sqlite.ts',
   },
+  // Ignore the mistakenly prefixed test folder with a leading space.
+  testPathIgnorePatterns: ['<rootDir>/ __tests__/'],
   // Note: test script in package.json already adds --experimental-vm-modules
 };
