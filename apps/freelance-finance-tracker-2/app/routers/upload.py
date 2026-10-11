@@ -1,9 +1,10 @@
 import os
 import uuid
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Request
 from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 from .. import models, auth
+from ..limit import limiter
 
 router = APIRouter()
 
@@ -11,8 +12,14 @@ router = APIRouter()
 UPLOAD_DIR = os.getenv("UPLOAD_DIR", "uploaded_files")
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
+# Define max upload size (e.g., 5 MB)
+MAX_UPLOAD_SIZE = 5 * 1024 * 1024  # bytes
+
+# Limit uploads per user to mitigate abuse
 @router.post("/uploads", status_code=200)
+@limiter.limit("10/minute")
 async def upload_file(
+    request: Request,
     file: UploadFile = File(...),
     current_user: models.User = Depends(auth.get_current_user),
     db: Session = Depends(auth.get_db),
@@ -22,10 +29,23 @@ async def upload_file(
     secure_name = f"{uuid.uuid4().hex}{ext}"
     file_path = os.path.join(UPLOAD_DIR, secure_name)
 
-    # Save file to disk
-    with open(file_path, "wb") as buffer:
-        content = await file.read()
-        buffer.write(content)
+    total_bytes = 0
+    # Save file to disk in chunks to avoid loading entire file into memory
+    try:
+        with open(file_path, "wb") as buffer:
+            while True:
+                chunk = await file.read(1024 * 1024)  # 1 MB per chunk
+                if not chunk:
+                    break
+                total_bytes += len(chunk)
+                if total_bytes > MAX_UPLOAD_SIZE:
+                    # Remove partially written file
+                    buffer.close()
+                    os.remove(file_path)
+                    raise HTTPException(status_code=413, detail="File too large")
+                buffer.write(chunk)
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Failed to save upload: {exc}")
 
     # Record in DB
     upload_record = models.Upload(
