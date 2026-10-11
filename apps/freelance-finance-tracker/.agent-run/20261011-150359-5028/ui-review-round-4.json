@@ -1,0 +1,154 @@
+{
+  "verdict": "fail",
+  "summary": "The UI largely follows the design tokens, layout, and accessibility guidelines, and passes automated axe scans. However, the primary user flow is broken \u2013 after accepting the policy the app never reaches the dashboard empty state, causing the UI\u2011flow test to time out. This is a high\u2011severity regression. Several secondary issues were found: missing or incomplete empty/error states, validation gating on forms, focus\u2011visible outlines, and occasional hard\u2011coded colors or missing accessibility labels. Fixing these will bring the product back to a polished, launch\u2011ready state.",
+  "findings": [
+    {
+      "severity": "high",
+      "file": "src/screens/PolicyScreen.tsx",
+      "issue": "The Accept button does not store the policy acceptance nor navigate to the main app after the checkbox is checked; the UI remains on the policy gate, preventing the dashboard empty state from ever appearing.",
+      "fix": "Add a state hook for the checkbox, enable the Accept button only when checked, call `await acceptPolicy(store)` on press, and then navigate to the root tab navigator (e.g., `navigation.reset({ index: 0, routes: [{ name: 'MainTabs' }] })`). Ensure the policy acceptance flag persists across app restarts.",
+      "source": "designer"
+    },
+    {
+      "severity": "high",
+      "file": "src/screens/DashboardScreen.tsx",
+      "issue": "The dashboard never renders the EmptyState component when there are no entries; instead it shows only a loading spinner or stays blank, causing the UI flow test to timeout while waiting for the \"Nothing here yet\" copy.",
+      "fix": "After data loading resolves, check `receipts.length === 0 && mileage.length === 0` and render `<EmptyState title=\"Nothing here yet\" description=\"Add a receipt or mileage entry to start tracking your finances.\" actionLabel=\"Add receipt\" onActionPress={...} />`. Use the design\u2011token based spacing and ensure the primary button routes to the Receipt entry screen.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/screens/ReceiptEntryScreen.tsx",
+      "issue": "The Save receipt button is not disabled until all required fields are valid, contrary to the specification which requires the button to be disabled and only enabled after live validation passes.",
+      "fix": "Implement form state validation using `validateReceiptAmount`, `validateDate`, etc., update a `isFormValid` flag, and pass `disabled={!isFormValid}` to `<PrimaryButton>`. Show `<HelperText type=\"error\">` under each field when its validation fails.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/screens/MileageEntryScreen.tsx",
+      "issue": "Save mileage button is always enabled and does not enforce live numeric validation for miles, date, and purpose fields.",
+      "fix": "Add validation logic analogous to ReceiptEntryScreen, using `validateMileageMiles`, `validateDate`, `validatePurpose`. Disable the button until all validations succeed and display `<HelperText type=\"error\">` messages.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/components/ui/BottomTabBar.tsx",
+      "issue": "Bottom\u2011tab icons and labels use default Paper colors instead of the design\u2011token colors (`theme.colors.primary` for selected, `theme.colors.onSurfaceVariant` for unselected). This may violate the required contrast ratios.",
+      "fix": "Explicitly set `activeColor={theme.colors.primary}` and `inactiveColor={theme.colors.onSurfaceVariant}` on the `BottomNavigation` component, and ensure the label style uses the appropriate token colors.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "src/components/ui/MiniFAB.tsx",
+      "issue": "Mini\u2011FAB does not have a visible focus outline (2\u202fdp `theme.colors.outline`) when focused via keyboard or assistive technology.",
+      "fix": "Add a `style` prop that applies a focus\u2011visible style: `borderWidth: 2, borderColor: theme.colors.outline, borderRadius: theme.roundness` when the component receives focus (`onFocus`/`onBlur` state).",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "src/components/ui/FABAdd.tsx",
+      "issue": "Icon\u2011only FAB lacks an `accessibilityLabel` describing its function (e.g., \"Add receipt or mileage\").",
+      "fix": "Add `accessibilityLabel=\"Add receipt or mileage\"` and `accessibilityRole=\"button\"` to the `FAB` component.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "src/components/ui/PrimaryButton.tsx",
+      "issue": "Button component uses hard\u2011coded color values for disabled state (`#212121` on `#E0E0E0`) instead of design tokens (`theme.colors.onDisabled`, `theme.colors.disabled`).",
+      "fix": "Replace hard\u2011coded colors with `theme.colors.onDisabled` and `theme.colors.disabled` via the Paper theme or custom style.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "src/components/ui/FormField.tsx",
+      "issue": "TextInput placeholder color is not using the `placeholder` token (`theme.colors.placeholder`).",
+      "fix": "Pass `placeholderTextColor={theme.colors.placeholder}` to the underlying `TextInput` component.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "src/screens/ExportScreen.tsx",
+      "issue": "The small `ActivityIndicator` inside export buttons lacks an accessible label, so screen readers announce only \"loading\" without context.",
+      "fix": "Wrap the indicator in a `<View accessibilityLabel=\"Generating export\" accessibilityLiveRegion=\"polite\">` or use `accessibilityLabel` on the button when `loading` is true.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "src/screens/BackupScreen.tsx",
+      "issue": "The passphrase modal does not announce validation errors with `aria-live` region; users of assistive tech may miss the error messages.",
+      "fix": "Wrap `HelperText` in a container with `accessibilityLiveRegion=\"polite\"` so that errors are announced.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "src/components/ui/EmptyState.tsx",
+      "issue": "The illustration/icon in the EmptyState view does not have an `accessibilityLabel`, violating the rule against decorative images without a label.",
+      "fix": "Add `accessibilityLabel=\"Empty state illustration\" accessibilityIgnoresInvertColors` to the icon component.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "src/screens/SettingsScreen.tsx",
+      "issue": "Switch component (`SettingSwitch`) does not expose its current state to screen readers (`accessibilityState`).",
+      "fix": "Pass `accessibilityState={{ checked: value }}` to the `Switch` component.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "src/components/ui/Screen.tsx",
+      "issue": "The global `Screen` wrapper does not set `role=\"main\"` on the `ScrollView`, missing a landmark for assistive technologies.",
+      "fix": "Add `accessibilityRole=\"main\"` to the `ScrollView` inside the `Screen` component.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "src/components/ui/ScreenHeader.tsx",
+      "issue": "Header uses a generic `<Text>` for the title without specifying heading level; screen readers treat it as normal text.",
+      "fix": "Use `<Text variant=\"headlineMedium\" accessibilityRole=\"header\">` or `accessibilityLevel={1}` to mark it as an h1.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "viewport": "both",
+      "issue": "The 'Accept' button is visually centered but not perfectly aligned with the checkbox above it; there's a small vertical misalignment.",
+      "fix": "Adjust the button's vertical position to align with the checkbox's baseline for perfect vertical rhythm.",
+      "screen": "policy_gate",
+      "source": "vision"
+    },
+    {
+      "severity": "low",
+      "viewport": "phone",
+      "issue": "The 'Accept' button is slightly too wide for the phone viewport, causing a small horizontal overflow on the right edge.",
+      "fix": "Reduce the button's width slightly or add padding to ensure it fits within the 390px width without clipping.",
+      "screen": "policy_gate",
+      "source": "vision"
+    },
+    {
+      "severity": "low",
+      "viewport": "both",
+      "issue": "The 'Tick the box to continue.' hint is styled in teal, which matches the version text, but lacks visual hierarchy compared to the main heading and policy sections.",
+      "fix": "Increase the font weight or add a subtle underline to make the hint stand out as a secondary instruction.",
+      "screen": "policy_gate",
+      "source": "vision"
+    }
+  ],
+  "lighthouse": [
+    {
+      "accessibility": 98,
+      "bestPractices": 100,
+      "performance": 57
+    }
+  ],
+  "vision_scores": [
+    {
+      "screen": "policy_gate",
+      "score": 8.0,
+      "summary": "A polished, modern onboarding screen with clear visual hierarchy, consistent spacing, and touch-friendly controls. The primary action is obvious and disabled until required, and typography is readable and well-scaled. No critical flaws, but minor spacing and alignment tweaks could elevate it to exceptional."
+    },
+    {
+      "screen": "dashboard_empty",
+      "score": 9.0,
+      "summary": "A polished, modern, and trustworthy onboarding screen that clearly communicates privacy and sets user expectations. The layout is clean, the typography is well-scaled, and the primary action is unambiguous and visually distinct. No critical usability or design flaws are visible."
+    }
+  ]
+}
