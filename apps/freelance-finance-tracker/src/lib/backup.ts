@@ -55,6 +55,9 @@ export function validateBackupStructure(data: any): string | null {
 /** Restore data from an encrypted backup blob. */
 export async function restoreBackup(store: Store, backupBlob: string, passphrase: string): Promise<void> {
   const combined = fromBase64(backupBlob);
+  // Guard against excessively large backup blobs (e.g., >10 MiB) which could cause OOM.
+  const MAX_BLOB_SIZE = 10 * 1024 * 1024; // 10 MiB
+  if (combined.length > MAX_BLOB_SIZE) throw new Error('Backup file too large');
   if (combined.length < 16) throw new Error('Invalid backup file');
   const salt = combined.subarray(0, 16);
   const ciphertext = combined.subarray(16);
@@ -71,6 +74,12 @@ export async function restoreBackup(store: Store, backupBlob: string, passphrase
   const structErr = validateBackupStructure(data);
   if (structErr) throw new Error('Invalid backup format: ' + structErr);
 
+  // Limits to prevent DoS
+  const MAX_RECEIPTS = 10000;
+  const MAX_MILEAGE = 5000;
+  if (data.receipts.length > MAX_RECEIPTS) throw new Error('Backup contains too many receipts');
+  if (data.mileage.length > MAX_MILEAGE) throw new Error('Backup contains too many mileage entries');
+
   // Replace everything: records and the photo folder.
   await deleteAllPhotos();
   await keepingPolicy(store, async () => {
@@ -80,9 +89,10 @@ export async function restoreBackup(store: Store, backupBlob: string, passphrase
       await store.put('receipts', rest as any);
       if (photoData) {
         try {
+          // Write photo to trusted location using receipt id as filename
           await store.put('receipts', { ...rest, photoUri: await writePhotoBase64(rest.id, photoData) } as any);
         } catch {
-          // A photo that can't be written: keep the receipt without it.
+          // ignore photo write errors
         }
       }
     }
