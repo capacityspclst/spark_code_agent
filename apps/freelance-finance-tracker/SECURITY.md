@@ -1,11 +1,11 @@
 # Security assurance: freelance-finance-tracker
 
-Pipeline run `20261010-140319-3cd7`, 2026-10-10. Generated from the run's recorded results.
+Pipeline run `20261010-183844-b878`, 2026-10-10. Generated from the run's recorded results.
 
 ## Verdict
 
-No critical or high security findings remain open, and every blocking scanner check passed.
-The run was not approved after 5 round(s).
+**Not cleared:** critical/high findings or blocking scanner checks remain; see below.
+The run was not approved after 9 round(s).
 
 ## What was checked
 
@@ -34,17 +34,32 @@ Blocking rules: any secret; high/critical dependency vulnerabilities with a fix 
 
 | ID | Severity | Fixed in | Status | Found in round | File | Issue |
 |---|---|---|---|---|---|---|
-| | | | | | No findings |
+| dependency-braces-high | high | deployment | open | 6 | `package-lock.json` | The `braces` library (version 3.0.3) has CVE‑2026‑93687 – a denial‑of‑service via stack overflow from deeply nested patterns. The library is present in the lockfile and could be invoked by any code that uses glob/regex u |
+| dependency-node-forge-high | high | deployment | open | 6 | `package-lock.json` | `node-forge` (1.4.0) contains CVE‑2026‑85393 – a signature‑forgery flaw in RSA PKCS#1 v1.5 verification, which could allow an attacker to craft forged signatures if the library is used for any cryptographic verification. |
+| data-reset-photo-leak-high | high | code | open | 6 | `src/lib/dataReset.ts` | The "Delete all data" flow deletes the encrypted KV store and the SecureStore encryption key but does not purge receipt photo files that are stored on the device’s file system, leaving potentially sensitive images on the |
+| dependency-sprintf-js-medium | medium | deployment | open | 6 | `package-lock.json` | `sprintf-js` (1.0.3) is vulnerable to CVE‑2026‑97058 – denial‑of‑service via unbounded precision specifiers, potentially crashing the app if malicious format strings are processed. |
+| dependency-uuid-medium | medium | code | open | 6 | `package-lock.json` | `uuid` (7.0.3) has CVE‑2026‑41907 – out‑of‑bounds write vulnerability that can corrupt memory and affect data integrity. |
+| backup-restore-path-traversal-medium | medium | code | open | 6 | `src/lib/backup.ts` | During restore, receipt photo data could be written to an attacker‑controlled `photoUri` path if the backup payload includes arbitrary URIs, potentially leading to path‑traversal or overwriting of files outside the app s |
+| backup-restore-size-dos-medium | medium | code | open | 6 | `src/lib/backup.ts` | The backup restore process decrypts the entire payload before checking its size, which could be abused with an extremely large backup file to exhaust memory and crash the app. |
+| backup-passphrase-bruteforce-medium | medium | code | open | 6 | `src/screens/BackupPassphraseScreen.tsx` | There is no rate‑limiting or delay on consecutive failed passphrase attempts during restore, allowing offline brute‑force attacks on the encrypted backup. |
+| csv-export-injection-weak-escaping-mediu | medium | code | open | 6 | `src/lib/exportCsv.ts` | CSV injection mitigation only prefixes a single quote to fields that start with `=`, `+`, `-`, or `@`. This does not fully escape commas, newlines, or other special characters and may still produce malformed CSV that can |
 
 ## Required before go-live (hosting and infrastructure)
 
 These can't be fixed in the app's code; configure them where the app is deployed. DEPLOYMENT.md shows how for the recommended hosts.
 
-- none
+- [ ] **high** dependency-braces-high: The `braces` library (version 3.0.3) has CVE‑2026‑93687 – a denial‑of‑service via stack overflow from deeply nested patterns. The library is present in the lockfile and could be invoked by any code that uses glob/regex utilities. How: No fixed release exists yet: monitor the advisory and upgrade as soon as one ships; confirm whether the package is only a build-time dependency. Upgrade `braces` to a version where the vulnerability is patched (>=3.0.4) or replace its usage with a safe alternative. If the library is not used directly, remove it from dependencies.
+- [ ] **high** dependency-node-forge-high: `node-forge` (1.4.0) contains CVE‑2026‑85393 – a signature‑forgery flaw in RSA PKCS#1 v1.5 verification, which could allow an attacker to craft forged signatures if the library is used for any cryptographic verification. How: No fixed release exists yet: monitor the advisory and upgrade as soon as one ships; confirm whether the package is only a build-time dependency. Replace `node-forge` with the already‑used `@noble/*` libraries for all cryptographic operations, or await an upstream fix and upgrade when available. Ensure no code path still imports `node-forge`.
+- [ ] **medium** dependency-sprintf-js-medium: `sprintf-js` (1.0.3) is vulnerable to CVE‑2026‑97058 – denial‑of‑service via unbounded precision specifiers, potentially crashing the app if malicious format strings are processed. How: No fixed release exists yet: monitor the advisory and upgrade as soon as one ships; confirm whether the package is only a build-time dependency. Replace `sprintf-js` with native template literals or a safer formatting library, or upgrade to a fixed version if one becomes available.
 
 ## Residual risk in the code (accepted, open)
 
-- none
+- **high** data-reset-photo-leak-high: The "Delete all data" flow deletes the encrypted KV store and the SecureStore encryption key but does not purge receipt photo files that are stored on the device’s file system, leaving potentially sensitive images on the device after a reset. Recommended fix: Extend `clearAllData` (or `clearAllData` in `src/lib/dataReset.ts`) to enumerate all stored `photoUri` values (e.g., via the receipt store) and delete the corresponding files using `expo-file-system` (`FileSystem.deleteAsync`) before completing the reset.
+- **medium** dependency-uuid-medium: `uuid` (7.0.3) has CVE‑2026‑41907 – out‑of‑bounds write vulnerability that can corrupt memory and affect data integrity. Recommended fix: Upgrade `uuid` to a safe version (>=13.0.1, or 12.0.1/11.0.1) and run the test suite to confirm no breaking changes.
+- **medium** backup-restore-path-traversal-medium: During restore, receipt photo data could be written to an attacker‑controlled `photoUri` path if the backup payload includes arbitrary URIs, potentially leading to path‑traversal or overwriting of files outside the app sandbox. Recommended fix: In `restoreBackup`, ignore any `photoUri` from the backup payload and always write restored images to a trusted app‑internal directory (e.g., `FileSystem.documentDirectory`). Validate that any target path is confined to this directory before writing.
+- **medium** backup-restore-size-dos-medium: The backup restore process decrypts the entire payload before checking its size, which could be abused with an extremely large backup file to exhaust memory and crash the app. Recommended fix: Add a size check on the encrypted backup blob (e.g., reject blobs >10 MiB) before decryption, and enforce a maximum number of receipts/mileage entries in `validateBackupStructure`.
+- **medium** backup-passphrase-bruteforce-medium: There is no rate‑limiting or delay on consecutive failed passphrase attempts during restore, allowing offline brute‑force attacks on the encrypted backup. Recommended fix: Implement a simple throttling mechanism (e.g., exponential back‑off after each failed restore attempt) and/or lock the restore UI for a short period after a configurable number of consecutive failures.
+- **medium** csv-export-injection-weak-escaping-mediu: CSV injection mitigation only prefixes a single quote to fields that start with `=`, `+`, `-`, or `@`. This does not fully escape commas, newlines, or other special characters and may still produce malformed CSV that can be used for injection attacks in spreadsheet software. Recommended fix: Replace the custom prefix logic with a robust CSV generation library such as `csv-stringify` that properly escapes all fields according to RFC 4180, ensuring commas, quotes, and line‑breaks are handled safely.
 
 ## Limits of this assurance
 
