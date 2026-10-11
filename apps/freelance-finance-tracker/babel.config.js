@@ -1,7 +1,8 @@
 export default function (api) {
-  api.cache(true);
+  const isTest = api.env('test');
+  api.cache.using(() => isTest);
   return {
     presets: ['babel-preset-expo'],
-    // other babel config if needed
+    plugins: isTest ? ['babel-plugin-dynamic-import-node'] : [],
   };
 }
