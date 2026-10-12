@@ -16,10 +16,8 @@ export default function FABAdd() {
 
   return (
     <View style={styles.container} pointerEvents="box-none">
-      {/* Primary action – add a receipt – uses a contained button to stand out. */}
       <PrimaryButton label="Receipt" variant="primary" onPress={goToReceipt} style={styles.button} />
-      {/* Secondary action – add mileage – outlined to appear less prominent. */}
-      <PrimaryButton label="Mileage" variant="secondary" onPress={goToMileage} style={styles.button} />
+      <PrimaryButton label="Mileage" variant="primary" onPress={goToMileage} style={styles.button} />
     </View>
   );
 }
