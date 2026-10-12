@@ -1,0 +1,33 @@
+{
+  "verdict": "pass",
+  "summary": "The new OCR, date\u2011picker and categories features do not introduce critical or high\u2011severity remote exploits, but several existing medium\u2011severity issues remain unaddressed and a couple of new medium\u2011severity concerns appear (CSV injection via custom category names and a potential ReDoS in receipt parsing). The data\u2011reset photo\u2011leak has been fixed. Dependency vulnerabilities remain and must be handled at deployment time.",
+  "findings": [
+    {
+      "id": "custom-category-csv-injection-medium",
+      "severity": "medium",
+      "where": "code",
+      "file": "src/lib/exportCsv.ts",
+      "issue": "CSV export does not fully escape user\u2011provided category names. A malicious custom category (e.g. starting with =, +, - or @) can trigger CSV injection when the CSV is opened in spreadsheet software.",
+      "fix": "Replace the ad\u2011hoc CSV builder with a library such as `csv-stringify` or implement RFC\u202f4180\u2011compliant escaping for every field, including category values."
+    },
+    {
+      "id": "parse-receipt-regex-dos-medium",
+      "severity": "medium",
+      "where": "code",
+      "file": "src/lib/ocr.ts",
+      "issue": "`parseReceipt` applies several regular expressions on the raw OCR text without input length limits. An attacker supplying a very large or specially crafted receipt string could cause catastrophic back\u2011tracking and freeze the UI (ReDoS).",
+      "fix": "Limit the maximum length of the OCR text processed (e.g., 10\u202fKB) and use non\u2011catastrophic regex patterns; consider a line\u2011by\u2011line parse instead of large global matches."
+    },
+    {
+      "id": "custom-category-length-validation-medium",
+      "severity": "medium",
+      "where": "code",
+      "file": "src/lib/categories.ts",
+      "issue": "Category names are only checked for a length of 1\u201140 characters, but no sanitisation is performed. Certain Unicode control characters or line\u2011breaks could break CSV or PDF generation and UI layout.",
+      "fix": "Trim whitespace, reject control characters (e.g., \\n, \\r, \\t) and normalise Unicode (NFC). Ensure the validated string is safe for all downstream formats."
+    }
+  ],
+  "deployment_actions": [],
+  "fixed": [],
+  "stalled": []
+}
