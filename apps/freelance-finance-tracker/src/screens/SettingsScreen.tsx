@@ -41,7 +41,8 @@ export default function SettingsScreen({ onViewPolicy }: { onViewPolicy?: () => 
       <PrimaryButton label="Tax settings" variant="secondary" onPress={() => navigation.navigate('TaxSettings')} />
       <PrimaryButton label="Export" variant="secondary" onPress={() => navigation.navigate('Export')} />
       <PrimaryButton label="Backup & restore" variant="secondary" onPress={() => navigation.navigate('Backup')} />
-      <PrimaryButton label="Delete all data" variant="secondary" onPress={deleteAllData} />
+      {/* Deleting all data is a destructive action – make it visually prominent. */}
+      <PrimaryButton label="Delete all data" variant="primary" onPress={deleteAllData} />
       <PrimaryButton label="View Terms and Privacy Policy" variant="secondary" onPress={onViewPolicy ?? (() => {})} />
     </Screen>
   );

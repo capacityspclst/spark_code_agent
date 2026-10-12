@@ -53,8 +53,9 @@ const styles = StyleSheet.create({
   },
   input: {},
   helper: {
+    // Align error text directly under the input with modest spacing.
     alignSelf: 'flex-start',
     minHeight: 20,
-    marginTop: 4,
+    marginTop: 2,
   },
 });
