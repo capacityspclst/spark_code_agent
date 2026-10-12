@@ -1,0 +1,90 @@
+{
+  "verdict": "fail",
+  "summary": "The current code base still contains several high\u2011severity problems that block release (two critical dependency CVEs in braces and node\u2011forge, and a high\u2011severity data\u2011reset photo leak) as well as a suite of medium\u2011severity flaws (backup passphrase length enforcement, backup size DoS, brute\u2011force throttling, CSV injection, unsafe photo restore paths, and a vulnerable uuid dependency). All of these must be addressed before the app can be considered production\u2011ready. Dependency issues are deployment\u2011level fixes; the functional security gaps require code changes.",
+  "findings": [
+    {
+      "id": "data-reset-photo-leak-high",
+      "severity": "high",
+      "where": "code",
+      "file": "src/lib/dataReset.ts",
+      "issue": "The \"Delete all data\" flow clears the encrypted KV store and deletes the SecureStore encryption key, but it never deletes receipt photo files stored on the device, leaving potentially sensitive images after a reset.",
+      "fix": "Extend `clearAllData` (or `clearAllData` in `src/lib/dataReset.ts`) to enumerate all receipts, collect their `photoUri` values and delete each file via `expo-file-system` (`FileSystem.deleteAsync`). Perform this before wiping the store, then preserve only the policy\u2011acceptance flag."
+    },
+    {
+      "id": "backup-passphrase-min-length-missing-cod",
+      "severity": "medium",
+      "where": "code",
+      "file": "src/lib/backup.ts",
+      "issue": "`createBackup` does not enforce the UI\u2011mandated minimum 12\u2011character passphrase rule; callers can supply a short passphrase programmatically, resulting in weakly protected backups.",
+      "fix": "Add a length check at the start of `createBackup` (and similarly in `restoreBackup` for symmetry). Throw a clear error if `passphrase.length < 12`."
+    },
+    {
+      "id": "backup-restore-size-dos-medium",
+      "severity": "medium",
+      "where": "code",
+      "file": "src/lib/backup.ts",
+      "issue": "`restoreBackup` decrypts the entire backup blob before any size validation, allowing an attacker to supply an extremely large encrypted file that can exhaust memory and crash the app.",
+      "fix": "Implement a pre\u2011decryption size check (e.g., reject blobs >\u202f10\u202fMiB). After decryption, enforce maximum numbers of receipts (e.g., 10\u202f000) and mileage entries (e.g., 5\u202f000) in `validateBackupStructure`. Abort early with a friendly error."
+    },
+    {
+      "id": "backup-passphrase-bruteforce-medium",
+      "severity": "medium",
+      "where": "code",
+      "file": "src/screens/RestoreScreen.tsx",
+      "issue": "There is no rate\u2011limiting or delay on consecutive failed backup passphrase attempts, enabling offline brute\u2011force attacks against the encrypted backup.",
+      "fix": "Track consecutive failure count in memory. After each failed attempt introduce exponential back\u2011off (1\u202fs, 2\u202fs, 4\u202fs, \u2026) and lock the restore UI after a configurable threshold (e.g., 5 attempts). Reset the counter on app restart."
+    },
+    {
+      "id": "csv-export-injection-weak-escaping-mediu",
+      "severity": "medium",
+      "where": "code",
+      "file": "src/lib/exportCsv.ts",
+      "issue": "CSV sanitisation only prefixes a single quote for fields starting with `=`, `+`, `-`, or `@`. It does not escape commas, newlines, quotes, or other special characters, leaving exported CSVs vulnerable to injection attacks in spreadsheet software.",
+      "fix": "Replace the custom sanitisation with a robust CSV library such as `csv-stringify` that correctly escapes all fields according to RFC\u202f4180 (handling commas, quotes, line\u2011breaks, and leading characters)."
+    },
+    {
+      "id": "restore-photo-path-traversal-medium",
+      "severity": "medium",
+      "where": "code",
+      "file": "src/lib/backup.ts",
+      "issue": "`restoreBackup` writes receipt photo bytes back using `File.write(uri, data)` where `uri` comes from the backup payload. A malicious backup could supply an absolute or traversal path, causing the app to write files outside its sandbox.",
+      "fix": "Ignore any `photoUri` supplied in the backup. Write restored photos to a safe, app\u2011controlled directory (e.g., `FileSystem.documentDirectory`) with filenames derived from the receipt ID. Validate that the final path is within the allowed directory before writing."
+    },
+    {
+      "id": "dependency-uuid-medium",
+      "severity": "medium",
+      "where": "code",
+      "file": "package-lock.json",
+      "issue": "`uuid` 7.0.3 has CVE\u20112026\u201141907 (out\u2011of\u2011bounds write) that can corrupt memory and affect data integrity.",
+      "fix": "Upgrade `uuid` to a safe version (\u2265\u202f13.0.1, or 12.0.1/11.0.1). Adjust imports if necessary and verify all code paths still work."
+    }
+  ],
+  "deployment_actions": [
+    {
+      "id": "dependency-braces-high",
+      "severity": "high",
+      "where": "deployment",
+      "file": "package-lock.json",
+      "issue": "`braces` 3.0.3 contains CVE\u20112026\u201193687 (Denial of Service via deep regex patterns). The library is included in the production bundle and can be triggered by any regex/glob usage.",
+      "fix": "Upgrade `braces` to >=\u202f3.0.4 when a fix is released, or replace the library with a safe alternative. If it is only a build\u2011time dependency, remove it from the shipped bundle."
+    },
+    {
+      "id": "dependency-node-forge-high",
+      "severity": "high",
+      "where": "deployment",
+      "file": "package-lock.json",
+      "issue": "`node\u2011forge` 1.4.0 has CVE\u20112026\u201185393 (RSA PKCS#1 v1.5 signature forgery) which could allow forged signatures in cryptographic operations.",
+      "fix": "Replace all usage of `node\u2011forge` with the already\u2011used `@noble/*` libraries or upgrade to a fixed version if one becomes available. Ensure the package is removed from the production bundle."
+    },
+    {
+      "id": "dependency-sprintf-js-medium",
+      "severity": "medium",
+      "where": "deployment",
+      "file": "package-lock.json",
+      "issue": "`sprintf-js` 1.0.3 is vulnerable to CVE\u20112026\u201197058 (Denial of Service via unbounded precision specifiers).",
+      "fix": "Replace any usage of `sprintf-js` with native template literals or a safe formatting library. If it only appears as a transitive dependency, upgrade to a fixed release when available or prune it from the final bundle."
+    }
+  ],
+  "fixed": [],
+  "stalled": []
+}
