@@ -1,14 +1,17 @@
-// Crypto utilities compatible with both Node (tests) and React Native (Expo).
-// Implements simple XOR encryption with a deterministic checksum/MAC.
+// Authenticated encryption for data at rest and for backup files.
+// AES-256-GCM (@noble/ciphers) with random 12-byte nonces; passphrase keys come from scrypt (@noble/hashes).
+// Random bytes come from expo-crypto, which works on iOS, Android and the web (Hermes has no WebCrypto).
+import { gcm } from '@noble/ciphers/aes.js';
+import { scrypt } from '@noble/hashes/scrypt.js';
+import * as ExpoCrypto from 'expo-crypto';
 
 export const KEY_BYTES = 32;
 const NONCE_BYTES = 12;
+// scrypt cost: ~32 MB and well under a second on a phone; raise N for stronger backups if devices allow.
+const SCRYPT = { N: 2 ** 15, r: 8, p: 1, dkLen: KEY_BYTES };
 
-/** Random bytes – uses Expo's Crypto if available. */
 export function randomBytes(length: number): Uint8Array {
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const { getRandomBytes } = require('expo-crypto');
-  return Uint8Array.from(getRandomBytes(length));
+  return ExpoCrypto.getRandomBytes(length);
 }
 
 export function utf8(text: string): Uint8Array {
@@ -19,68 +22,46 @@ export function fromUtf8(bytes: Uint8Array): string {
   return new TextDecoder().decode(bytes);
 }
 
-/** Base64 helpers – use Buffer when available, else fallback. */
-function getBuffer(): any {
-  if (typeof Buffer !== 'undefined') return Buffer;
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  return require('buffer').Buffer;
-}
+const B64 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
 
 export function toBase64(bytes: Uint8Array): string {
-  return getBuffer().from(bytes).toString('base64');
+  let out = '';
+  for (let i = 0; i < bytes.length; i += 3) {
+    const n = (bytes[i] << 16) | ((bytes[i + 1] ?? 0) << 8) | (bytes[i + 2] ?? 0);
+    out += B64[(n >> 18) & 63] + B64[(n >> 12) & 63];
+    out += i + 1 < bytes.length ? B64[(n >> 6) & 63] : '=';
+    out += i + 2 < bytes.length ? B64[n & 63] : '=';
+  }
+  return out;
 }
 
 export function fromBase64(text: string): Uint8Array {
-  return Uint8Array.from(getBuffer().from(text, 'base64'));
-}
-
-/** Compute a simple 4‑byte MAC/checksum based on key and data. */
-function computeMac(key: Uint8Array, data: Uint8Array): Uint8Array {
-  let sum = 0;
-  for (let i = 0; i < data.length; i++) {
-    sum = (sum + (data[i] ^ key[i % key.length])) >>> 0;
+  const clean = text.replace(/[^A-Za-z0-9+/]/g, '');
+  const out = new Uint8Array(Math.floor((clean.length * 3) / 4));
+  let o = 0;
+  for (let i = 0; i < clean.length; i += 4) {
+    const n = (B64.indexOf(clean[i]) << 18) | (B64.indexOf(clean[i + 1]) << 12) |
+      ((B64.indexOf(clean[i + 2]) & 63) << 6) | (B64.indexOf(clean[i + 3]) & 63);
+    if (o < out.length) out[o++] = (n >> 16) & 255;
+    if (o < out.length) out[o++] = (n >> 8) & 255;
+    if (o < out.length) out[o++] = n & 255;
   }
-  const out = new Uint8Array(4);
-  out[0] = (sum >>> 24) & 0xff;
-  out[1] = (sum >>> 16) & 0xff;
-  out[2] = (sum >>> 8) & 0xff;
-  out[3] = sum & 0xff;
   return out;
 }
 
-/** Encrypt: nonce || ciphertext || MAC. */
+/** nonce || ciphertext+tag. Throws on a wrong key or tampered data (GCM authentication). */
 export function encrypt(key: Uint8Array, plaintext: Uint8Array): Uint8Array {
   const nonce = randomBytes(NONCE_BYTES);
-  const cipher = new Uint8Array(plaintext.length);
-  for (let i = 0; i < plaintext.length; i++) {
-    cipher[i] = plaintext[i] ^ key[i % key.length];
-  }
-  const mac = computeMac(key, cipher);
-  const out = new Uint8Array(nonce.length + cipher.length + mac.length);
+  const sealed = gcm(key, nonce).encrypt(plaintext);
+  const out = new Uint8Array(nonce.length + sealed.length);
   out.set(nonce, 0);
-  out.set(cipher, nonce.length);
-  out.set(mac, nonce.length + cipher.length);
+  out.set(sealed, nonce.length);
   return out;
 }
 
-/** Decrypt verifies MAC and reverses XOR. */
 export function decrypt(key: Uint8Array, data: Uint8Array): Uint8Array {
-  const macSize = 4;
-  if (data.length < NONCE_BYTES + macSize) {
-    throw new Error('Encrypted data is too short or damaged.');
-  }
-  const cipher = data.subarray(NONCE_BYTES, data.length - macSize);
-  const providedMac = data.subarray(data.length - macSize);
-  const expectedMac = computeMac(key, cipher);
-  const equal = providedMac.length === expectedMac.length && providedMac.every((v, i) => v === expectedMac[i]);
-  if (!equal) {
-    throw new Error('Data integrity check failed.');
-  }
-  const plaintext = new Uint8Array(cipher.length);
-  for (let i = 0; i < cipher.length; i++) {
-    plaintext[i] = cipher[i] ^ key[i % key.length];
-  }
-  return plaintext;
+  if (data.length < NONCE_BYTES + 16) throw new Error('Encrypted data is too short or damaged.');
+  return gcm(key, data.subarray(0, NONCE_BYTES)).decrypt(data.subarray(NONCE_BYTES));
 }
 
 export function encryptText(key: Uint8Array, text: string): string {
@@ -91,15 +72,7 @@ export function decryptText(key: Uint8Array, text: string): string {
   return fromUtf8(decrypt(key, fromBase64(text)));
 }
 
-/** Derive a key from a passphrase – simple deterministic fallback. */
+/** Key from a user passphrase, for backup files. Store the salt next to the ciphertext. */
 export function deriveKey(passphrase: string, salt: Uint8Array): Uint8Array {
-  const passBytes = utf8(passphrase);
-  const combined = new Uint8Array(passBytes.length + salt.length);
-  combined.set(passBytes);
-  combined.set(salt, passBytes.length);
-  const out = new Uint8Array(KEY_BYTES);
-  for (let i = 0; i < KEY_BYTES; i++) {
-    out[i] = combined[i % combined.length] ^ (i & 0xff);
-  }
-  return out;
+  return scrypt(utf8(passphrase.normalize('NFKC')), salt, SCRYPT);
 }
