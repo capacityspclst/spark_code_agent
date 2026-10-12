@@ -72,9 +72,18 @@ export function validateBackupStructure(data: any): string | null {
   return null;
 }
 
+/** Sanitize a receipt id to avoid path traversal when writing files. */
+function safeReceiptId(id: string): string {
+  // Allow only alphanumeric, dash, underscore
+  return id.replace(/[^a-zA-Z0-9_-]/g, '_');
+}
+
 /** Restore data from an encrypted backup blob. */
 export async function restoreBackup(store: Store, backupBlob: string, passphrase: string): Promise<void> {
+  // Enforce passphrase length policy
+  enforcePassphrasePolicy(passphrase);
   const combined = fromBase64(backupBlob);
+  // Pre‑decryption size check to prevent DoS
   if (combined.length > MAX_BACKUP_SIZE) throw new Error('Backup file too large');
   if (combined.length < 16) throw new Error('Invalid backup file');
   const salt = combined.subarray(0, 16);
@@ -98,17 +107,20 @@ export async function restoreBackup(store: Store, backupBlob: string, passphrase
     await store.clearAll();
     for (const r of data.receipts) {
       const { photoData, ...rest } = r as any;
-      await store.put('receipts', rest as any);
+      const safeId = safeReceiptId(rest.id);
+      await store.put('receipts', { ...rest, id: safeId } as any);
       if (photoData) {
         try {
-          await store.put('receipts', { ...rest, photoUri: await writePhotoBase64(rest.id, photoData) } as any);
+          const uri = await writePhotoBase64(safeId, photoData);
+          await store.put('receipts', { ...rest, id: safeId, photoUri: uri } as any);
         } catch {
           // keep receipt without photo if write fails
         }
       }
     }
     for (const m of data.mileage) {
-      await store.put('mileage', m as any);
+      const safeId = safeReceiptId(m.id);
+      await store.put('mileage', { ...m, id: safeId } as any);
     }
   });
 }
