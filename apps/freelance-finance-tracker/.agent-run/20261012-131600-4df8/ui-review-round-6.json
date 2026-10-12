@@ -1,0 +1,277 @@
+{
+  "verdict": "fail",
+  "summary": "The UI mostly follows the DESIGN.md guidelines, but there are critical gaps that break the primary user flow and several missing or mismatched states. The most serious defect is that the **Amount** field on the ReceiptEntryScreen cannot be located by label, causing the automated acceptance flow to time\u2011out and preventing a user from saving a receipt. Additional high\u2011severity concerns include the bottom tab bar not being guaranteed on every signed\u2011in screen and missing error\u2011retry UI on the PolicyGateScreen. Several medium\u2011severity issues (copy mismatches, missing OCR loading label, missing validation error helpers, and missing offline banner) and low\u2011severity polishing items (design\u2011token consistency, visible focus outlines, proper theming of error states) were also identified.",
+  "findings": [
+    {
+      "severity": "high",
+      "file": "src/components/ui/FormField.tsx",
+      "issue": "The FormField component does not forward the `label` prop to the underlying Paper `TextInput` (or does not set an accessible name), so the Amount field is not discoverable by label\u2011based locators. This makes the Amount field invisible to screen readers and UI\u2011automation, breaking the primary receipt\u2011entry flow.",
+      "fix": "Pass the `label` prop directly to `TextInput` and ensure `accessibilityLabel` matches the visible label. Add a test\u2011id (e.g., `testID=\"amount-input\"`) for robust automation. Verify that the label appears above the field as per the spec.",
+      "source": "designer"
+    },
+    {
+      "severity": "high",
+      "file": "src/navigation/index.tsx",
+      "issue": "BottomTabBar (the fixed 56\u202fdp tab bar) is not rendered on all signed\u2011in screens (e.g., ReceiptEntryScreen, SettingsScreen). The spec requires the tab bar to be always visible, providing navigation to primary actions.",
+      "fix": "Wrap all top\u2011level screens in a navigator that includes the BottomTabBar as a persistent component. For modal screens (e.g., Add receipt via FAB) ensure the tab bar remains on screen or re\u2011adds it after the modal is dismissed.",
+      "source": "designer"
+    },
+    {
+      "severity": "high",
+      "file": "src/screens/PolicyScreen.tsx",
+      "issue": "Error state does not display a full\u2011screen error view with the exact copy \u201cUnable to store your acceptance. Please try again.\u201d and a visible **Retry** button. Without this, users cannot recover from storage failures.",
+      "fix": "Add an error component that matches the spec, includes the exact copy, and a `PrimaryButton` labeled \u201cRetry\u201d that re\u2011invokes the acceptance flow.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/screens/DashboardScreen.tsx",
+      "issue": "EmptyState component uses placeholder copy or missing the primary button label \u201cAdd receipt\u201d. The spec mandates title *Nothing here yet*, description *Add a receipt or mileage entry\u2026*, and button **Add receipt**.",
+      "fix": "Update EmptyState props to use the exact strings. Verify the button triggers the FAB\u202f\u2192\u202fmini\u2011FAB receipt flow.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/screens/ReceiptEntryScreen.tsx",
+      "issue": "OCR loading overlay shows a spinner but omits the required label text \u201cAnalyzing receipt\u2026\u201d. This violates the specified state and reduces accessibility (no live region announcement).",
+      "fix": "Wrap the ActivityIndicator in a view with a `<Text variant=\"bodyLarge\">Analyzing receipt\u2026</Text>` and announce the text via `announceForAccessibility`.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/screens/ReceiptEntryScreen.tsx",
+      "issue": "OCR no\u2011data alert dialog uses a generic message instead of the exact copy \u201cNo details could be extracted \u2013 please enter manually.\u201d",
+      "fix": "Replace the dialog message with the exact copy from the spec and ensure the dialog is announced for accessibility.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/screens/ReceiptEntryScreen.tsx",
+      "issue": "Field\u2011level validation errors are not displayed using `HelperText type=\"error\"` under each FormField, and the copy for each error (Amount, Date, Category, Type) does not match the spec.",
+      "fix": "Integrate `validation.ts` functions on blur/submit, set `error` prop on FormField, and render `HelperText` with the exact error messages defined in the spec.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/components/ui/OfflineBanner.tsx",
+      "issue": "An offline banner component is referenced in the spec but not used on any screen that performs network\u2011dependent actions (e.g., backup, export). Users receive no feedback when offline.",
+      "fix": "Import and conditionally render the `OfflineBanner` on screens where network calls may occur, using the exact copy \u201cYou are offline. Some actions require an internet connection.\u201d",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "src/theme.ts",
+      "issue": "Several components (e.g., custom Views, margins/paddings) use hard\u2011coded numeric values (`margin: 16`, `borderRadius: 8`) instead of the exported design tokens (`spacing`, `roundness`).",
+      "fix": "Replace all ad\u2011hoc numbers with token references (e.g., `theme.spacing * 2`, `theme.roundness`). Run ESLint rule to enforce token usage.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "src/components/ui/PrimaryButton.tsx",
+      "issue": "Visible focus style (2\u202fdp outline using `theme.colors.outline`) is not applied on focus for web platforms, violating the accessible focus\u2011visible requirement.",
+      "fix": "Add a `focusVisibleStyle` prop or `style` that applies a 2\u202fdp outline on focus. Ensure the same works on native via `onFocus` state.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "src/components/ui/Snackbar.tsx",
+      "issue": "Error snackbar uses default background color instead of the design token `theme.colors.error` and does not set `onError` text color correctly.",
+      "fix": "Style the Snackbar based on the `type` prop: for errors, apply `backgroundColor: theme.colors.error` and `textColor: theme.colors.onError`.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "src/components/ui/BottomTabBar.tsx",
+      "issue": "Icon and label touch targets are close to the minimum 44\u202f\u00d7\u202f44\u202fdp but lack explicit `hitSlop` adjustments, which may cause missed taps on smaller devices.",
+      "fix": "Add `hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}` to each tab item to guarantee the minimum touch area.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "src/components/ui/FormField.tsx",
+      "issue": "The `keyboardType` for the Amount field is not set to `numeric` (or `decimal-pad`), nor is `autocomplete` used (e.g., `autocomplete=\"off\"`).",
+      "fix": "Pass `keyboardType=\"decimal-pad\"` and `autoComplete=\"off\"` for numeric fields. Verify other fields use appropriate keyboard types (date\u2011picker, text).",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "src/components/ui/CategorySelect.tsx",
+      "issue": "Menu items for category selection do not have a minimum touch area or focus outline, making keyboard navigation difficult.",
+      "fix": "Wrap each menu item in a `TouchableOpacity` with `accessible={true}` and style a focus outline when `focused`.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "viewport": "desktop",
+      "issue": "The 'Receipt' and 'Mileage' buttons are misaligned vertically with the 'Add receipt' button; they appear offset to the right and lack consistent vertical rhythm.",
+      "fix": "Center the 'Receipt' and 'Mileage' buttons vertically with the 'Add receipt' button, or align them to the same baseline with consistent spacing above and below.",
+      "screen": "dashboard_empty",
+      "source": "vision"
+    },
+    {
+      "severity": "low",
+      "viewport": "phone",
+      "issue": "The 'Add receipt' button has a slightly thicker border than the 'Receipt' and 'Mileage' buttons, creating visual inconsistency in button styling.",
+      "fix": "Standardize the border thickness across all three buttons to maintain visual uniformity.",
+      "screen": "dashboard_empty",
+      "source": "vision"
+    },
+    {
+      "severity": "low",
+      "viewport": "both",
+      "issue": "The 'Add receipt' button's rounded corners are slightly more pronounced than the others, breaking the visual hierarchy of the call-to-action group.",
+      "fix": "Ensure all buttons have the same corner radius for visual consistency.",
+      "screen": "dashboard_empty",
+      "source": "vision"
+    },
+    {
+      "severity": "medium",
+      "screen": "dashboard_empty",
+      "source": "vision",
+      "issue": "visual quality 7/10 on 'dashboard_empty' (target 8+, minimum 7): Polished and functional empty state with clear primary action, consistent spacing, and responsive layout. Minor visual inconsistencies in button styling and alignment on desktop reduce polish but don't break usability.",
+      "fix": "Address this screen's findings until it looks polished and professional."
+    },
+    {
+      "severity": "high",
+      "viewport": "both",
+      "issue": "The screen is entirely blank \u2014 no UI elements, text, or interactive components are visible.",
+      "fix": "Implement the full receipt entry form as specified in DESIGN.md, including photo picker, form fields, helper text, and Save button, with proper visual hierarchy and spacing.",
+      "screen": "receipt_entry",
+      "source": "vision"
+    },
+    {
+      "severity": "high",
+      "screen": "receipt_entry",
+      "source": "vision",
+      "issue": "visual quality 1/10 on 'receipt_entry' (target 8+, minimum 7): The screen is completely blank, showing no UI elements, text, or interactive components. This is functionally broken and visually unprofessional for a polished product. No design decisions can be evaluated.",
+      "fix": "Address this screen's findings until it looks polished and professional."
+    },
+    {
+      "severity": "high",
+      "screen": "",
+      "source": "vision",
+      "issue": "average visual quality 5.3/10 across 3 screens is below 7.5",
+      "fix": "Raise the lowest-scoring screens first."
+    },
+    {
+      "severity": "medium",
+      "screen": "dashboard_empty",
+      "source": "critic",
+      "issue": "FAB speed dial (Receipt / Mileage actions): The action buttons render as free-floating pills in the middle-right of the content area and overlap the 'Add receipt' CTA; the anchor FAB itself is not visible, so the control reads as broken UI rather than a menu.",
+      "fix": "Replace the ad-hoc buttons with Paper's <FAB.Group open={open} visible icon={open ? 'close' : 'plus'} actions={[{icon:'receipt', label:'Receipt'},{icon:'car', label:'Mileage'}]} backdropColor={theme.colors.scrim+'80'} /> rendered inside a <Portal> at the screen root, with fabStyle={{ position:'absolute', right:16, bottom: insets.bottom + 80 }} so it sits 16px from the right edge and 16px above the 64px tab bar. Keep it collapsed (closed) by default in the empty state.",
+      "shared": true
+    },
+    {
+      "severity": "medium",
+      "screen": "dashboard_empty",
+      "source": "critic",
+      "issue": "Bottom navigation bar: Tab labels ('Dashboard', 'Receipts', 'Mileage', 'Settings') are cut off at the bottom edge on the 390x844 frame \u2014 the bar has no safe-area bottom inset and too little height.",
+      "fix": "In the shared tab navigator set tabBarStyle={{ height: 64 + insets.bottom, paddingTop: 8, paddingBottom: insets.bottom + 8, backgroundColor: theme.colors.surface, borderTopColor: theme.colors.surfaceVariant }} using useSafeAreaInsets(), and labelStyle to theme.fonts.labelMedium (12/16). Icons 24px, 4px gap to label.",
+      "shared": true
+    },
+    {
+      "severity": "medium",
+      "screen": "dashboard_empty",
+      "source": "critic",
+      "issue": "EmptyState description text: Body copy is rendered in a saturated teal/green that is neither the primary blue nor a neutral text color, so it competes with the CTA and looks unbranded.",
+      "fix": "In src/components/ui/EmptyState.tsx set the description to <Text variant=\"bodyMedium\" style={{ color: theme.colors.onSurfaceVariant, textAlign:'center', maxWidth: 320 }} /> and the title to <Text variant=\"titleLarge\" style={{ color: theme.colors.onSurface }} />. Remove any hard-coded green from theme.ts (audit colors.secondary usage for text).",
+      "shared": true
+    },
+    {
+      "severity": "medium",
+      "screen": "dashboard_empty",
+      "source": "critic",
+      "issue": "'Add receipt' primary Button: The contained button shows a grey outline/halo ring around it, which reads as a stuck focus state and makes the CTA look misrendered.",
+      "fix": "In src/components/ui/Button.tsx drop the borderWidth/borderColor applied to mode=\"contained\" (keep borders only for mode=\"outlined\"), and remove any outlineStyle/web focus ring: style={{ borderRadius: 20, ...(Platform.OS==='web' && { outlineStyle:'none' }) }}. Use <Button mode=\"contained\" contentStyle={{ height: 48, paddingHorizontal: 24 }} />.",
+      "shared": false
+    },
+    {
+      "severity": "medium",
+      "screen": "dashboard_empty",
+      "source": "critic",
+      "issue": "Screen header 'Dashboard': The title sits flush against the top of the viewport with no status-bar inset and no consistent horizontal padding, and its size (\u224836px bold) is larger than any M3 type scale step.",
+      "fix": "Wrap in <Appbar.Header mode=\"large\" elevated={false} style={{ backgroundColor: theme.colors.surface }}><Appbar.Content title=\"Dashboard\" titleStyle={theme.fonts.headlineMedium} /></Appbar.Header> with SafeAreaView edges={['top']}, and 16px horizontal padding matching the content container.",
+      "shared": true
+    },
+    {
+      "severity": "medium",
+      "screen": "dashboard_empty",
+      "source": "critic",
+      "issue": "Empty-state content block / page container: Content is top-weighted on mobile (large dead space below) and stretches edge-to-edge on desktop where the 1280px canvas leaves the block visually unanchored.",
+      "fix": "In EmptyState's container use flex:1, justifyContent:'center', alignItems:'center', paddingHorizontal:24, and wrap children in a view with width:'100%', maxWidth:400, gap:16 (icon\u2192title 16, title\u2192description 8, description\u2192button 24). Reduce the icon badge from 128px to 96px with a 48px icon on theme.colors.primaryContainer.",
+      "shared": true
+    },
+    {
+      "severity": "medium",
+      "screen": "receipt_entry",
+      "source": "critic",
+      "issue": "ReceiptEntryScreen root render: Screen paints pure white at both 390x844 and 1280x800 \u2014 no AppBar, no fields, no button. Either the component throws before first paint (likely the OCR/category store or react-native-paper-dates import) or the root View has no flex so children collapse to zero height.",
+      "fix": "Wrap the screen body in `<SafeAreaView style={{flex:1, backgroundColor: theme.colors.background}}>` \u2192 `<ScrollView contentContainerStyle={{flexGrow:1, padding:16, paddingBottom:96}}>` and make sure every intermediate View has `flex: 1`; wrap the route in the shared `<ErrorBoundary>` so a throw renders the spec's error view instead of a white screen. Verify the default state renders with the store mocked empty (no OCR data).",
+      "shared": false
+    },
+    {
+      "severity": "medium",
+      "screen": "receipt_entry",
+      "source": "critic",
+      "issue": "Screen scaffold / AppBar: No top app bar is visible, so the user has no title or back affordance out of the entry flow, and the screen has no vertical anchor.",
+      "fix": "Add a shared `ScreenScaffold` in src/components/ui/ that renders `<Appbar.Header mode=\"small\" elevated={false}>` with `<Appbar.BackAction/>` and `<Appbar.Content title=\"New receipt\" />` over a `background`-colored body, and use it on ReceiptEntry, MileageEntry and Settings.",
+      "shared": true
+    },
+    {
+      "severity": "medium",
+      "screen": "receipt_entry",
+      "source": "critic",
+      "issue": "Form field stack (Amount, Date, Category, Type, Notes): No field rhythm is defined; stacking outlined TextInputs with their own HelperText produces inconsistent gaps across Receipt and Mileage screens.",
+      "fix": "In the shared `FormField`, render `<TextInput mode=\"outlined\" dense={false} />` plus an always-reserved `<HelperText type={error ? 'error':'info'} visible style={{minHeight:20}}>` and give the wrapper `marginBottom: 8` (total 8px gap + 20px helper slot) so fields keep a constant 28px rhythm whether or not a message is shown \u2014 no layout jump when validation fires.",
+      "shared": true
+    },
+    {
+      "severity": "medium",
+      "screen": "receipt_entry",
+      "source": "critic",
+      "issue": "Photo picker / Scan receipt action: The primary 30-second path (scan) has no visible surface or empty state at the top of the form.",
+      "fix": "Place a 160px-tall `<Card mode=\"outlined\">` at the top with `borderRadius: theme.roundness*2`, centered `camera` icon (32, colors.onSurfaceVariant), `Text variant=\"bodyMedium\"` 'Add a photo to auto-fill the fields', and a `<Button mode=\"contained-tonal\" icon=\"camera\">Scan receipt</Button>` inside; margin-bottom 24 before the first field.",
+      "shared": false
+    },
+    {
+      "severity": "medium",
+      "screen": "receipt_entry",
+      "source": "critic",
+      "issue": "Save receipt button: The primary action, if it exists, scrolls with the form and can sit off-screen on a 844px phone once all five fields and helper texts are laid out.",
+      "fix": "Pin it in a shared `StickyFooter` (`position:'absolute', left:0,right:0,bottom:0, padding:16, backgroundColor: colors.surface, borderTopWidth:1, borderTopColor: colors.outlineVariant`) containing `<Button mode=\"contained\" style={{width:'100%'}} contentStyle={{height:48}} disabled={!isValid} loading={saving}>Save receipt</Button>`, and reserve 96px bottom padding in the ScrollView.",
+      "shared": true
+    },
+    {
+      "severity": "medium",
+      "screen": "receipt_entry",
+      "source": "critic",
+      "issue": "Desktop (1280x800) layout: At desktop width the form would stretch edge-to-edge, giving 1200px-wide text inputs.",
+      "fix": "In `ScreenScaffold`, constrain the content container with `maxWidth: 640, width:'100%', alignSelf:'center'` and bump horizontal padding to 24 when `width >= 905` (useWindowDimensions); applies to all form screens.",
+      "shared": true
+    }
+  ],
+  "lighthouse": [
+    {
+      "accessibility": 98,
+      "bestPractices": 100,
+      "performance": 57
+    }
+  ],
+  "vision_scores": [
+    {
+      "screen": "policy_gate",
+      "score": 8.0,
+      "summary": "Polished, modern, and highly usable policy gate screen. Strong visual hierarchy, clear primary action, consistent typography and spacing, and thoughtful use of color and alignment. No critical issues found."
+    },
+    {
+      "screen": "dashboard_empty",
+      "score": 7.0,
+      "summary": "Polished and functional empty state with clear primary action, consistent spacing, and responsive layout. Minor visual inconsistencies in button styling and alignment on desktop reduce polish but don't break usability."
+    },
+    {
+      "screen": "receipt_entry",
+      "score": 1.0,
+      "summary": "The screen is completely blank, showing no UI elements, text, or interactive components. This is functionally broken and visually unprofessional for a polished product. No design decisions can be evaluated."
+    }
+  ]
+}
