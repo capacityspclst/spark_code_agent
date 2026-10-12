@@ -6,6 +6,7 @@ import { deriveKey, encrypt, decrypt, toBase64, fromBase64, utf8, fromUtf8, rand
 import type { Receipt, MileageEntry } from './models';
 import { deleteAllPhotos, readPhotoBase64, writePhotoBase64 } from './photos';
 import { validateBackupPassphrase } from './validation';
+import { getAllCategories, DEFAULT_CATEGORIES } from './categories';
 
 const BACKUP_VERSION = 1;
 /** Validate passphrase policy */
@@ -22,11 +23,12 @@ const MAX_MILEAGE = 5000;
 /** Maximum allowed photo size (in bytes) for each receipt photo during backup (2 MiB). */
 const MAX_PHOTO_SIZE = 2 * 1024 * 1024;
 
-/** Create an encrypted backup of all data, including receipt photos. */
+/** Create an encrypted backup of all data, including receipt photos and categories. */
 export async function createBackup(store: Store, passphrase: string): Promise<string> {
   enforcePassphrasePolicy(passphrase);
   const receipts: Receipt[] = await getAllReceipts(store);
   const mileage: MileageEntry[] = await getAllMileageEntries(store);
+  const categories = await getAllCategories(store, { includeHidden: true });
   const receiptsWithPhotos = await Promise.all(
     receipts.map(async (r) => {
       if (r.photoUri) {
@@ -43,7 +45,7 @@ export async function createBackup(store: Store, passphrase: string): Promise<st
       return { ...r };
     })
   );
-  const payload = JSON.stringify({ version: BACKUP_VERSION, receipts: receiptsWithPhotos, mileage });
+  const payload = JSON.stringify({ version: BACKUP_VERSION, receipts: receiptsWithPhotos, mileage, categories });
   const salt = randomBytes(16);
   const key = deriveKey(passphrase, salt);
   const encrypted = encrypt(key, utf8(payload));
@@ -68,6 +70,13 @@ export function validateBackupStructure(data: any): string | null {
   for (const m of data.mileage) {
     if (typeof m.id !== 'string' || typeof m.date !== 'string' || typeof m.miles !== 'number')
       return 'Invalid mileage entry.';
+  }
+  // Optional categories
+  if (data.categories) {
+    const c = data.categories;
+    if (typeof c !== 'object' || c === null) return 'Invalid categories object.';
+    if (!Array.isArray(c.custom) || !Array.isArray(c.hidden) || typeof c.rename !== 'object' || c.rename === null)
+      return 'Categories object shape invalid.';
   }
   return null;
 }
@@ -121,6 +130,10 @@ export async function restoreBackup(store: Store, backupBlob: string, passphrase
     for (const m of data.mileage) {
       const safeId = safeReceiptId(m.id);
       await store.put('mileage', { ...m, id: safeId } as any);
+    }
+    // Restore categories if present
+    if (data.categories) {
+      await store.set('categories', data.categories);
     }
   });
 }

@@ -1,0 +1,81 @@
+import { Platform } from 'react-native';
+import * as TextExtractor from 'expo-text-extractor';
+
+/**
+ * Recognize text from a receipt image URI using expo-text-extractor.
+ * On web platform, throws an error indicating unavailability.
+ */
+export async function recognizeReceiptText(uri: string): Promise<string> {
+  if (Platform.OS === 'web') {
+    throw new Error('Scanning is available in the phone app');
+  }
+  // expo-text-extractor expects a local file URI.
+  const result = await TextExtractor.extract(uri);
+  // result.text is the recognized string (may be empty).
+  return result?.text ?? '';
+}
+
+/**
+ * Simple parser for receipt text.
+ * Returns optional fields: merchant, date (ISO string), total (number), tax (number).
+ */
+export interface ParsedReceipt {
+  merchant?: string;
+  date?: string;
+  total?: number;
+  tax?: number;
+}
+
+export function parseReceipt(text: string): ParsedReceipt {
+  const lines = text.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+  const result: ParsedReceipt = {};
+  // Merchant: first non‑trivial line (ignore common headers like "Receipt" etc.)
+  for (const line of lines) {
+    if (line.length > 2 && !/receipt|store|session|order|thank/i.test(line)) {
+      result.merchant = line;
+      break;
+    }
+  }
+  // Date: look for common US formats MM/DD/YYYY or YYYY‑MM‑DD etc.
+  const dateRegex = /(?:0?[1-9]|1[0-2])[\/-](?:0?[1-9]|[12][0-9]|3[01])[\/-]\d{2,4}|\d{4}[\/-](?:0?[1-9]|1[0-2])[\/-](?:0?[1-9]|[12][0-9]|3[01])/i;
+  for (const line of lines) {
+    const m = line.match(dateRegex);
+    if (m) {
+      // Normalize to ISO YYYY‑MM‑DD if possible
+      const raw = m[0];
+      const parts = raw.split(/[\/-]/);
+      let iso = '';
+      if (parts[0].length === 4) {
+        // YYYY‑MM‑DD
+        iso = `${parts[0].padStart(4, '0')}-${parts[1].padStart(2, '0')}-${parts[2].padStart(2, '0')}`;
+      } else {
+        // MM‑DD‑YY(YY)
+        const year = parts[2].length === 2 ? `20${parts[2]}` : parts[2];
+        iso = `${year}-${parts[0].padStart(2, '0')}-${parts[1].padStart(2, '0')}`;
+      }
+      result.date = iso;
+      break;
+    }
+  }
+  // Total: lines containing TOTAL, AMOUNT DUE, BALANCE (but not SUBTOTAL)
+  const totalRegex = /(TOTAL|AMOUNT DUE|BALANCE)\s*[:\-]?\s*\$?\s*([0-9]+(?:\.[0-9]{2})?)/i;
+  // Also capture lines like "$12.34" at end after the keyword.
+  for (const line of lines) {
+    if (/subtotal/i.test(line)) continue;
+    const m = line.match(totalRegex);
+    if (m) {
+      result.total = parseFloat(m[2]);
+      break;
+    }
+  }
+  // Tax: look for TAX line
+  const taxRegex = /TAX\s*[:\-]?\s*\$?\s*([0-9]+(?:\.[0-9]{2})?)/i;
+  for (const line of lines) {
+    const m = line.match(taxRegex);
+    if (m) {
+      result.tax = parseFloat(m[1]);
+      break;
+    }
+  }
+  return result;
+}
