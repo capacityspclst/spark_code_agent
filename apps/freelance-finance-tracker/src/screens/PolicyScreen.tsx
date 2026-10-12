@@ -43,8 +43,16 @@ export default function PolicyScreen({ onAccept, readOnly }: Props) {
             <Card mode="outlined" style={styles.card}>
               <Card.Content style={styles.agree}>
                 <CheckboxField label="I have read and agree to the Terms of Use and Privacy Policy." checked={agreed} onChange={setAgreed} />
-                <PrimaryButton label="Accept" disabled={!agreed} onPress={onAccept} />
-                {!agreed ? <Text variant="bodySmall" style={styles.hint}>Tick the box to continue.</Text> : null}
+                {/* Container to visually group the checkbox and button */}
+                <View style={styles.actions}>
+                  <PrimaryButton
+                    label="Accept"
+                    disabled={!agreed}
+                    onPress={onAccept}
+                    style={styles.acceptButton}
+                  />
+                  {!agreed ? <Text variant="bodySmall" style={styles.hint}>Tick the box to continue.</Text> : null}
+                </View>
               </Card.Content>
             </Card>
           )}
@@ -70,5 +78,7 @@ const styles = StyleSheet.create({
   heading: { fontWeight: '600' },
   body: { color: theme.colors.onSurfaceVariant },
   agree: { gap: space(1.5), paddingVertical: space(1.5) },
-  hint: { color: theme.colors.secondary, textAlign: 'center' },
+  actions: { marginTop: space(1), alignItems: 'stretch' },
+  acceptButton: { alignSelf: 'stretch', minWidth: 200 },
+  hint: { color: theme.colors.secondary, textAlign: 'center', marginTop: space(0.5) },
 });

@@ -12,7 +12,7 @@ import { totalMileageDeduction } from '../lib/mileage';
 import { getTaxRate } from '../lib/settings';
 import ReceiptCard from '../components/ui/ReceiptCard';
 import { consumeSnack } from '../lib/uiState';
-import SimpleAddButtons from '../components/ui/SimpleAddButtons';
+import FABAdd from '../components/ui/FABAdd';
 import { space } from '../theme';
 
 type DashboardRouteParams = {};
@@ -89,12 +89,12 @@ export default function DashboardScreen() {
           visible={true}
           onDismiss={() => setSnack('')}
           duration={3000}
-          style={{ bottom: space(14) }}
+          style={{ bottom: space(20) }}
         >
           {snack}
         </Snackbar>
       ) : null}
-      <SimpleAddButtons />
+      <FABAdd />
     </Screen>
   );
 }

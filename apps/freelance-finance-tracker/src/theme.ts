@@ -5,7 +5,7 @@ export const space = (n: number) => n * 8; // 8dp grid
 
 export const layout = {
   pagePadding: space(3), // 24dp
-  maxContentWidth: 560,
+  maxContentWidth: 420, // updated to match design (max 420dp)
   maxWideWidth: 960,
   touchTarget: 48,
 };
