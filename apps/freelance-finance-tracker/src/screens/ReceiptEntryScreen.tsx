@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { View } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import { useNavigation, NavigationProp } from '@react-navigation/native';
 import { PrimaryButton, Screen, FormField, ChoiceField } from '../components/ui';
-import { Snackbar } from 'react-native-paper';
+import { Snackbar, IconButton } from 'react-native-paper';
 import ReceiptImagePicker from '../components/ui/ReceiptImagePicker';
 import { v4 as uuidv4 } from 'uuid';
 import { getStore } from '../lib/storage';
@@ -13,7 +13,6 @@ import { setPendingSnack } from '../lib/uiState';
 import { persistPhoto } from '../lib/photos';
 import { recognizeReceiptText, parseReceipt, ParsedReceipt } from '../lib/ocr';
 import { getAllCategories } from '../lib/categories';
-import { IconButton } from 'react-native-paper';
 import { DatePickerModal } from 'react-native-paper-dates';
 
 export default function ReceiptEntryScreen() {
@@ -103,13 +102,19 @@ export default function ReceiptEntryScreen() {
 
   return (
     <Screen title="Add receipt">
-      <View style={{ gap: 12 }}>
+      <View style={styles.container}>
         <ReceiptImagePicker photoUri={photoUri} onChange={setPhotoUri} />
         <PrimaryButton label="Scan receipt" onPress={startScan} disabled={!photoUri} />
-        <FormField label="Amount" value={amount} onChangeText={setAmount} keyboardType="numeric" error={amountError ?? undefined} />
+        <FormField
+          label="Amount"
+          value={amount}
+          onChangeText={setAmount}
+          keyboardType="numeric"
+          error={amountError ?? undefined}
+        />
         {/* Date field with picker */}
-        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-          <FormField label="Date" value={date} onChangeText={setDate} placeholder="YYYY-MM-DD" />
+        <View style={styles.row}>
+          <FormField label="Date" value={date} onChangeText={setDate} placeholder="YYYY-MM-DD" style={styles.flexGrow} />
           <IconButton icon="calendar" onPress={() => setShowDatePicker(true)} accessibilityLabel="Select receipt date" />
         </View>
         <DatePickerModal
@@ -126,7 +131,6 @@ export default function ReceiptEntryScreen() {
           }}
           validRange={{ endDate: new Date() }}
         />
-        {/* Category field */}
         <FormField label="Category" value={category} onChangeText={setCategory} placeholder="Select category" />
         <ChoiceField<ReceiptType>
           label="Type"
@@ -141,3 +145,18 @@ export default function ReceiptEntryScreen() {
     </Screen>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    width: '100%',
+  },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  flexGrow: {
+    flex: 1,
+    marginRight: 8,
+  },
+});
