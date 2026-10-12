@@ -1,4 +1,2 @@
-export async function extractAsync(uri: string) {
-  // Return a dummy result; tests will mock this function as needed.
-  return { text: '' };
-}
+export const isSupported = true;
+export const extractTextFromImage = jest.fn();

@@ -9,9 +9,10 @@ export async function recognizeReceiptText(uri: string): Promise<string> {
   if (Platform.OS === 'web') {
     throw new Error('Scanning is available in the phone app');
   }
-  // expo-text-extractor provides extractAsync
-  const result = await TextExtractor.extractAsync(uri);
-  return result?.text ?? '';
+  // expo-text-extractor provides extractTextFromImage which returns an array of lines
+  const lines = await TextExtractor.extractTextFromImage(uri);
+  // Join lines with newline to form full text
+  return lines.join('\n');
 }
 
 /**

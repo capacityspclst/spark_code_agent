@@ -11,6 +11,7 @@ export default {
   setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
   moduleNameMapper: {
     '^expo-sqlite$': '<rootDir>/__mocks__/expo-sqlite.ts',
+    '^@noble/ciphers/aes\.js$': '<rootDir>/__mocks__/noble-ciphers-aes.js',
   },
   // Ignore the mistakenly prefixed test folder with a leading space.
   testPathIgnorePatterns: ['<rootDir>/ __tests__/'],
