@@ -1,0 +1,25 @@
+{
+  "verdict": "pass",
+  "summary": "The recent OCR, date\u2011picker, and category\u2011management changes do not introduce any new critical or high security issues. Existing open findings from previous rounds (dependency vulnerabilities, backup handling flaws, CSV injection, and photo\u2011path traversal) remain unchanged. Two new medium/low code findings were identified: a potential denial\u2011of\u2011service via un\u2011checked image size for OCR, and a low\u2011risk XSS vector if custom category strings are rendered as raw HTML on the web build.",
+  "findings": [
+    {
+      "id": "ocr-image-dos",
+      "severity": "medium",
+      "where": "code",
+      "file": "src/lib/ocr.ts",
+      "issue": "No size or dimension validation is performed before passing a receipt image to expo\u2011text\u2011extractor. An attacker could supply an extremely large or malformed image, causing high memory consumption and potentially crashing the app (local denial\u2011of\u2011service).",
+      "fix": "Add a guard that checks the image file size and dimensions (e.g., reject files >5\u202fMiB or >3000\u202fpx in either dimension) before calling recognizeReceiptText. Offer a friendly error message and optionally downscale the image before OCR."
+    },
+    {
+      "id": "category-xss",
+      "severity": "low",
+      "where": "code",
+      "file": "src/lib/categories.ts",
+      "issue": "Custom category names are stored and later rendered directly in the dropdown/menu. On the web build, if a category string contains HTML tags it could be interpreted as markup (dangerous if any future component uses dangerouslySetInnerHTML), yielding a potential XSS vector.",
+      "fix": "Validate category input to reject characters that form HTML tags (e.g., '<', '>', '&') or whitelist only alphanumeric, space, and basic punctuation. Additionally, escape the text when rendering, although React\u2011Native\u2011Paper already escapes Text content."
+    }
+  ],
+  "deployment_actions": [],
+  "fixed": [],
+  "stalled": []
+}
