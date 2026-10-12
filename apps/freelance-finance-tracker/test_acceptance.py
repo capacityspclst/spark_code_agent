@@ -1,26 +1,25 @@
 #!/usr/bin/env python3
-"""
-Acceptance test runner for the Freelance Finance Tracker Expo app.
+"""Acceptance test runner for the Freelance Finance Tracker Expo app.
 
 The script:
 
 1. Generates Jest test files for each implementation milestone under
    ``__tests__/acceptance/``.  Each test file contains one or more
    ``describe('M<N>: …')`` blocks, so the ``-t`` filter can be used.
-2. Honors the ``ACCEPTANCE_MILESTONE`` environment variable – if set to
-   a positive integer, only milestones ``1`` … ``N`` are generated and
+2. Honors the ``ACCEPTANCE_MILESTONE`` environment variable – if set to a
+   positive integer, only milestones ``1`` … ``N`` are generated and
    executed.
 3. Installs npm dependencies if ``node_modules`` is missing.
 4. Executes Jest with ``--ci``.  When a milestone limit is given, passes
    ``-t '^(M1|M2|…): '`` so only the requested milestones run.  The command
-   now runs **all** Jest tests (acceptance and unit tests) to verify the new
-   hardening behavior in addition to the existing checks.
+   now runs **all** Jest tests (acceptance and unit tests) to verify the
+   new hardening behavior in addition to the existing checks.
 5. Prints a short pass/fail summary and exits with the Jest exit code.
 
 The generated tests exercise only pure‑logic modules (policy gate,
 receipt & mileage stores, finance calculations, settings, CSV export,
-and encrypted backup/restore) using the in‑memory store provided by the
-template.
+encrypted backup/restore, OCR parsing, and category management) using the
+in‑memory store provided by the template.
 """
 import os
 import sys
@@ -32,7 +31,8 @@ import textwrap
 # Paths & configuration
 # ----------------------------------------------------------------------
 PROJECT_ROOT = Path(__file__).resolve().parent
-TESTS_DIR = PROJECT_ROOT / " __tests__" / "acceptance"
+# NOTE: The acceptance tests live under __tests__/acceptance (no leading space)
+TESTS_DIR = PROJECT_ROOT / "__tests__" / "acceptance"
 
 # ----------------------------------------------------------------------
 # Test definitions per milestone
@@ -259,7 +259,6 @@ MILESTONE_TESTS = {
             ),
         )
     ],
-    # New milestone 5 – hardening unit‑style checks
     5: [
         (
             "m5.test.ts",
@@ -354,6 +353,95 @@ MILESTONE_TESTS = {
             ),
         )
     ],
+    6: [
+        (
+            "m6.test.ts",
+            textwrap.dedent(
+                """\
+                import { createStore, createMemoryRawStore, createMemoryKeyProvider } from '../../src/lib/storage/memory';
+                import { recognizeReceiptText, parseReceipt } from '../../src/lib/ocr';
+                import { addReceipt, getAllReceipts } from '../../src/lib/receiptStore';
+                import { getAllCategories, addCustomCategory, renameCategory, hideCategory, syncCategoriesWithReceipts } from '../../src/lib/categories';
+                import * as TextExtractor from 'expo-text-extractor';
+                import { Platform } from 'react-native';
+                
+                jest.mock('expo-text-extractor');
+                
+                describe('M6: OCR integration', () => {
+                  it('recognizes receipt text and parses fields correctly', async () => {
+                    const sampleText = `
+SuperMart
+04/15/2023
+TOTAL $23.45
+`;
+                    // mock the extractor to return the sample receipt text
+                    (TextExtractor.extractAsync as jest.Mock).mockResolvedValue(sampleText);
+                
+                    const uri = 'file:///tmp/receipt.jpg';
+                    const raw = await recognizeReceiptText(uri);
+                    expect(raw).toContain('SuperMart');
+                
+                    const parsed = parseReceipt(raw);
+                    expect(parsed.merchant).toBe('SuperMart');
+                    expect(parsed.date).toBe('2023-04-15');
+                    expect(parsed.total).toBeCloseTo(23.45);
+                    expect(parsed.tax).toBeUndefined();
+                  });
+                });
+                
+                describe('M6: categories backup and management', () => {
+                  it('adds custom category, renames, hides, and persists through backup', async () => {
+                    const store = createStore(createMemoryRawStore(), createMemoryKeyProvider());
+                
+                    // add a receipt with a custom category
+                    const receipt = {
+                      id: 'r100',
+                      amount: 50,
+                      date: '2023-03-01',
+                      category: 'Travel Concierge',
+                      type: 'expense',
+                      notes: '',
+                    };
+                    await addReceipt(store, receipt);
+                
+                    // sync categories – should add the custom category automatically
+                    await syncCategoriesWithReceipts(store);
+                
+                    const allCats1 = await getAllCategories(store);
+                    const customCat = allCats1.find(c => c.name === 'Travel Concierge');
+                    expect(customCat).toBeDefined();
+                    expect(customCat?.custom).toBe(true);
+                
+                    // rename a default category
+                    await renameCategory(store, 'Meals', 'Food & Dining');
+                
+                    // attempt to hide the custom category (should fail because it's in use)
+                    const hideResult = await hideCategory(store, 'Travel Concierge');
+                    expect(hideResult).toMatch(/cannot hide.*in use/i);
+                
+                    // create a backup that includes categories
+                    const passphrase = 'Testpass123!';
+                    const { createBackup, restoreBackup } = await import('../../src/lib/backup');
+                    const backupBlob = await createBackup(store, passphrase);
+                    expect(typeof backupBlob).toBe('string');
+                
+                    // clear the store and restore
+                    await store.clearAll();
+                    await restoreBackup(store, backupBlob, passphrase);
+                
+                    // after restore, categories should persist
+                    const allCats2 = await getAllCategories(store);
+                    const renamed = allCats2.find(c => c.name === 'Food & Dining');
+                    expect(renamed).toBeDefined();
+                
+                    const customAfter = allCats2.find(c => c.name === 'Travel Concierge');
+                    expect(customAfter).toBeDefined();
+                  });
+                });
+                """
+            ),
+        )
+    ],
 }
 
 # ----------------------------------------------------------------------
@@ -364,6 +452,7 @@ def write_test_file(path: Path, content: str) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(content, encoding="utf-8")
 
+
 def generate_tests(limit: int | None) -> None:
     """Create Jest test files for the requested milestones."""
     for milestone, files in MILESTONE_TESTS.items():
@@ -372,14 +461,15 @@ def generate_tests(limit: int | None) -> None:
         for filename, content in files:
             write_test_file(TESTS_DIR / filename, content)
 
+
 def ensure_node_modules() -> None:
     """Run `npm install` if the `node_modules` directory is absent."""
     if (PROJECT_ROOT / "node_modules").is_dir():
         return
-    print("\u2699\ufe0f  node_modules not found – installing dependencies with `npm install`...")
+    print("⚙️  node_modules not found – installing dependencies with `npm install`...")
     try:
         subprocess.run(
-            ["npm", "install"],
+            ["npm", "ci"],
             cwd=PROJECT_ROOT,
             check=True,
             stdout=sys.stdout,
@@ -387,12 +477,12 @@ def ensure_node_modules() -> None:
             timeout=600,
         )
     except subprocess.CalledProcessError as exc:
-        print(f"\u274c npm install failed (exit code {exc.returncode})")
+        print(f"❌ npm ci failed (exit code {exc.returncode})")
         sys.exit(1)
+
 
 def run_jest(limit: int | None) -> int:
     """Execute Jest, optionally filtering by milestone."""
-    # Run all Jest tests (acceptance + unit) so the new hardening checks are exercised.
     jest_cmd = ["npx", "jest", "--ci"]
     if limit is not None:
         allowed = "|".join(f"M{i}" for i in range(1, limit + 1))
@@ -410,6 +500,7 @@ def run_jest(limit: int | None) -> int:
     print(result.stdout)
     return result.returncode
 
+
 def main() -> None:
     # Determine which milestones to run
     env_val = os.getenv("ACCEPTANCE_MILESTONE")
@@ -421,7 +512,7 @@ def main() -> None:
                 raise ValueError()
         except ValueError:
             print(
-                "\u26a0\ufe0f  Invalid ACCEPTANCE_MILESTONE – must be a positive integer.",
+                "⚠️  Invalid ACCEPTANCE_MILESTONE – must be a positive integer.",
                 file=sys.stderr,
             )
             sys.exit(2)
@@ -436,10 +527,11 @@ def main() -> None:
     exit_code = run_jest(limit)
 
     if exit_code == 0:
-        print("\u2705 All acceptance tests passed.")
+        print("✅ All acceptance tests passed.")
     else:
-        print(f"\u274c Acceptance tests failed (exit code {exit_code}).")
+        print(f"❌ Acceptance tests failed (exit code {exit_code}).")
     sys.exit(exit_code)
+
 
 if __name__ == "__main__":
     main()
