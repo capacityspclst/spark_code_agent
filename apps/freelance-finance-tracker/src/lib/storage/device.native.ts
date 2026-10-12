@@ -68,16 +68,21 @@ if (isTest) {
 
 const KEY_NAME = 'app.data-key.v1';
 
+async function newKey(): Promise<Uint8Array> {
+  const key = randomBytes(KEY_BYTES);
+  await SecureStore.setItemAsync(KEY_NAME, toBase64(key), { keychainAccessible: SecureStore.WHEN_UNLOCKED_THIS_DEVICE_ONLY });
+  return key;
+}
+
 export function createDeviceKeyProvider(): KeyProvider {
   return {
     async getKey() {
       const saved = await SecureStore.getItemAsync(KEY_NAME);
-      if (saved) return fromBase64(saved);
-      const key = randomBytes(KEY_BYTES);
-      await SecureStore.setItemAsync(KEY_NAME, toBase64(key), {
-        keychainAccessible: SecureStore.WHEN_UNLOCKED_THIS_DEVICE_ONLY,
-      });
-      return key;
+      return saved ? fromBase64(saved) : newKey();
+    },
+    async rotateKey() {
+      await SecureStore.deleteItemAsync(KEY_NAME);
+      return newKey();
     },
   };
 }

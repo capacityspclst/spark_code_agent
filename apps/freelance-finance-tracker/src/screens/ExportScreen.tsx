@@ -4,9 +4,9 @@ import { ActivityIndicator, Snackbar } from 'react-native-paper';
 import { Screen, PrimaryButton } from '../components/ui';
 import { useNavigation, NavigationProp } from '@react-navigation/native';
 import { generateCsv } from '../lib/exportCsv';
-import { generatePdf } from '../lib/exportPdf';
-import * as Sharing from 'expo-sharing';
-import * as FileSystem from 'expo-file-system';
+import { sharePdfReport } from '../lib/exportPdf';
+import { utf8 } from '../lib/crypto';
+import { saveAndShare } from '../lib/files';
 
 /** ExportScreen that actually generates CSV/PDF files and shares them. */
 export default function ExportScreen() {
@@ -14,25 +14,12 @@ export default function ExportScreen() {
   const [snack, setSnack] = useState<string>('');
   const navigation = useNavigation<NavigationProp<any>>();
 
-  const shareFile = async (uri: string, mimeType: string, filename: string) => {
-    try {
-      await Sharing.shareAsync(uri, { mimeType, dialogTitle: filename });
-    } catch {
-      // Sharing may fail on web; ignore for UI flow.
-    }
-  };
+  const stamp = () => new Date().toISOString().slice(0, 10);
 
   const exportCsv = async () => {
     setLoading(true);
     try {
-      const csv = await generateCsv();
-      // Determine a writable directory; on web one may be undefined.
-      const dir = (FileSystem as any).cacheDirectory || (FileSystem as any).documentDirectory;
-      if (dir) {
-        const fileUri = dir + 'export.csv';
-        await (FileSystem as any).writeAsStringAsync(fileUri, csv, { encoding: (FileSystem as any).EncodingType.UTF8 });
-        await shareFile(fileUri, 'text/csv', 'export.csv');
-      }
+      await saveAndShare(`tax-export-${stamp()}.csv`, utf8(await generateCsv()), 'text/csv');
       setSnack('Export ready to share');
     } catch {
       setSnack('Export failed. Try again.');
@@ -44,8 +31,7 @@ export default function ExportScreen() {
   const exportPdf = async () => {
     setLoading(true);
     try {
-      const pdfUri = await generatePdf();
-      await shareFile(pdfUri, 'application/pdf', 'export.pdf');
+      await sharePdfReport(`tax-report-${stamp()}.pdf`);
       setSnack('Export ready to share');
     } catch {
       setSnack('Export failed. Try again.');

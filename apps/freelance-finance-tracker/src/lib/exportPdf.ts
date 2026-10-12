@@ -1,5 +1,9 @@
 import * as Print from 'expo-print';
-import * as FileSystem from 'expo-file-system';
+import { File } from 'expo-file-system';
+import * as Sharing from 'expo-sharing';
+import { Platform } from 'react-native';
+import { utf8 } from './crypto';
+import { saveAndShare } from './files';
 import { getAllReceipts } from './receiptStore';
 import { getAllMileageEntries } from './mileageStore';
 import { getStore } from './storage';
@@ -31,26 +35,28 @@ function buildHtml(receipts: Receipt[], mileage: MileageEntry[]): string {
   return `<!DOCTYPE html><html><head><meta charset="utf-8"><style>table{width:100%;border-collapse:collapse}th,td{border:1px solid #ddd;padding:8px}</style></head><body><h1>Export Data</h1><table><thead><tr><th>Type</th><th>Amount</th><th>Date</th><th>Category</th><th>Receipt Type</th><th>Notes / Details</th></tr></thead><tbody>${rows}</tbody></table></body></html>`;
 }
 
-/** Generate a PDF file and return its file:// URI.
- * Works on native platforms; on web it returns a dummy data URI without throwing.
- */
-export async function generatePdf(): Promise<string> {
-  try {
-    const store = getStore();
-    const receipts = await getAllReceipts(store);
-    const mileage = await getAllMileageEntries(store);
-    const html = buildHtml(receipts, mileage);
-    if (typeof (Print as any).printToFileAsync === 'function') {
-      const { uri } = await (Print as any).printToFileAsync({ html });
-      const dest = (FileSystem as any).cacheDirectory + 'export.pdf';
-      await (FileSystem as any).moveAsync({ from: uri, to: dest });
-      return dest;
-    }
-  } catch (e) {
-    // ignore errors in web environment
+/** The tax report as HTML (escaped user content), from the stored receipts and mileage. */
+export async function buildReportHtml(): Promise<string> {
+  const store = getStore();
+  return buildHtml(await getAllReceipts(store), await getAllMileageEntries(store));
+}
+
+/** Create the PDF report and hand it to the share sheet (iOS/Android), or download the report on the web build,
+ * where native PDF printing isn't available. Throws if the report couldn't be produced, so the UI never claims a
+ * file was made when it wasn't. */
+export async function sharePdfReport(fileName: string): Promise<void> {
+  const html = await buildReportHtml();
+  if (Platform.OS === 'web') {
+    await saveAndShare(fileName.replace(/\.pdf$/, '.html'), utf8(html), 'text/html');
+    return;
   }
-  // Fallback: return a dummy data URI for testing purposes
-  return 'data:application/pdf;base64,JVBERi0xLjQK';
+  const { uri } = await Print.printToFileAsync({ html });
+  const file = new File(uri);
+  try {
+    if (await Sharing.isAvailableAsync()) await Sharing.shareAsync(uri, { mimeType: 'application/pdf', UTI: 'com.adobe.pdf', dialogTitle: fileName });
+  } finally {
+    if (file.exists) file.delete();
+  }
 }
 
 // Export htmlEscape for testing purposes

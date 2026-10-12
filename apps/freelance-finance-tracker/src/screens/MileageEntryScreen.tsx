@@ -10,6 +10,7 @@ import { DEFAULT_MILEAGE_RATE, getMileageRate } from '../lib/settings';
 import { getStore } from '../lib/storage';
 import { setPendingSnack } from '../lib/uiState';
 import { space, theme } from '../theme';
+import { validateMileageMiles } from '../lib/validation';
 
 const today = () => new Date().toISOString().slice(0, 10);
 const money = (n: number) => `$${n.toFixed(2)}`;
@@ -35,7 +36,8 @@ export default function MileageEntryScreen() {
   const validate = () => {
     const e: typeof errors = {};
     if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) e.date = 'Use the format YYYY-MM-DD.';
-    if (!/^\d{1,6}(\.\d{1,2})?$/.test(miles) || milesNumber <= 0) e.miles = 'Enter the miles driven, e.g. 30 or 12.5.';
+    const milesErr = validateMileageMiles(miles);
+    if (milesErr) e.miles = milesErr;
     if (!purpose.trim()) e.purpose = 'Say what the trip was for.';
     return e;
   };

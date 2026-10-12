@@ -1,0 +1,196 @@
+{
+  "verdict": "fail",
+  "summary": "The UI is largely built around the DESIGN.md token system and component library, and most screens are present. However the primary user flow cannot be completed because the Add action (FAB/EmptyState button) is not discoverable by the test harness \u2013 it lacks an accessible name and/or a proper test\u2011id, breaking the core flow. Several secondary states (error & retry views) are missing or incomplete, and a few accessibility details (touch\u2011target size for MiniFAB, focus\u2011visible styling, alt text for images, use of hard\u2011coded colours) do not fully follow the spec. These issues are grouped by severity below.",
+  "findings": [
+    {
+      "severity": "high",
+      "file": "src/components/ui/FABAdd.tsx",
+      "issue": "The FAB that opens the mini\u2011FABs does not have an `accessibilityLabel` or `testID`. The test suite looks for a button labelled \u201cAdd\u201d and times out, meaning users of assistive technology also cannot discover the add\u2011entry action.",
+      "fix": "Add `accessibilityLabel=\"Add receipt or mileage\"` (or separate labels for each mini\u2011FAB) and a stable `testID=\"fab-add\"`. Ensure the mini\u2011FABs also expose `accessibilityLabel` (e.g. \"Add receipt\", \"Add mileage\").",
+      "source": "designer"
+    },
+    {
+      "severity": "high",
+      "file": "src/screens/DashboardScreen.tsx",
+      "issue": "Missing Error state UI. The spec requires a full\u2011screen error view with a Retry button, but the component only shows a Snackbar on failure and never renders a retry UI, leaving the user without a recoverable path.",
+      "fix": "Implement an `ErrorView` component that displays the copy \"Failed to load data. Pull down to retry.\" and a `PrimaryButton` labelled \"Retry\" that re\u2011fetches the dashboard data.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/screens/PolicyScreen.tsx",
+      "issue": "Error state (failed to store acceptance) is not implemented \u2013 only the default agreement view exists.",
+      "fix": "Add a full\u2011screen error view with the specified copy and a `PrimaryButton` labelled \"Retry\" that re\u2011attempts storing the acceptance flag.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/screens/ExportScreen.tsx",
+      "issue": "During export the UI disables the buttons but does not show an inner `ActivityIndicator` as described in the spec, and the Snackbar on success uses the generic message \"Export ready to share\" instead of the exact copy.",
+      "fix": "Wrap the button label with a small `ActivityIndicator` when `exportRunning` is true and use the exact copy \"Export ready to share\" in the Snackbar.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/screens/BackupScreen.tsx",
+      "issue": "Passphrase modal is missing the rule text \"Passphrase must be at least\u202f12\u202fcharacters\" above the inputs, and the primary button remains enabled before validation passes.",
+      "fix": "Render the rule description component above the passphrase fields and bind the button's `disabled` prop to the validation result.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "src/components/ui/MiniFAB.tsx",
+      "issue": "Mini\u2011FAB size is 40\u202f\u00d7\u202f40\u202fdp, which is below the required 44\u202f\u00d7\u202f44\u202fdp touch target for interactive elements.",
+      "fix": "Increase the hit\u2011area to at least 44\u202f\u00d7\u202f44\u202fdp (e.g., by adding a transparent `TouchableOpacity` wrapper) while keeping the visual icon size at 40\u202fdp.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "src/components/ui/PrimaryButton.tsx",
+      "issue": "Focus\u2011visible style is defined only for web (`outline: 2px solid theme.colors.outline`) but native platforms lack a visible focus indicator, violating the spec's visible focus requirement.",
+      "fix": "Add a platform\u2011agnostic focus style using Paper\u2019s `rippleColor` and a visible border/outline when `focused` is true (e.g., via `onFocus`/`onBlur`).",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "src/components/ui/ReceiptImagePicker.tsx",
+      "issue": "Receipt thumbnail images have no `accessibilityLabel` or `alt` text, breaking the rule that images must have descriptive labels.",
+      "fix": "Pass `accessibilityLabel=\"Receipt photo\"` (or the actual file name) to the `Image` component.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "src/components/ui/EmptyState.tsx",
+      "issue": "Some EmptyState instances use hard\u2011coded colour values (e.g., `color: '#212121'`) instead of `theme.colors.onSurface`. This bypasses the design token system.",
+      "fix": "Replace all literal colours with references to `theme.colors` via the Paper theme (e.g., `color={theme.colors.onSurface}`).",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "src/components/ui/Screen.tsx",
+      "issue": "Horizontal padding is set to a constant `16` instead of using the token `theme.spacing * 2`. This creates a layout that could drift from the 8\u202fdp grid.",
+      "fix": "Replace the magic number with `paddingHorizontal={theme.spacing * 2}` to stay consistent with the token system.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "src/components/ui/ChoiceField.tsx",
+      "issue": "SegmentedButtons do not expose an `accessibilityLabel` for each segment; screen readers read only the group label, making it hard to select a specific option.",
+      "fix": "Pass `accessibilityLabel` to each button option (e.g., `{ label: 'Expense', accessibilityLabel: 'Expense' }`).",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "src/screens/SettingsScreen.tsx",
+      "issue": "The Settings error view only uses a `Snackbar` but the spec defines a full\u2011screen error view with the copy \"Unable to load settings.\". The Snackbar disappears quickly, leaving the user without a persistent error state.",
+      "fix": "Add an error view component that displays the message and a Retry button, matching the spec.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "src/screens/BackupScreen.tsx",
+      "issue": "After a successful backup the temporary file is deleted, but the UI does not wait for the deletion to complete before closing the modal, which can cause a race condition on slower devices.",
+      "fix": "Await the file deletion promise before dismissing the modal and showing the success Snackbar.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "src/components/ui/ScreenHeader.tsx",
+      "issue": "The header uses a plain `<View>` with `role=\"banner\"` but does not set `accessibilityRole=\"header\"` for the title text, reducing heading semantics.",
+      "fix": "Wrap the title in a `<Text>` component with `accessibilityRole=\"header\"` (or proper heading level via `variant=\"headlineMedium\"`).",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "viewport": "phone",
+      "issue": "Typography lacks a clear type scale; headings and body text are visually similar in weight and size, reducing hierarchy.",
+      "fix": "Establish a clear typographic scale: use a larger, bolder heading for 'Add receipt', a distinct body font for labels and inputs, and a smaller font for error messages.",
+      "screen": "receipt entry",
+      "source": "vision"
+    },
+    {
+      "severity": "medium",
+      "viewport": "phone",
+      "issue": "Form fields have no placeholder text or hint, making it unclear what to enter (e.g., 'Date' field).",
+      "fix": "Add placeholder text or subtle hints (e.g., 'MM/DD/YYYY') to each input field to guide users.",
+      "screen": "receipt entry",
+      "source": "vision"
+    },
+    {
+      "severity": "medium",
+      "viewport": "phone",
+      "issue": "The 'Save receipt' button is disabled and greyed out, but there's no visual indicator (like a subtle animation or loading state) when the form is valid and ready to save.",
+      "fix": "Add a subtle animation or visual feedback (e.g., a pulsing border or color shift) when the form is valid to signal readiness.",
+      "screen": "receipt entry",
+      "source": "vision"
+    },
+    {
+      "severity": "medium",
+      "viewport": "desktop",
+      "issue": "Desktop layout is a stretched version of the phone layout, not optimized for wider screens. Fields are not aligned or spaced to take advantage of the available width.",
+      "fix": "Re-layout for desktop: increase field widths, add horizontal spacing, and consider using a grid to align form elements. Avoid stretching the phone layout.",
+      "screen": "receipt entry",
+      "source": "vision"
+    },
+    {
+      "severity": "low",
+      "viewport": "phone",
+      "issue": "The 'Add photo' button is visually distinct but lacks a clear affordance for touch; it's a rounded rectangle with no tactile feedback.",
+      "fix": "Add a subtle elevation or shadow to the 'Add photo' button to enhance touch feedback and visual hierarchy.",
+      "screen": "receipt entry",
+      "source": "vision"
+    },
+    {
+      "severity": "medium",
+      "screen": "receipt entry",
+      "source": "vision",
+      "issue": "visual quality 7/10 on 'receipt entry' (target 8+, minimum 7): The screen is clean and functional, with clear visual hierarchy and a strong primary action. Typography is readable and consistent, spacing is generous, and form elements are well-grouped. However, it lacks polish in typography scale, subtle visual feedback, and a fully optimized desktop layout.",
+      "fix": "Address this screen's findings until it looks polished and professional."
+    },
+    {
+      "severity": "low",
+      "viewport": "both",
+      "issue": "The snackbar overlaps slightly with the activity card, obscuring part of the entry details.",
+      "fix": "Adjust snackbar position or padding to prevent overlap with content.",
+      "screen": "dashboard - populated after receipt",
+      "source": "vision"
+    },
+    {
+      "severity": "low",
+      "viewport": "phone",
+      "issue": "The FAB is positioned slightly too far from the bottom edge on phone, reducing touch target size.",
+      "fix": "Move FAB closer to bottom edge to ensure full touch target on small screens.",
+      "screen": "dashboard - populated after receipt",
+      "source": "vision"
+    }
+  ],
+  "lighthouse": [
+    {
+      "accessibility": 98,
+      "bestPractices": 100,
+      "performance": 57
+    }
+  ],
+  "vision_scores": [
+    {
+      "screen": "policy gate - agreement",
+      "score": 8.0,
+      "summary": "Polished, clean, and well-structured policy screen that aligns with a premium product. Strong visual hierarchy, consistent spacing, and clear primary action. Typography is readable and well-scaled. No obvious usability or design flaws. Feels like a commercial app."
+    },
+    {
+      "screen": "dashboard - empty",
+      "score": 8.0,
+      "summary": "Polished, clean, and intuitive empty state with clear primary action. Typography is well-scaled and readable. Spacing is generous and aligned on a consistent grid. Color use is restrained and high contrast. Touch targets are appropriately sized. No browser defaults or layout issues. Desktop version mirrors phone layout without stretching or crowding."
+    },
+    {
+      "screen": "receipt entry",
+      "score": 7.0,
+      "summary": "The screen is clean and functional, with clear visual hierarchy and a strong primary action. Typography is readable and consistent, spacing is generous, and form elements are well-grouped. However, it lacks polish in typography scale, subtle visual feedback, and a fully optimized desktop layout."
+    },
+    {
+      "screen": "dashboard - populated after receipt",
+      "score": 8.0,
+      "summary": "Polished, modern dashboard with clear hierarchy and consistent spacing. Primary action (FAB) is prominent. Typography is clean and readable. Empty states and navigation are well-handled. No critical flaws."
+    }
+  ]
+}

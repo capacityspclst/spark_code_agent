@@ -1,0 +1,329 @@
+{
+  "run_id": "20261010-140319-3cd7",
+  "task": "Harden the app for v1.0. No new features: keep every screen, label, flow and the current look the same, and keep all existing tests passing. Changes: (1) \"Delete all data\" also discards the database encryption key and creates a new one, so deleted data can never be recovered (the policy acceptance stays). (2) Backups: delete the temporary backup file after the share sheet closes (also if sharing fails or is cancelled). (3) Backup passphrase rules: at least 12 characters, shown before the user types, checked as they type and on \"Create backup\", with the error under the field. (4) Receipt photos in backups use the current expo-file-system File API (new File(uri).bytes() to read, File.write to restore); the legacy readAsStringAsync/writeAsStringAsync functions are not available in this SDK. Restore writes the photos back and updates each receipt's photo reference. (5) Validate every number field with a friendly error under the field: receipt amounts above 0 and at most 1,000,000 with up to 2 decimals; miles above 0 and at most 10,000; mileage rate 0 to 5 dollars per mile; tax rate 0 to 100 percent. (6) Restore checks the decrypted backup against the expected format (version number, arrays of receipts and mileage entries with the right field types) before changing any data; an invalid backup shows a friendly error and leaves the data untouched. (7) CSV and PDF export buttons are disabled while an export is running, so repeated taps can't start several exports. Add unit tests for 1, 3, 5 and 6.",
+  "app": "apps/freelance-finance-tracker",
+  "new_app": false,
+  "success": false,
+  "tests_passed": false,
+  "validation_passed": false,
+  "validation": "npm install (.) ok, expo dependency versions (.) ok, expo export (.) ok, expo web export (.) ok, ui renders (.) ok, ui styles applied (.) ok, accessibility, serious or critical (.) ok, responsive layout on a phone (.) ok, ui primary flow (.) FAIL, typescript (tsc) ok, json syntax ok, scanner suppressions ok, semgrep (security errors) ok, trivy secrets ok, trivy dependency vulnerabilities (high/critical, fixable) ok, trivy misconfigurations (high/critical) ok, trivy dependency vulnerabilities (other) warn, planned files present ok",
+  "review": {
+    "issues": []
+  },
+  "review_rounds": 5,
+  "seconds": 13052.5,
+  "agents": {
+    "planner": {
+      "calls": 2,
+      "prompt_tokens": 45801,
+      "completion_tokens": 18791,
+      "seconds": 792.1120457649231
+    },
+    "designer": {
+      "calls": 7,
+      "prompt_tokens": 161249,
+      "completion_tokens": 38573,
+      "seconds": 1538.9688601493835
+    },
+    "coder": {
+      "calls": 165,
+      "prompt_tokens": 8121165,
+      "completion_tokens": 150942,
+      "seconds": 7782.4436004161835
+    },
+    "vision": {
+      "calls": 20,
+      "prompt_tokens": 71090,
+      "completion_tokens": 5223,
+      "seconds": 252.12032890319824
+    },
+    "reviewer": {
+      "calls": 40,
+      "prompt_tokens": 1491263,
+      "completion_tokens": 26363,
+      "seconds": 1389.0486669540405
+    },
+    "escalation": {
+      "calls": 9,
+      "prompt_tokens": 155774,
+      "completion_tokens": 3013,
+      "seconds": 35.68183732032776
+    },
+    "fixer": {
+      "calls": 15,
+      "prompt_tokens": 275564,
+      "completion_tokens": 12462,
+      "seconds": 148.65434050559998
+    },
+    "retro": {
+      "calls": 1,
+      "prompt_tokens": 5098,
+      "completion_tokens": 4400,
+      "seconds": 136.28239607810974
+    }
+  },
+  "stalled": [
+    "acceptance tests failed 5 rounds in a row with: UnicodeEncodeError: 'utf-N' codec can't encode characters in position N-N: surrogates not allowed"
+  ],
+  "security": {
+    "verdict": "skipped",
+    "summary": "Skipped until tests and validation pass.",
+    "findings": [],
+    "assurance": {
+      "blocking_open": 0,
+      "open": 0,
+      "deployment_actions": 0,
+      "fixed": 0
+    },
+    "ledger": []
+  },
+  "deployment_guide": {
+    "written": false
+  },
+  "ui": {
+    "verdict": "fail",
+    "summary": "The app generally follows the design spec \u2013 all required screens, states and copy are present, the layout matches the mobile\u2011first grid, and accessibility scores are high (axe\u202f0 violations, Lighthouse\u202faccessibility\u202f98). However a critical navigation bug prevents the user from reaching the Settings screen, breaking the primary flow (the user cannot access Export/Backup/Restore or the Delete\u2011All\u2011Data action). Secondary issues include missing offline\u2011state handling, a few instances of hard\u2011coded colours instead of design tokens, and minor accessibility oversights (focus\u2011visible outlines, autocomplete attributes, and ARIA role on Snackbar). The navigation failure is a show\u2011stopper; the other issues are medium\u2011to\u2011low severity but should be fixed to meet the polished product bar.",
+    "findings": [
+      {
+        "severity": "high",
+        "file": "src/navigation/index.tsx",
+        "issue": "The Settings tab/button is not reachable \u2013 the UI flow test timed out trying to click \"Settings\" on both phone and desktop viewports. This prevents the user from accessing Export, Backup/Restore and Delete\u2011All\u2011Data screens, breaking the primary flow.",
+        "fix": "Add a correctly configured route for Settings in the BottomNavigation routes array, ensure the route key matches the SettingsScreen component, give the tab a proper label and accessibilityLabel, and confirm the component renders without errors. Add an integration test that clicks the Settings tab and verifies navigation.",
+        "source": "designer"
+      },
+      {
+        "severity": "medium",
+        "file": "src/screens/ExportScreen.tsx",
+        "issue": "The spec requires an offline full\u2011screen message when network\u2011required actions are attempted, but ExportScreen (and other export/backup screens) do not display the \"You are offline\u2026\" message when NetInfo reports no connection.",
+        "fix": "Import NetInfo (or use expo\u2011network) and render a full\u2011screen overlay with the required copy when offline. Wrap the export buttons in a conditional that disables them and shows the offline view. Apply the same pattern to BackupScreen and RestoreScreen.",
+        "source": "designer"
+      },
+      {
+        "severity": "medium",
+        "file": "src/components/ui/MiniFAB.tsx",
+        "issue": "Background colour for MiniFAB is hard\u2011coded to \"#015958\" instead of using the secondary colour from the design tokens. This breaks the token\u2011driven visual language and could cause contrast regressions if the token changes.",
+        "fix": "Replace the hard\u2011coded colour with `theme.colors.secondary` and the icon colour with `theme.colors.onSecondary`. Pull the theme via `useTheme()` from React\u2011Native\u2011Paper and apply it to the FAB style.",
+        "source": "designer"
+      },
+      {
+        "severity": "low",
+        "file": "src/components/ui/PrimaryButton.tsx",
+        "issue": "Focus\u2011visible outline (2\u202fdp) defined in the spec is not applied on web; buttons only show a default outline on focus, which may not meet the required visual style.",
+        "fix": "Add a `style` for the `focusVisible` state that sets `outlineWidth: 2`, `outlineColor: theme.colors.outline`, and `outlineStyle: 'solid'`. Ensure the component forwards the `onFocus`/`onBlur` state to trigger the style.",
+        "source": "designer"
+      },
+      {
+        "severity": "low",
+        "file": "src/components/ui/FormField.tsx",
+        "issue": "Form inputs lack explicit `autoComplete` attributes (e.g., amount, date, mileage) causing sub\u2011optimal keyboard behaviour on web and missing hints for assistive technology.",
+        "fix": "Pass appropriate `autoComplete` props to the underlying `TextInput` (e.g., `autoComplete=\"off\"` for numeric fields, `autoComplete=\"bday\"` for date). Update the FormField component's props interface to accept and forward this attribute.",
+        "source": "designer"
+      },
+      {
+        "severity": "low",
+        "file": "src/components/ui/Snackbar.tsx",
+        "issue": "Snackbar component does not set `role=\"alert\"` or `aria-live=\"assertive\"`, which means screen readers may not announce success/error messages promptly.",
+        "fix": "Add `accessibilityLiveRegion=\"assertive\"` and `accessibilityRole=\"alert\"` to the root view of the Snackbar. Verify that the announcement fires when `visible` changes.",
+        "source": "designer"
+      },
+      {
+        "severity": "low",
+        "viewport": "both",
+        "issue": "The 'Accept' button is disabled until the checkbox is checked, which is correct behavior, but the disabled state is not visually distinct enough from the enabled state (e.g., no opacity change or border style difference).",
+        "fix": "Apply a subtle opacity reduction and/or border color change to clearly indicate the disabled state.",
+        "screen": "policy gate - agreement",
+        "source": "vision"
+      },
+      {
+        "severity": "low",
+        "viewport": "phone",
+        "issue": "The checkbox and 'Accept' button are vertically aligned, but the text 'Tick the box to continue.' is positioned below the button, which is slightly off-center and could be misaligned on smaller screens.",
+        "fix": "Center the instructional text horizontally and vertically relative to the checkbox and button group.",
+        "screen": "policy gate - agreement",
+        "source": "vision"
+      },
+      {
+        "severity": "low",
+        "viewport": "desktop",
+        "issue": "The policy text is presented in a single, narrow column, which is not optimal for desktop users who may want to read it in a more comfortable, multi-column format.",
+        "fix": "On desktop, consider a two-column layout for the policy text to improve readability and reduce vertical scrolling.",
+        "screen": "policy gate - agreement",
+        "source": "vision"
+      },
+      {
+        "severity": "medium",
+        "viewport": "phone",
+        "issue": "The 'Amount' field is highlighted with a red border and error text, but the error text is not visually connected to the field (e.g., no icon or consistent spacing).",
+        "fix": "Align the error text to the left of the field and add a small error icon (e.g., !) next to the field label to visually group the error with the field.",
+        "screen": "receipt entry",
+        "source": "vision"
+      },
+      {
+        "severity": "medium",
+        "viewport": "phone",
+        "issue": "The 'Save receipt' button is disabled but lacks visual feedback beyond grey color; no hover or press state is indicated.",
+        "fix": "Add a subtle shadow or elevation change on press, and consider a slight animation when enabled/disabled to reinforce state.",
+        "screen": "receipt entry",
+        "source": "vision"
+      },
+      {
+        "severity": "low",
+        "viewport": "phone",
+        "issue": "The 'Add photo' button is a simple pill-shaped button with no visual indication of its function (e.g., camera icon).",
+        "fix": "Add a small camera icon to the left of the text to clearly indicate the button's purpose.",
+        "screen": "receipt entry",
+        "source": "vision"
+      },
+      {
+        "severity": "low",
+        "viewport": "both",
+        "issue": "The 'Type' toggle is a segmented control but lacks visual feedback on selection (e.g., no indicator on the selected segment).",
+        "fix": "Add a small checkmark or highlight border to the selected segment to reinforce selection state.",
+        "screen": "receipt entry",
+        "source": "vision"
+      },
+      {
+        "severity": "low",
+        "viewport": "phone",
+        "issue": "The 'Notes' field has no placeholder text or hint to guide the user on what to enter.",
+        "fix": "Add a placeholder text like 'Add notes (optional)' to guide the user.",
+        "screen": "receipt entry",
+        "source": "vision"
+      },
+      {
+        "severity": "medium",
+        "screen": "receipt entry",
+        "source": "vision",
+        "issue": "visual quality 7/10 on 'receipt entry' (target 8+, minimum 7): The screen is clean and functional, with clear visual hierarchy and a primary action. Typography is readable and consistent, spacing is generous, and form elements are well-aligned. However, it lacks polish in typography scale, spacing consistency, and visual feedback, which prevent it from being truly exceptional.",
+        "fix": "Address this screen's findings until it looks polished and professional."
+      },
+      {
+        "severity": "low",
+        "viewport": "phone",
+        "issue": "The snackbar overlaps slightly with the recent activity card, obscuring part of the entry details.",
+        "fix": "Adjust the snackbar's position or reduce its height to avoid overlap with the card content.",
+        "screen": "dashboard - populated after receipt",
+        "source": "vision"
+      },
+      {
+        "severity": "low",
+        "viewport": "phone",
+        "issue": "The FAB is positioned slightly too low, partially overlapping the bottom navigation bar.",
+        "fix": "Move the FAB up slightly to ensure it sits fully above the navigation bar.",
+        "screen": "dashboard - populated after receipt",
+        "source": "vision"
+      },
+      {
+        "severity": "low",
+        "viewport": "both",
+        "issue": "The summary cards have inconsistent vertical spacing between them and the 'Recent activity' section.",
+        "fix": "Apply consistent padding and spacing between all cards and sections to improve visual rhythm.",
+        "screen": "dashboard - populated after receipt",
+        "source": "vision"
+      },
+      {
+        "severity": "medium",
+        "viewport": "phone",
+        "issue": "The 'Save mileage' button is not touch-friendly; it's too narrow for a single finger tap, especially on smaller screens. It should be wider and possibly larger to accommodate thumb reach and reduce tap targets.",
+        "fix": "Increase the button width to at least 60% of the screen width or ensure it\u2019s at least 44dp wide with sufficient padding. Consider increasing height to 56dp for better tap target size.",
+        "screen": "mileage entry",
+        "source": "vision"
+      },
+      {
+        "severity": "low",
+        "viewport": "both",
+        "issue": "The 'Miles' input field lacks placeholder text or hint, making it unclear what should be entered. The 'Purpose' field has a placeholder, but 'Miles' does not.",
+        "fix": "Add a placeholder text to the 'Miles' field, e.g., 'Enter number of miles'. This improves clarity for users without requiring interaction.",
+        "screen": "mileage entry",
+        "source": "vision"
+      },
+      {
+        "severity": "low",
+        "viewport": "phone",
+        "issue": "The 'Save mileage' button is positioned too close to the bottom edge of the screen, leaving minimal padding. This can feel cramped on smaller phones and may interfere with thumb reach.",
+        "fix": "Add at least 16dp of padding between the button and the bottom edge of the screen to improve touch target comfort and visual breathing room.",
+        "screen": "mileage entry",
+        "source": "vision"
+      }
+    ],
+    "lighthouse": [
+      {
+        "accessibility": 98,
+        "bestPractices": 100,
+        "performance": 57
+      }
+    ],
+    "screenshots": [
+      "apps/freelance-finance-tracker/.agent-run/20261010-140319-3cd7/screenshots/app/screenshot-phone.png",
+      "apps/freelance-finance-tracker/.agent-run/20261010-140319-3cd7/screenshots/app/screenshot-phone-full.png",
+      "apps/freelance-finance-tracker/.agent-run/20261010-140319-3cd7/screenshots/app/screenshot-desktop.png",
+      "apps/freelance-finance-tracker/.agent-run/20261010-140319-3cd7/screenshots/app/screenshot-desktop-full.png",
+      "apps/freelance-finance-tracker/.agent-run/20261010-140319-3cd7/screenshots/app/flow-phone-01-policy-gate-agreement.png",
+      "apps/freelance-finance-tracker/.agent-run/20261010-140319-3cd7/screenshots/app/flow-phone-02-dashboard-empty.png",
+      "apps/freelance-finance-tracker/.agent-run/20261010-140319-3cd7/screenshots/app/flow-phone-03-receipt-entry.png",
+      "apps/freelance-finance-tracker/.agent-run/20261010-140319-3cd7/screenshots/app/flow-phone-04-dashboard-populated-after-receipt.png",
+      "apps/freelance-finance-tracker/.agent-run/20261010-140319-3cd7/screenshots/app/flow-phone-05-mileage-entry.png",
+      "apps/freelance-finance-tracker/.agent-run/20261010-140319-3cd7/screenshots/app/flow-phone-06-dashboard-populated-after-mileage.png",
+      "apps/freelance-finance-tracker/.agent-run/20261010-140319-3cd7/screenshots/app/flow-desktop-01-policy-gate-agreement.png",
+      "apps/freelance-finance-tracker/.agent-run/20261010-140319-3cd7/screenshots/app/flow-desktop-02-dashboard-empty.png",
+      "apps/freelance-finance-tracker/.agent-run/20261010-140319-3cd7/screenshots/app/flow-desktop-03-receipt-entry.png",
+      "apps/freelance-finance-tracker/.agent-run/20261010-140319-3cd7/screenshots/app/flow-desktop-04-dashboard-populated-after-receipt.png",
+      "apps/freelance-finance-tracker/.agent-run/20261010-140319-3cd7/screenshots/app/flow-desktop-05-mileage-entry.png",
+      "apps/freelance-finance-tracker/.agent-run/20261010-140319-3cd7/screenshots/app/flow-desktop-06-dashboard-populated-after-mileage.png"
+    ]
+  },
+  "retro": {
+    "observations": [
+      "acceptance tests failed with the same error in 5 of 5 rounds: UnicodeEncodeError: 'utf-N' codec can't encode characters in position N-N: surrogates not allowed",
+      "validator 'ui primary flow (.)' blocked 5 of 5 rounds",
+      "validator 'typescript (tsc)' blocked 2 of 5 rounds",
+      "validator 'accessibility, serious or critical (.)' blocked 2 of 5 rounds",
+      "coder hit its turn limit in 5 of 5 rounds ([1, 2, 3, 4, 5])",
+      "slowest round 3 took 51 min; average 39 min"
+    ],
+    "went_well": [
+      "The pipeline surface\u2011level failures across multiple dimensions (UnicodeEncodeError, UI flow timeouts, TypeScript compile errors, and accessibility violations) in every round, giving clear visibility into the blockers.",
+      "The reviewer consistently produced concrete observations about missing exports, empty screen components, and nested interactive elements, which is valuable guidance for the coder.",
+      "The UI primary\u2011flow validator was active and detected click timeouts on both phone and desktop sizes, confirming the end\u2011to\u2011end UI testing harness is functional.",
+      "The coder was able to generate a large amount of code (over 8\u202fM prompt tokens) and attempted many of the required hardening changes, showing the coding agent can handle the workload.",
+      "The acceptance test runner produced the same UnicodeEncodeError each round, making the root\u2011cause deterministic and easy to target."
+    ],
+    "improvements": [
+      {
+        "title": "Prevent UnicodeEncodeError in acceptance test runner",
+        "evidence": "Rounds 1\u20115 all failed with `UnicodeEncodeError: 'utf-8' codec can't encode characters in position 0-1: surrogates not allowed` (see raw_output round 1). Reviewer repeatedly points out the surrogate emoji in `test_acceptance.py` (round 1, reviewer issue).",
+        "change": "Sandbox/runner image: set `PYTHONIOENCODING=utf-8` globally. Update `test_acceptance.py` to replace the surrogate emoji `\\ud83d\\ude80` with a proper code point (`\\U0001F680`) or remove it. Add a static validator in `validate.py` that scans all source and test files for surrogate pairs or invalid Unicode characters and fails early with a clear message.",
+        "expected_effect": "Acceptance tests will start without crashing, allowing UI, TypeScript, and other validators to run. Early detection of illegal Unicode prevents repeated round restarts, cutting total runtime by up to 30\u202f%.",
+        "priority": "high"
+      },
+      {
+        "title": "Enhance UI validator to pinpoint nested\u2011interactive accessibility violations and flow blockages",
+        "evidence": "Rounds 3\u20114 UI validator reported `nested-interactive` errors (see raw_output rounds 3\u20114) and UI primary\u2011flow timed out on clicking \"Add\"/\"Mileage\" buttons. Reviewer flagged the FAB component nesting (round 3 reviewer issue).",
+        "change": "Update `ui_check.mjs` (or add a new UI validator) to: (a) detect any pressable element containing another pressable element, outputting file path, line number, and component name; (b) extend the primary\u2011flow validator to include element\u2011hierarchy info when a click times out, linking the failure to the offending JSX node.",
+        "expected_effect": "Coder receives precise, file\u2011level guidance, can refactor nested buttons in one go, and UI flow tests will pass faster. Reduces UI\u2011related turn count by ~50\u202f% and eliminates repeated accessibility failures.",
+        "priority": "high"
+      },
+      {
+        "title": "Add TypeScript export audit validator",
+        "evidence": "Rounds 1\u20112 `typescript (tsc)` validator errors: missing export `validateBackupStructure` (round 1), missing `clearAllData` (round 1), and missing default export in `DashboardScreen.tsx` (round 2). Reviewer highlighted these missing exports in both rounds.",
+        "change": "Implement a new static validator (e.g., `ts_export_audit.py`) that parses all test files for import statements, cross\u2011checks them against the source module's exported symbols, and emits a clear error like `File src/lib/dataReset.ts: missing export 'clearAllData'`. Run this validator before the main TypeScript compile step.",
+        "expected_effect": "Export\u2011related TypeScript errors are caught early, preventing the coder from wasting turns on unrelated fixes. Expected reduction of compile\u2011error turns by ~30\u202f% and earlier convergence on functional changes.",
+        "priority": "medium"
+      },
+      {
+        "title": "Enforce planned test file creation immediately after design",
+        "evidence": "Round 1 validator `planned files present` reported missing test files `__tests__/dataReset.test.ts`, `__tests__/passphraseRules.test.ts`, `__tests__/restoreValidation.test.ts`. The same issue persisted through later rounds.",
+        "change": "Add a post\u2011designer validator that reads the planner's file list (or `DESIGN.md`) and aborts the round if any planned file is absent, returning the missing file list as feedback to the coder. Increase the missing\u2011file repeat\u2011failure guard to 2 before stopping the run.",
+        "expected_effect": "Ensures all required test files are created early, avoiding delayed test\u2011suite failures and reducing the number of rounds needed to achieve full test coverage.",
+        "priority": "medium"
+      },
+      {
+        "title": "Structure reviewer feedback for direct coder action",
+        "evidence": "Reviewer issues across rounds were verbose and sometimes bundled several problems in one bullet (e.g., round 1 reviewer issue about `src/lib/validation.ts` signatures). This contributed to the coder hitting its turn limit in every round.",
+        "change": "Revise the reviewer prompt to require output in a strict format: `FILE: <path> | ISSUE: <short description> | FIX: <code snippet or precise instruction>`. Implement a parser that turns each line into a focused coder instruction for the next turn.",
+        "expected_effect": "Coder receives unambiguous, actionable tasks, cutting the average number of turns per round from ~30 to <15 and reducing overall runtime.",
+        "priority": "medium"
+      }
+    ]
+  }
+}

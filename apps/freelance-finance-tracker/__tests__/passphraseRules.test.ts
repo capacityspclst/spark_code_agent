@@ -1,0 +1,7 @@
+import { validateBackupPassphrase } from '../src/lib/validation';
+
+test('backup passphrase must be at least 12 characters', () => {
+  expect(validateBackupPassphrase('short')).toBe('Passphrase must be at least 12 characters');
+  // 12 characters exactly
+  expect(validateBackupPassphrase('exactly12!!!')).toBeNull();
+});

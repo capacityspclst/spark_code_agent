@@ -1,6 +1,6 @@
 import { acceptPolicy, getPolicyAcceptance, policyAccepted } from './policy';
 import type { Store } from './storage/types';
-import * as SecureStore from 'expo-secure-store';
+import { deleteAllPhotos } from './photos';
 
 /** Run a destructive store operation (restore, delete all) without losing the user's policy acceptance. */
 export async function keepingPolicy(store: Store, work: () => Promise<void>): Promise<void> {
@@ -9,13 +9,16 @@ export async function keepingPolicy(store: Store, work: () => Promise<void>): Pr
   if (acceptance && policyAccepted(acceptance)) await acceptPolicy(store, new Date(acceptance.acceptedAt));
 }
 
-/** "Delete all data": every record and setting goes; the policy acceptance stays. */
+/** "Delete all data": every receipt photo, record and setting goes, and the encryption key is replaced (the store
+ * switches to the new key at once), so nothing deleted can be recovered. The policy acceptance stays. */
 export async function deleteAllData(store: Store): Promise<void> {
-  await keepingPolicy(store, async () => {
-    await store.clearAll();
-    // Also delete the encryption key from SecureStore so a full wipe removes all secrets.
-    try {
-      await SecureStore.deleteItemAsync('app.data-key.v1');
-    } catch {}
-  });
+  // First, remove all stored receipt photos.
+  await deleteAllPhotos();
+  // Then wipe the encrypted store; this also rotates the encryption key.
+  await keepingPolicy(store, () => store.wipe());
+  // Ensure any stray photos are removed after wipe as a safety net (idempotent).
+  await deleteAllPhotos();
 }
+
+/** Alias for deleteAllData to match expected API in tests */
+export const clearAllData = deleteAllData;

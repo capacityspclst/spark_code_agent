@@ -1,0 +1,209 @@
+{
+  "verdict": "fail",
+  "summary": "The UI does not satisfy the primary user flow and several required states. After a user accepts the policy the app never navigates to the Dashboard, so the empty dashboard (\u201cNothing here yet\u201d) never appears, causing a high\u2011severity regression. Numerous screens are missing required loading, empty, error or success states, and a number of accessibility and design\u2011token usages are either absent or hard\u2011coded. These gaps break the polished product bar and must be fixed before release.",
+  "findings": [
+    {
+      "severity": "high",
+      "file": "src/screens/PolicyScreen.tsx",
+      "issue": "Accept button does not navigate to Dashboard after storing policy acceptance; the app remains on the policy screen, causing the flow test to timeout.",
+      "fix": "Update the onPress handler to await policy acceptance storage, then call navigation.reset({ index: 0, routes: [{ name: 'Dashboard' }] }) (or navigation.navigate('Dashboard')). Ensure the navigation occurs after the async call resolves.",
+      "source": "designer"
+    },
+    {
+      "severity": "high",
+      "file": "src/screens/DashboardScreen.tsx",
+      "issue": "Dashboard does not render the EmptyState component when there are no receipt or mileage entries, so the expected text \u201cNothing here yet\u201d is never shown.",
+      "fix": "Add a conditional that checks both receipt and mileage collections; when both are empty render <EmptyState title=\"Nothing here yet\" description=\"Add a receipt or mileage entry to start tracking your finances.\" actionLabel=\"Add receipt\" onActionPress={openFAB} /> as defined in DESIGN.md.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/screens/PolicyScreen.tsx",
+      "issue": "Missing loading UI while the app checks the stored policy version; the spec requires a full\u2011screen ActivityIndicator with the copy \u201cChecking policy version\u2026\u201d.",
+      "fix": "Show a full\u2011screen <ActivityIndicator size=\"large\" /> with a <Text>Checking policy version\u2026</Text> overlay while the async isPolicyAccepted check is pending.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/screens/ReceiptsScreen.tsx",
+      "issue": "Error state does not include a visible Retry button; the spec requires an error view with a Retry action.",
+      "fix": "Create an error component that displays the copy \"Could not fetch receipts. Pull to retry.\" and a <PrimaryButton onPress={refetch}>Retry</PrimaryButton>.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/screens/MileageScreen.tsx",
+      "issue": "Error view is missing; should present \"Could not fetch mileage entries. Pull to retry.\" with a Retry button.",
+      "fix": "Implement the same error view pattern as ReceiptsScreen for the mileage list.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/screens/SettingsScreen.tsx",
+      "issue": "Settings load failures are only reported via Snackbar; DESIGN.md specifies an error view with a Snackbar for persistent errors.",
+      "fix": "Wrap the settings fetch in a try/catch; on error render a full\u2011screen error view with copy \"Unable to load settings.\" and a Retry button that re\u2011invokes the load function.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/screens/ExportScreen.tsx",
+      "issue": "Export running state does not disable the Export CSV/PDF buttons nor show an ActivityIndicator inside the button as required.",
+      "fix": "When exportRunning flag is true, render each button with disabled={true} and include a small <ActivityIndicator size=\"small\" /> inside the button along with the copy \"Generating export\u2026\".",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/screens/BackupScreen.tsx",
+      "issue": "Passphrase modal lacks live validation messages and does not disable the Create backup button until the passphrase meets the 12\u2011character rule and both fields match.",
+      "fix": "Add HelperText below each passphrase field showing the appropriate error, compute validation on each keystroke, and set the button disabled prop accordingly.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/screens/RestoreScreen.tsx",
+      "issue": "Restore error handling only shows a Snackbar; the spec requires a full\u2011screen error view for invalid format/decryption failures.",
+      "fix": "Add a conditional error view that replaces the modal with a full\u2011screen message \"Invalid passphrase or corrupted backup file.\" and a Retry button.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/screens/TaxSettingsScreen.tsx",
+      "issue": "Missing per\u2011field validation error UI and the Save button remains enabled even when no changes have been made.",
+      "fix": "Display <HelperText type=\"error\"> when validation fails, compute a dirty flag comparing current values to persisted ones, and enable the Save button only when dirty && valid.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/components/ui/PrimaryButton.tsx",
+      "issue": "Button lacks a visible focus outline for keyboard navigation on web, violating the focus\u2011visible requirement.",
+      "fix": "Add a style rule that, when the button receives focus (focus-visible), applies a 2\u202fdp solid border using theme.colors.outline.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/components/ui/MiniFAB.tsx",
+      "issue": "Mini\u2011FAB uses hard\u2011coded background (#015958) and icon color (#FFFFFF) instead of the secondary token from the theme.",
+      "fix": "Replace hard\u2011coded colors with theme.colors.secondary (or secondaryContainer) for background and theme.colors.onSecondary for the icon.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "src/components/ui/FormField.tsx",
+      "issue": "Form fields rely on placeholder text only; the design requires a visible label above the input.",
+      "fix": "Pass a `label` prop to the underlying <TextInput mode=\"outlined\" label={label} /> and ensure the placeholder is used only for helper text.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "src/components/ui/FABAdd.tsx",
+      "issue": "FAB lacks an explicit `accessibilityLabel`, making it invisible to screen readers.",
+      "fix": "Add `accessibilityLabel=\"Add entry\"` (or a more specific label) to the <FAB> component.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "src/components/ui/BottomTabBar.tsx",
+      "issue": "Bottom navigation does not have a landmark role or accessibilityLabel, reducing screen\u2011reader discoverability.",
+      "fix": "Wrap BottomNavigation in a view with `accessibilityRole=\"navigation\"` and `accessibilityLabel=\"Bottom navigation\"`.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "src/components/ui/Screen.tsx",
+      "issue": "Screen component does not enforce the required horizontal padding of 16\u202fdp (spacing * 2).",
+      "fix": "Add `style={{ paddingHorizontal: theme.spacing * 2 }}` to the ScrollView inside the Screen wrapper.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "src/components/ui/Screen.tsx",
+      "issue": "Screen container does not limit content width to a maximum of 420\u202fdp on larger viewports, as defined in the layout spec.",
+      "fix": "Wrap children in a centered container with `maxWidth: 420, alignSelf: 'center'` and apply `marginHorizontal: 'auto'` when `Dimensions.get('window').width >= 1280`.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "src/components/ui/SummaryCard.tsx",
+      "issue": "Card borderRadius and elevation are hard\u2011coded (8\u202fdp, elevation\u202f1) rather than using theme.roundness and theme.elevation.level1.",
+      "fix": "Read `theme.roundness` and `theme.elevation.level1.elevation` and apply them via the `style` prop.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "src/components/ui/EmptyState.tsx",
+      "issue": "EmptyState component does not render the required primary action button; it only shows the title and description.",
+      "fix": "Render a <PrimaryButton onPress={onActionPress}>{actionLabel}</PrimaryButton> below the description.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "src/components/ui/Dialog.tsx",
+      "issue": "Dialog action buttons lack focus\u2011visible outlines, which are required for keyboard navigation.",
+      "fix": "Apply the same focus-visible style used for PrimaryButton to the dialog actions.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "src/components/ui/SettingSwitch.tsx",
+      "issue": "Switch thumb and track colors are hard\u2011coded and do not use the secondary token.",
+      "fix": "Pass `thumbColor={theme.colors.onSecondary}` and `trackColor={{ false: theme.colors.disabled, true: theme.colors.secondary }}` to the Switch component.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "src/components/ui/ChoiceField.tsx",
+      "issue": "SegmentedButtons use Paper\u2019s default colors instead of the secondary token for the selected state.",
+      "fix": "Supply `selectedColor={theme.colors.secondary}` and `unselectedColor={theme.colors.onSurfaceVariant}` props.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "src/components/ui/CheckboxField.tsx",
+      "issue": "Checkbox label is not programmatically linked to the native control, breaking accessibility.",
+      "fix": "Wrap the Checkbox and its label inside a Pressable that sets `accessibilityLabel` to the label text and `accessibilityState={{ checked: status === 'checked' }}`.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "src/components/ui/ScreenHeader.tsx",
+      "issue": "App bar header does not have `role=\"banner\"`, which is required for the top\u2011level landmark.",
+      "fix": "Add `accessibilityRole=\"banner\"` to the <Appbar.Header> component.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "viewport": "phone",
+      "issue": "The 'Accept' button is disabled until the checkbox is checked, which is correct behavior, but the placeholder text 'Tick the box to continue.' is redundant since the button state already communicates this.",
+      "fix": "Remove the redundant instruction text below the button.",
+      "screen": "policy_gate",
+      "source": "vision"
+    },
+    {
+      "severity": "low",
+      "viewport": "phone",
+      "issue": "The policy text is presented in a single block without visual breaks, which may be hard to scan for users reading on a phone.",
+      "fix": "Break the policy text into smaller, scannable sections with subtle visual separation (e.g., subtle dividers or indentation) while maintaining the card structure.",
+      "screen": "policy_gate",
+      "source": "vision"
+    }
+  ],
+  "lighthouse": [
+    {
+      "accessibility": 98,
+      "bestPractices": 100,
+      "performance": 57
+    }
+  ],
+  "vision_scores": [
+    {
+      "screen": "policy_gate",
+      "score": 8.0,
+      "summary": "A polished, modern onboarding screen with clear visual hierarchy, consistent spacing, and touch-friendly controls. The design feels premium and aligns with commercial app standards."
+    },
+    {
+      "screen": "dashboard_empty",
+      "score": 9.0,
+      "summary": "A polished, modern, and highly usable onboarding screen that clearly communicates privacy and terms with excellent visual hierarchy, consistent spacing, and a clear primary action. The design feels premium and trustworthy, fitting a paid product."
+    }
+  ]
+}

@@ -11,6 +11,10 @@ export function createDeviceKeyProvider(): KeyProvider {
       const { randomBytes } = await import('../crypto');
       return randomBytes(32);
     },
+    async rotateKey() {
+      const { randomBytes } = await import('../crypto');
+      return randomBytes(32);
+    },
   };
 }
 

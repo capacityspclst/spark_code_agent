@@ -21,6 +21,8 @@ export interface RawStore {
 /** Supplies the 32-byte data key, creating and saving it the first time. */
 export interface KeyProvider {
   getKey(): Promise<Uint8Array>;
+  /** Discard the current key and create a new one, so nothing encrypted with the old key can be read again. */
+  rotateKey?(): Promise<Uint8Array>;
 }
 
 export interface Store {
@@ -32,4 +34,6 @@ export interface Store {
   delete(collection: string, id: string): Promise<void>;
   /** Deletes every record and setting (the "delete all data" action). Keeps the data key. */
   clearAll(): Promise<void>;
+  /** "Delete all data": deletes everything and replaces the encryption key (the store switches to it at once). */
+  wipe(): Promise<void>;
 }

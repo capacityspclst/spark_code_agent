@@ -3,39 +3,38 @@ import { getAllMileageEntries } from './mileageStore';
 import type { Receipt, MileageEntry } from './models';
 import type { Store } from './storage/types';
 
-/** Escape a cell for CSV output.
- * - Numbers are output as plain numbers.
- * - undefined/null become empty string.
- * - For strings, if it starts with = + - @ \t \r, prefix with a single quote to prevent formula injection.
- * - If the resulting string contains commas, double quotes, or line breaks, wrap the entire cell in double quotes.
- *   Escape internal double quotes by doubling them.
+/** Escape a cell for CSV output according to RFC 4180.
+ * Numbers output as plain numbers.
+ * null/undefined become empty string.
+ * Strings starting with = + - @ or tab are prefixed with a single quote to prevent formula injection.
+ * If a string is prefixed, we leave it as‑is (no additional quoting or double‑quote escaping) because the prefix already neutralises formulas.
+ * Otherwise, double quotes inside the value are escaped by doubling them.
+ * If the resulting string contains commas, double quotes, or line breaks, wrap the whole field in double quotes.
  */
 function csvEscape(value: any): string {
   if (value === undefined || value === null) return '';
   if (typeof value === 'number') return String(value);
-  let s = String(value);
-  // Neutralise CSV injection formulas.
-  if (/^[=+\-@\t\r]/.test(s)) {
-    s = "'" + s;
+  const original = String(value);
+  const needsPrefix = /^[=+\-@\t]/.test(original);
+  if (needsPrefix) {
+    return "'" + original;
   }
-  const needsWrap = /[",\r\n]/.test(s);
-  if (needsWrap) {
-    // Escape inner double quotes by doubling them.
-    s = s.replace(/"/g, '""');
-    return `"${s}"`;
+  // Escape double quotes by doubling them
+  const escaped = original.replace(/"/g, '""');
+  // Wrap in quotes if contains special chars
+  if (/[",\r\n]/.test(escaped)) {
+    return `"${escaped}"`;
   }
-  return s;
+  return escaped;
 }
 
 /** Generate a CSV string containing receipts and mileage entries.
  * Accepts an optional Store for testing; defaults to the global encrypted store.
- * In case of any error (e.g., missing native modules in test env), returns an empty CSV.
  */
 export async function generateCsv(store?: Store): Promise<string> {
   let s = store;
   if (!s) {
     try {
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
       const { getStore } = require('./storage');
       s = getStore();
     } catch {
@@ -46,31 +45,31 @@ export async function generateCsv(store?: Store): Promise<string> {
     const receipts: Receipt[] = s ? await getAllReceipts(s) : [];
     const mileage: MileageEntry[] = s ? await getAllMileageEntries(s) : [];
     const lines: string[] = [];
+    // Header for receipts
     lines.push('id,amount,date,category,type,notes');
     for (const r of receipts) {
-      const line = [
+      lines.push([
         csvEscape(r.id),
         csvEscape(r.amount),
         csvEscape(r.date),
         csvEscape(r.category),
         csvEscape(r.type),
         csvEscape(r.notes),
-      ].join(',');
-      lines.push(line);
+      ].join(','));
     }
+    // Header for mileage
     lines.push('id,miles,date,purpose');
     for (const m of mileage) {
-      const line = [
+      lines.push([
         csvEscape(m.id),
         csvEscape(m.miles),
         csvEscape(m.date),
         csvEscape(m.purpose),
-      ].join(',');
-      lines.push(line);
+      ].join(','));
     }
     return lines.join('\n');
   } catch {
-    // Return minimal CSV structure on failure.
+    // Minimal CSV on failure
     return 'id,amount,date,category,type,notes\nid,miles,date,purpose';
   }
 }

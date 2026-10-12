@@ -32,5 +32,10 @@ export function createStore(raw: RawStore, keys: KeyProvider): Store {
     async clearAll() {
       await raw.clearAll();
     },
+    async wipe() {
+      await raw.clearAll();
+      // Switch to the new key now; a cached old key would keep encrypting new data with a key that no longer exists.
+      key = keys.rotateKey ? await keys.rotateKey() : null;
+    },
   };
 }
