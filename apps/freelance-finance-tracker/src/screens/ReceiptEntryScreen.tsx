@@ -29,6 +29,7 @@ export default function ReceiptEntryScreen() {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [categories, setCategories] = useState<Array<{ id: string; name: string }>>([]);
   const [preFilled, setPreFilled] = useState<Partial<ParsedReceipt>>({});
+  const [marked, setMarked] = useState<{ amount: boolean; date: boolean; category: boolean }>({ amount: false, date: false, category: false });
 
   // Load categories for dropdown (hidden filtered)
   useEffect(() => {
@@ -80,6 +81,10 @@ export default function ReceiptEntryScreen() {
 
   const canSave = !saving && validate() === '' && !amountError;
 
+  const clearMark = (field: keyof typeof marked) => {
+    setMarked((prev) => ({ ...prev, [field]: false }));
+  };
+
   const startScan = async () => {
     if (!photoUri) {
       setError('Please select a photo first.');
@@ -88,14 +93,25 @@ export default function ReceiptEntryScreen() {
     try {
       const text = await recognizeReceiptText(photoUri);
       if (!text) {
-        setError('No details could be extracted – please enter manually.');
+        setError('No details could be extracted \u2013 please enter manually.');
         return;
       }
       const parsed = parseReceipt(text);
       setPreFilled(parsed);
-      if (parsed.total) setAmount(parsed.total.toString());
-      if (parsed.date) setDate(parsed.date);
-      if (parsed.merchant) setCategory(parsed.merchant);
+      const newMarks = { amount: false, date: false, category: false };
+      if (parsed.total) {
+        setAmount(parsed.total.toString());
+        newMarks.amount = true;
+      }
+      if (parsed.date) {
+        setDate(parsed.date);
+        newMarks.date = true;
+      }
+      if (parsed.merchant) {
+        setCategory(parsed.merchant);
+        newMarks.category = true;
+      }
+      setMarked(newMarks);
     } catch (e: any) {
       setError(e.message ?? 'Scanning failed');
     }
@@ -106,11 +122,35 @@ export default function ReceiptEntryScreen() {
       <View style={{ gap: 12 }}>
         <ReceiptImagePicker photoUri={photoUri} onChange={setPhotoUri} />
         <PrimaryButton label="Scan receipt" onPress={startScan} disabled={!photoUri} />
-        <FormField label="Amount" value={amount} onChangeText={setAmount} keyboardType="numeric" error={amountError ?? undefined} />
+        {/* Amount */}
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+          <FormField
+            label="Amount"
+            value={amount}
+            onChangeText={(v) => { setAmount(v); clearMark('amount'); }}
+            keyboardType="numeric"
+            error={amountError ?? undefined}
+            hint={marked.amount ? 'Check these details' : undefined}
+            marked={marked.amount}
+          />
+          {marked.amount && (
+            <PrimaryButton label="Looks right" variant="text" onPress={() => clearMark('amount')} />
+          )}
+        </View>
         {/* Date field with picker */}
-        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-          <FormField label="Date" value={date} onChangeText={setDate} placeholder="YYYY-MM-DD" />
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+          <FormField
+            label="Date"
+            value={date}
+            onChangeText={(v) => { setDate(v); clearMark('date'); }}
+            placeholder="YYYY-MM-DD"
+            hint={marked.date ? 'Check these details' : undefined}
+            marked={marked.date}
+          />
           <IconButton icon="calendar" onPress={() => setShowDatePicker(true)} accessibilityLabel="Select receipt date" />
+          {marked.date && (
+            <PrimaryButton label="Looks right" variant="text" onPress={() => clearMark('date')} />
+          )}
         </View>
         <DatePickerModal
           locale="en"
@@ -123,11 +163,24 @@ export default function ReceiptEntryScreen() {
             const iso = d.toISOString().split('T')[0];
             setDate(iso);
             setShowDatePicker(false);
+            clearMark('date');
           }}
           validRange={{ endDate: new Date() }}
         />
         {/* Category field */}
-        <FormField label="Category" value={category} onChangeText={setCategory} placeholder="Select category" />
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+          <FormField
+            label="Category"
+            value={category}
+            onChangeText={(v) => { setCategory(v); clearMark('category'); }}
+            placeholder="Select category"
+            hint={marked.category ? 'Check these details' : undefined}
+            marked={marked.category}
+          />
+          {marked.category && (
+            <PrimaryButton label="Looks right" variant="text" onPress={() => clearMark('category')} />
+          )}
+        </View>
         <ChoiceField<ReceiptType>
           label="Type"
           value={type}

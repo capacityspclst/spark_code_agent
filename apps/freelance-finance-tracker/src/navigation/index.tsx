@@ -20,6 +20,7 @@ import DeleteAllDataScreen from '../screens/DeleteAllDataScreen';
 import BackupSuccessScreen from '../screens/BackupSuccessScreen';
 import RestoreSuccessScreen from '../screens/RestoreSuccessScreen';
 import { theme } from '../theme';
+import CategoriesScreen from '../screens/CategoriesScreen';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -33,6 +34,7 @@ function SettingsStackScreen() {
   return (
     <SettingsStack.Navigator initialRouteName="SettingsMain">
       <SettingsStack.Screen name="SettingsMain" component={SettingsScreen} options={{ headerShown: false }} />
+      <SettingsStack.Screen name="Categories" component={CategoriesScreen} options={{ title: 'Categories' }} />
       <SettingsStack.Screen name="Export" component={ExportScreen} options={{ title: 'Export data' }} />
       <SettingsStack.Screen name="Backup" component={BackupScreen} options={{ title: 'Backup & restore' }} />
       <SettingsStack.Screen name="backup_passphrase_modal" component={BackupPassphraseScreen} options={{ title: 'Create backup' }} />
