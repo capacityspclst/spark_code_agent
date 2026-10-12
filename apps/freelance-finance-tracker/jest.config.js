@@ -16,12 +16,11 @@ export default {
   },
   // Ignore duplicate manual mock files that are not used.
   modulePathIgnorePatterns: [
-    '<rootDir>/__mocks__/noble-ciphers-aes.mjs',
     '<rootDir>/__mocks__/noble-ciphers-aes.js',
+    '<rootDir>/__mocks__/noble-ciphers-aes.mjs',
     '<rootDir>/__mocks__/noble-ciphers-aes.esm.js',
-    '<rootDir>/__mocks__/noble-ciphers-aes-js.js',
-    '<rootDir>/__mocks__/noble-hashes-scrypt.mjs',
     '<rootDir>/__mocks__/noble-hashes-scrypt.js',
+    '<rootDir>/__mocks__/noble-hashes-scrypt.mjs',
     '<rootDir>/__mocks__/@noble/',
   ],
   // Ignore the mistakenly prefixed test folder with a leading space.
