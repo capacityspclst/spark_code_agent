@@ -41,13 +41,15 @@ async function saveData(store: Store, data: CategoriesData): Promise<void> {
   await store.set(STORAGE_KEY, data);
 }
 
-/** Get all categories, applying rename and hidden flags. */
+/** Get all categories, applying rename and hidden flags.
+ * Returns both visible and hidden categories; callers can filter by the 'hidden' flag.
+ */
 export async function getAllCategories(
   store: Store,
   options?: { includeHidden?: boolean }
 ): Promise<Array<{ id: string; name: string; hidden: boolean; custom: boolean }>> {
   const data = await loadData(store);
-  const includeHidden = options?.includeHidden ?? false;
+  const includeHidden = options?.includeHidden ?? true; // default to include hidden
   const result: Array<{ id: string; name: string; hidden: boolean; custom: boolean }> = [];
   // defaults
   for (const def of DEFAULT_CATEGORIES) {
@@ -67,7 +69,7 @@ export async function getAllCategories(
 
 /** Add a new custom category. Returns null on success or error string. */
 export async function addCustomCategory(store: Store, name: string): Promise<string | null> {
-  if (name.length < 1 || name.length > 40) return 'Category must be 1–40 characters.';
+  if (name.length < 1 || name.length > 40) return 'Category must be 1‑40 characters.';
   const data = await loadData(store);
   const allNames = [...DEFAULT_CATEGORIES, ...data.custom];
   const exists = allNames.some((n) => n.toLowerCase() === name.toLowerCase());
@@ -79,7 +81,7 @@ export async function addCustomCategory(store: Store, name: string): Promise<str
 
 /** Rename a category (default or custom). */
 export async function renameCategory(store: Store, oldName: string, newName: string): Promise<string | null> {
-  if (newName.length < 1 || newName.length > 40) return 'Category must be 1–40 characters.';
+  if (newName.length < 1 || newName.length > 40) return 'Category must be 1‑40 characters.';
   const data = await loadData(store);
   const allNames = [...DEFAULT_CATEGORIES, ...data.custom];
   const conflict = allNames.some((n) => n.toLowerCase() === newName.toLowerCase());
@@ -120,7 +122,6 @@ export async function deleteCategory(store: Store, name: string): Promise<string
   data.custom = data.custom.filter((c) => c !== name);
   // Also remove any hidden flag or rename entry for this name
   data.hidden = data.hidden.filter((h) => h !== name);
-  // Remove rename mapping if present (unlikely for custom but safe)
   if (data.rename[name]) {
     delete data.rename[name];
   }

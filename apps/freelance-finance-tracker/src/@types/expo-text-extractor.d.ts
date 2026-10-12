@@ -1,6 +1,4 @@
 declare module 'expo-text-extractor' {
-  export interface TextExtractorResult {
-    text: string;
-  }
-  export function extractAsync(uri: string): Promise<TextExtractorResult>;
+  export const isSupported: boolean;
+  export function extractTextFromImage(uri: string): Promise<string[]>;
 }
