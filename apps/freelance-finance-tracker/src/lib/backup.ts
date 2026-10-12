@@ -6,35 +6,30 @@ import { deriveKey, encrypt, decrypt, toBase64, fromBase64, utf8, fromUtf8, rand
 import type { Receipt, MileageEntry } from './models';
 import { deleteAllPhotos, readPhotoBase64, writePhotoBase64 } from './photos';
 import { validateBackupPassphrase } from './validation';
-import { getAllCategories, DEFAULT_CATEGORIES } from './categories';
+import { getAllCategories } from './categories';
 
 const BACKUP_VERSION = 1;
-/** Validate passphrase policy */
 function enforcePassphrasePolicy(p: string): void {
   const err = validateBackupPassphrase(p);
   if (err) throw new Error(`Invalid backup passphrase: ${err}`);
 }
 
-/** Maximum backup file size before decryption (10 MiB). */
 const MAX_BACKUP_SIZE = 10 * 1024 * 1024;
-/** Maximum number of entries allowed in a backup to prevent DoS. */
 const MAX_RECEIPTS = 10000;
 const MAX_MILEAGE = 5000;
-/** Maximum allowed photo size (in bytes) for each receipt photo during backup (2 MiB). */
 const MAX_PHOTO_SIZE = 2 * 1024 * 1024;
 
-/** Create an encrypted backup of all data, including receipt photos and categories. */
 export async function createBackup(store: Store, passphrase: string): Promise<string> {
   enforcePassphrasePolicy(passphrase);
   const receipts: Receipt[] = await getAllReceipts(store);
   const mileage: MileageEntry[] = await getAllMileageEntries(store);
-  const categories = await getAllCategories(store, { includeHidden: true });
+  // retrieve raw categories data (may be undefined)
+  const categoriesData = await store.get<any>('categories');
   const receiptsWithPhotos = await Promise.all(
     receipts.map(async (r) => {
       if (r.photoUri) {
         const photoData = await readPhotoBase64(r.photoUri);
         if (photoData) {
-          // Approximate original byte size from base64 length
           const approxSize = Math.floor((photoData.length * 3) / 4);
           if (approxSize > MAX_PHOTO_SIZE) {
             throw new Error('Photo too large to include in backup');
@@ -45,7 +40,7 @@ export async function createBackup(store: Store, passphrase: string): Promise<st
       return { ...r };
     })
   );
-  const payload = JSON.stringify({ version: BACKUP_VERSION, receipts: receiptsWithPhotos, mileage, categories });
+  const payload = JSON.stringify({ version: BACKUP_VERSION, receipts: receiptsWithPhotos, mileage, categories: categoriesData ?? null });
   const salt = randomBytes(16);
   const key = deriveKey(passphrase, salt);
   const encrypted = encrypt(key, utf8(payload));
@@ -55,7 +50,6 @@ export async function createBackup(store: Store, passphrase: string): Promise<st
   return toBase64(combined);
 }
 
-/** Validate the structure of a decrypted backup. */
 export function validateBackupStructure(data: any): string | null {
   if (typeof data !== 'object' || data === null) return 'Backup data is not an object.';
   if (typeof data.version !== 'number') return 'Missing or invalid version.';
@@ -71,7 +65,6 @@ export function validateBackupStructure(data: any): string | null {
     if (typeof m.id !== 'string' || typeof m.date !== 'string' || typeof m.miles !== 'number')
       return 'Invalid mileage entry.';
   }
-  // Optional categories
   if (data.categories) {
     const c = data.categories;
     if (typeof c !== 'object' || c === null) return 'Invalid categories object.';
@@ -81,18 +74,13 @@ export function validateBackupStructure(data: any): string | null {
   return null;
 }
 
-/** Sanitize a receipt id to avoid path traversal when writing files. */
 function safeReceiptId(id: string): string {
-  // Allow only alphanumeric, dash, underscore
   return id.replace(/[^a-zA-Z0-9_-]/g, '_');
 }
 
-/** Restore data from an encrypted backup blob. */
 export async function restoreBackup(store: Store, backupBlob: string, passphrase: string): Promise<void> {
-  // Enforce passphrase length policy
   enforcePassphrasePolicy(passphrase);
   const combined = fromBase64(backupBlob);
-  // Pre‑decryption size check to prevent DoS
   if (combined.length > MAX_BACKUP_SIZE) throw new Error('Backup file too large');
   if (combined.length < 16) throw new Error('Invalid backup file');
   const salt = combined.subarray(0, 16);
@@ -105,12 +93,8 @@ export async function restoreBackup(store: Store, backupBlob: string, passphrase
     throw new Error('Invalid passphrase or corrupted backup file');
   }
   const data = JSON.parse(decrypted) as any;
-
-  // Validate structure before mutating store
   const structErr = validateBackupStructure(data);
   if (structErr) throw new Error('Invalid backup format: ' + structErr);
-
-  // Replace everything: records and the photo folder.
   await deleteAllPhotos();
   await keepingPolicy(store, async () => {
     await store.clearAll();
@@ -122,16 +106,13 @@ export async function restoreBackup(store: Store, backupBlob: string, passphrase
         try {
           const uri = await writePhotoBase64(safeId, photoData);
           await store.put('receipts', { ...rest, id: safeId, photoUri: uri } as any);
-        } catch {
-          // keep receipt without photo if write fails
-        }
+        } catch {}
       }
     }
     for (const m of data.mileage) {
       const safeId = safeReceiptId(m.id);
       await store.put('mileage', { ...m, id: safeId } as any);
     }
-    // Restore categories if present
     if (data.categories) {
       await store.set('categories', data.categories);
     }

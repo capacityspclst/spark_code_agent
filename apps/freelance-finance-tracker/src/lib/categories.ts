@@ -102,7 +102,7 @@ export async function renameCategory(store: Store, oldName: string, newName: str
 /** Hide a category (default or custom). */
 export async function hideCategory(store: Store, name: string): Promise<string | null> {
   const inUse = await isCategoryInUse(store, name);
-  if (inUse) return 'Category is used by receipts – hide instead.';
+  if (inUse) return 'Cannot hide category – it is in use';
   const data = await loadData(store);
   if (!data.hidden.includes(name)) data.hidden.push(name);
   await saveData(store, data);
