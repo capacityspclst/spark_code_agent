@@ -1,0 +1,92 @@
+{
+  "verdict": "pass",
+  "summary": "The recent feature additions (on\u2011device OCR, calendar date picker, and category management) did not introduce any new critical or high\u2011severity flaws, but a number of medium\u2011severity code issues remain unaddressed. Deployment\u2011level dependency vulnerabilities (braces, node\u2011forge, sprintf\u2011js) are still open and must be mitigated at the hosting level before production. The OCR implementation appears to have lost the earlier image\u2011size validation, re\u2011exposing a denial\u2011of\u2011service vector. Existing high\u2011severity issues (data\u2011reset photo leak) stay fixed, and the low\u2011severity XSS risk in custom categories is still mitigated.",
+  "findings": [
+    {
+      "id": "ocr-image-dos",
+      "severity": "medium",
+      "where": "code",
+      "file": "src/lib/ocr.ts",
+      "issue": "No size or dimension validation is performed before passing a receipt image to expo\u2011text\u2011extractor. An attacker could supply an extremely large or malformed image, causing high memory consumption and potentially crashing the app (local denial\u2011of\u2011service).",
+      "fix": "Add a guard that checks the image file size and dimensions (e.g., reject files >5\u202fMiB or >3000\u202fpx in either dimension) before calling recognizeReceiptText. Offer a friendly error message and optionally downscale the image before OCR."
+    },
+    {
+      "id": "ocr-image-dos-2",
+      "severity": "medium",
+      "where": "code",
+      "file": "src/lib/ocr.ts",
+      "issue": "No validation of the receipt image size or dimensions before invoking expo\u2011text\u2011extractor. Maliciously large or malformed images can consume excessive memory and crash the app on the device.",
+      "fix": "Add pre\u2011validation (e.g., using expo\u2011file\u2011system to read the file size or inspect image dimensions) and reject images exceeding a safe threshold (e.g., >5\u202fMiB or >3000\u202fpx) before calling extractTextFromImage."
+    },
+    {
+      "id": "backup-restore-size-dos",
+      "severity": "medium",
+      "where": "code",
+      "file": "src/lib/backup.ts",
+      "issue": "restoreBackup decrypts the entire encrypted blob before any size checks. Supplying an extremely large backup (e.g., >10\u202fMiB) can exhaust device memory and cause the app to crash.",
+      "fix": "Enforce a size limit on the encrypted backup data (reject >10\u202fMiB) *before* decryption and also cap the number of receipts/mileage entries in validateBackupStructure (e.g., \u226410\u202f000 receipts, \u22645\u202f000 mileage entries). Abort early if limits are exceeded."
+    },
+    {
+      "id": "backup-passphrase-bruteforce",
+      "severity": "medium",
+      "where": "code",
+      "file": "src/lib/backup.ts",
+      "issue": "Failed restore attempts do not have any rate\u2011limiting or delay, allowing an attacker to brute\u2011force the backup passphrase offline with rapid retries.",
+      "fix": "Implement exponential back\u2011off (1\u202fs, 2\u202fs, 4\u202fs, \u2026) after each failed attempt and lock the restore UI after a configurable number of consecutive failures (e.g., 5). Store the failure count in memory and reset it on app restart."
+    },
+    {
+      "id": "csv-export-injection-weak-escaping",
+      "severity": "medium",
+      "where": "code",
+      "file": "src/lib/exportCsv.ts",
+      "issue": "CSV generation only prefixes a single quote for cells that start with =, +, -, or @. It does not fully escape commas, quotes, newlines or other special characters, leaving the exported CSV vulnerable to formula injection in spreadsheet programs.",
+      "fix": "Replace the hand\u2011rolled CSV builder with a standards\u2011compliant library such as csv\u2011stringify, or implement full RFC\u202f4180 escaping for every field (double\u2011quote fields containing commas, quotes, newlines, and prefix with a single quote only when needed)."
+    },
+    {
+      "id": "backup-passphrase-min-length-missing",
+      "severity": "medium",
+      "where": "code",
+      "file": "src/lib/backup.ts",
+      "issue": "createBackup and restoreBackup accept any passphrase length. Although the UI enforces a 12\u2011character minimum, programmatic callers could supply a short passphrase, producing weakly protected backups.",
+      "fix": "Add an explicit length check at the start of both createBackup and restoreBackup (e.g., if passphrase.length < 12 throw an error). This guarantees the policy is enforced regardless of the caller."
+    },
+    {
+      "id": "restore-photo-path-traversal",
+      "severity": "medium",
+      "where": "code",
+      "file": "src/lib/backup.ts",
+      "issue": "restoreBackup writes receipt photos using the photoUri stored in the backup payload via FileSystem.writeAsync. An attacker\u2011controlled URI can lead to path traversal or overwriting files outside the app sandbox.",
+      "fix": "Ignore photoUri from the backup. When restoring, write each receipt photo to a trusted internal directory (e.g., FileSystem.documentDirectory) with a filename derived from the receipt ID, and validate that the resolved path remains within that directory before writing."
+    }
+  ],
+  "deployment_actions": [
+    {
+      "id": "dependency-braces-high",
+      "severity": "high",
+      "where": "deployment",
+      "file": "package-lock.json",
+      "issue": "`braces` 3.0.3 is vulnerable to CVE\u20112026\u201193687 (Denial\u2011of\u2011Service via stack overflow from deeply nested patterns). No patched release exists yet.",
+      "fix": "No fixed release exists yet: monitor the advisory and upgrade as soon as one ships; confirm whether the package is only a build-time dependency. Monitor the package for a patched release (>=\u202f3.0.4) and upgrade as soon as it is available. If the library is only a build\u2011time dependency, consider removing it from the production bundle."
+    },
+    {
+      "id": "dependency-node-forge-high",
+      "severity": "high",
+      "where": "deployment",
+      "file": "package-lock.json",
+      "issue": "`node\u2011forge` 1.4.0 contains CVE\u20112026\u201185393 (signature forgery vulnerability in RSA PKCS#1 v1.5 verification).",
+      "fix": "No fixed release exists yet: monitor the advisory and upgrade as soon as one ships; confirm whether the package is only a build-time dependency. Upgrade to a version that fixes the issue (>=\u202f1.5.0) when released, or replace the usage of `node\u2011forge` with a modern, audited library such as the `@noble/*` crypto suite. Remove the dependency from `package.json` if it is not required at runtime."
+    },
+    {
+      "id": "dependency-sprintf-js-medium",
+      "severity": "medium",
+      "where": "deployment",
+      "file": "package-lock.json",
+      "issue": "`sprintf\u2011js` 1.0.3 is vulnerable to CVE\u20112026\u201197058 (Denial\u2011of\u2011Service via unbounded precision specifiers).",
+      "fix": "No fixed release exists yet: monitor the advisory and upgrade as soon as one ships; confirm whether the package is only a build-time dependency. Upgrade to a patched version (if available) or replace the library with native template literals or a safe formatting utility such as `format` from the standard library. Remove the dependency if it is only transitive."
+    }
+  ],
+  "fixed": [
+    "category-xss"
+  ],
+  "stalled": []
+}
