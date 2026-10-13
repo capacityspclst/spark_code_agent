@@ -3,6 +3,7 @@ import { getAllReceipts } from './receiptStore';
 import { getAllMileageEntries } from './mileageStore';
 import { getAllCategories } from './categories';
 import { encryptText, decryptText, deriveKey, randomBytes, toBase64, fromBase64 } from './crypto';
+import { verifyLedger } from './ledger';
 
 /**
  * Backup format version.
@@ -17,6 +18,7 @@ export interface BackupData {
   receipts: any[]; // Receipt objects
   mileage: any[]; // MileageEntry objects
   categories?: any; // optional categories data (raw storage shape)
+  ledger?: any[]; // ledger entries
 }
 
 /**
@@ -46,6 +48,7 @@ export function validateBackupStructure(obj: any): string | null {
     if (typeof m.miles !== 'number') return 'Mileage miles must be number';
     if (typeof m.purpose !== 'string') return 'Mileage purpose must be string';
   }
+  if (obj.ledger !== undefined && !Array.isArray(obj.ledger)) return 'Ledger must be an array';
   // categories, if present, should be an object (light validation)
   if (obj.categories !== undefined && typeof obj.categories !== 'object') {
     return 'Categories must be an object';
@@ -55,18 +58,19 @@ export function validateBackupStructure(obj: any): string | null {
 
 /**
  * Create an encrypted backup string.
- * The backup includes receipts, mileage entries, and raw categories storage.
+ * The backup includes receipts, mileage entries, raw categories storage, and the ledger.
  */
 export async function createBackup(store: Store, passphrase: string): Promise<string> {
   const receipts = await getAllReceipts(store);
   const mileage = await getAllMileageEntries(store);
-  // Retrieve raw categories storage shape
   const rawCategories = await store.get<any>('categories');
+  const ledger = await store.get<any>('ledger');
   const data: BackupData = {
     version: BACKUP_VERSION,
     receipts,
     mileage,
     categories: rawCategories ?? { custom: [], hidden: [], rename: {} },
+    ledger: ledger ?? [],
   };
   const json = JSON.stringify(data);
   const salt = randomBytes(16);
@@ -94,6 +98,18 @@ export async function restoreBackup(store: Store, backupString: string, passphra
   }
   const err = validateBackupStructure(obj);
   if (err) throw new Error(err);
+  // Verify ledger before applying data
+  if (obj.ledger) {
+    // simple verification using verifyLedger logic on the provided ledger array
+    // We'll temporarily set it to store to reuse verifyLedger, then remove if fails.
+    await store.set('ledger', obj.ledger);
+    const verification = await verifyLedger(store);
+    if (!verification.ok) {
+      // rollback ledger to previous state (clear)
+      await store.remove('ledger');
+      throw new Error('Backup ledger verification failed');
+    }
+  }
   await store.clearAll();
   for (const r of obj.receipts) {
     await store.put('receipts', r);
@@ -103,5 +119,8 @@ export async function restoreBackup(store: Store, backupString: string, passphra
   }
   if (obj.categories) {
     await store.set('categories', obj.categories);
+  }
+  if (obj.ledger) {
+    await store.set('ledger', obj.ledger);
   }
 }

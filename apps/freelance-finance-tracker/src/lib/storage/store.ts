@@ -8,7 +8,7 @@ export function createStore(raw: RawStore, keys: KeyProvider): Store {
   const seal = async (value: unknown) => encryptText(await dataKey(), JSON.stringify(value));
   const open = async <T>(text: string) => JSON.parse(decryptText(await dataKey(), text)) as T;
 
-  return {
+  const store: Store = {
     async get<T>(k: string) {
       const v = await raw.getValue(k);
       return v === null ? null : open<T>(v);
@@ -37,5 +37,14 @@ export function createStore(raw: RawStore, keys: KeyProvider): Store {
       // Switch to the new key now; a cached old key would keep encrypting new data with a key that no longer exists.
       key = keys.rotateKey ? await keys.rotateKey() : null;
     },
+    // Compatibility helpers for tests expecting raw array access
+    async getItem(key: string) {
+      // Use the encrypted get and return decrypted value (or null)
+      return this.get<any>(key);
+    },
+    async setItem(key: string, value: any) {
+      await this.set<any>(key, value);
+    },
   };
+  return store;
 }
