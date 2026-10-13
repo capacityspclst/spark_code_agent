@@ -457,6 +457,224 @@ MILESTONE_TESTS = {
             ),
         )
     ],
+    7: [
+        (
+            "ledger.test.ts",
+            textwrap.dedent(
+                """\
+                import { createStore, createMemoryRawStore, createMemoryKeyProvider } from '../../src/lib/storage/memory';
+                import { addLedgerEntry, verifyLedger } from '../../src/lib/ledger';
+                
+                describe('M7: ledger hash chain and verification', () => {
+                  it('creates entries with correct chaining and verifies successfully', async () => {
+                    const store = createStore(createMemoryRawStore(), createMemoryKeyProvider());
+                
+                    // Add first entry
+                    await addLedgerEntry(store, 'receipt.created', 'r1', {
+                      id: 'r1',
+                      amount: 100,
+                      date: '2023-01-01',
+                      category: 'Supplies',
+                      type: 'expense',
+                      notes: '',
+                    });
+                
+                    // Add second entry (a correction)
+                    await addLedgerEntry(store, 'receipt.corrected', 'r1', {
+                      id: 'r1',
+                      amount: 150,
+                      date: '2023-01-01',
+                      category: 'Supplies',
+                      type: 'expense',
+                      notes: '',
+                    });
+                
+                    const result = await verifyLedger(store);
+                    expect(result.ok).toBe(true);
+                    expect(result.entries.length).toBe(2);
+                
+                    // First entry prevHash should be zeros
+                    expect(result.entries[0].prevHash).toBe('0'.repeat(64));
+                    // Second entry prevHash should equal first entry's hash
+                    expect(result.entries[1].prevHash).toBe(result.entries[0].hash);
+                    // Hashes should be non‑empty hex strings of length 64
+                    expect(result.entries[0].hash).toMatch(/^[0-9a-f]{64}$/);
+                    expect(result.entries[1].hash).toMatch(/^[0-9a-f]{64}$/);
+                  });
+                });
+                """
+            ),
+        ),
+        (
+            "ledgerTamper.test.ts",
+            textwrap.dedent(
+                """\
+                import { createStore, createMemoryRawStore, createMemoryKeyProvider } from '../../src/lib/storage/memory';
+                import { addLedgerEntry, verifyLedger } from '../../src/lib/ledger';
+                
+                describe('M7: ledger tamper detection', () => {
+                  it('detects a changed field in a ledger entry', async () => {
+                    const store = createStore(createMemoryRawStore(), createMemoryKeyProvider());
+                
+                    // Add a single entry
+                    await addLedgerEntry(store, 'receipt.created', 'r2', {
+                      id: 'r2',
+                      amount: 200,
+                      date: '2023-02-02',
+                      category: 'Travel',
+                      type: 'expense',
+                      notes: '',
+                    });
+                
+                    // Verify that the ledger is initially valid
+                    let result = await verifyLedger(store);
+                    expect(result.ok).toBe(true);
+                
+                    // Tamper the stored ledger directly
+                    const raw = await store.getItem('ledger');
+                    // Assuming raw is an array of entries
+                    raw[0].data.amount = 9999;
+                    await store.setItem('ledger', raw);
+                
+                    // Verification should now fail
+                    result = await verifyLedger(store);
+                    expect(result.ok).toBe(false);
+                    expect(result.firstBadSeq).toBe(1);
+                    expect(result.reason?.toLowerCase()).toContain('hash mismatch');
+                  });
+                });
+                """
+            ),
+        ),
+        (
+            "importLedger.test.ts",
+            textwrap.dedent(
+                """\
+                import { createStore, createMemoryRawStore, createMemoryKeyProvider } from '../../src/lib/storage/memory';
+                import { addReceipt } from '../../src/lib/receiptStore';
+                import { addMileageEntry } from '../../src/lib/mileageStore';
+                import { initLedgerIfNeeded, verifyLedger } from '../../src/lib/ledger';
+                
+                describe('M7: import existing data on first launch', () => {
+                  it('creates imported ledger entries for pre‑existing records exactly once', async () => {
+                    const rawStore = createMemoryRawStore();
+                    const store = createStore(rawStore, createMemoryKeyProvider());
+                
+                    // Add records before the ledger is initialized
+                    await addReceipt(store, {
+                      id: 'r3',
+                      amount: 50,
+                      date: '2023-03-03',
+                      category: 'Meals',
+                      type: 'expense',
+                      notes: '',
+                    });
+                    await addMileageEntry(store, {
+                      id: 'm3',
+                      date: '2023-03-04',
+                      miles: 30,
+                      purpose: 'Client visit',
+                    });
+                
+                    // First init should import them as 'imported' entries
+                    await initLedgerIfNeeded(store);
+                    let result = await verifyLedger(store);
+                    expect(result.ok).toBe(true);
+                    const imported = result.entries.filter(e => e.kind === 'imported');
+                    expect(imported.length).toBe(2);
+                
+                    // Adding a new receipt after init should create a normal entry
+                    await addReceipt(store, {
+                      id: 'r4',
+                      amount: 75,
+                      date: '2023-03-05',
+                      category: 'Supplies',
+                      type: 'expense',
+                      notes: '',
+                    });
+                    // Re‑run init – should NOT duplicate imports
+                    await initLedgerIfNeeded(store);
+                
+                    result = await verifyLedger(store);
+                    expect(result.ok).toBe(true);
+                    const totalImported = result.entries.filter(e => e.kind === 'imported').length;
+                    expect(totalImported).toBe(2); // still only the original imports
+                  });
+                });
+                """
+            ),
+        ),
+        (
+            "backupLedger.test.ts",
+            textwrap.dedent(
+                """\
+                import { createStore, createMemoryRawStore, createMemoryKeyProvider } from '../../src/lib/storage/memory';
+                import { addLedgerEntry, verifyLedger } from '../../src/lib/ledger';
+                import { createBackup, restoreBackup } from '../../src/lib/backup';
+                
+                describe('M7: backup includes ledger and verifies on restore', () => {
+                  const passphrase = 'Testpass123!';
+                
+                  it('creates a backup with a verifiable ledger and restores it correctly', async () => {
+                    const store = createStore(createMemoryRawStore(), createMemoryKeyProvider());
+                
+                    // Add a ledger entry
+                    await addLedgerEntry(store, 'receipt.created', 'r5', {
+                      id: 'r5',
+                      amount: 300,
+                      date: '2023-04-01',
+                      category: 'Equipment',
+                      type: 'expense',
+                      notes: '',
+                    });
+                
+                    const backupBlob = await createBackup(store, passphrase);
+                    expect(typeof backupBlob).toBe('string');
+                
+                    // Clear the store to simulate a fresh install
+                    await store.clearAll();
+                
+                    // Restore from backup
+                    await restoreBackup(store, backupBlob, passphrase);
+                    const result = await verifyLedger(store);
+                    expect(result.ok).toBe(true);
+                    expect(result.entries.length).toBe(1);
+                    expect(result.entries[0].kind).toBe('receipt.created');
+                  });
+                
+                  it('rejects a backup whose ledger has been tampered', async () => {
+                    const store = createStore(createMemoryRawStore(), createMemoryKeyProvider());
+                
+                    await addLedgerEntry(store, 'receipt.created', 'r6', {
+                      id: 'r6',
+                      amount: 400,
+                      date: '2023-04-02',
+                      category: 'Services',
+                      type: 'expense',
+                      notes: '',
+                    });
+                
+                    const backupBlob = await createBackup(store, passphrase);
+                
+                    // Restore first so we have a normal store to tamper
+                    const restoreStore = createStore(createMemoryRawStore(), createMemoryKeyProvider());
+                    await restoreBackup(restoreStore, backupBlob, passphrase);
+                
+                    // Tamper the ledger entry in the restored store
+                    const raw = await restoreStore.getItem('ledger');
+                    raw[0].data.amount = 9999;
+                    await restoreStore.setItem('ledger', raw);
+                
+                    // Verification should now fail
+                    const result = await verifyLedger(restoreStore);
+                    expect(result.ok).toBe(false);
+                    expect(result.firstBadSeq).toBe(1);
+                  });
+                });
+                """
+            ),
+        ),
+    ],
 }
 
 # ----------------------------------------------------------------------
@@ -481,7 +699,7 @@ def ensure_node_modules() -> None:
     """Run `npm install` if the `node_modules` directory is absent."""
     if (PROJECT_ROOT / "node_modules").is_dir():
         return
-    print("⚙️  node_modules not found – installing dependencies with `npm install`...")
+    print("\u2699\ufe0f  node_modules not found – installing dependencies with `npm install`...")
     try:
         subprocess.run(
             ["npm", "ci"],
@@ -492,7 +710,7 @@ def ensure_node_modules() -> None:
             timeout=600,
         )
     except subprocess.CalledProcessError as exc:
-        print(f"❌ npm ci failed (exit code {exc.returncode})")
+        print(f"\u274c npm ci failed (exit code {exc.returncode})")
         sys.exit(1)
 
 
@@ -527,7 +745,7 @@ def main() -> None:
                 raise ValueError()
         except ValueError:
             print(
-                "⚠️  Invalid ACCEPTANCE_MILESTONE – must be a positive integer.",
+                "\u26a0\ufe0f  Invalid ACCEPTANCE_MILESTONE – must be a positive integer.",
                 file=sys.stderr,
             )
             sys.exit(2)
@@ -542,9 +760,9 @@ def main() -> None:
     exit_code = run_jest(limit)
 
     if exit_code == 0:
-        print("✅ All acceptance tests passed.")
+        print("\u2705 All acceptance tests passed.")
     else:
-        print(f"❌ Acceptance tests failed (exit code {exit_code}).")
+        print(f"\u274c Acceptance tests failed (exit code {exit_code}).")
     sys.exit(exit_code)
 
 
