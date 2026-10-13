@@ -32,7 +32,6 @@ const ZERO_64 = '0'.repeat(64);
 
 /** Helper: produce a canonical JSON string with stable field order (excluding hash). */
 function canonical(entry: Omit<LedgerEntry, 'hash'>): string {
-  // Sort keys alphabetically to ensure deterministic order.
   const ordered: any = {};
   const keys = Object.keys(entry).sort();
   for (const k of keys) {
@@ -94,13 +93,11 @@ export async function verifyLedger(store: Store): Promise<{
   const ledger = await loadLedger(store);
   for (let i = 0; i < ledger.length; i++) {
     const entry = ledger[i];
-    // Re‑compute hash
     const { hash, ...withoutHash } = entry;
     const expectedHash = computeHash(withoutHash as Omit<LedgerEntry, 'hash'>);
     if (hash !== expectedHash) {
       return { ok: false, entries: ledger, firstBadSeq: entry.seq, reason: 'hash mismatch' };
     }
-    // Verify prevHash linkage
     const expectedPrev = i === 0 ? ZERO_64 : ledger[i - 1].hash;
     if (entry.prevHash !== expectedPrev) {
       return { ok: false, entries: ledger, firstBadSeq: entry.seq, reason: 'prevHash mismatch' };
@@ -113,11 +110,13 @@ export async function verifyLedger(store: Store): Promise<{
 export async function initLedgerIfNeeded(store: Store): Promise<void> {
   const existing = await store.get<LedgerEntry[]>(LEDGER_KEY);
   if (existing && existing.length > 0) return; // already initialized
-  // Import existing data
+
+  // Import existing receipts
   const receipts = await getAllReceipts(store);
   for (const r of receipts) {
     await addLedgerEntry(store, 'imported', r.id, r);
   }
+  // Import existing mileage entries
   const mileage = await getAllMileageEntries(store);
   for (const m of mileage) {
     await addLedgerEntry(store, 'imported', m.id, m);
