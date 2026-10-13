@@ -1,0 +1,399 @@
+{
+  "verdict": "fail",
+  "summary": "The UI largely follows the DESIGN.md, but the primary backup flow is broken, several secondary states are missing or incomplete, and a few accessibility and token\u2011usage details need attention. The biggest blocker is the missing `createBackup` implementation that prevents the \"Backup ready to share\" screen from ever appearing. Other issues are medium\u2011severity gaps (error UI for policy acceptance, missing focus\u2011visible outlines, bottom\u2011tab persistence on modal screens) and low\u2011severity polish items (autocomplete/kb types on form fields, aria\u2011live on snackbars, proper alt text, consistent token usage). Fixing the high\u2011severity backup bug and adding the missing secondary states will bring the product to a polished, production\u2011ready level.",
+  "findings": [
+    {
+      "severity": "high",
+      "file": "src/screens/BackupScreen.tsx",
+      "issue": "The backup creation process crashes with \"(0, c.createBackup) is not a function\" and never reaches the success state \"Backup ready to share\". This breaks the primary user flow for exporting data.",
+      "fix": "Implement the `createBackup` function in `src/lib/backup.ts` (and export it) and import it correctly in `BackupScreen.tsx`. Add proper async handling, set loading state, and navigate to a success screen or show a success snackbar when the backup is ready.",
+      "source": "designer"
+    },
+    {
+      "severity": "high",
+      "file": "src/screens/BackupScreen.tsx",
+      "issue": "Missing success view/state after backup creation. The spec expects a page/dialog that confirms the backup is ready to share, but none is rendered.",
+      "fix": "Add a 'BackupSuccessScreen' component (or dialog) that displays the copy \"Backup ready to share\" and a button to share/copy the file. Route to this view after `createBackup` resolves.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/screens/PolicyScreen.tsx",
+      "issue": "No error UI for the PolicyGateScreen when storing the acceptance fails. The design mandates a full\u2011screen error view with a Retry button.",
+      "fix": "Add an error state to `PolicyScreen` that renders a full\u2011screen view containing the error message \"Unable to store your acceptance. Please try again.\" and a `PrimaryButton` labelled \"Retry\" that re\u2011invokes the acceptance persistence logic.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/components/ui/PrimaryButton.tsx",
+      "issue": "Buttons lack a visible focus outline (2\u202fdp) on web/desktop, violating the spec's focus\u2011visible requirement.",
+      "fix": "Apply a style that adds `outline: 2px solid ${theme.colors.outline}` when the button receives focus (e.g., via `onFocus`/`onBlur` or using `:focus-visible` CSS). Ensure the style works for both native and web platforms.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/components/ui/FormField.tsx",
+      "issue": "Form fields currently have no `autoComplete` or keyboard type hints; numeric fields like Amount lack `keyboardType=\"numeric\"` and `autoComplete=\"off\"`. This doesn't follow the sign\u2011up/sign\u2011in best\u2011practice checklist (even though the app is offline, the same UX standards apply).",
+      "fix": "Pass appropriate `keyboardType` (e.g., `numeric` for amount, `default` for notes) and `autoComplete` props to `TextInput` based on the field's purpose. Add `accessibilityState={{ disabled: disabled }}` for disabled inputs.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/components/ui/BottomTabBar.tsx",
+      "issue": "The bottom tab bar is not rendered on modal screens such as the backup passphrase dialog, leaving users without a navigation path back to other primary sections.",
+      "fix": "Ensure that modal dialogs are rendered within the same navigation hierarchy so the `BottomTabBar` remains visible underneath (e.g., use a portal that does not hide the tab bar) or provide a clear close button that returns to the previous screen. Verify each signed\u2011in screen includes the tab bar.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/components/ui/Snackbar.tsx",
+      "issue": "Snackbars are not marked with `aria-live=\"assertive\"` or `role=\"alert\"`, so screen\u2011reader users may miss success/error messages.",
+      "fix": "Wrap the snackbar content in a component that has `accessibilityLiveRegion=\"assertive\"` (or `aria-live=\"assertive\"` on web) and `role=\"alert\"`. Verify the live region works across platforms.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "src/components/ui/ReceiptImagePicker.tsx",
+      "issue": "The receipt thumbnail image lacks an `accessibilityLabel`/`alt` attribute (should be \"Receipt photo\").",
+      "fix": "Add `accessibilityLabel=\"Receipt photo\"` to the Image component (or `alt` on web) to provide descriptive text for assistive technologies.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "src/components/ui/EmptyState.tsx",
+      "issue": "The illustration in the empty state does not have an `accessibilityLabel` (spec calls for \"Empty state illustration\").",
+      "fix": "Add `accessibilityLabel=\"Empty state illustration\"` to the illustration component and set `importantForAccessibility=\"no\"` if decorative.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "src/components/ui/Screen.tsx",
+      "issue": "Screen container uses hard\u2011coded padding values (`16dp`) instead of the design token `spacing*2`. This can cause inconsistency if the token changes.",
+      "fix": "Replace literal padding numbers with `theme.spacing * 2` (or a helper like `spacing(2)`) so layout adheres to the token system.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "viewport": "phone",
+      "issue": "The 'Add receipt' button is visually distinct but not perfectly aligned with the icon or text above it. The 'Receipt' and 'Mileage' buttons are slightly misaligned vertically with the main content.",
+      "fix": "Adjust button alignment to ensure consistent vertical rhythm with the icon and text above.",
+      "screen": "dashboard_empty",
+      "source": "vision"
+    },
+    {
+      "severity": "low",
+      "viewport": "desktop",
+      "issue": "The 'Receipt' and 'Mileage' buttons are slightly too close to the right edge, leaving minimal padding on the right side of the screen.",
+      "fix": "Increase right-side padding on the desktop version to create more breathing room and align with the left-aligned main content.",
+      "screen": "dashboard_empty",
+      "source": "vision"
+    },
+    {
+      "severity": "medium",
+      "screen": "dashboard_empty",
+      "source": "vision",
+      "issue": "visual quality 7/10 on 'dashboard_empty' (target 8+, minimum 7): Polished, modern, and functional empty state. Strong visual hierarchy with clear primary action. Typography is readable and well-scaled. Spacing and alignment are consistent. Color use is intentional and accessible. Navigation is clear. Desktop layout is spacious and well-balanced. Touch targets are appropriate. No critical issues.",
+      "fix": "Address this screen's findings until it looks polished and professional."
+    },
+    {
+      "severity": "medium",
+      "viewport": "phone",
+      "issue": "The primary action is not clearly emphasized. The 'Add photo' button is the most prominent, but there's no visual hierarchy to guide the user to the 'Save receipt' button which is the ultimate goal of the flow.",
+      "fix": "Add visual hierarchy to the 'Save receipt' button (e.g., bold color, larger size, or a more prominent position) to make it the clear primary action.",
+      "screen": "receipt_entry",
+      "source": "vision"
+    },
+    {
+      "severity": "medium",
+      "viewport": "phone",
+      "issue": "Typography lacks a clear type scale. The heading 'Add receipt' is large, but the section headers 'Receipt details' and 'Additional information' are not significantly larger than the field labels, making the hierarchy unclear.",
+      "fix": "Increase the font size of section headers to create a clear type scale. Use a consistent font family and weight for all text elements.",
+      "screen": "receipt_entry",
+      "source": "vision"
+    },
+    {
+      "severity": "medium",
+      "viewport": "phone",
+      "issue": "Field labels are positioned above the fields, which is correct, but the spacing between fields is inconsistent. The 'Amount' field is closer to the 'Scan receipt' button than to the 'Date' field, and the 'Category' field is closer to the 'Date' field than to the 'Type' section.",
+      "fix": "Align all fields to a consistent grid. Use equal vertical spacing between fields and consistent horizontal spacing between fields and their labels.",
+      "screen": "receipt_entry",
+      "source": "vision"
+    },
+    {
+      "severity": "medium",
+      "viewport": "phone",
+      "issue": "The 'Type' toggle is not aligned with the other fields. It is positioned lower and has a different width, making it look disconnected from the form.",
+      "fix": "Align the 'Type' toggle with the other fields. Use the same width and spacing as the other fields.",
+      "screen": "receipt_entry",
+      "source": "vision"
+    },
+    {
+      "severity": "medium",
+      "viewport": "phone",
+      "issue": "The 'Add photo' button is too large and takes up too much space. It should be more compact and positioned closer to the top of the screen.",
+      "fix": "Reduce the size of the 'Add photo' button to match the size of the other buttons. Position it closer to the top of the screen to make it more accessible.",
+      "screen": "receipt_entry",
+      "source": "vision"
+    },
+    {
+      "severity": "medium",
+      "viewport": "desktop",
+      "issue": "The desktop version is a scaled-up version of the phone layout, missing the opportunity to optimize for larger screens. The form fields are too close together and the spacing is inconsistent.",
+      "fix": "Re-layout the form for desktop. Use a grid system to align the fields and increase the spacing between them. Consider using a two-column layout for the form fields.",
+      "screen": "receipt_entry",
+      "source": "vision"
+    },
+    {
+      "severity": "low",
+      "viewport": "both",
+      "issue": "The 'Add photo' button is not styled to indicate it is the primary action. It should be more prominent than the 'Scan receipt' button.",
+      "fix": "Style the 'Add photo' button to make it more prominent. Use a bold color, larger size, or a more prominent position.",
+      "screen": "receipt_entry",
+      "source": "vision"
+    },
+    {
+      "severity": "low",
+      "viewport": "both",
+      "issue": "The form fields are not styled to indicate they are editable. They should have a clear visual indicator that they can be tapped or clicked.",
+      "fix": "Style the form fields to indicate they are editable. Use a border, shadow, or other visual indicator.",
+      "screen": "receipt_entry",
+      "source": "vision"
+    },
+    {
+      "severity": "low",
+      "viewport": "both",
+      "issue": "The 'Type' toggle is not styled to indicate it is a toggle. It should have a clear visual indicator that it can be toggled.",
+      "fix": "Style the 'Type' toggle to indicate it is a toggle. Use a clear visual indicator, such as a switch or a toggle button.",
+      "screen": "receipt_entry",
+      "source": "vision"
+    },
+    {
+      "severity": "medium",
+      "screen": "receipt_entry",
+      "source": "vision",
+      "issue": "visual quality 7/10 on 'receipt_entry' (target 8+, minimum 7): The screen is clean and functional, with a clear visual hierarchy and consistent spacing. However, it lacks polish in typography, spacing, and visual hierarchy that would elevate it to 'polished' status. The primary action is implied but not strongly emphasized, and the form fields lack helpful hints or validation states. The desktop version is a scaled-up version of the phone layout, missing the opportunity to optimize for larger screens.",
+      "fix": "Address this screen's findings until it looks polished and professional."
+    },
+    {
+      "severity": "low",
+      "viewport": "desktop",
+      "issue": "The 'Recent activity' section's card is wider than the cards above it, creating inconsistent width alignment. The card's right edge is inset from the right edge of the screen, leaving unused space.",
+      "fix": "Adjust the card width to match the summary cards above it, or ensure consistent spacing on both sides.",
+      "screen": "dashboard_populated",
+      "source": "vision"
+    },
+    {
+      "severity": "medium",
+      "viewport": "phone",
+      "issue": "The 'Add photo' button is large and prominent, but the 'Scan receipt' button below it is greyed out and visually less emphasized, which could confuse users about its current state or importance.",
+      "fix": "Ensure the 'Scan receipt' button has a consistent visual state (e.g., enabled, disabled, or highlighted) and consider making it visually comparable to the 'Add photo' button to avoid hierarchy confusion.",
+      "screen": "receipt_entry_photo",
+      "source": "vision"
+    },
+    {
+      "severity": "medium",
+      "viewport": "phone",
+      "issue": "The 'Type' toggle (Expense/Income) is positioned below the 'Notes' field, which is cut off in the screenshot. This suggests poor layout or truncation, potentially hiding critical UI.",
+      "fix": "Ensure the 'Type' toggle is fully visible and positioned above or adjacent to the 'Notes' field to avoid truncation and maintain logical grouping.",
+      "screen": "receipt_entry_photo",
+      "source": "vision"
+    },
+    {
+      "severity": "low",
+      "viewport": "phone",
+      "issue": "The 'Add photo' button is visually dominant, but the 'Scan receipt' button is greyed out, which may imply it's not a primary action, but the design doesn't clearly communicate this distinction.",
+      "fix": "Add a subtle visual cue (e.g., a muted icon or text) to indicate the 'Scan receipt' button is secondary or inactive, rather than relying solely on color and state.",
+      "screen": "receipt_entry_photo",
+      "source": "vision"
+    },
+    {
+      "severity": "low",
+      "viewport": "phone",
+      "issue": "The 'Category' field is positioned under 'Receipt details' and 'Date' field, but no visual indicator (like a label or icon) suggests it might be a dropdown or searchable field.",
+      "fix": "Add a small icon (e.g., a downward arrow or magnifying glass) next to the 'Category' field to indicate it\u2019s interactive or searchable, improving user expectations.",
+      "screen": "receipt_entry_photo",
+      "source": "vision"
+    },
+    {
+      "severity": "low",
+      "viewport": "both",
+      "issue": "The 'Add receipt' header is centered on desktop but aligned to the left on phone. This inconsistent alignment breaks visual harmony across viewports.",
+      "fix": "Align the header consistently across both viewports (e.g., left-aligned on both, or center-aligned on both) to maintain a cohesive design language.",
+      "screen": "receipt_entry_photo",
+      "source": "vision"
+    },
+    {
+      "severity": "medium",
+      "screen": "receipt_entry_photo",
+      "source": "vision",
+      "issue": "visual quality 7/10 on 'receipt_entry_photo' (target 8+, minimum 7): Polished, clean interface with clear visual hierarchy and consistent spacing. The primary action is obvious (Add photo), typography is readable, and form elements are well-aligned. Minor improvements needed for touch targets and spacing consistency.",
+      "fix": "Address this screen's findings until it looks polished and professional."
+    },
+    {
+      "severity": "medium",
+      "viewport": "phone",
+      "issue": "The 'Save mileage' button is visually heavy and could be more subtly styled to match the rest of the interface, which uses rounded corners and subtle shadows.",
+      "fix": "Reduce button weight by removing the dark shadow and using a lighter, more consistent elevation style. Consider a more subtle color gradient or solid fill that better integrates with the card design.",
+      "screen": "mileage_entry",
+      "source": "vision"
+    },
+    {
+      "severity": "low",
+      "viewport": "phone",
+      "issue": "The 'Purpose' field's placeholder text 'e.g. Client site visit' is positioned below the field but not aligned with the label's baseline, creating a slight visual misalignment.",
+      "fix": "Align the placeholder text to the baseline of the field label to ensure consistent vertical alignment across all form fields.",
+      "screen": "mileage_entry",
+      "source": "vision"
+    },
+    {
+      "severity": "low",
+      "viewport": "desktop",
+      "issue": "The form fields and buttons are centered vertically but lack horizontal padding on the left and right, making them feel slightly cramped against the edges.",
+      "fix": "Add consistent horizontal padding (e.g., 16px) to the container to create breathing room and improve visual balance on desktop.",
+      "screen": "mileage_entry",
+      "source": "vision"
+    },
+    {
+      "severity": "low",
+      "viewport": "desktop",
+      "issue": "The recent activity cards are too close together, creating a cramped appearance. The horizontal spacing between the 'Receipt' and 'Mileage' buttons is inconsistent with the spacing between cards.",
+      "fix": "Increase vertical spacing between activity cards and standardize the spacing between buttons and cards for consistency.",
+      "screen": "dashboard_with_mileage",
+      "source": "vision"
+    },
+    {
+      "severity": "medium",
+      "viewport": "both",
+      "issue": "The toggle switch for 'App lock' is visually distinct from the other buttons, but its label and subtext are not aligned with the toggle, creating inconsistent visual hierarchy.",
+      "fix": "Align the toggle and its label to the same baseline, and ensure the subtext is consistently positioned relative to the toggle.",
+      "screen": "settings",
+      "source": "vision"
+    },
+    {
+      "severity": "medium",
+      "viewport": "both",
+      "issue": "The buttons lack visual hierarchy or differentiation; all are identical in shape, color, and size, making it hard to identify primary actions.",
+      "fix": "Use subtle visual cues like different background color, icon, or padding to differentiate primary actions from secondary ones.",
+      "screen": "settings",
+      "source": "vision"
+    },
+    {
+      "severity": "medium",
+      "viewport": "both",
+      "issue": "Spacing between buttons is inconsistent, with some buttons appearing too close together, reducing readability and visual breathing room.",
+      "fix": "Apply consistent vertical spacing between buttons and ensure adequate padding within each button for better visual separation.",
+      "screen": "settings",
+      "source": "vision"
+    },
+    {
+      "severity": "medium",
+      "viewport": "desktop",
+      "issue": "The bottom navigation bar is not integrated into the desktop layout; it appears as a separate element at the bottom, which feels disconnected from the main content.",
+      "fix": "Integrate the bottom navigation into the desktop layout by either hiding it or placing it in a more appropriate position, such as the bottom-left corner, to maintain visual continuity.",
+      "screen": "settings",
+      "source": "vision"
+    },
+    {
+      "severity": "low",
+      "viewport": "phone",
+      "issue": "The toggle switch for 'App lock' is too small for touch targets on a phone, potentially leading to user errors.",
+      "fix": "Increase the size of the toggle switch to meet standard touch target guidelines (minimum 44x44 pixels).",
+      "screen": "settings",
+      "source": "vision"
+    },
+    {
+      "severity": "medium",
+      "screen": "settings",
+      "source": "vision",
+      "issue": "visual quality 7/10 on 'settings' (target 8+, minimum 7): The settings screen is clean and functional, with consistent spacing and a clear visual hierarchy. The primary action is implied by the list, but the toggle for 'App lock' is visually distinct. Typography is readable, and alignment is consistent on both views. However, the design lacks polish in form elements, spacing feels tight, and the bottom navigation is not fully integrated into the desktop layout.",
+      "fix": "Address this screen's findings until it looks polished and professional."
+    },
+    {
+      "severity": "low",
+      "viewport": "desktop",
+      "issue": "The form fields and button are centered vertically, leaving significant white space above and below, which may feel underutilized on desktop.",
+      "fix": "Adjust vertical spacing to better utilize the desktop viewport, perhaps by reducing top/bottom padding or adding secondary content.",
+      "screen": "backup_passphrase_modal",
+      "source": "vision"
+    }
+  ],
+  "lighthouse": [
+    {
+      "accessibility": 98,
+      "bestPractices": 100,
+      "performance": 57
+    }
+  ],
+  "vision_scores": [
+    {
+      "screen": "policy_gate",
+      "score": 8.0,
+      "summary": "Polished, modern, and consistent UI with strong visual hierarchy and clear primary action. Typography is well-scaled and readable. Spacing and alignment are clean and grid-based. Color use is minimal and intentional. Form design follows best practices. Navigation is clear. Empty states and use of space are appropriate. Touch targets are adequate. No browser defaults or layout issues visible."
+    },
+    {
+      "screen": "dashboard_empty",
+      "score": 7.0,
+      "summary": "Polished, modern, and functional empty state. Strong visual hierarchy with clear primary action. Typography is readable and well-scaled. Spacing and alignment are consistent. Color use is intentional and accessible. Navigation is clear. Desktop layout is spacious and well-balanced. Touch targets are appropriate. No critical issues."
+    },
+    {
+      "screen": "receipt_entry",
+      "score": 7.0,
+      "summary": "The screen is clean and functional, with a clear visual hierarchy and consistent spacing. However, it lacks polish in typography, spacing, and visual hierarchy that would elevate it to 'polished' status. The primary action is implied but not strongly emphasized, and the form fields lack helpful hints or validation states. The desktop version is a scaled-up version of the phone layout, missing the opportunity to optimize for larger screens."
+    },
+    {
+      "screen": "dashboard_populated",
+      "score": 8.0,
+      "summary": "Polished, modern dashboard with clear visual hierarchy, consistent spacing, and touch-friendly controls. The design feels professional and would not look out of place in a commercial app. Minor spacing issues on desktop could be improved but do not detract from usability."
+    },
+    {
+      "screen": "receipts_loaded",
+      "score": 8.0,
+      "summary": "Polished, clean layout with strong visual hierarchy and consistent spacing. The card is well-contained, typography is readable, and the bottom navigation is clearly visible. No critical issues found."
+    },
+    {
+      "screen": "receipt_entry_photo",
+      "score": 7.0,
+      "summary": "Polished, clean interface with clear visual hierarchy and consistent spacing. The primary action is obvious (Add photo), typography is readable, and form elements are well-aligned. Minor improvements needed for touch targets and spacing consistency."
+    },
+    {
+      "screen": "dashboard_with_two_receipts",
+      "score": 8.0,
+      "summary": "Polished, modern dashboard with clear visual hierarchy and consistent spacing. Primary action (Save receipt) is evident via snackbar feedback. Typography is readable and scaled. Desktop layout is spacious and well-aligned. No critical usability or design flaws."
+    },
+    {
+      "screen": "mileage_empty",
+      "score": 9.0,
+      "summary": "Polished, clean, and intuitive empty state with clear primary action. Strong visual hierarchy, generous spacing, and consistent branding. Desktop version mirrors phone layout without stretching or cramming. Touch targets are appropriately sized. No unstyled elements or layout issues."
+    },
+    {
+      "screen": "mileage_entry",
+      "score": 8.0,
+      "summary": "Polished, modern interface with clear visual hierarchy and consistent spacing. The primary action is prominent, typography is readable, and layout is well-organized on both phone and desktop. Minor improvements could enhance accessibility and visual polish."
+    },
+    {
+      "screen": "dashboard_with_mileage",
+      "score": 8.0,
+      "summary": "Polished, modern dashboard with clear visual hierarchy and consistent spacing. Primary actions are prominent, typography is readable, and the layout scales well from phone to desktop without distortion. Minor spacing inconsistencies and a slightly cramped activity list on desktop are the only issues."
+    },
+    {
+      "screen": "settings",
+      "score": 7.0,
+      "summary": "The settings screen is clean and functional, with consistent spacing and a clear visual hierarchy. The primary action is implied by the list, but the toggle for 'App lock' is visually distinct. Typography is readable, and alignment is consistent on both views. However, the design lacks polish in form elements, spacing feels tight, and the bottom navigation is not fully integrated into the desktop layout."
+    },
+    {
+      "screen": "export",
+      "score": 9.0,
+      "summary": "Polished, modern export screen with clear visual hierarchy and consistent spacing. Primary actions are prominent, typography is clean and readable, and the layout is spacious and well-aligned on both phone and desktop. No critical issues."
+    },
+    {
+      "screen": "backup",
+      "score": 9.0,
+      "summary": "Polished, modern interface with clear visual hierarchy, consistent spacing, and touch-friendly controls. The primary action is immediately obvious, typography is readable and scaled, and the layout is well-balanced on both phone and desktop. No critical issues found."
+    },
+    {
+      "screen": "backup_passphrase_modal",
+      "score": 8.0,
+      "summary": "Polished, modern interface with clear visual hierarchy and consistent spacing. The primary action is obvious, typography is readable, and the layout is well-organized for both phone and desktop. Minor spacing improvements could enhance the desktop experience."
+    }
+  ]
+}
