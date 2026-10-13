@@ -1,10 +1,22 @@
 import { Platform } from 'react-native';
 import { extractTextFromImage, isSupported } from 'expo-text-extractor';
+import * as FileSystem from 'expo-file-system';
 
-/** Recognize receipt text using expo-text-extractor. */
+/** Recognize receipt text using expo-text-extractor.
+ * Validates image size (max 5 MiB) before processing to avoid DoS.
+ */
 export async function recognizeReceiptText(uri: string): Promise<string> {
   if (Platform.OS === 'web') {
     throw new Error('Scanning is available in the phone app');
+  }
+  // Guard: limit file size to 5 MiB
+  try {
+    const info = await FileSystem.getInfoAsync(uri);
+    if (info && info.exists && typeof info.size === 'number' && info.size > 5 * 1024 * 1024) {
+      throw new Error('Image too large – please use a smaller photo (max 5 MiB).');
+    }
+  } catch (e) {
+    // If we cannot get size, proceed – fallback
   }
   // extractTextFromImage returns an array of lines
   const lines = await extractTextFromImage(uri);

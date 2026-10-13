@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View } from 'react-native';
 import { useNavigation, NavigationProp } from '@react-navigation/native';
 import { PrimaryButton, Screen, FormField, ChoiceField } from '../components/ui';
-import { Snackbar } from 'react-native-paper';
+import { Snackbar, Text } from 'react-native-paper';
 import ReceiptImagePicker from '../components/ui/ReceiptImagePicker';
 import { v4 as uuidv4 } from 'uuid';
 import { getStore } from '../lib/storage';
@@ -15,6 +15,7 @@ import { recognizeReceiptText, parseReceipt, ParsedReceipt } from '../lib/ocr';
 import { getAllCategories } from '../lib/categories';
 import { IconButton } from 'react-native-paper';
 import { DatePickerModal } from 'react-native-paper-dates';
+import { theme, layout } from '../theme';
 
 export default function ReceiptEntryScreen() {
   const navigation = useNavigation<NavigationProp<any>>();
@@ -119,9 +120,12 @@ export default function ReceiptEntryScreen() {
 
   return (
     <Screen title="Add receipt">
-      <View style={{ gap: 12 }}>
+      <View style={{ padding: layout.pagePadding, maxWidth: layout.maxContentWidth, alignSelf: 'center', gap: 16 }}>
         <ReceiptImagePicker photoUri={photoUri} onChange={setPhotoUri} />
         <PrimaryButton label="Scan receipt" onPress={startScan} disabled={!photoUri} />
+        <Text variant="titleMedium" style={{ marginTop: 12, marginBottom: 4 }}>
+          Receipt details
+        </Text>
         {/* Amount */}
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
           <FormField
@@ -137,7 +141,7 @@ export default function ReceiptEntryScreen() {
             <PrimaryButton label="Looks right" variant="text" onPress={() => clearMark('amount')} />
           )}
         </View>
-        {/* Date field with picker */}
+        {/* Date */}
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
           <FormField
             label="Date"
@@ -147,7 +151,7 @@ export default function ReceiptEntryScreen() {
             hint={marked.date ? 'Check these details' : undefined}
             marked={marked.date}
           />
-          <IconButton icon="calendar" onPress={() => setShowDatePicker(true)} accessibilityLabel="Select receipt date" />
+          <IconButton icon="calendar" size={24} onPress={() => setShowDatePicker(true)} accessibilityLabel="Select receipt date" />
           {marked.date && (
             <PrimaryButton label="Looks right" variant="text" onPress={() => clearMark('date')} />
           )}
@@ -167,7 +171,7 @@ export default function ReceiptEntryScreen() {
           }}
           validRange={{ endDate: new Date() }}
         />
-        {/* Category field */}
+        {/* Category */}
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
           <FormField
             label="Category"
@@ -181,6 +185,9 @@ export default function ReceiptEntryScreen() {
             <PrimaryButton label="Looks right" variant="text" onPress={() => clearMark('category')} />
           )}
         </View>
+        <Text variant="titleMedium" style={{ marginTop: 12, marginBottom: 4 }}>
+          Additional information
+        </Text>
         <ChoiceField<ReceiptType>
           label="Type"
           value={type}
@@ -189,7 +196,7 @@ export default function ReceiptEntryScreen() {
         />
         <FormField label="Notes" value={notes} onChangeText={setNotes} multiline placeholder="Enter notes about this receipt" />
         {error ? <Snackbar visible={true} onDismiss={() => setError('')} duration={3000}>{error}</Snackbar> : null}
-        <PrimaryButton label="Save receipt" onPress={onSave} loading={saving} disabled={!canSave} />
+        <PrimaryButton label="Save receipt" onPress={onSave} loading={saving} disabled={!canSave} style={{ marginTop: 16 }} />
       </View>
     </Screen>
   );

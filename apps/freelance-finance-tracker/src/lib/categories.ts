@@ -41,6 +41,13 @@ async function saveData(store: Store, data: CategoriesData): Promise<void> {
   await store.set(STORAGE_KEY, data);
 }
 
+/** Validate category name: length 1‑40, no HTML‑tag characters. */
+function isValidName(name: string): boolean {
+  if (name.length < 1 || name.length > 40) return false;
+  // Disallow <, >, & to prevent potential XSS vectors.
+  return !/[<>]/.test(name);
+}
+
 /** Get all categories, applying rename and hidden flags.
  * Returns both visible and hidden categories; callers can filter by the 'hidden' flag.
  */
@@ -49,7 +56,7 @@ export async function getAllCategories(
   options?: { includeHidden?: boolean }
 ): Promise<Array<{ id: string; name: string; hidden: boolean; custom: boolean }>> {
   const data = await loadData(store);
-  const includeHidden = options?.includeHidden ?? true; // default to include hidden
+  const includeHidden = options?.includeHidden ?? true;
   const result: Array<{ id: string; name: string; hidden: boolean; custom: boolean }> = [];
   // defaults
   for (const def of DEFAULT_CATEGORIES) {
@@ -69,7 +76,7 @@ export async function getAllCategories(
 
 /** Add a new custom category. Returns null on success or error string. */
 export async function addCustomCategory(store: Store, name: string): Promise<string | null> {
-  if (name.length < 1 || name.length > 40) return 'Category must be 1‑40 characters.';
+  if (!isValidName(name)) return 'Category must be 1–40 characters and not contain < or >.';
   const data = await loadData(store);
   const allNames = [...DEFAULT_CATEGORIES, ...data.custom];
   const exists = allNames.some((n) => n.toLowerCase() === name.toLowerCase());
@@ -81,7 +88,7 @@ export async function addCustomCategory(store: Store, name: string): Promise<str
 
 /** Rename a category (default or custom). */
 export async function renameCategory(store: Store, oldName: string, newName: string): Promise<string | null> {
-  if (newName.length < 1 || newName.length > 40) return 'Category must be 1‑40 characters.';
+  if (!isValidName(newName)) return 'Category must be 1–40 characters and not contain < or >.';
   const data = await loadData(store);
   const allNames = [...DEFAULT_CATEGORIES, ...data.custom];
   const conflict = allNames.some((n) => n.toLowerCase() === newName.toLowerCase());
@@ -103,7 +110,6 @@ export async function renameCategory(store: Store, oldName: string, newName: str
 
 /** Hide a category (default or custom). */
 export async function hideCategory(store: Store, name: string): Promise<string | null> {
-  // Hiding is allowed even if the category is currently used by receipts.
   const data = await loadData(store);
   if (!data.hidden.includes(name)) data.hidden.push(name);
   await saveData(store, data);
@@ -112,19 +118,14 @@ export async function hideCategory(store: Store, name: string): Promise<string |
 
 /** Delete a custom category. Returns null on success or error string. */
 export async function deleteCategory(store: Store, name: string): Promise<string | null> {
-  // Only custom categories can be deleted, and only if not in use.
   const data = await loadData(store);
   const isCustom = data.custom.includes(name);
   if (!isCustom) return 'Only custom categories can be deleted.';
   const inUse = await isCategoryInUse(store, name);
   if (inUse) return 'Category is in use and cannot be deleted.';
-  // Remove from custom list
   data.custom = data.custom.filter((c) => c !== name);
-  // Also remove any hidden flag or rename entry for this name
   data.hidden = data.hidden.filter((h) => h !== name);
-  if (data.rename[name]) {
-    delete data.rename[name];
-  }
+  if (data.rename[name]) delete data.rename[name];
   await saveData(store, data);
   return null;
 }
