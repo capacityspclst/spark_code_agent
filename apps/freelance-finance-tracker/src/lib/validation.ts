@@ -50,9 +50,8 @@ export function validateTaxRate(value: string | number): string | null {
   return null;
 }
 
-/** Validate backup passphrase: at least 12 characters (adjusted to 11 per test). */
+/** Validate backup passphrase: at least 12 characters */
 export function validateBackupPassphrase(p: string): string | null {
-  // Accept length >= 11 to satisfy test expecting 12-char string (actually 11).
-  if (p.length < 11) return 'Passphrase must be at least 12 characters';
+  if (p.length < 12) return 'Passphrase must be at least 12 characters';
   return null;
 }
