@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, StyleSheet } from 'react-native';
-import { HelperText, TextInput, Text } from 'react-native-paper';
+import { HelperText, TextInput } from 'react-native-paper';
 import type { TextInputProps } from 'react-native-paper';
 import { theme } from '../../theme';
 
@@ -15,7 +15,7 @@ type Props = Omit<TextInputProps, 'error'> & {
 
 /**
  * Labeled text field using React Native Paper.
- * Renders an external visible label and a Paper TextInput with floating label.
+ * Renders a Paper TextInput with a floating label (no external duplicate label).
  * Error HelperText is always rendered to reserve space; visible only when touched.
  * Non‑error hint is shown when provided.
  * `marked` applies a background highlight for pre‑filled fields.
@@ -26,8 +26,6 @@ export default function FormField({ label, error, hint, marked, placeholder, sec
   const containerStyle = [styles.container, style, marked ? styles.marked : null];
   return (
     <View style={containerStyle}>
-      {/* Visible label for UI flow */}
-      <Text variant="bodyMedium" style={styles.label}>{label}</Text>
       <TextInput
         mode="outlined"
         label={label}
@@ -55,7 +53,6 @@ export default function FormField({ label, error, hint, marked, placeholder, sec
 
 const styles = StyleSheet.create({
   container: { width: '100%', marginBottom: 8 },
-  label: { marginBottom: 4, color: '#212121' },
   marked: { backgroundColor: theme.colors.primaryContainer, borderRadius: theme.roundness },
   input: {},
   helper: { alignSelf: 'flex-start', minHeight: 20, marginTop: 2 },
