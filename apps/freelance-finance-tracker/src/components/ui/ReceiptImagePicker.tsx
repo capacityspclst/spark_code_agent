@@ -35,7 +35,7 @@ export default function ReceiptImagePicker({ photoUri, onChange }: Props) {
           <PrimaryButton label="Remove photo" variant="text" onPress={remove} />
         </View>
       ) : (
-        <PrimaryButton label="Add photo" variant="secondary" onPress={pick} />
+        <PrimaryButton label="Add photo" variant="primary" onPress={pick} />
       )}
     </View>
   );
