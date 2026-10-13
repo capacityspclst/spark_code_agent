@@ -1,126 +1,107 @@
-import type { Store } from './storage/types';
-import { keepingPolicy } from './dataReset';
+import { Store } from './storage/types';
 import { getAllReceipts } from './receiptStore';
 import { getAllMileageEntries } from './mileageStore';
-import { deriveKey, encrypt, decrypt, toBase64, fromBase64, utf8, fromUtf8, randomBytes } from './crypto';
-import type { Receipt, MileageEntry } from './models';
-import { deleteAllPhotos, readPhotoBase64, writePhotoBase64 } from './photos';
-import { validateBackupPassphrase } from './validation';
+import { getAllCategories } from './categories';
+import { encryptText, decryptText, deriveKey, randomBytes, toBase64, fromBase64 } from './crypto';
 
+/**
+ * Backup format version.
+ */
 const BACKUP_VERSION = 1;
-/** Validate passphrase policy */
-function enforcePassphrasePolicy(p: string): void {
-  const err = validateBackupPassphrase(p);
-  if (err) throw new Error(`Invalid backup passphrase: ${err}`);
+
+/**
+ * Shape of the unencrypted backup data.
+ */
+export interface BackupData {
+  version: number;
+  receipts: any[]; // Receipt objects
+  mileage: any[]; // MileageEntry objects
+  categories?: any; // optional categories data (raw storage shape)
 }
 
-/** Maximum backup file size before decryption (10 MiB). */
-const MAX_BACKUP_SIZE = 10 * 1024 * 1024;
-/** Maximum number of entries allowed in a backup to prevent DoS. */
-const MAX_RECEIPTS = 10000;
-const MAX_MILEAGE = 5000;
-/** Maximum allowed photo size (in bytes) for each receipt photo during backup (2 MiB). */
-const MAX_PHOTO_SIZE = 2 * 1024 * 1024;
-
-/** Create an encrypted backup of all data, including receipt photos. */
-export async function createBackup(store: Store, passphrase: string): Promise<string> {
-  enforcePassphrasePolicy(passphrase);
-  const receipts: Receipt[] = await getAllReceipts(store);
-  const mileage: MileageEntry[] = await getAllMileageEntries(store);
-  const receiptsWithPhotos = await Promise.all(
-    receipts.map(async (r) => {
-      if (r.photoUri) {
-        const photoData = await readPhotoBase64(r.photoUri);
-        if (photoData) {
-          // Approximate original byte size from base64 length
-          const approxSize = Math.floor((photoData.length * 3) / 4);
-          if (approxSize > MAX_PHOTO_SIZE) {
-            throw new Error('Photo too large to include in backup');
-          }
-          return { ...r, photoData };
-        }
-      }
-      return { ...r };
-    })
-  );
-  const payload = JSON.stringify({ version: BACKUP_VERSION, receipts: receiptsWithPhotos, mileage });
-  const salt = randomBytes(16);
-  const key = deriveKey(passphrase, salt);
-  const encrypted = encrypt(key, utf8(payload));
-  const combined = new Uint8Array(salt.length + encrypted.length);
-  combined.set(salt, 0);
-  combined.set(encrypted, salt.length);
-  return toBase64(combined);
-}
-
-/** Validate the structure of a decrypted backup. */
-export function validateBackupStructure(data: any): string | null {
-  if (typeof data !== 'object' || data === null) return 'Backup data is not an object.';
-  if (typeof data.version !== 'number') return 'Missing or invalid version.';
-  if (!Array.isArray(data.receipts)) return 'Receipts should be an array.';
-  if (!Array.isArray(data.mileage)) return 'Mileage should be an array.';
-  if (data.receipts.length > MAX_RECEIPTS) return `Too many receipts (max ${MAX_RECEIPTS}).`;
-  if (data.mileage.length > MAX_MILEAGE) return `Too many mileage entries (max ${MAX_MILEAGE}).`;
-  for (const r of data.receipts) {
-    if (typeof r.id !== 'string' || typeof r.amount !== 'number' || typeof r.date !== 'string')
-      return 'Invalid receipt entry.';
+/**
+ * Validate the shape of a backup object (not encrypted).
+ * Returns null if valid, otherwise an error string.
+ */
+export function validateBackupStructure(obj: any): string | null {
+  if (typeof obj !== 'object' || obj === null) return 'Backup must be an object';
+  if (obj.version !== BACKUP_VERSION) return 'Unsupported backup version';
+  if (!Array.isArray(obj.receipts)) return 'Receipts must be an array';
+  if (!Array.isArray(obj.mileage)) return 'Mileage must be an array';
+  // simple field checks for receipts
+  for (const r of obj.receipts) {
+    if (typeof r !== 'object' || r === null) return 'Invalid receipt entry';
+    if (typeof r.id !== 'string') return 'Receipt id must be string';
+    if (typeof r.amount !== 'number') return 'Receipt amount must be number';
+    if (typeof r.date !== 'string') return 'Receipt date must be string';
+    if (typeof r.category !== 'string') return 'Receipt category must be string';
+    if (typeof r.type !== 'string') return 'Receipt type must be string';
+    if (typeof r.notes !== 'string') return 'Receipt notes must be string';
   }
-  for (const m of data.mileage) {
-    if (typeof m.id !== 'string' || typeof m.date !== 'string' || typeof m.miles !== 'number')
-      return 'Invalid mileage entry.';
+  // mileage checks
+  for (const m of obj.mileage) {
+    if (typeof m !== 'object' || m === null) return 'Invalid mileage entry';
+    if (typeof m.id !== 'string') return 'Mileage id must be string';
+    if (typeof m.date !== 'string') return 'Mileage date must be string';
+    if (typeof m.miles !== 'number') return 'Mileage miles must be number';
+    if (typeof m.purpose !== 'string') return 'Mileage purpose must be string';
+  }
+  // categories, if present, should be an object (light validation)
+  if (obj.categories !== undefined && typeof obj.categories !== 'object') {
+    return 'Categories must be an object';
   }
   return null;
 }
 
-/** Sanitize a receipt id to avoid path traversal when writing files. */
-function safeReceiptId(id: string): string {
-  // Allow only alphanumeric, dash, underscore
-  return id.replace(/[^a-zA-Z0-9_-]/g, '_');
+/**
+ * Create an encrypted backup string.
+ * The backup includes receipts, mileage entries, and raw categories storage.
+ */
+export async function createBackup(store: Store, passphrase: string): Promise<string> {
+  const receipts = await getAllReceipts(store);
+  const mileage = await getAllMileageEntries(store);
+  // Retrieve raw categories storage shape
+  const rawCategories = await store.get<any>('categories');
+  const data: BackupData = {
+    version: BACKUP_VERSION,
+    receipts,
+    mileage,
+    categories: rawCategories ?? { custom: [], hidden: [], rename: {} },
+  };
+  const json = JSON.stringify(data);
+  const salt = randomBytes(16);
+  const key = deriveKey(passphrase, salt);
+  const ciphertext = encryptText(key, json);
+  const saltB64 = toBase64(salt);
+  return `${saltB64}:${ciphertext}`;
 }
 
-/** Restore data from an encrypted backup blob. */
-export async function restoreBackup(store: Store, backupBlob: string, passphrase: string): Promise<void> {
-  // Enforce passphrase length policy
-  enforcePassphrasePolicy(passphrase);
-  const combined = fromBase64(backupBlob);
-  // Pre‑decryption size check to prevent DoS
-  if (combined.length > MAX_BACKUP_SIZE) throw new Error('Backup file too large');
-  if (combined.length < 16) throw new Error('Invalid backup file');
-  const salt = combined.subarray(0, 16);
-  const ciphertext = combined.subarray(16);
+/**
+ * Restore from an encrypted backup string.
+ * Throws on validation failure or decryption errors.
+ */
+export async function restoreBackup(store: Store, backupString: string, passphrase: string): Promise<void> {
+  const [saltB64, cipher] = backupString.split(':');
+  if (!saltB64 || !cipher) throw new Error('Invalid backup format');
+  const salt = fromBase64(saltB64);
   const key = deriveKey(passphrase, salt);
-  let decrypted: string;
+  const json = decryptText(key, cipher);
+  let obj: any;
   try {
-    decrypted = fromUtf8(decrypt(key, ciphertext));
+    obj = JSON.parse(json);
   } catch {
-    throw new Error('Invalid passphrase or corrupted backup file');
+    throw new Error('Backup data corrupted');
   }
-  const data = JSON.parse(decrypted) as any;
-
-  // Validate structure before mutating store
-  const structErr = validateBackupStructure(data);
-  if (structErr) throw new Error('Invalid backup format: ' + structErr);
-
-  // Replace everything: records and the photo folder.
-  await deleteAllPhotos();
-  await keepingPolicy(store, async () => {
-    await store.clearAll();
-    for (const r of data.receipts) {
-      const { photoData, ...rest } = r as any;
-      const safeId = safeReceiptId(rest.id);
-      await store.put('receipts', { ...rest, id: safeId } as any);
-      if (photoData) {
-        try {
-          const uri = await writePhotoBase64(safeId, photoData);
-          await store.put('receipts', { ...rest, id: safeId, photoUri: uri } as any);
-        } catch {
-          // keep receipt without photo if write fails
-        }
-      }
-    }
-    for (const m of data.mileage) {
-      const safeId = safeReceiptId(m.id);
-      await store.put('mileage', { ...m, id: safeId } as any);
-    }
-  });
+  const err = validateBackupStructure(obj);
+  if (err) throw new Error(err);
+  await store.clearAll();
+  for (const r of obj.receipts) {
+    await store.put('receipts', r);
+  }
+  for (const m of obj.mileage) {
+    await store.put('mileage', m);
+  }
+  if (obj.categories) {
+    await store.set('categories', obj.categories);
+  }
 }

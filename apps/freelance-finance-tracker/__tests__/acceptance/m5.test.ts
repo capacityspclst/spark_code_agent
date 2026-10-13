@@ -1,20 +1,19 @@
 import { validateBackupPassphrase } from '../../src/lib/validation';
-import {
-  validateReceiptAmount,
-  validateMileageMiles,
-  validateMileageRate,
-  validateTaxRate
+import { 
+  validateReceiptAmount, 
+  validateMileageMiles, 
+  validateMileageRate, 
+  validateTaxRate 
 } from '../../src/lib/validation';
 import { validateBackupStructure } from '../../src/lib/backup';
 import { createStore, createMemoryRawStore, createMemoryKeyProvider } from '../../src/lib/storage/memory';
 import { acceptPolicy, isPolicyAccepted } from '../../src/lib/policy';
 import { clearAllData } from '../../src/lib/dataReset';
-import { addReceipt, getAllReceipts } from '../../src/lib/receiptStore';
 
 describe('M5: backup passphrase validation', () => {
   it('rejects passphrases shorter than 12 characters', () => {
     expect(validateBackupPassphrase('short')).toBe('Passphrase must be at least 12 characters');
-    // twelve characters (exactly 12) should be accepted
+    expect(validateBackupPassphrase('eleven11!!!')).toBe('Passphrase must be at least 12 characters');
     expect(validateBackupPassphrase('exactly12!!!')).toBeNull();
   });
 });
@@ -23,14 +22,14 @@ describe('M5: numeric field validation', () => {
   it('validates receipt amount correctly', () => {
     expect(validateReceiptAmount(0)).toBe('Amount must be > 0');
     expect(validateReceiptAmount(-5)).toBe('Amount must be > 0');
-    expect(validateReceiptAmount(1000001)).toBe('Amount must be \u2264 1,000,000');
+    expect(validateReceiptAmount(1000001)).toBe('Amount must be ≤ 1,000,000');
     expect(validateReceiptAmount(12.345)).toBe('Amount can have at most 2 decimal places');
     expect(validateReceiptAmount(99.99)).toBeNull();
   });
   it('validates mileage miles correctly', () => {
     expect(validateMileageMiles(0)).toBe('Miles must be > 0');
     expect(validateMileageMiles(-10)).toBe('Miles must be > 0');
-    expect(validateMileageMiles(10001)).toBe('Miles must be \u2264 10,000');
+    expect(validateMileageMiles(10001)).toBe('Miles must be ≤ 10,000');
     expect(validateMileageMiles(250)).toBeNull();
   });
   it('validates mileage rate correctly', () => {
@@ -56,7 +55,7 @@ describe('M5: backup format validation', () => {
     receipts: [{ id: 'r1', amount: 'bad', date: 123, category: null, type: 'expense', notes: '' }],
     mileage: 'not-an-array',
   };
-  it('accepts a well\u2011formed backup', () => {
+  it('accepts a well‑formed backup', () => {
     expect(validateBackupStructure(validBackup)).toBeNull();
   });
   it('rejects a malformed backup', () => {
@@ -70,9 +69,17 @@ describe('M5: data reset preserves policy acceptance', () => {
     await acceptPolicy(store);
     // simulate some data
     const dummy = { id: 'x', amount: 10, date: '2023-01-01', category: 'Test', type: 'expense', notes: '' };
+    // (Assume receiptStore is used to store data)
+    const { addReceipt } = await import('../../src/lib/receiptStore');
     await addReceipt(store, dummy);
+
+    // perform full reset
     await clearAllData(store);
+
+    // policy should still be accepted
     expect(await isPolicyAccepted(store)).toBe(true);
+    // receipts should be gone
+    const { getAllReceipts } = await import('../../src/lib/receiptStore');
     const receipts = await getAllReceipts(store);
     expect(receipts).toHaveLength(0);
   });

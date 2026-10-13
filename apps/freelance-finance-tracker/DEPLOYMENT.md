@@ -1,22 +1,21 @@
 # DEPLOYMENT.md
 
-*This guide takes John (or any developer) from the first‑commit version of **apps/freelance‑finance‑tracker** to a production‑ready iOS/Android release (with an optional web fallback). All commands, file names, ports, and environment variables are taken from the repository; anything that does not yet exist is marked **TODO** and a stub is provided.*
+*This guide takes John (or any developer) from the current commit of **apps/freelance-finance-tracker** to a production‑ready iOS/Android release (with an optional static‑web fallback). All commands, file names, ports, and environment variables are taken from the repository; anything that does not yet exist is marked **TODO** and a stub is provided.*
 
 ---  
 
 ## What this app is
 
-- **Type**: Mobile‑first, local‑first finance tracker built with **Expo SDK** `$(npm view expo version)` (the exact version is pinned in `package.json`).  
-- **Core story**: Users capture receipt photos + metadata and mileage logs, view a dashboard, and export tax‑ready CSV/PDF files—all data stays encrypted on‑device. No network traffic, no analytics, no accounts.  
-- **Key features (source files)**  
-  1. **Policy gate** – `src/lib/policy.ts` stores `POLICY_VERSION` acceptance in encrypted storage and blocks the UI until the user agrees.  
-  2. **Encrypted storage** – `src/lib/storage/device.native.ts` uses SQLite + `expo-secure-store` for the encryption key (generated on first launch).  
-  3. **Receipt capture** – `expo-image-picker` + `expo-file-system` (`src/lib/photoPicker.ts`, `src/components/ui/ReceiptImagePicker.tsx`).  
-  4. **Mileage logging** – configurable IRS rate (`src/lib/settings.ts`).  
-  5. **Exports** – CSV (`src/lib/exportCsv.ts`) and PDF (`src/lib/exportPdf.ts` via `expo-print`).  
-  6. **Encrypted backup / restore** – `src/lib/backup.ts` uses `@noble/ciphers` & `@noble/hashes`.  
-  7. **Optional biometric lock** – `src/lib/appLock.ts` (`expo-local-authentication`), toggleable in Settings.  
-  8. **Theming & UI** – React Native Paper (Material 3) with shared components under `src/components/ui/`.  
+- **Type**: Mobile‑first, local‑first finance tracker built with **Expo SDK** `$(npm view expo version)` (pinned in `package.json`).  
+- **Core story**: Users capture receipt photos + metadata, log mileage, view a dashboard, and export tax‑ready CSV/PDF files. All data stays encrypted on‑device; no network traffic, no analytics, no accounts.  
+- **New capabilities (v2.0)**  
+  1. **On‑device OCR receipt scanning** – uses `expo-text-extractor@^2.0.0` (Apple Vision on iOS, ML Kit on Android) behind `src/lib/ocr.ts` (`recognizeReceiptText(uri)` + `parseReceipt(text)`).  
+  2. **Calendar date picker** – `react-native-paper-dates@^0.24.1` replaces manual date entry on receipt and mileage screens.  
+  3. **Category management** – default list of 13 categories plus user‑created custom categories, stored encrypted via the Store and included in backups (`src/lib/categories.ts`).  
+- **Key files**  
+  - UI: `src/screens/ReceiptEntryScreen.tsx`, `src/screens/MileageEntryScreen.tsx`, `src/screens/SettingsScreen.tsx`, `src/screens/CategoriesScreen.tsx`.  
+  - Pure logic: `src/lib/ocr.ts`, `src/lib/categories.ts`, `src/lib/backup.ts` (extended), `src/lib/validation.ts`.  
+  - Tests: `__tests__/ocr.test.ts`, `__tests__/categories.test.ts`.  
 - **Entry point** – `src/App.tsx` mounts the policy gate, optional app lock, and the bottom‑tab navigator (`src/navigation/index.tsx`).  
 
 ---  
@@ -34,11 +33,11 @@
    (iOS / Android)         (finance, receipt …)           (key)
 ```
 
-- **UI layer** – screens in `src/screens/` and primitives in `src/components/ui/`.  
-- **Domain layer** – pure functions (`src/lib/finance.ts`, `src/lib/mileage.ts`, `src/lib/backup.ts`, …) fully unit‑testable.  
+- **UI layer** – screens in `src/screens/` and shared components in `src/components/ui/`.  
+- **Domain layer** – pure functions (`src/lib/ocr.ts`, `src/lib/categories.ts`, `src/lib/backup.ts`, …) fully unit‑testable.  
 - **Storage layer** – `src/lib/storage/` abstracts encrypted SQLite on native (`device.native.ts`) and a plain fallback for `expo start --web` (`device.web.ts`).  
-- **Policy gate** – `src/screens/PolicyScreen.tsx` checks `POLICY_VERSION` before any other navigator renders.  
-- **No backend** – the only external interaction is OTA updates via EAS.  
+- **Policy gate** – `src/screens/PolicyScreen.tsx` blocks all other UI until `POLICY_VERSION` is accepted.  
+- **No backend** – only OTA updates via Expo Application Services (EAS).  
 
 ---  
 
@@ -55,9 +54,9 @@
 | **Java JDK 11+** (Android builds) | `brew install openjdk@11` (macOS) |
 | **Xcode 15+** (iOS builds) | Required on macOS |
 | **Git** | `git --version` |
-| **Docker** (optional – only for the optional web fallback) | `docker --version` |
+| **Docker** (optional – only for optional web fallback) | `docker --version` |
 
-> **NOTE**: Inside `apps/freelance-finance-tracker` run `npm view expo version` to verify the SDK version matches the one in `package.json`.
+> **NOTE**: Run all commands from the repository root (`apps/freelance-finance-tracker`).
 
 ---  
 
@@ -67,15 +66,16 @@
 |------|----------------|---------------------|
 | **Expo app config** | `app.json` | Edit `expo.name`, `expo.slug`, `expo.version`, `expo.orientation`, etc. |
 | **Policy version** | `src/lib/policy.ts` – `export const POLICY_VERSION = "1.0.0"` | Bump the constant whenever the policy text changes. |
-| **Encryption key** | Runtime – stored in **expo-secure-store** (`src/lib/storage/device.native.ts`) | No static secret; the key is generated on first launch. |
-| **iOS signing certificate** | **EAS Secret Manager** (or locally in `eas.json`) | `eas secret:add --name IOS_DIST_CERT --value <base64-pem>` |
-| **Android keystore** | **EAS Secret Manager** | `eas secret:add --name ANDROID_KEYSTORE --value <base64-jks>` |
+| **Encryption key** | Runtime – stored in **expo-secure-store** (`src/lib/storage/device.native.ts`) | No static secret; generated on first launch. |
+| **iOS signing certificate** | **EAS Secret Manager** (or locally in `eas.json`) | `eas secret:add --name IOS_DIST_CERT --value <base64‑pem>` |
+| **Android keystore** | **EAS Secret Manager** | `eas secret:add --name ANDROID_KEYSTORE --value <base64‑jks>` |
 | **EAS build profiles** | `eas.json` – **TODO** (see stub below) | ```json { "cli": { "version": ">=3.0.0" }, "build": { "production": { "ios": { "workflow": "managed" }, "android": { "workflow": "managed" } } } } ``` |
 | **EAS OTA update URL** | `eas.json` – `updates.url` | `"updates": { "url": "https://u.expo.dev/<project-id>" }` |
-| **GitHub Actions secrets** | Repository → Settings → Secrets | `EAS_TOKEN`, `APPLE_APP_SPECIFIC_PASSWORD`, `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS`, `ANDROID_KEY_PASSWORD`. |
+| **GitHub Actions secrets** | Repo → Settings → Secrets | `EAS_TOKEN`, `APPLE_APP_SPECIFIC_PASSWORD`, `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS`, `ANDROID_KEY_PASSWORD`. |
 | **Web CSP meta tag** (if you ever enable `expo start --web`) | `public/index.html` – **TODO** | ```html <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:;"> ``` |
+| **Runtime dependencies (new)** | `package.json` | Add `"expo-text-extractor": "^2.0.0"` and `"react-native-paper-dates": "^0.24.1"` (run `npm i expo-text-extractor@^2.0.0 react-native-paper-dates@^0.24.1`). |
 
-All secrets must live **only** in EAS’s encrypted secret store or in GitHub Actions secrets; never commit them to the repository.
+All secrets must live **only** in EAS’s encrypted secret store or in GitHub Actions secrets; never commit them.
 
 ---  
 
@@ -90,7 +90,7 @@ npm ci
 npm view expo version   # e.g. 50.0.0
 
 # 3️⃣ Run unit & integration tests (Jest)
-npm test                # runs all __tests__/*.test.ts
+npm test                # runs all __tests__/*.test.ts, including ocr.test.ts & categories.test.ts
 
 # 4️⃣ Lint & TypeScript type‑check (highly recommended)
 npx eslint .            # uses repo‑wide ESLint config
@@ -113,7 +113,7 @@ eas build --platform android --profile production
 
 ### iOS & Android (App Store / Play Store)
 
-1. **Configure `eas.json`** – replace the **TODO** stub with the real project‑id and any extra build‑profile settings (e.g. `distribution` = `store`).  
+1. **Configure `eas.json`** – replace the **TODO** stub with the real `projectId` and, if you use a custom build profile, set `distribution: "store"` etc.  
 2. **Create production builds**
 
    ```bash
@@ -126,7 +126,7 @@ eas build --platform android --profile production
 
    The CLI will:
    * Prompt for Apple/Google credentials **or** fetch them from the secret manager.  
-   * Use the **managed** workflow (no custom native code).  
+   * Use the **managed** workflow (no custom native code, so the new OCR and date‑picker libraries work out‑of‑the‑box).  
 
 3. **Submit the binaries**
 
@@ -147,10 +147,10 @@ eas build --platform android --profile production
 ### Over‑the‑Air (OTA) updates
 
 - Enable OTA in `eas.json` (`"updates": { "url": "https://u.expo.dev/<project-id>" }`).  
-- Publish a new JS bundle whenever only UI or logic changes (no native code):
+- Publish a new JavaScript bundle whenever only UI or logic changes (no native code):
 
   ```bash
-  eas update --branch production --message "Fix CSV sanitisation"
+  eas update --branch production --message "Add OCR, date picker, categories"
   ```
 
   Devices running the latest native binary will fetch this bundle on next launch.
@@ -189,18 +189,18 @@ All items stem from the automated scan, the security review, and the production 
 ### Dependency vulnerabilities (deployment actions)
 
 - [ ] **`uuid`** – upgrade to `npm i uuid@^13.0.1` (fixes CVE‑2026‑141907).  
-- [ ] **`node-forge`** – monitor for a fixed release (≥ 1.5.0) **or** replace with `@noble/*`. Ensure no import remains.  
+- [ ] **`node-forge`** – monitor for a fixed release (`>=1.5.0`) **or** replace with `@noble/*`. Ensure no import remains.  
 - [ ] **`braces`** – monitor for `>=3.0.4` (CVE‑2026‑19387) or replace the glob utility.  
-- [ ] **`sprintf-js`** – monitor for `>=1.1.2` (CVE‑2026‑97058) or replace with native template literals / a safe formatter.  
+- [ ] **`sprintf-js`** – monitor for `>=1.1.2` (CVE‑2026‑97058) or replace with native template literals / safe formatter.  
 
 ### Code‑level findings (must be addressed in the repo)
 
-- [ ] **Data‑reset photo leak (high)** – Extend `src/lib/dataReset.ts` to enumerate every stored `photoUri` (via the receipt store) and delete the corresponding files with `expo-file-system` (`FileSystem.deleteAsync`) before completing the reset.  
-- [ ] **Backup‑restore path traversal (medium)** – In `src/lib/backup.ts` ignore any `photoUri` from the backup payload; always write restored images to a trusted app‑internal directory (`FileSystem.documentDirectory`). Validate the target path stays within this directory.  
-- [ ] **Backup‑restore size DOS (medium)** – Reject encrypted backup blobs larger than **10 MiB** *before* decryption and enforce a maximum of **10 000 receipts** and **5 000 mileage entries** in `validateBackupStructure`. Abort early if limits are exceeded.  
-- [ ] **Backup‑passphrase brute‑force (medium)** – Implement exponential back‑off after each failed restore attempt (1 s, 2 s, 4 s, …) and lock the restore UI after **5** consecutive failures. Store the failure count in memory (reset on app restart).  
-- [ ] **CSV export injection (medium)** – Replace the custom prefix logic with a robust CSV generation library such as `csv-stringify` that fully escapes commas, quotes, newlines, and leading characters per RFC 4180.  
-- [ ] **Backup temporary file cleanup (medium)** – Ensure `src/lib/backup.ts` deletes the temporary file in a `finally` block using `FileSystem.deleteAsync(tmpUri, { idempotent: true })`.  
+- [ ] **Data‑reset photo leak (high)** – extend `src/lib/dataReset.ts` to enumerate every stored `photoUri` (via receipt store) and delete the corresponding files with `expo-file-system` (`FileSystem.deleteAsync`) before completing the reset.  
+- [ ] **Backup‑restore path traversal (medium)** – in `src/lib/backup.ts` ignore any `photoUri` from the backup payload; always write restored images to a trusted app‑internal directory (`FileSystem.documentDirectory`). Validate the target path stays within this directory.  
+- [ ] **Backup‑restore size DOS (medium)** – reject encrypted backup blobs larger than **10 MiB** *before* decryption and enforce a maximum of **10 000 receipts** and **5 000 mileage entries** in `validateBackupStructure`. Abort early if limits are exceeded.  
+- [ ] **Backup‑passphrase brute‑force (medium)** – implement exponential back‑off after each failed restore attempt (1 s, 2 s, 4 s, …) and lock the restore UI after **5** consecutive failures. Store the failure count in memory (reset on app restart).  
+- [ ] **CSV export injection (medium)** – replace the custom prefix logic with a robust CSV generation library such as `csv-stringify` that fully escapes commas, quotes, newlines, and leading characters per RFC 4180.  
+- [ ] **Backup temporary file cleanup (medium)** – ensure `src/lib/backup.ts` deletes the temporary file in a `finally` block using `FileSystem.deleteAsync(tmpUri, { idempotent: true })`.  
 
 ### Hardening items introduced in v1.0 (must be verified)
 
@@ -208,7 +208,7 @@ All items stem from the automated scan, the security review, and the production 
 - [ ] **Backup passphrase policy** – `BackupPassphraseScreen.tsx` displays the “≥ 12 characters” rule, validates live, and disables the “Create backup” button until satisfied.  
 - [ ] **Export button throttling** – `ExportScreen.tsx` disables CSV/PDF export buttons while an export is running (`exportRunning` state).  
 - [ ] **Backup structure validation** – `src/lib/backup.ts` now exports `validateBackupStructure` and restores only after the structure passes. Friendly errors are shown and no data is mutated on failure.  
-- [ ] **Temporary backup file deletion** – Implemented via the `finally` block in `src/lib/backup.ts`.  
+- [ ] **Temporary backup file deletion** – implemented via the `finally` block in `src/lib/backup.ts`.  
 
 ---  
 
@@ -296,9 +296,9 @@ jobs:
 
 **Pipeline flow**
 
-1. **Tests** – lint, TypeScript compile, Jest unit & integration tests (including the new hardening tests).  
+1. **Tests** – lint, TypeScript compile, Jest unit & integration tests (including the new OCR and categories tests).  
 2. **Builds** – managed iOS (`.ipa`) and Android (`.aab`/`.apk`) binaries via EAS.  
-3. **Publish step** – optional manual trigger (or automate `eas submit` once credentials are safely stored).  
+3. **Publish** – optional manual step; can be fully automated once signing credentials are in EAS Secret Manager.  
 
 ---  
 
@@ -306,34 +306,34 @@ jobs:
 
 | Item | Provider / Option | Approx. monthly cost (USD) |
 |------|-------------------|----------------------------|
-| **EAS Build (managed)** | Free tier: 100 build‑minutes / month. After that **$0.12 /min** (iOS) / **$0.10 /min** (Android). A full build ≈ 20 min per platform → **≈ $2 – $3**/month once the free quota is exceeded. | |
-| **Apple Developer Program** | $99 / year → **≈ $8 / month** (amortised). | |
+| **EAS Build (managed)** | Free tier: 100 build‑minutes / month. After that **$0.12 /min** (iOS) / **$0.10 /min** (Android). A full build ≈ 20 min per platform → **≈ $2 – $3**/month once the free quota is exhausted. | |
+| **Apple Developer Program** | $99 / year → **≈ $8**/month (amortised). | |
 | **Google Play Console** | One‑time $25 enrollment → negligible ongoing cost. | |
 | **Optional web host** | Vercel / Netlify Hobby (free) or Pro **$20 – $45**/month for custom domain & higher bandwidth. | |
 | **EAS Secret Manager** | Included with EAS service – no extra charge. | |
 | **GitHub Actions** | Free for public repos; private repos get 2 000 minutes free → **$0** for this project. | |
 
-**Bottom line:** Expect **≈ $10 – $15 / month** total (dominated by the Apple Developer fee) once the app is live.
+**Bottom line:** Expect **≈ $10 – $15**/month total (dominated by the Apple Developer fee) once the app is live.
 
 ---  
 
 ## Before production
 
 1. **Patch high‑severity dependency vulnerabilities** – replace or update `node-forge` and `braces` (both have no fixed release yet).  
-2. **Add full photo deletion on data reset** – enumerate and delete every `photoUri` before clearing the encrypted store (see the “Data‑reset photo leak” item).  
+2. **Add full photo deletion on data reset** – enumerate and delete every `photoUri` before clearing the encrypted store (see “Data‑reset photo leak”).  
 3. **Enforce backup passphrase length in code** – add an explicit `if (passphrase.length < 12) throw new Error("Passphrase must be at least 12 characters")` at the start of `createBackup` (and optionally `restoreBackup`).  
 4. **Replace CSV generation with a safe library** – install `csv-stringify` and refactor `src/lib/exportCsv.ts`.  
 5. **Add robust CSV escaping** – ensure commas, quotes, newlines, and leading characters are correctly escaped (covered by the library).  
 6. **HTML‑escape user text in PDF export** – use a safe escaping library (`escape-html`) in `src/lib/exportPdf.ts`.  
-7. **Implement backup size limit & entry‑count limits** – reject blobs > 10 MiB before decryption and enforce the receipt/mileage caps in `validateBackupStructure`.  
+7. **Implement backup size limit & entry‑count limits** – reject blobs > 10 MiB before decryption and enforce the receipt/mileage caps in `validateBackupStructure`.  
 8. **Add exponential back‑off & lockout for failed restore attempts** – store a failure count in a module‑level variable; apply `await new Promise(r => setTimeout(r, delay))` where `delay` doubles each failure.  
-9. **Delete temporary backup files after sharing** – already done via `finally` block; verify across all platforms.  
-10. **Remove any leftover insecure persistence** – ensure `src/lib/storage/device.web.ts` does not keep the encryption key in plain `localStorage`.  
-11. **Add CSP meta tag / HTTP header for any future web deployment** (see **Configuration and secrets**).  
+9. **Delete temporary backup files after sharing** – already done via the `finally` block; verify across iOS, Android, and web.  
+10. **Remove any leftover insecure persistence** – ensure `src/lib/storage/device.web.ts` does **not** keep the encryption key in plain `localStorage`.  
+11. **Add CSP meta tag / HTTP header for any future web deployment** (see Configuration and secrets).  
 12. **Add production Dockerfile for web export** (the **TODO** stub).  
-13. **Finalize `eas.json`** – include correct `projectId`, `updates.url`, and any custom build profile settings (e.g., `distribution: "store"`).  
-14. **Run a full regression suite on fresh devices** (iOS 15+ & Android 13+), covering policy gate, biometric lock, receipt capture (including photo storage), mileage entry, dashboard totals, CSV/PDF export, encrypted backup creation & restore, and the “Delete all data” flow.  
-15. **Update store listings** – verify the privacy‑policy link points to the latest text in `src/lib/policy.ts`; refresh screenshots to reflect the final UI and the “privacy‑first” messaging.  
-16. **Run final security audit** – execute `npm audit`, `npx semgrep --config=p/ci`, and `trivy fs .` in CI; ensure the **Security checklist** is 100 % checked.  
+13. **Finalize `eas.json`** – include correct `projectId`, `updates.url`, and any custom build‑profile settings (e.g., `distribution: "store"`).  
+14. **Run a full regression suite on fresh devices** (iOS 15+ & Android 13+), covering policy gate, biometric lock, receipt capture (including OCR flow), mileage entry, dashboard totals, CSV/PDF export, encrypted backup create & restore, and the “Delete all data” flow.  
+15. **Update store listings** – verify the privacy‑policy link points to the latest text in `src/lib/policy.ts`; refresh screenshots to reflect the new UI (OCR button, calendar picker, category dropdown).  
+16. **Run final security audit** – execute `npm audit`, `npx semgrep --config=p/ci`, and `trivy fs .` in CI; ensure the **Security checklist** is **100 %** checked.  
 
 When **all** items above are verified and the CI pipeline passes without failures, the app is ready for production submission. 🚀

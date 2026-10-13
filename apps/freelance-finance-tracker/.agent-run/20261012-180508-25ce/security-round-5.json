@@ -1,0 +1,73 @@
+{
+  "verdict": "pass",
+  "summary": "All previously reported code findings have been addressed: OCR image size validation, backup size check, CSV escaping, and path\u2011traversal in restore are now fixed. Remaining open issues are deployment\u2011level vulnerable dependencies and two medium\u2011severity backup passphrase weaknesses. New code\u2011level issues were discovered around category synchronization and backup restoration lacking validation of category strings.",
+  "findings": [
+    {
+      "id": "backup-passphrase-bruteforce",
+      "severity": "medium",
+      "where": "code",
+      "file": "src/lib/backup.ts",
+      "issue": "Failed restore attempts do not have any rate\u2011limiting or delay, allowing an attacker to brute\u2011force the backup passphrase offline with rapid retries.",
+      "fix": "Implement exponential back\u2011off (1\u202fs, 2\u202fs, 4\u202fs, \u2026) after each failed attempt and lock the restore UI after a configurable number of consecutive failures (e.g., 5). Store the failure count in memory and reset it on app restart."
+    },
+    {
+      "id": "backup-passphrase-min-length-missing",
+      "severity": "medium",
+      "where": "code",
+      "file": "src/lib/backup.ts",
+      "issue": "createBackup and restoreBackup accept any passphrase length. Although the UI enforces a 12\u2011character minimum, programmatic callers could supply a short passphrase, producing weakly protected backups.",
+      "fix": "Add an explicit length check at the start of both createBackup and restoreBackup (e.g., if passphrase.length < 12 throw an error). This guarantees the policy is enforced regardless of the caller."
+    },
+    {
+      "id": "category-sync-validation-bypass",
+      "severity": "low",
+      "where": "code",
+      "file": "src/lib/categories.ts",
+      "issue": "syncCategoriesWithReceipts adds category strings from existing receipts directly to the custom\u2011category list without running them through isValidName. Malicious receipt data (or a crafted backup) can therefore introduce category names containing disallowed characters (e.g., <, >) which could later be rendered in UI components and become an XSS vector on the web fallback.",
+      "fix": "Validate each category name before adding it as a custom entry (reuse isValidName or addCustomCategory logic). Reject or sanitise names that fail validation, and optionally log the skipped entries."
+    },
+    {
+      "id": "backup-categories-validation-bypass",
+      "severity": "low",
+      "where": "code",
+      "file": "src/lib/backup.ts",
+      "issue": "restoreBackup writes the entire `categories` object from a backup straight into the encrypted store without validating the individual category strings (custom, hidden, rename). This permits a crafted backup to inject malformed or unsafe category names that bypass the validation performed when categories are added via the UI.",
+      "fix": "After parsing the backup JSON, run the categories data through a validation routine that checks each string against isValidName (length, prohibited characters) and ensures rename keys map only to allowed default names. Store the data only if it passes validation; otherwise reject the backup or sanitize offending entries."
+    }
+  ],
+  "deployment_actions": [
+    {
+      "id": "dependency-braces-high",
+      "severity": "high",
+      "where": "deployment",
+      "file": "package-lock.json",
+      "issue": "`braces` 3.0.3 is vulnerable to CVE\u20112026\u201193687 (Denial\u2011of\u2011Service via stack overflow from deeply nested patterns). No patched release exists yet.",
+      "fix": "No fixed release exists yet: monitor the advisory and upgrade as soon as one ships; confirm whether the package is only a build-time dependency. Monitor the package for a patched release (>=\u202f3.0.4) and upgrade as soon as it is available. If the library is only a build\u2011time dependency, consider removing it from the production bundle."
+    },
+    {
+      "id": "dependency-node-forge-high",
+      "severity": "high",
+      "where": "deployment",
+      "file": "package-lock.json",
+      "issue": "`node\u2011forge` 1.4.0 contains CVE\u20112026\u201185393 (signature forgery vulnerability in RSA PKCS#1 v1.5 verification).",
+      "fix": "No fixed release exists yet: monitor the advisory and upgrade as soon as one ships; confirm whether the package is only a build-time dependency. Upgrade to a version that fixes the issue (>=\u202f1.5.0) when released, or replace the usage of `node\u2011forge` with a modern, audited library such as the `@noble/*` crypto suite. Remove the dependency from `package.json` if it is not required at runtime."
+    },
+    {
+      "id": "dependency-sprintf-js-medium",
+      "severity": "medium",
+      "where": "deployment",
+      "file": "package-lock.json",
+      "issue": "`sprintf\u2011js` 1.0.3 is vulnerable to CVE\u20112026\u201197058 (Denial\u2011of\u2011Service via unbounded precision specifiers).",
+      "fix": "No fixed release exists yet: monitor the advisory and upgrade as soon as one ships; confirm whether the package is only a build-time dependency. Upgrade to a patched version (if available) or replace the library with native template literals or a safe formatting utility such as `format` from the standard library. Remove the dependency if it is only transitive."
+    }
+  ],
+  "fixed": [
+    "ocr-image-dos",
+    "category-xss",
+    "ocr-image-dos-2",
+    "backup-restore-size-dos",
+    "csv-export-injection-weak-escaping",
+    "restore-photo-path-traversal"
+  ],
+  "stalled": []
+}

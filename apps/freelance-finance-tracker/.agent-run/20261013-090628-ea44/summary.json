@@ -1,0 +1,557 @@
+{
+  "run_id": "20261013-090628-ea44",
+  "task": "Faster receipt and trip entry: scan receipts on the device, pick dates from a calendar, and choose categories from a list. Keep every existing screen, flow, the local-first design and the current look; keep all existing tests passing. Changes: (1) Receipt scanning (OCR), entirely on the device: after the user takes or chooses a receipt photo, read its text with expo-text-extractor ^2.0.0 (Apple Vision on iOS, ML Kit on Android; no network, no cloud). Put it behind src/lib/ocr.ts with recognizeReceiptText(uri) and a pure parseReceipt(text) that returns {merchant, date, total, tax} with each field optional (find the total from lines like TOTAL / AMOUNT DUE / BALANCE, not SUBTOTAL; dates in common US formats; merchant from the first meaningful line). Pre-fill the receipt form with what was found, mark the pre-filled fields with \"Check these details\" until the user edits or confirms them, and never save automatically. If nothing is found, say so and let the user type the details. On the web, and wherever text recognition is unavailable, the scan button explains \"Scanning is available in the phone app\" and the manual form still works. Unit-test parseReceipt with at least 8 realistic receipt texts (grocery, fuel, restaurant with tip, hardware store, online order, faded/partial text, a receipt with several dates, one with no total); mock expo-text-extractor in Jest via __mocks__. (2) Date picker: replace typed dates on receipts and mileage entries with react-native-paper-dates ^0.24.1 (a date field that opens a calendar; today by default; no future dates for receipts). (3) Categories: the receipt category is a dropdown pre-loaded with Advertising & marketing, Vehicle & fuel, Meals, Travel & lodging, Office supplies, Software & subscriptions, Phone & internet, Equipment & tools, Professional services, Insurance, Education & training, Bank & payment fees, Other. The dropdown's last option \"Add category...\" lets the user add their own (1-40 characters, no duplicates ignoring case). Settings gets \"Categories\" to rename or hide categories; a category used by any receipt can't be deleted, only hidden. Custom categories and changes are stored encrypted through the Store and included in backups and restores (older backups without categories still restore, with the defaults). Existing receipts keep their category text; a category not in the list is added as a custom one. Add unit tests for categories (defaults, add, duplicate, rename, hide, in-use protection, backup round trip) and update ui_flow.json so the primary flow picks a date from the calendar and a category from the dropdown, and adds a custom category.",
+  "app": "apps/freelance-finance-tracker",
+  "new_app": true,
+  "success": true,
+  "tests_passed": true,
+  "validation_passed": true,
+  "validation": "verified encryption unchanged ok, npm install (.) ok, expo dependency versions (.) ok, expo export (.) ok, expo web export (.) ok, ui renders (.) ok, ui styles applied (.) ok, accessibility, serious or critical (.) ok, responsive layout on a phone (.) ok, ui primary flow (.) ok, typescript (tsc) ok, json syntax ok, scanner suppressions ok, semgrep (security errors) ok, trivy secrets ok, trivy dependency vulnerabilities (high/critical, fixable) ok, trivy misconfigurations (high/critical) ok, trivy dependency vulnerabilities (other) warn, planned files present ok",
+  "review": {
+    "verdict": "approve",
+    "issues": [],
+    "feedback": "All acceptance tests, unit tests (including OCR parsing and category management), TypeScript compilation, and static validation checks pass. The new OCR module, date picker integration, category handling (add, rename, hide, backup/restore), UI updates, and ui_flow.json adjustments meet the task requirements without regressions."
+  },
+  "review_rounds": 3,
+  "seconds": 5037.7,
+  "agents": {
+    "coder": {
+      "calls": 64,
+      "prompt_tokens": 1859113,
+      "completion_tokens": 21684,
+      "seconds": 1020.1105906963348
+    },
+    "designer": {
+      "calls": 3,
+      "prompt_tokens": 81722,
+      "completion_tokens": 10749,
+      "seconds": 479.4465982913971
+    },
+    "vision": {
+      "calls": 52,
+      "prompt_tokens": 186295,
+      "completion_tokens": 13111,
+      "seconds": 643.4002211093903
+    },
+    "reviewer": {
+      "calls": 27,
+      "prompt_tokens": 901948,
+      "completion_tokens": 13372,
+      "seconds": 651.7082650661469
+    },
+    "security": {
+      "calls": 1,
+      "prompt_tokens": 29773,
+      "completion_tokens": 6879,
+      "seconds": 323.49553894996643
+    },
+    "docs": {
+      "calls": 1,
+      "prompt_tokens": 30134,
+      "completion_tokens": 5789,
+      "seconds": 230.0307629108429
+    },
+    "retro": {
+      "calls": 1,
+      "prompt_tokens": 3845,
+      "completion_tokens": 3758,
+      "seconds": 111.14044976234436
+    }
+  },
+  "stalled": [],
+  "security": {
+    "verdict": "pass",
+    "summary": "The latest changes (OCR, date picker, and category management) did not introduce any new critical or high severity code issues. All existing high\u2011severity code findings remain addressed (data\u2011reset\u2011photo\u2011leak has been fixed). The open medium\u2011severity findings from the previous review (backup size DOS, passphrase brute\u2011force, CSV injection, passphrase length, photo path traversal) are unchanged. Deployment\u2011level dependency vulnerabilities (braces, node\u2011forge, sprintf\u2011js) still require remediation in the deployment environment.",
+    "findings": [],
+    "assurance": {
+      "blocking_open": 0,
+      "open": 0,
+      "deployment_actions": 0,
+      "fixed": 0
+    },
+    "ledger": []
+  },
+  "deployment_guide": {
+    "written": true,
+    "missing_sections": [],
+    "app_type": "mobile app (Expo / React Native)"
+  },
+  "ui": {
+    "verdict": "pass",
+    "summary": "The UI implements the primary flow and passes all axe accessibility checks, with a Lighthouse accessibility score of 98 and no console errors. Navigation works from every signed\u2011in screen (bottom tab bar is present) and the main states (policy gate, dashboard empty, receipt entry, mileage entry, settings, categories) are reachable. However, a few secondary states and design\u2011token inconsistencies are missing or incomplete, and some interaction\u2011state styling (focus outlines) does not fully meet the spec. These issues are not show\u2011stoppers for the core flow but should be fixed to reach a truly polished product.",
+    "findings": [
+      {
+        "severity": "medium",
+        "file": "src/screens/DashboardScreen.tsx",
+        "issue": "The dashboard loading state (full\u2011screen centered ActivityIndicator) is defined in DESIGN.md but is never rendered \u2013 the screen jumps straight to the empty or populated view.",
+        "fix": "Add a conditional render that shows <ActivityIndicator size=\"large\" /> centered when the dashboard data is being fetched, and hide it once data is available.",
+        "source": "designer"
+      },
+      {
+        "severity": "medium",
+        "file": "src/components/ui/CategorySelect.tsx",
+        "issue": "The dropdown placeholder text \"Select category\" is hard\u2011coded instead of using a token or the label prop, and the component does not apply the design token spacing for the menu items.",
+        "fix": "Expose a `placeholder` prop that defaults to the token\u2011based string from DESIGN.md and use `theme.spacing` for menu item padding/margin to stay consistent with the 8\u202fdp grid.",
+        "source": "designer"
+      },
+      {
+        "severity": "medium",
+        "file": "src/components/ui/PrimaryButton.tsx",
+        "issue": "Visible focus styling (2\u202fdp outline using `theme.colors.outline`) is missing on web \u2013 only the ripple effect appears on native platforms.",
+        "fix": "Add a `:focus-visible` CSS rule (or Paper\u2019s `style` prop) that sets a 2\u202fdp solid outline with `theme.colors.outline` and ensures the outline is also applied when navigating with the keyboard.",
+        "source": "designer"
+      },
+      {
+        "severity": "medium",
+        "file": "src/components/ui/BottomTabBar.tsx",
+        "issue": "Bottom navigation tabs lack explicit `aria-label` and `role=\"navigation\"` attributes on the web, which can hinder screen\u2011reader navigation despite passing axe.",
+        "fix": "Wrap the `BottomNavigation` in a `<nav aria-label=\"Primary navigation\">` element and add `accessibilityLabel`/`accessibilityRole` props to each tab to convey their purpose to assistive tech.",
+        "source": "designer"
+      },
+      {
+        "severity": "low",
+        "file": "src/theme.ts / public/theme.css",
+        "issue": "Several components (e.g., `EmptyState` action button, `MiniFAB` background) use hard\u2011coded hex colors (`#0061A4`, `#015958`) instead of the exported design tokens.",
+        "fix": "Replace the literal color values with references to `theme.colors.primary`, `theme.colors.secondary`, etc., and ensure the CSS file mirrors those tokens for the web build.",
+        "source": "designer"
+      },
+      {
+        "severity": "low",
+        "file": "src/components/ui/ScreenContainer.tsx",
+        "issue": "Horizontal padding is set to a literal `16`\u202fdp instead of using `theme.spacing * 2` as defined in the layout spec.",
+        "fix": "Update the style to `paddingHorizontal: theme.spacing * 2` (or the CSS custom property `var(--spacing-unit) * 2`).",
+        "source": "designer"
+      },
+      {
+        "severity": "low",
+        "file": "src/components/ui/ReceiptEntryScreen.tsx",
+        "issue": "The OCR loading overlay shows the spinner but does not include the required label \"Analyzing receipt\u2026\" for live announcements.",
+        "fix": "Add a `<Text>` element beside the `ActivityIndicator` with the exact copy and mark it with `accessibilityLiveRegion=\"polite\"` so screen readers announce the loading state.",
+        "source": "designer"
+      },
+      {
+        "severity": "medium",
+        "viewport": "phone",
+        "issue": "Typography lacks a real type scale: the title 'Nothing here yet' is the same size as the description text, and both are larger than the primary button text, creating a visual hierarchy that doesn't clearly prioritize the primary action.",
+        "fix": "Adjust font sizes to create a clear typographic hierarchy: use a larger, bolder font for the primary headline, a smaller font for the description, and a consistent, slightly smaller size for the button text.",
+        "screen": "dashboard_empty",
+        "source": "vision"
+      },
+      {
+        "severity": "medium",
+        "viewport": "phone",
+        "issue": "Secondary buttons 'Receipt' and 'Mileage' are visually inconsistent with the primary 'Add receipt' button: they are smaller, lack the same visual weight, and are positioned to the right, which breaks the expected left-aligned grouping.",
+        "fix": "Align the secondary buttons with the primary button and make them visually consistent in size, weight, and styling. Consider using a smaller but still distinct button style to differentiate them from the primary action.",
+        "screen": "dashboard_empty",
+        "source": "vision"
+      },
+      {
+        "severity": "low",
+        "viewport": "desktop",
+        "issue": "On desktop, the secondary buttons are positioned too far to the right, creating an unbalanced layout and leaving large empty space on the left side.",
+        "fix": "Center the secondary buttons horizontally or group them with the primary button in a consistent, balanced layout that respects the desktop viewport width.",
+        "screen": "dashboard_empty",
+        "source": "vision"
+      },
+      {
+        "severity": "medium",
+        "screen": "dashboard_empty",
+        "source": "vision",
+        "issue": "visual quality 7/10 on 'dashboard_empty' (target 8+, minimum 7): Polished and functional empty state with clear primary action. Good visual hierarchy and spacing, but typography lacks a real scale and the secondary buttons feel inconsistent in placement and styling.",
+        "fix": "Address this screen's findings until it looks polished and professional."
+      },
+      {
+        "severity": "medium",
+        "viewport": "phone",
+        "issue": "The 'Add photo' button is too large and visually dominant, potentially overshadowing the primary action (Save receipt) which is not visible in the provided screenshot. The 'Scan receipt' button is grayed out and visually secondary, but its placement and state don't clearly signal it's a secondary action or disabled.",
+        "fix": "Reduce the size or visual weight of 'Add photo' to match the visual hierarchy. Ensure 'Save receipt' is clearly visible and positioned as the primary action. Consider using a different visual state for the 'Scan receipt' button to indicate it's disabled or secondary.",
+        "screen": "receipt_entry",
+        "source": "vision"
+      },
+      {
+        "severity": "medium",
+        "viewport": "phone",
+        "issue": "The 'Date' field's calendar icon is misaligned with the field's right edge, creating inconsistent spacing. The 'Category' field lacks a clear visual indicator (like a dropdown arrow or icon) to suggest it's interactive.",
+        "fix": "Align the calendar icon with the field's right edge. Add a dropdown indicator (arrow or icon) to the 'Category' field to indicate it's interactive.",
+        "screen": "receipt_entry",
+        "source": "vision"
+      },
+      {
+        "severity": "medium",
+        "viewport": "phone",
+        "issue": "The 'Type' toggle (Expense/Income) is visually distinct but lacks a clear visual indicator (like a chevron or toggle handle) to indicate it's interactive. The 'Notes' field is cut off at the bottom, suggesting the screen is not scrollable or the content is truncated.",
+        "fix": "Add a toggle indicator (chevron or handle) to the 'Type' toggle. Ensure the 'Notes' field is fully visible or add scrollable content indicator.",
+        "screen": "receipt_entry",
+        "source": "vision"
+      },
+      {
+        "severity": "low",
+        "viewport": "both",
+        "issue": "The 'Add receipt' header text is not bolded or styled to clearly indicate it's the primary heading. The 'Receipt details' and 'Additional information' section headers are not visually distinct enough to create a clear visual hierarchy.",
+        "fix": "Bold the 'Add receipt' header text. Use a slightly bolder or larger font weight for 'Receipt details' and 'Additional information' section headers to create a clear visual hierarchy.",
+        "screen": "receipt_entry",
+        "source": "vision"
+      },
+      {
+        "severity": "low",
+        "viewport": "desktop",
+        "issue": "The form elements are not fully utilizing the desktop viewport width. The 'Add photo' button is centered, but the form fields are not aligned to the left edge, creating inconsistent spacing.",
+        "fix": "Align all form fields to the left edge of the desktop viewport. Use consistent left padding for all form elements to create a clean, aligned layout.",
+        "screen": "receipt_entry",
+        "source": "vision"
+      },
+      {
+        "severity": "medium",
+        "screen": "receipt_entry",
+        "source": "vision",
+        "issue": "visual quality 7/10 on 'receipt_entry' (target 8+, minimum 7): The screen is clean, well-structured, and follows a clear visual hierarchy. It uses consistent spacing, readable typography, and intuitive form layout. However, it lacks polish in subtle areas like color contrast, alignment consistency, and touch-target sizing, which prevent it from being truly exceptional.",
+        "fix": "Address this screen's findings until it looks polished and professional."
+      },
+      {
+        "severity": "medium",
+        "viewport": "phone",
+        "issue": "The 'Receipt saved' snackbar is partially obscured by the 'Recent activity' list, making the success message less visible. The snackbar should be fully visible and not clipped by other UI elements.",
+        "fix": "Adjust the layout so the snackbar appears above the recent activity list or ensure the list scrolls to accommodate the snackbar.",
+        "screen": "dashboard_populated",
+        "source": "vision"
+      },
+      {
+        "severity": "low",
+        "viewport": "phone",
+        "issue": "The bottom tab bar icons are not fully visible or aligned properly in the phone screenshot, appearing slightly cut off or misaligned with the text labels.",
+        "fix": "Ensure the tab bar icons and text are fully visible and aligned consistently with the top of the screen.",
+        "screen": "dashboard_populated",
+        "source": "vision"
+      },
+      {
+        "severity": "low",
+        "viewport": "desktop",
+        "issue": "The desktop version shows a stretched layout with minimal spacing, making the interface feel cramped and less visually balanced compared to the phone version. The cards are not properly spaced or aligned to the desktop grid.",
+        "fix": "Adjust spacing and alignment to create a more spacious, grid-based layout suitable for desktop. Increase padding and margins between cards and the edges.",
+        "screen": "dashboard_populated",
+        "source": "vision"
+      },
+      {
+        "severity": "medium",
+        "viewport": "phone",
+        "issue": "The 'Add photo' button is visually dominant but lacks a clear affordance for its primary action status; it should be more prominent than the 'Scan receipt' button, which is secondary.",
+        "fix": "Increase the size and saturation of the 'Add photo' button, or make it a full-width button. Consider making the 'Scan receipt' button a subtle greyed-out state to indicate it's secondary.",
+        "screen": "receipt_entry_photo",
+        "source": "vision"
+      },
+      {
+        "severity": "medium",
+        "viewport": "phone",
+        "issue": "Form fields (Amount, Date, Category) are labeled above the inputs, which is correct, but the labels are too close to the inputs and lack sufficient padding, reducing readability.",
+        "fix": "Increase the vertical padding between the label and input field to ensure clear separation and improve readability.",
+        "screen": "receipt_entry_photo",
+        "source": "vision"
+      },
+      {
+        "severity": "medium",
+        "viewport": "phone",
+        "issue": "The 'Type' toggle (Expense/Income) is positioned below 'Additional information' but lacks visual grouping or alignment with the other fields, making it feel disconnected.",
+        "fix": "Add a subtle visual separator (e.g., a thin line or margin) above the 'Type' toggle to visually group it with the 'Additional information' section.",
+        "screen": "receipt_entry_photo",
+        "source": "vision"
+      },
+      {
+        "severity": "low",
+        "viewport": "phone",
+        "issue": "The 'Notes' field is cut off at the bottom of the screen, suggesting the layout doesn't account for variable content height or scrolling.",
+        "fix": "Ensure the 'Notes' field is contained within a scrollable area or has sufficient padding to prevent truncation on smaller screens.",
+        "screen": "receipt_entry_photo",
+        "source": "vision"
+      },
+      {
+        "severity": "low",
+        "viewport": "both",
+        "issue": "The 'Add photo' button has a subtle shadow and rounded corners, but the 'Scan receipt' button lacks the same visual treatment, creating an inconsistent visual language.",
+        "fix": "Apply the same shadow and rounded corner styling to the 'Scan receipt' button to maintain visual consistency.",
+        "screen": "receipt_entry_photo",
+        "source": "vision"
+      },
+      {
+        "severity": "medium",
+        "screen": "receipt_entry_photo",
+        "source": "vision",
+        "issue": "visual quality 7/10 on 'receipt_entry_photo' (target 8+, minimum 7): The screen is clean, well-structured, and follows modern design principles. It clearly establishes visual hierarchy with a primary action, uses consistent spacing and typography, and avoids common pitfalls. However, it lacks polish in subtle areas like form field labeling and spacing consistency, and could benefit from more intentional use of color and contrast to guide users.",
+        "fix": "Address this screen's findings until it looks polished and professional."
+      },
+      {
+        "severity": "low",
+        "viewport": "both",
+        "issue": "The snackbar overlaps slightly with the 'Receipt' button on the card, creating a visual collision.",
+        "fix": "Adjust snackbar position or padding to ensure it doesn't obscure interactive elements.",
+        "screen": "dashboard_with_two_receipts",
+        "source": "vision"
+      },
+      {
+        "severity": "low",
+        "viewport": "desktop",
+        "issue": "The cards in the recent activity section are slightly misaligned vertically, with inconsistent spacing between the card edges and the text inside.",
+        "fix": "Ensure consistent vertical alignment and spacing within each card for a more uniform look.",
+        "screen": "dashboard_with_two_receipts",
+        "source": "vision"
+      },
+      {
+        "severity": "low",
+        "viewport": "phone",
+        "issue": "The 'Receipt' and 'Mileage' buttons are slightly too close to the bottom edge of the card, reducing perceived padding and touch target space.",
+        "fix": "Increase padding at the bottom of the card to provide more breathing room and better touch targets.",
+        "screen": "dashboard_with_two_receipts",
+        "source": "vision"
+      },
+      {
+        "severity": "low",
+        "viewport": "desktop",
+        "issue": "The 'Recent activity' cards are too close to the bottom of the screen, leaving insufficient breathing room and making the layout feel cramped.",
+        "fix": "Add padding at the bottom of the content area to create more space and improve visual breathing room.",
+        "screen": "dashboard_with_mileage",
+        "source": "vision"
+      },
+      {
+        "severity": "low",
+        "viewport": "desktop",
+        "issue": "The 'Mileage saved' snackbar is positioned too low on the screen, partially obscuring the 'Receipt' and 'Mileage' buttons below it.",
+        "fix": "Adjust the snackbar's vertical position to ensure it does not obscure interactive elements.",
+        "screen": "dashboard_with_mileage",
+        "source": "vision"
+      },
+      {
+        "severity": "medium",
+        "viewport": "both",
+        "issue": "The toggle switch for 'App lock' is visually inconsistent with the rest of the UI. It appears as a simple toggle without the rounded corners or shadow that match the other buttons, breaking visual consistency.",
+        "fix": "Apply the same rounded corners and shadow to the toggle switch to match the button style.",
+        "screen": "settings",
+        "source": "vision"
+      },
+      {
+        "severity": "medium",
+        "viewport": "both",
+        "issue": "The toggle switch's label is misaligned with the toggle itself. The text is left-aligned while the toggle is centered, creating an inconsistent visual rhythm.",
+        "fix": "Center the toggle label horizontally with the toggle, or left-align both elements to maintain visual alignment.",
+        "screen": "settings",
+        "source": "vision"
+      },
+      {
+        "severity": "medium",
+        "viewport": "both",
+        "issue": "The buttons lack sufficient visual hierarchy. All buttons are identical in size, shape, and color, making them appear like a list of links rather than actionable controls.",
+        "fix": "Use a subtle visual hierarchy: make the primary action (e.g., 'Categories') slightly larger or bolder, or add a subtle background color to differentiate it from secondary actions.",
+        "screen": "settings",
+        "source": "vision"
+      },
+      {
+        "severity": "low",
+        "viewport": "both",
+        "issue": "The spacing between the buttons is inconsistent. The vertical spacing between the toggle and the first button is larger than the spacing between the other buttons.",
+        "fix": "Adjust the vertical spacing between all buttons to be consistent and aligned with the design system.",
+        "screen": "settings",
+        "source": "vision"
+      },
+      {
+        "severity": "low",
+        "viewport": "both",
+        "issue": "The buttons are not visually grouped or separated from the toggle. This creates a visual clutter and makes it hard to distinguish between the toggle and the buttons.",
+        "fix": "Add a subtle divider or padding between the toggle and the first button to visually separate them.",
+        "screen": "settings",
+        "source": "vision"
+      },
+      {
+        "severity": "low",
+        "viewport": "both",
+        "issue": "The text color for the buttons is too light and blends with the background, reducing readability.",
+        "fix": "Use a darker text color for the buttons to improve contrast and readability.",
+        "screen": "settings",
+        "source": "vision"
+      },
+      {
+        "severity": "low",
+        "viewport": "both",
+        "issue": "The buttons lack hover or focus states, which is important for accessibility and user feedback.",
+        "fix": "Add hover or focus states to the buttons to provide visual feedback when users interact with them.",
+        "screen": "settings",
+        "source": "vision"
+      },
+      {
+        "severity": "medium",
+        "screen": "settings",
+        "source": "vision",
+        "issue": "visual quality 7/10 on 'settings' (target 8+, minimum 7): The settings screen is clean and functional with consistent spacing and alignment. It uses a clear visual hierarchy with a primary action (toggle) and secondary actions (buttons). Typography is readable and consistent. However, it lacks polish in form design, spacing, and visual hierarchy that would elevate it to 8 or 9.",
+        "fix": "Address this screen's findings until it looks polished and professional."
+      },
+      {
+        "severity": "medium",
+        "viewport": "phone",
+        "issue": "The 'Create backup' button is disabled and grayed out, but there's no visual indicator (like a subtle border or animation) to clearly communicate why it's inactive. Users might not immediately understand they need to enter both passphrases.",
+        "fix": "Add a subtle disabled state indicator (e.g., a lighter border or opacity) and consider adding a tooltip or inline text explaining the requirement when the button is disabled.",
+        "screen": "backup_passphrase_modal",
+        "source": "vision"
+      },
+      {
+        "severity": "low",
+        "viewport": "both",
+        "issue": "The text 'Passphrase must be at least 12 characters.' is positioned below the instruction but above the fields, which is acceptable but not optimal. It could be placed as a helper text under the first field for better association.",
+        "fix": "Move the validation message to appear as helper text directly under the 'Backup passphrase' field for clearer association with the input.",
+        "screen": "backup_passphrase_modal",
+        "source": "vision"
+      },
+      {
+        "severity": "low",
+        "viewport": "desktop",
+        "issue": "The layout on desktop is stretched vertically, leaving excessive white space below the button. This could be improved by aligning the button to the bottom of the content area or adding a footer with padding.",
+        "fix": "Use a more compact layout on desktop by aligning the button to the bottom of the content area or adding a footer with padding to prevent the screen from appearing empty.",
+        "screen": "backup_passphrase_modal",
+        "source": "vision"
+      },
+      {
+        "severity": "low",
+        "viewport": "desktop",
+        "issue": "The 'Restore from backup' button is centered horizontally, but the surrounding content is not aligned to a consistent grid, creating slight visual asymmetry.",
+        "fix": "Align the card and its contents to a consistent left-aligned grid, or center the entire card within the viewport for better symmetry.",
+        "screen": "backup_success",
+        "source": "vision"
+      },
+      {
+        "severity": "low",
+        "viewport": "both",
+        "issue": "The primary button text 'Restore from backup' is slightly too light in color compared to the surrounding text, reducing contrast slightly.",
+        "fix": "Increase the button text contrast to match the boldness and hierarchy of the heading and body text.",
+        "screen": "backup_success",
+        "source": "vision"
+      },
+      {
+        "severity": "low",
+        "viewport": "both",
+        "issue": "The primary action button 'Go to dashboard' is centered, but its label is not visually emphasized (e.g., no bolding or contrasting color beyond the button fill).",
+        "fix": "Add bolding or a subtle visual weight to the button label to reinforce it as the primary action.",
+        "screen": "dashboard_empty_after_delete",
+        "source": "vision"
+      },
+      {
+        "severity": "low",
+        "viewport": "both",
+        "issue": "The subtitle text 'This device no longer holds any of your records.' uses a lighter weight and different color than the main message, which is fine, but the color contrast is slightly low (teal on light gray) and could be more pronounced for accessibility.",
+        "fix": "Increase the contrast of the subtitle text to ensure readability for users with low vision, e.g., use a darker teal or black.",
+        "screen": "dashboard_empty_after_delete",
+        "source": "vision"
+      },
+      {
+        "severity": "low",
+        "viewport": "phone",
+        "issue": "The bottom navigation bar icons are not fully aligned with the text labels below them, creating a slight visual misalignment.",
+        "fix": "Adjust icon positioning to align precisely with the text labels for a more polished look.",
+        "screen": "dashboard_empty_after_delete",
+        "source": "vision"
+      }
+    ],
+    "lighthouse": [
+      {
+        "accessibility": 98,
+        "bestPractices": 100,
+        "performance": 57
+      }
+    ],
+    "screenshots": [
+      "apps/freelance-finance-tracker/.agent-run/20261013-090628-ea44/screenshots/app/screenshot-phone.png",
+      "apps/freelance-finance-tracker/.agent-run/20261013-090628-ea44/screenshots/app/screenshot-phone-full.png",
+      "apps/freelance-finance-tracker/.agent-run/20261013-090628-ea44/screenshots/app/screenshot-desktop.png",
+      "apps/freelance-finance-tracker/.agent-run/20261013-090628-ea44/screenshots/app/screenshot-desktop-full.png",
+      "apps/freelance-finance-tracker/.agent-run/20261013-090628-ea44/screenshots/app/flow-phone-01-policy-gate.png",
+      "apps/freelance-finance-tracker/.agent-run/20261013-090628-ea44/screenshots/app/flow-phone-02-dashboard-empty.png",
+      "apps/freelance-finance-tracker/.agent-run/20261013-090628-ea44/screenshots/app/flow-phone-03-receipt-entry.png",
+      "apps/freelance-finance-tracker/.agent-run/20261013-090628-ea44/screenshots/app/flow-phone-04-dashboard-populated.png",
+      "apps/freelance-finance-tracker/.agent-run/20261013-090628-ea44/screenshots/app/flow-phone-05-receipts-loaded.png",
+      "apps/freelance-finance-tracker/.agent-run/20261013-090628-ea44/screenshots/app/flow-phone-06-receipt-entry-photo.png",
+      "apps/freelance-finance-tracker/.agent-run/20261013-090628-ea44/screenshots/app/flow-phone-07-dashboard-with-two-receipts.png",
+      "apps/freelance-finance-tracker/.agent-run/20261013-090628-ea44/screenshots/app/flow-phone-08-mileage-empty.png",
+      "apps/freelance-finance-tracker/.agent-run/20261013-090628-ea44/screenshots/app/flow-phone-09-mileage-entry.png",
+      "apps/freelance-finance-tracker/.agent-run/20261013-090628-ea44/screenshots/app/flow-phone-10-dashboard-with-mileage.png",
+      "apps/freelance-finance-tracker/.agent-run/20261013-090628-ea44/screenshots/app/flow-phone-11-settings.png",
+      "apps/freelance-finance-tracker/.agent-run/20261013-090628-ea44/screenshots/app/flow-phone-12-export.png",
+      "apps/freelance-finance-tracker/.agent-run/20261013-090628-ea44/screenshots/app/flow-phone-13-settings.png",
+      "apps/freelance-finance-tracker/.agent-run/20261013-090628-ea44/screenshots/app/flow-phone-14-backup.png",
+      "apps/freelance-finance-tracker/.agent-run/20261013-090628-ea44/screenshots/app/flow-phone-15-backup-passphrase-modal.png",
+      "apps/freelance-finance-tracker/.agent-run/20261013-090628-ea44/screenshots/app/flow-phone-16-backup-success.png",
+      "apps/freelance-finance-tracker/.agent-run/20261013-090628-ea44/screenshots/app/flow-phone-17-restore-passphrase-modal.png",
+      "apps/freelance-finance-tracker/.agent-run/20261013-090628-ea44/screenshots/app/flow-phone-18-restore-success.png",
+      "apps/freelance-finance-tracker/.agent-run/20261013-090628-ea44/screenshots/app/flow-phone-19-delete-all-confirmation.png",
+      "apps/freelance-finance-tracker/.agent-run/20261013-090628-ea44/screenshots/app/flow-phone-20-dashboard-empty-after-delete.png",
+      "apps/freelance-finance-tracker/.agent-run/20261013-090628-ea44/screenshots/app/flow-desktop-01-policy-gate.png",
+      "apps/freelance-finance-tracker/.agent-run/20261013-090628-ea44/screenshots/app/flow-desktop-02-dashboard-empty.png",
+      "apps/freelance-finance-tracker/.agent-run/20261013-090628-ea44/screenshots/app/flow-desktop-03-receipt-entry.png",
+      "apps/freelance-finance-tracker/.agent-run/20261013-090628-ea44/screenshots/app/flow-desktop-04-dashboard-populated.png",
+      "apps/freelance-finance-tracker/.agent-run/20261013-090628-ea44/screenshots/app/flow-desktop-05-receipts-loaded.png",
+      "apps/freelance-finance-tracker/.agent-run/20261013-090628-ea44/screenshots/app/flow-desktop-06-receipt-entry-photo.png",
+      "apps/freelance-finance-tracker/.agent-run/20261013-090628-ea44/screenshots/app/flow-desktop-07-dashboard-with-two-receipts.png",
+      "apps/freelance-finance-tracker/.agent-run/20261013-090628-ea44/screenshots/app/flow-desktop-08-mileage-empty.png",
+      "apps/freelance-finance-tracker/.agent-run/20261013-090628-ea44/screenshots/app/flow-desktop-09-mileage-entry.png",
+      "apps/freelance-finance-tracker/.agent-run/20261013-090628-ea44/screenshots/app/flow-desktop-10-dashboard-with-mileage.png",
+      "apps/freelance-finance-tracker/.agent-run/20261013-090628-ea44/screenshots/app/flow-desktop-11-settings.png",
+      "apps/freelance-finance-tracker/.agent-run/20261013-090628-ea44/screenshots/app/flow-desktop-12-export.png",
+      "apps/freelance-finance-tracker/.agent-run/20261013-090628-ea44/screenshots/app/flow-desktop-13-settings.png",
+      "apps/freelance-finance-tracker/.agent-run/20261013-090628-ea44/screenshots/app/flow-desktop-14-backup.png",
+      "apps/freelance-finance-tracker/.agent-run/20261013-090628-ea44/screenshots/app/flow-desktop-15-backup-passphrase-modal.png",
+      "apps/freelance-finance-tracker/.agent-run/20261013-090628-ea44/screenshots/app/flow-desktop-16-backup-success.png",
+      "apps/freelance-finance-tracker/.agent-run/20261013-090628-ea44/screenshots/app/flow-desktop-17-restore-passphrase-modal.png",
+      "apps/freelance-finance-tracker/.agent-run/20261013-090628-ea44/screenshots/app/flow-desktop-18-restore-success.png",
+      "apps/freelance-finance-tracker/.agent-run/20261013-090628-ea44/screenshots/app/flow-desktop-19-delete-all-confirmation.png",
+      "apps/freelance-finance-tracker/.agent-run/20261013-090628-ea44/screenshots/app/flow-desktop-20-dashboard-empty-after-delete.png"
+    ]
+  },
+  "native": {
+    "error": "unreadable native result: Invalid control character at: line 1 column 71 (char 70)"
+  },
+  "retro": {
+    "observations": [
+      "coder hit its turn limit in 1 of 3 rounds ([1])",
+      "vision scores flat across the run: first rounds [7.9, 8.2, 8.1], last rounds [7.9, 8.2, 8.1]",
+      "slowest round 2 took 43 min; average 24 min"
+    ],
+    "went_well": [
+      "All acceptance tests passed by the final round, resulting in a successful overall run.",
+      "UI flow validator eventually succeeded after the initial fix, confirming that the UI changes were correctly integrated.",
+      "Vision scores stayed stable across rounds, showing that the code generation remained consistent.",
+      "The reviewer correctly identified the missing backup exports and the passphrase validation bug, providing useful diagnostic clues.",
+      "The pipeline completed within the allowed time budget (\u224884\u202fmin) despite the early setbacks."
+    ],
+    "improvements": [
+      {
+        "title": "Add pre\u2011coding export validation to catch missing module exports",
+        "evidence": "Round\u202f1 failed the `typescript (tsc)` validator: missing exported members `createBackup`, `restoreBackup`, `validateBackupStructure`, `deleteCategory` (see raw_output round\u202f1). The coder hit its turn limit (64 calls) and spent ~14\u202fmin before the issue was discovered.",
+        "change": "Static validator (validate.py) \u2013 introduce an `export_check` step that parses all test imports and the DESIGN.md to build a required\u2011exports list per file. Run this validator **before** the coder starts (round\u202f0). If any export is missing, fail with a clear message and a stub implementation suggestion.",
+        "expected_effect": "Missing exports are detected early, eliminating wasted coder turns and preventing turn\u2011limit hits. Convergence speeds up because the coder can start with a correct module skeleton.",
+        "priority": "high"
+      },
+      {
+        "title": "Make reviewer feedback actionable with file paths and stub code",
+        "evidence": "Reviewer issues in round\u202f1 were generic (e.g., \"Missing exported functions createBackup\u2026\") leading to the coder\u2019s trial\u2011and\u2011error (64 calls). Round\u202f2 still required a separate fix for the passphrase validator, adding 42\u202fmin of work.",
+        "change": "Reviewer prompt \u2013 require feedback in the form:\n```\nFile: src/lib/backup.ts\nAdd export const createBackup = async (store, passphrase) => { /* stub */ };\n```\nInclude line numbers and short code snippets for every issue (exports, validation logic, etc.).",
+        "expected_effect": "Coder receives precise, ready\u2011to\u2011copy fixes, reducing the number of iterations and overall round time.",
+        "priority": "high"
+      },
+      {
+        "title": "Enforce a detailed implementation blueprint in the planner output",
+        "evidence": "The coder consumed 1\u202f859\u202f113 prompt tokens in round\u202f1 and hit the turn limit, indicating an under\u2011specified plan. The missing backup exports and the ambiguous validation logic were not listed in the planner\u2019s initial plan.",
+        "change": "Planner prompt \u2013 add a requirement to output a table of all new/modified files with exact function signatures and required export statements. Example:\n| File | Exported symbols | Signature |\n|------|-----------------|-----------|\n| src/lib/backup.ts | createBackup, restoreBackup, validateBackupStructure, deleteCategory | async (store: Store, passphrase: string) => Promise<string> |\nPass this blueprint as the first context for the coder.",
+        "expected_effect": "Provides a clear, low\u2011entropy roadmap, reduces token usage, and prevents missing\u2011export bugs, leading to faster convergence.",
+        "priority": "medium"
+      },
+      {
+        "title": "Run targeted unit tests for critical validators early",
+        "evidence": "Round\u202f2 failed the passphrase validation test (`validateBackupPassphrase('exactly12!!')` returned an error) after a long 42\u202fmin iteration. The bug stemmed from an off\u2011by\u2011one length check.",
+        "change": "Add a lightweight validator step that runs the `passphraseRules.test.ts` unit test before the coder begins work on the backup module. If it fails, surface the exact expected behavior (minimum length = 12) to the coder.",
+        "expected_effect": "Detects the boundary\u2011condition bug before any coding, avoiding the 42\u2011minute round\u202f2 delay.",
+        "priority": "medium"
+      },
+      {
+        "title": "Split large tasks into focused phases with lower turn limits",
+        "evidence": "Coder hit its turn limit in round\u202f1 (64 calls) and overall round\u202f2 lasted 2554\u202fs (\u224843\u202fmin). The combined tasks (backup refactor, OCR addition, date picker, category UI) overloaded a single round.",
+        "change": "Planner \u2013 break the overall feature set into separate phases (e.g., \"Backup API fixes\", \"Passphrase validation\", \"OCR & date picker integration\", \"Category UI updates\"). For each phase set a tighter turn limit (\u224830 turns) and restart the coder with the phase\u2011specific blueprint.",
+        "expected_effect": "Prevents turn\u2011limit exhaustion, keeps each round short and focused, and improves overall pipeline throughput.",
+        "priority": "low"
+      }
+    ]
+  }
+}

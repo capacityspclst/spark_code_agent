@@ -1,0 +1,35 @@
+{
+  "verdict": "pass",
+  "summary": "The recent changes introduce on\u2011device OCR and a full category\u2011management system. CSV export now prefixes formula\u2011triggering characters, fixing the previous CSV\u2011injection issue. However, the earlier concerns about insufficient category\u2011name sanitisation and the potential DoS from unbounded receipt\u2011text parsing remain unresolved. A new medium\u2011severity issue is introduced: custom category names (and renamed categories) are stored without sanitising control or invisible Unicode characters, which could break UI rendering, CSV/PDF export, or be used for hidden\u2011character attacks.",
+  "findings": [
+    {
+      "id": "parse-receipt-regex-dos-medium",
+      "severity": "medium",
+      "where": "code",
+      "file": "src/lib/ocr.ts",
+      "issue": "`parseReceipt` applies several regular expressions on the raw OCR text without input length limits. An attacker supplying a very large or specially crafted receipt string could cause catastrophic back\u2011tracking and freeze the UI (ReDoS).",
+      "fix": "Limit the maximum length of the OCR text processed (e.g., 10\u202fKB) and use non\u2011catastrophic regex patterns; consider a line\u2011by\u2011line parse instead of large global matches."
+    },
+    {
+      "id": "custom-category-length-validation-medium",
+      "severity": "medium",
+      "where": "code",
+      "file": "src/lib/categories.ts",
+      "issue": "Category names are only checked for a length of 1\u201140 characters, but no sanitisation is performed. Certain Unicode control characters or line\u2011breaks could break CSV or PDF generation and UI layout.",
+      "fix": "Trim whitespace, reject control characters (e.g., \\n, \\r, \\t) and normalise Unicode (NFC). Ensure the validated string is safe for all downstream formats."
+    },
+    {
+      "id": "category-name-unsafe-characters-medium",
+      "severity": "medium",
+      "where": "code",
+      "file": "src/lib/categories.ts",
+      "issue": "Custom category names (including renamed categories) are accepted without sanitising Unicode control characters, line\u2011separator characters, or other non\u2011printable code points. Such characters can break UI layout, interfere with CSV or PDF generation, and enable hidden\u2011character attacks.",
+      "fix": "Validate category strings before storing: trim whitespace, reject or strip characters in Unicode categories Cc, Cf, Zl, Zp (control, format, line/paragraph separators). Apply the same validation to renamed categories. Consider normalising to NFC and limiting to printable characters."
+    }
+  ],
+  "deployment_actions": [],
+  "fixed": [
+    "custom-category-csv-injection-medium"
+  ],
+  "stalled": []
+}

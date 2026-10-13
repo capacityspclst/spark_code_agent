@@ -27,6 +27,10 @@ export default function SettingsScreen({ onViewPolicy }: { onViewPolicy?: () => 
     navigation.navigate('DeleteAllData' as any);
   };
 
+  const goCategories = () => {
+    navigation.navigate('Categories' as any);
+  };
+
   return (
     <Screen title="Settings">
       <Card mode="outlined" style={{ backgroundColor: theme.colors.surface, marginBottom: 12 }}>
@@ -39,6 +43,7 @@ export default function SettingsScreen({ onViewPolicy }: { onViewPolicy?: () => 
       </Card>
       <PrimaryButton label="App lock" variant="secondary" onPress={() => navigation.navigate('AppLock')} />
       <PrimaryButton label="Tax settings" variant="secondary" onPress={() => navigation.navigate('TaxSettings')} />
+      <PrimaryButton label="Categories" variant="secondary" onPress={goCategories} />
       <PrimaryButton label="Export" variant="secondary" onPress={() => navigation.navigate('Export')} />
       <PrimaryButton label="Backup & restore" variant="secondary" onPress={() => navigation.navigate('Backup')} />
       <PrimaryButton label="Delete all data" variant="secondary" onPress={deleteAllData} />
