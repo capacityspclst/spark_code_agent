@@ -1,11 +1,9 @@
 // Ledger core implementation for tamper‑evident record keeping.
 // Stores an append‑only encrypted array under the key "ledger" in the Store.
 
-import type { Store } from './storage/types';
+import type { Store, StoredRecord } from './storage/types';
 import { sha256 } from '@noble/hashes/sha2.js';
 import { bytesToHex, utf8ToBytes } from '@noble/hashes/utils.js';
-import { getAllReceipts } from './receiptStore';
-import { getAllMileageEntries } from './mileageStore';
 
 export type LedgerKind =
   | 'receipt.created'
@@ -27,7 +25,8 @@ export interface LedgerEntry {
   hash: string; // hex 64‑char SHA‑256 of this entry (excluding the hash field)
 }
 
-const LEDGER_KEY = 'ledger';
+export const LEDGER_KEY = 'ledger';
+export const LEDGER_INIT_FLAG = 'ledgerInitialized';
 const ZERO_64 = '0'.repeat(64);
 
 /** Helper: produce a canonical JSON string with stable field order (excluding hash). */
@@ -108,17 +107,20 @@ export async function verifyLedger(store: Store): Promise<{
 
 /** Initialise ledger on first launch: import existing receipts/mileage as "imported" entries. */
 export async function initLedgerIfNeeded(store: Store): Promise<void> {
-  const existing = await store.get<LedgerEntry[]>(LEDGER_KEY);
-  if (existing && existing.length > 0) return; // already initialized
+  const initFlag = await store.get<boolean>(LEDGER_INIT_FLAG);
+  if (initFlag) return; // already initialized
 
   // Import existing receipts
-  const receipts = await getAllReceipts(store);
+  const receipts = await store.list<StoredRecord>('receipts');
   for (const r of receipts) {
     await addLedgerEntry(store, 'imported', r.id, r);
   }
   // Import existing mileage entries
-  const mileage = await getAllMileageEntries(store);
+  const mileage = await store.list<StoredRecord>('mileage');
   for (const m of mileage) {
     await addLedgerEntry(store, 'imported', m.id, m);
   }
+
+  // Mark initialization
+  await store.set(LEDGER_INIT_FLAG, true);
 }
