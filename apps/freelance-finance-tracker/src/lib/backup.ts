@@ -116,8 +116,7 @@ export async function restoreBackup(store: Store, backupBlob: string, passphrase
       const safeId = safeReceiptId(m.id);
       await store.put('mileage', { ...m, id: safeId } as any);
     }
-    if (data.categories) {
-      await store.set('categories', data.categories);
-    }
+    // Persist categories data even if null to trigger defaults initialization.
+    await store.set('categories', data.categories ?? null);
   });
 }

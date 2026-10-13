@@ -42,7 +42,7 @@ async function saveData(store: Store, data: CategoriesData): Promise<void> {
 }
 
 /** Validate category name: length 1‑40, no HTML‑tag characters. */
-function isValidName(name: string): boolean {
+export function isValidName(name: string): boolean {
   if (name.length < 1 || name.length > 40) return false;
   // Disallow <, >, & to prevent potential XSS vectors.
   return !/[<>]/.test(name);
@@ -76,7 +76,7 @@ export async function getAllCategories(
 
 /** Add a new custom category. Returns null on success or error string. */
 export async function addCustomCategory(store: Store, name: string): Promise<string | null> {
-  if (!isValidName(name)) return 'Category must be 1–40 characters and not contain < or >.';
+  if (!isValidName(name)) return 'Category must be 1‑40 characters and not contain < or >.';
   const data = await loadData(store);
   const allNames = [...DEFAULT_CATEGORIES, ...data.custom];
   const exists = allNames.some((n) => n.toLowerCase() === name.toLowerCase());
@@ -88,7 +88,7 @@ export async function addCustomCategory(store: Store, name: string): Promise<str
 
 /** Rename a category (default or custom). */
 export async function renameCategory(store: Store, oldName: string, newName: string): Promise<string | null> {
-  if (!isValidName(newName)) return 'Category must be 1–40 characters and not contain < or >.';
+  if (!isValidName(newName)) return 'Category must be 1‑40 characters and not contain < or >.';
   const data = await loadData(store);
   const allNames = [...DEFAULT_CATEGORIES, ...data.custom];
   const conflict = allNames.some((n) => n.toLowerCase() === newName.toLowerCase());
@@ -146,8 +146,11 @@ export async function syncCategoriesWithReceipts(store: Store): Promise<void> {
   ]);
   for (const r of receipts) {
     if (r.category && !existing.has(r.category.toLowerCase())) {
-      data.custom.push(r.category);
-      existing.add(r.category.toLowerCase());
+      // Validate name before adding.
+      if (isValidName(r.category)) {
+        data.custom.push(r.category);
+        existing.add(r.category.toLowerCase());
+      }
     }
   }
   await saveData(store, data);
