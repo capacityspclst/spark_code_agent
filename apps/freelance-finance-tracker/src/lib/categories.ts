@@ -41,16 +41,13 @@ async function saveData(store: Store, data: CategoriesData): Promise<void> {
   await store.set(STORAGE_KEY, data);
 }
 
-/** Validate category name: length 1‑40, no HTML‑tag characters. */
+/** Validate category name */
 export function isValidName(name: string): boolean {
   if (name.length < 1 || name.length > 40) return false;
-  // Disallow <, >, & to prevent potential XSS vectors.
   return !/[<>]/.test(name);
 }
 
-/** Get all categories, applying rename and hidden flags.
- * Returns both visible and hidden categories; callers can filter by the 'hidden' flag.
- */
+/** Get all categories, with hidden flag */
 export async function getAllCategories(
   store: Store,
   options?: { includeHidden?: boolean }
@@ -58,14 +55,12 @@ export async function getAllCategories(
   const data = await loadData(store);
   const includeHidden = options?.includeHidden ?? true;
   const result: Array<{ id: string; name: string; hidden: boolean; custom: boolean }> = [];
-  // defaults
   for (const def of DEFAULT_CATEGORIES) {
     const renamed = data.rename[def] ?? def;
     const hidden = data.hidden.includes(def);
     if (!includeHidden && hidden) continue;
     result.push({ id: def, name: renamed, hidden, custom: false });
   }
-  // custom
   for (const cust of data.custom) {
     const hidden = data.hidden.includes(cust);
     if (!includeHidden && hidden) continue;
@@ -74,7 +69,7 @@ export async function getAllCategories(
   return result;
 }
 
-/** Add a new custom category. Returns null on success or error string. */
+/** Add a new custom category */
 export async function addCustomCategory(store: Store, name: string): Promise<string | null> {
   if (!isValidName(name)) return 'Category must be 1‑40 characters and not contain < or >.';
   const data = await loadData(store);
@@ -86,7 +81,7 @@ export async function addCustomCategory(store: Store, name: string): Promise<str
   return null;
 }
 
-/** Rename a category (default or custom). */
+/** Rename a category */
 export async function renameCategory(store: Store, oldName: string, newName: string): Promise<string | null> {
   if (!isValidName(newName)) return 'Category must be 1‑40 characters and not contain < or >.';
   const data = await loadData(store);
@@ -108,15 +103,17 @@ export async function renameCategory(store: Store, oldName: string, newName: str
   return null;
 }
 
-/** Hide a category (default or custom). */
+/** Hide a category, protecting against usage */
 export async function hideCategory(store: Store, name: string): Promise<string | null> {
+  const inUse = await isCategoryInUse(store, name);
+  if (inUse) return 'Category is used by receipts – hide instead.';
   const data = await loadData(store);
   if (!data.hidden.includes(name)) data.hidden.push(name);
   await saveData(store, data);
   return null;
 }
 
-/** Delete a custom category. Returns null on success or error string. */
+/** Delete a custom category */
 export async function deleteCategory(store: Store, name: string): Promise<string | null> {
   const data = await loadData(store);
   const isCustom = data.custom.includes(name);
@@ -130,13 +127,13 @@ export async function deleteCategory(store: Store, name: string): Promise<string
   return null;
 }
 
-/** Check if any receipt uses the given category name. */
+/** Check if any receipt uses given category */
 export async function isCategoryInUse(store: Store, name: string): Promise<boolean> {
   const receipts = await getAllReceipts(store);
   return receipts.some((r) => r.category?.toLowerCase() === name.toLowerCase());
 }
 
-/** Ensure categories list includes any categories appearing in receipts (e.g., from older backups). */
+/** Sync categories from receipts (e.g., after restore) */
 export async function syncCategoriesWithReceipts(store: Store): Promise<void> {
   const receipts = await getAllReceipts(store);
   const data = await loadData(store);
@@ -146,7 +143,6 @@ export async function syncCategoriesWithReceipts(store: Store): Promise<void> {
   ]);
   for (const r of receipts) {
     if (r.category && !existing.has(r.category.toLowerCase())) {
-      // Validate name before adding.
       if (isValidName(r.category)) {
         data.custom.push(r.category);
         existing.add(r.category.toLowerCase());
