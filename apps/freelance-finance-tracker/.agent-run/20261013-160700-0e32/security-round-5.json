@@ -1,0 +1,93 @@
+{
+  "verdict": "pass",
+  "summary": "The ledger implementation still suffers from append\u2011only guarantee reliance on the Store and lacks size limits, while the backup logic allows arbitrarily large payloads and does not validate unexpected fields (e.g., photoUri) that could be used for path\u2011traversal later. Receipt and mileage stores do not log edits or deletions, breaking the tamper\u2011evident design. Dependency vulnerabilities in `node\u2011forge` and `braces` remain unaddressed. The low\u2011severity CSP omission for the web fallback and two low/medium findings have been fixed. New medium\u2011severity code findings and two high\u2011severity deployment findings are identified.",
+  "findings": [
+    {
+      "id": "ledger-append-only",
+      "severity": "medium",
+      "where": "code",
+      "file": "src/lib/ledger.ts",
+      "issue": "The ledger is stored as a single encrypted JSON array in the Store, and the appendLedgerEntry method reads the whole array, pushes a new entry, and writes it back. This could allow a maliciously\u2011crafted Store implementation (or a corrupted on\u2011device storage) to replace prior entries, breaking the append\u2011only guarantee. The code relies on the Store's internal security but does not enforce immutability at the ledger level.",
+      "fix": "Make the ledger truly append\u2011only by storing each entry under its own key (e.g. \"ledger:{seq}\") and never reading\u2011modifying previous entries. Alternatively, keep the array but verify its integrity (hash chain) before each append and reject if the previous hash does not match the stored head."
+    },
+    {
+      "id": "ledger-unbounded-growth",
+      "severity": "medium",
+      "where": "code",
+      "file": "src/lib/ledger.ts",
+      "issue": "The ledger is stored as a single encrypted JSON array that grows indefinitely. Over time this can exhaust device storage and cause performance or denial\u2011of\u2011service issues.",
+      "fix": "Implement size limits or rotate the ledger (e.g., chunk into multiple entries, prune old entries after export, or enforce a maximum number of entries)."
+    },
+    {
+      "id": "backup-unbounded-size",
+      "severity": "medium",
+      "where": "code",
+      "file": "src/lib/backup.ts",
+      "issue": "createBackup can generate arbitrarily large encrypted blobs and restoreBackup will load them fully into memory. A crafted large backup can cause memory exhaustion or long processing times.",
+      "fix": "Enforce a reasonable maximum backup size (e.g., 10\u202fMiB) before decryption and reject oversized payloads. Also consider streaming decryption for very large backups."
+    },
+    {
+      "id": "backup-unknown-fields",
+      "severity": "medium",
+      "where": "code",
+      "file": "src/lib/backup.ts",
+      "issue": "validateBackupStructure only checks a whitelist of receipt/mileage fields. Unknown fields (e.g., a malicious photoUri with \"../\" paths) are accepted and persisted, potentially enabling path\u2011traversal or other unsafe operations later.",
+      "fix": "Extend validation to reject any fields not explicitly allowed, or sanitize fields like photoUri to ensure they stay within the app\u2011sandbox directory before storing."
+    },
+    {
+      "id": "ledger-missing-mod-log",
+      "severity": "medium",
+      "where": "code",
+      "file": "src/lib/receiptStore.ts",
+      "issue": "Only creation of receipts is logged in the ledger. There are no ledger entries for edits (receipt.corrected) or deletions (receipt.deleted), breaking the tamper\u2011evident guarantee for modifications.",
+      "fix": "Implement editReceipt and deleteReceipt functions that call addLedgerEntry with kinds 'receipt.corrected' and 'receipt.deleted', respectively, and ensure all mutation paths go through these wrappers."
+    },
+    {
+      "id": "ledger-missing-mod-log-mileage",
+      "severity": "medium",
+      "where": "code",
+      "file": "src/lib/mileageStore.ts",
+      "issue": "Only mileage creation is logged. Edits and deletions are not recorded, leaving a gap in the audit trail.",
+      "fix": "Add editMileageEntry and deleteMileageEntry functions that record 'mileage.corrected' and 'mileage.deleted' ledger entries."
+    }
+  ],
+  "deployment_actions": [
+    {
+      "id": "ledger-entry-size",
+      "severity": "medium",
+      "where": "deployment",
+      "file": "src/lib/ledger.ts",
+      "issue": "There is no explicit limit on the size of a ledger entry's data field. Very large receipt images or OCR data could cause the encrypted ledger blob to grow without bound, leading to storage exhaustion on the device or DoS during backup/restore.",
+      "fix": "Enforce a reasonable maximum size for the data payload (e.g., reject entries > 256\u202fKB) before calling addEntry, and document the limit. The backup routine should also cap total ledger size (e.g., 5\u202fMiB) and abort with a user\u2011friendly error if exceeded."
+    },
+    {
+      "id": "missing-csp-web",
+      "severity": "low",
+      "where": "deployment",
+      "file": "public/index.html",
+      "issue": "The web fallback does not include a Content\u2011Security\u2011Policy meta tag, leaving the web build potentially vulnerable to script injection if a malicious component is added in the future.",
+      "fix": "Add a CSP meta tag in public/index.html (e.g., \"default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:;\") as a deployment hardening step."
+    },
+    {
+      "id": "node-forge-vuln",
+      "severity": "high",
+      "where": "deployment",
+      "file": "package-lock.json",
+      "issue": "`node-forge` version 1.4.0 contains a signature forgery vulnerability (CVE\u20112026\u201185393). The library is present in the dependency tree.",
+      "fix": "Upgrade to `node-forge` >=\u202f1.5.0 or replace with a safe alternative (e.g., `@noble/*` crypto primitives)."
+    },
+    {
+      "id": "braces-vuln",
+      "severity": "high",
+      "where": "deployment",
+      "file": "package-lock.json",
+      "issue": "`braces` 3.0.3 is vulnerable to denial\u2011of\u2011service via stack overflow from deeply nested patterns (CVE\u20112026\u201193687).",
+      "fix": "Upgrade to `braces` >=\u202f3.0.4 or replace the library with a non\u2011vulnerable alternative."
+    }
+  ],
+  "fixed": [
+    "photo-uri-path-traversal",
+    "export-verification-code-leak"
+  ],
+  "stalled": []
+}
