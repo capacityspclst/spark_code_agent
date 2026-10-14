@@ -1,6 +1,4 @@
-// Ledger core implementation for tamper‑evident record keeping.
-// Stores entries in an encrypted array under the key "ledger". Each append verifies
-// the chain to maintain append‑only guarantees and enforces a max size.
+// Ledger core implementation for tamper‑evident record keeping using a single encrypted array.
 
 import type { Store, StoredRecord } from './storage/types';
 import { sha256 } from '@noble/hashes/sha2.js';
@@ -28,8 +26,8 @@ export interface LedgerEntry {
 
 export const LEDGER_KEY = 'ledger';
 export const LEDGER_INIT_FLAG = 'ledgerInitialized';
-const ZERO_64 = '0'.repeat(64);
-const MAX_LEDGER_ENTRIES = 5000; // safety limit to avoid unbounded growth
+export const ZERO_64 = '0'.repeat(64);
+export const MAX_LEDGER_ENTRIES = 5000;
 
 /** Produce deterministic JSON with sorted keys (excluding hash). */
 function canonical(entry: Omit<LedgerEntry, 'hash'>): string {
@@ -47,16 +45,18 @@ function computeHash(entryWithoutHash: Omit<LedgerEntry, 'hash'>): string {
   return bytesToHex(hashBytes);
 }
 
+/** Load the whole ledger array (or empty). */
 async function loadLedger(store: Store): Promise<LedgerEntry[]> {
   const existing = await store.get<LedgerEntry[]>(LEDGER_KEY);
   return existing ?? [];
 }
 
+/** Persist the ledger array. */
 async function saveLedger(store: Store, ledger: LedgerEntry[]): Promise<void> {
   await store.set(LEDGER_KEY, ledger);
 }
 
-/** Verify the current ledger chain; used before each append. */
+/** Verify the ledger chain. */
 export async function verifyLedger(store: Store): Promise<{
   ok: boolean;
   entries: LedgerEntry[];
@@ -79,21 +79,21 @@ export async function verifyLedger(store: Store): Promise<{
   return { ok: true, entries: ledger };
 }
 
-/** Append a new entry after verifying integrity and size limits. */
+/** Append a new entry after checking integrity and size limits. */
 export async function addLedgerEntry(
   store: Store,
   kind: LedgerKind,
   recordId: string,
   data: any,
 ): Promise<void> {
-  // Verify existing chain to enforce append‑only guarantee.
-  const verification = await verifyLedger(store);
-  if (!verification.ok) {
-    throw new Error('Ledger integrity compromised; cannot append new entry');
-  }
-  const ledger = verification.entries;
+  const ledger = await loadLedger(store);
   if (ledger.length >= MAX_LEDGER_ENTRIES) {
     throw new Error('Ledger size limit exceeded');
+  }
+  // Verify existing chain before appending
+  const verification = await verifyLedger(store);
+  if (!verification.ok) {
+    throw new Error('Ledger integrity compromised; cannot append');
   }
   const seq = ledger.length + 1;
   const at = new Date().toISOString();

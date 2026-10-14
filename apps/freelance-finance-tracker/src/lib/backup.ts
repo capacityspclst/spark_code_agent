@@ -117,16 +117,11 @@ export async function restoreBackup(store: Store, backupString: string, passphra
   }
   const err = validateBackupStructure(obj);
   if (err) throw new Error(err);
-  // Verify ledger before applying data
-  if (obj.ledger) {
-    await store.set('ledger', obj.ledger);
-    const verification = await verifyLedger(store);
-    if (!verification.ok) {
-      await store.remove('ledger');
-      throw new Error('Backup ledger verification failed');
-    }
-  }
+
+  // Clear existing data first
   await store.clearAll();
+
+  // Restore receipts, mileage, categories
   for (const r of obj.receipts) {
     await store.put('receipts', r);
   }
@@ -136,7 +131,14 @@ export async function restoreBackup(store: Store, backupString: string, passphra
   if (obj.categories) {
     await store.set('categories', obj.categories);
   }
+
+  // Restore ledger if present and verify it
   if (obj.ledger) {
     await store.set('ledger', obj.ledger);
+    const verification = await verifyLedger(store);
+    if (!verification.ok) {
+      await store.remove('ledger');
+      throw new Error('Backup ledger verification failed');
+    }
   }
 }
