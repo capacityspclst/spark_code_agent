@@ -9,6 +9,7 @@ import { verifyLedger } from './ledger';
  * Backup format version.
  */
 const BACKUP_VERSION = 1;
+const MAX_BACKUP_BYTES = 10 * 1024 * 1024; // 10 MiB safety limit
 
 /**
  * Shape of the unencrypted backup data.
@@ -30,26 +31,38 @@ export function validateBackupStructure(obj: any): string | null {
   if (obj.version !== BACKUP_VERSION) return 'Unsupported backup version';
   if (!Array.isArray(obj.receipts)) return 'Receipts must be an array';
   if (!Array.isArray(obj.mileage)) return 'Mileage must be an array';
-  // simple field checks for receipts
+
+  // Validate receipts fields and sanitize photoUri
   for (const r of obj.receipts) {
     if (typeof r !== 'object' || r === null) return 'Invalid receipt entry';
+    const allowed = ['id','amount','date','category','type','notes','photoUri'];
+    for (const k of Object.keys(r)) {
+      if (!allowed.includes(k)) return `Unexpected field ${k} in receipt`;
+    }
     if (typeof r.id !== 'string') return 'Receipt id must be string';
     if (typeof r.amount !== 'number') return 'Receipt amount must be number';
     if (typeof r.date !== 'string') return 'Receipt date must be string';
     if (typeof r.category !== 'string') return 'Receipt category must be string';
     if (typeof r.type !== 'string') return 'Receipt type must be string';
     if (typeof r.notes !== 'string') return 'Receipt notes must be string';
+    if (r.photoUri !== undefined) {
+      if (typeof r.photoUri !== 'string') return 'photoUri must be string';
+      if (r.photoUri.includes('..') || r.photoUri.startsWith('/') ) return 'Invalid photoUri path';
+    }
   }
   // mileage checks
   for (const m of obj.mileage) {
     if (typeof m !== 'object' || m === null) return 'Invalid mileage entry';
+    const allowed = ['id','date','miles','purpose'];
+    for (const k of Object.keys(m)) {
+      if (!allowed.includes(k)) return `Unexpected field ${k} in mileage`;
+    }
     if (typeof m.id !== 'string') return 'Mileage id must be string';
     if (typeof m.date !== 'string') return 'Mileage date must be string';
     if (typeof m.miles !== 'number') return 'Mileage miles must be number';
     if (typeof m.purpose !== 'string') return 'Mileage purpose must be string';
   }
   if (obj.ledger !== undefined && !Array.isArray(obj.ledger)) return 'Ledger must be an array';
-  // categories, if present, should be an object (light validation)
   if (obj.categories !== undefined && typeof obj.categories !== 'object') {
     return 'Categories must be an object';
   }
@@ -73,6 +86,9 @@ export async function createBackup(store: Store, passphrase: string): Promise<st
     ledger: ledger ?? [],
   };
   const json = JSON.stringify(data);
+  if (json.length > MAX_BACKUP_BYTES) {
+    throw new Error('Backup size exceeds maximum allowed size');
+  }
   const salt = randomBytes(16);
   const key = deriveKey(passphrase, salt);
   const ciphertext = encryptText(key, json);
@@ -90,6 +106,9 @@ export async function restoreBackup(store: Store, backupString: string, passphra
   const salt = fromBase64(saltB64);
   const key = deriveKey(passphrase, salt);
   const json = decryptText(key, cipher);
+  if (json.length > MAX_BACKUP_BYTES) {
+    throw new Error('Backup size exceeds maximum allowed size');
+  }
   let obj: any;
   try {
     obj = JSON.parse(json);
@@ -100,12 +119,9 @@ export async function restoreBackup(store: Store, backupString: string, passphra
   if (err) throw new Error(err);
   // Verify ledger before applying data
   if (obj.ledger) {
-    // simple verification using verifyLedger logic on the provided ledger array
-    // We'll temporarily set it to store to reuse verifyLedger, then remove if fails.
     await store.set('ledger', obj.ledger);
     const verification = await verifyLedger(store);
     if (!verification.ok) {
-      // rollback ledger to previous state (clear)
       await store.remove('ledger');
       throw new Error('Backup ledger verification failed');
     }
