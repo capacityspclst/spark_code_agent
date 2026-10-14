@@ -9,21 +9,5 @@ export async function getAllMileageEntries(store: Store): Promise<MileageEntry[]
 
 export async function addMileageEntry(store: Store, entry: MileageEntry): Promise<void> {
   await store.put('mileage', entry as unknown as StoredRecord);
-  try {
-    await addLedgerEntry(store, 'mileage.created', entry.id, entry);
-  } catch {}
-}
-
-export async function editMileageEntry(store: Store, entry: MileageEntry): Promise<void> {
-  await store.put('mileage', entry as unknown as StoredRecord);
-  try {
-    await addLedgerEntry(store, 'mileage.corrected', entry.id, entry);
-  } catch {}
-}
-
-export async function deleteMileageEntry(store: Store, entry: MileageEntry): Promise<void> {
-  await store.delete('mileage', entry.id);
-  try {
-    await addLedgerEntry(store, 'mileage.deleted', entry.id, entry);
-  } catch {}
+  await addLedgerEntry(store, 'mileage.created', entry.id, entry);
 }
