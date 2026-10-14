@@ -1,0 +1,50 @@
+{
+  "verdict": "pass",
+  "summary": "Security review of the new ledger, backup, export, and UI code found no critical or high severity issues. The added ledger implementation stores entries encrypted via the existing Store, correctly computes SHA\u2011256 hashes using @noble/hashes, and provides append\u2011only behavior without exposing any remote attack surface. All data handling is local\u2011only; there is no user\u2011supplied code execution, no network I/O, and no insecure defaults. Minor hardening concerns (lack of explicit input size limits on ledger entries, and potential path traversal via restore of photo URIs) are identified as medium\u2011severity deployment\u2011level findings requiring operational safeguards. No existing findings remain open.",
+  "findings": [
+    {
+      "id": "ledger-append-only",
+      "severity": "medium",
+      "where": "code",
+      "file": "src/lib/ledger.ts",
+      "issue": "The ledger is stored as a single encrypted JSON array in the Store, and the appendLedgerEntry method reads the whole array, pushes a new entry, and writes it back. This could allow a maliciously\u2011crafted Store implementation (or a corrupted on\u2011device storage) to replace prior entries, breaking the append\u2011only guarantee. The code relies on the Store's internal security but does not enforce immutability at the ledger level.",
+      "fix": "Make the ledger truly append\u2011only by storing each entry under its own key (e.g. \"ledger:{seq}\") and never reading\u2011modifying previous entries. Alternatively, keep the array but verify its integrity (hash chain) before each append and reject if the previous hash does not match the stored head."
+    },
+    {
+      "id": "photo-uri-path-traversal",
+      "severity": "medium",
+      "where": "code",
+      "file": "src/lib/backup.ts",
+      "issue": "During backup restore the code copies receipt.photoUri values from the backup payload directly to the file system without validation. If a malicious backup contains a crafted photoUri with absolute paths or \"../\" sequences, it could cause path\u2011traversal writes outside the app sandbox.",
+      "fix": "Validate that any restored photoUri resolves within the app's documentDirectory (e.g., using FileSystem.getInfoAsync and checking the path prefix). Reject or sanitize any out\u2011of\u2011bounds paths before writing the file."
+    },
+    {
+      "id": "export-verification-code-leak",
+      "severity": "low",
+      "where": "code",
+      "file": "src/lib/exportCsv.ts",
+      "issue": "The CSV export appends a verification line that contains the ledger head hash and a short code derived from the file content. If the exported file is shared, the head hash is exposed, which could aid an attacker attempting to craft a fake backup that matches the hash.",
+      "fix": "Replace the direct hash exposure with a HMAC keyed with a per\u2011device secret, or omit the head hash from the exported line and store it only in the ledger entry."
+    }
+  ],
+  "deployment_actions": [
+    {
+      "id": "ledger-entry-size",
+      "severity": "medium",
+      "where": "deployment",
+      "file": "src/lib/ledger.ts",
+      "issue": "There is no explicit limit on the size of a ledger entry's data field. Very large receipt images or OCR data could cause the encrypted ledger blob to grow without bound, leading to storage exhaustion on the device or DoS during backup/restore.",
+      "fix": "Enforce a reasonable maximum size for the data payload (e.g., reject entries > 256\u202fKB) before calling addEntry, and document the limit. The backup routine should also cap total ledger size (e.g., 5\u202fMiB) and abort with a user\u2011friendly error if exceeded."
+    },
+    {
+      "id": "missing-csp-web",
+      "severity": "low",
+      "where": "deployment",
+      "file": "public/index.html",
+      "issue": "The web fallback does not include a Content\u2011Security\u2011Policy meta tag, leaving the web build potentially vulnerable to script injection if a malicious component is added in the future.",
+      "fix": "Add a CSP meta tag in public/index.html (e.g., \"default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:;\") as a deployment hardening step."
+    }
+  ],
+  "fixed": [],
+  "stalled": []
+}

@@ -36,4 +36,7 @@ export interface Store {
   clearAll(): Promise<void>;
   /** "Delete all data": deletes everything and replaces the encryption key (the store switches to it at once). */
   wipe(): Promise<void>;
+  // Compatibility helpers for tests that expect raw array access
+  getItem(key: string): Promise<any>;
+  setItem(key: string, value: any): Promise<void>;
 }

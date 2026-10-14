@@ -1,11 +1,11 @@
 # Security assurance: freelance-finance-tracker
 
-Pipeline run `20261013-090628-ea44`, 2026-10-13. Generated from the run's recorded results.
+Pipeline run `20261013-160700-0e32`, 2026-10-13. Generated from the run's recorded results.
 
 ## Verdict
 
-No critical or high security findings remain open, and every blocking scanner check passed.
-The run was approved after 3 round(s).
+**Not cleared:** critical/high findings or blocking scanner checks remain; see below.
+The run was not approved after 11 round(s).
 
 ## What was checked
 
@@ -32,17 +32,39 @@ Blocking rules: any secret; high/critical dependency vulnerabilities with a fix 
 
 | ID | Severity | Fixed in | Status | Found in round | File | Issue |
 |---|---|---|---|---|---|---|
-| | | | | | No findings |
+| node-forge-vuln | high | deployment | open | 5 | `package-lock.json` | `node-forge` version 1.4.0 contains a signature forgery vulnerability (CVE‑2026‑85393). The library is present in the dependency tree. |
+| braces-vuln | high | deployment | open | 5 | `package-lock.json` | `braces` 3.0.3 is vulnerable to denial‑of‑service via stack overflow from deeply nested patterns (CVE‑2026‑93687). |
+| ledger-size-limit-dos | high | code | open | 7 | `src/lib/ledger.ts` | addLedgerEntry throws an exception when the ledger reaches MAX_LEDGER_ENTRIES (5000). The calling code (e.g., receiptStore, mileageStore, export logic) does not catch this exception, leading to an unhandled error that ca |
+| ledger-append-only | medium | code | open | 4 | `src/lib/ledger.ts` | The ledger is stored as a single encrypted JSON array in the Store, and the appendLedgerEntry method reads the whole array, pushes a new entry, and writes it back. This could allow a maliciously‑crafted Store implementat |
+| ledger-entry-size | medium | deployment | open | 4 | `src/lib/ledger.ts` | There is no explicit limit on the size of a ledger entry's data field. Very large receipt images or OCR data could cause the encrypted ledger blob to grow without bound, leading to storage exhaustion on the device or DoS |
+| ledger-missing-mod-log | medium | code | open | 5 | `src/lib/receiptStore.ts` | Only creation of receipts is logged in the ledger. There are no ledger entries for edits (receipt.corrected) or deletions (receipt.deleted), breaking the tamper‑evident guarantee for modifications. |
+| ledger-missing-mod-log-mileage | medium | code | open | 5 | `src/lib/mileageStore.ts` | Only mileage creation is logged. Edits and deletions are not recorded, leaving a gap in the audit trail. |
+| backup-ledger-size-bypass | medium | code | open | 6 | `src/lib/backup.ts` | Backup restore writes the ledger payload directly without enforcing the ledger entry‑count or data‑size limits, allowing a crafted backup to bypass MAX_LEDGER_ENTRIES and cause unbounded storage growth or denial‑of‑servi |
+| backup-restore-ordered-data | medium | code | open | 9 | `src/lib/backup.ts` | restoreBackup writes receipts, mileage and categories to the store before the ledger (if present) is verified. When ledger verification fails the function throws an error after the other data has already been persisted,  |
+| missing-csp-web | low | deployment | open | 4 | `public/index.html` | The web fallback does not include a Content‑Security‑Policy meta tag, leaving the web build potentially vulnerable to script injection if a malicious component is added in the future. |
+| photo-uri-path-traversal | medium | code | fixed | 4 | `src/lib/backup.ts` | During backup restore the code copies receipt.photoUri values from the backup payload directly to the file system without validation. If a malicious backup contains a crafted photoUri with absolute paths or "../" sequenc |
+| backup-unbounded-size | medium | code | fixed | 5 | `src/lib/backup.ts` | createBackup can generate arbitrarily large encrypted blobs and restoreBackup will load them fully into memory. A crafted large backup can cause memory exhaustion or long processing times. |
+| backup-unknown-fields | medium | code | fixed | 5 | `src/lib/backup.ts` | validateBackupStructure only checks a whitelist of receipt/mileage fields. Unknown fields (e.g., a malicious photoUri with "../" paths) are accepted and persisted, potentially enabling path‑traversal or other unsafe oper |
+| export-verification-code-leak | low | code | fixed | 4 | `src/lib/exportCsv.ts` | The CSV export appends a verification line that contains the ledger head hash and a short code derived from the file content. If the exported file is shared, the head hash is exposed, which could aid an attacker attempti |
+| ledger-unbounded-growth | low | code | fixed | 5 | `src/lib/ledger.ts` | The ledger is stored as a single encrypted JSON array that grows indefinitely. Over time this can exhaust device storage and cause performance or denial‑of‑service issues. |
 
 ## Required before go-live (hosting and infrastructure)
 
 These can't be fixed in the app's code; configure them where the app is deployed. DEPLOYMENT.md shows how for the recommended hosts.
 
-- none
+- [ ] **high** node-forge-vuln: `node-forge` version 1.4.0 contains a signature forgery vulnerability (CVE‑2026‑85393). The library is present in the dependency tree. How: Upgrade to `node-forge` >= 1.5.0 or replace with a safe alternative (e.g., `@noble/*` crypto primitives).
+- [ ] **high** braces-vuln: `braces` 3.0.3 is vulnerable to denial‑of‑service via stack overflow from deeply nested patterns (CVE‑2026‑93687). How: Upgrade to `braces` >= 3.0.4 or replace the library with a non‑vulnerable alternative.
+- [ ] **medium** ledger-entry-size: There is no explicit limit on the size of a ledger entry's data field. Very large receipt images or OCR data could cause the encrypted ledger blob to grow without bound, leading to storage exhaustion on the device or DoS during backup/restore. How: Enforce a reasonable maximum size for the data payload (e.g., reject entries > 256 KB) before calling addEntry, and document the limit. The backup routine should also cap total ledger size (e.g., 5 MiB) and abort with a user‑friendly error if exceeded.
+- [ ] **low** missing-csp-web: The web fallback does not include a Content‑Security‑Policy meta tag, leaving the web build potentially vulnerable to script injection if a malicious component is added in the future. How: Add a CSP meta tag in public/index.html (e.g., "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:;") as a deployment hardening step.
 
 ## Residual risk in the code (accepted, open)
 
-- none
+- **high** ledger-size-limit-dos: addLedgerEntry throws an exception when the ledger reaches MAX_LEDGER_ENTRIES (5000). The calling code (e.g., receiptStore, mileageStore, export logic) does not catch this exception, leading to an unhandled error that can crash the app, providing a denial‑of‑service vector. Recommended fix: Catch the ‘Ledger size limit exceeded’ error in all callers and present a user‑friendly message. Consider increasing the limit, rotating/archiving old entries, or providing a graceful fallback instead of crashing.
+- **medium** ledger-append-only: The ledger is stored as a single encrypted JSON array in the Store, and the appendLedgerEntry method reads the whole array, pushes a new entry, and writes it back. This could allow a maliciously‑crafted Store implementation (or a corrupted on‑device storage) to replace prior entries, breaking the append‑only guarantee. The code relies on the Store's internal security but does not enforce immutability at the ledger level. Recommended fix: Make the ledger truly append‑only by storing each entry under its own key (e.g. "ledger:{seq}") and never reading‑modifying previous entries. Alternatively, keep the array but verify its integrity (hash chain) before each append and reject if the previous hash does not match the stored head.
+- **medium** ledger-missing-mod-log: Only creation of receipts is logged in the ledger. There are no ledger entries for edits (receipt.corrected) or deletions (receipt.deleted), breaking the tamper‑evident guarantee for modifications. Recommended fix: Implement editReceipt and deleteReceipt functions that call addLedgerEntry with kinds 'receipt.corrected' and 'receipt.deleted', respectively, and ensure all mutation paths go through these wrappers.
+- **medium** ledger-missing-mod-log-mileage: Only mileage creation is logged. Edits and deletions are not recorded, leaving a gap in the audit trail. Recommended fix: Add editMileageEntry and deleteMileageEntry functions that record 'mileage.corrected' and 'mileage.deleted' ledger entries.
+- **medium** backup-ledger-size-bypass: Backup restore writes the ledger payload directly without enforcing the ledger entry‑count or data‑size limits, allowing a crafted backup to bypass MAX_LEDGER_ENTRIES and cause unbounded storage growth or denial‑of‑service. Recommended fix: Validate the incoming ledger array before writing it – enforce MAX_LEDGER_ENTRIES, and optionally check total byte size of each entry. Reject or truncate oversized ledgers.
+- **medium** backup-restore-ordered-data: restoreBackup writes receipts, mileage and categories to the store before the ledger (if present) is verified. When ledger verification fails the function throws an error after the other data has already been persisted, leaving a partially restored and potentially inconsistent state. Recommended fix: Validate the entire backup payload, verify the ledger (including size limits) first, and only then persist receipts, mileage, categories and the ledger atomically. On any verification failure abort without mutating the store or roll back changes (e.g., call store.clearAll() before re‑throwing).
 
 ## Limits of this assurance
 

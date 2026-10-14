@@ -1,0 +1,14 @@
+{
+  "verdict": "revise",
+  "issues": [
+    "src/lib/backup.ts: Missing definition of MAX_LEDGER_ENTRIES causing ReferenceError during verification and tests (TS2304). Define MAX_LEDGER_ENTRIES (e.g., import from ledger module or set a constant) before using it in verifyLedgerArray.",
+    "src/lib/ledger.ts: TypeScript error: LedgerEntry generic type used with type argument in src/lib/ledger.ts:65 (computeHash<LedgerEntry>?) \u2013 the code incorrectly supplies a type argument to computeHash which expects no type parameters. Remove the extraneous type argument to fix the compile error.",
+    "src/lib/ledger.ts: verifyLedgerArray in backup.ts expects a ledger entry array but does not correctly import MAX_LEDGER_ENTRIES, causing both runtime and compile errors.",
+    "src/lib/backup.ts: In restoreBackup, ledger entries are written using store.setItem with key `ledger:${entry.seq}` but the ledger implementation expects keys with prefix LEDGER_ENTRY_PREFIX and also requires updating the ledger index. This may lead to inconsistency and verification failures.",
+    "src/lib/ledger.ts: initLedgerIfNeeded imports existing receipts and mileage but does not handle empty imports correctly for subsequent app launches. It should ensure the import runs only once and does not duplicate entries, but the current init flag usage may be insufficient if the flag storage fails or is inconsistent.",
+    "src/lib/ledger.ts: addLedgerEntry verifies the entire ledger before each append, which can be inefficient but also may cause circular verification when verifying an empty ledger. Ensure that verification of an empty ledger does not error.",
+    "src/lib/backup.ts: verifyLedgerArray uses a hard\u2011coded string of zeros for prevHash (\"0\".repeat(64)) but the ledger implementation uses ZERO_64 constant. This inconsistency could cause false negatives when restoring backups.",
+    "src/lib/backup.ts: restoreBackup writes ledger entries and index directly but does not call any Ledger API to set the init flag, potentially causing initLedgerIfNeeded to re\u2011import entries on next launch. Ensure the init flag is set appropriately after restore."
+  ],
+  "feedback": "The ledger implementation introduced several compile\u2011time errors (undefined MAX_LEDGER_ENTRIES, wrong generic usage) and runtime failures (ReferenceError, ledger verification mismatches). The backup restore logic also diverges from the ledger storage conventions, leading to verification failures in tests. Fix these issues, ensure consistency of constants and key prefixes, and verify that initLedgerIfNeeded runs only once. After addressing these problems, re\u2011run the test suite."
+}
