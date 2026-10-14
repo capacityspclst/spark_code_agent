@@ -1,5 +1,6 @@
 // Ledger core implementation for tamper‑evident record keeping.
-// Stores an append‑only encrypted array under the key "ledger" in the Store.
+// Stores entries in an encrypted array under the key "ledger". Each append verifies
+// the chain to maintain append‑only guarantees and enforces a max size.
 
 import type { Store, StoredRecord } from './storage/types';
 import { sha256 } from '@noble/hashes/sha2.js';
@@ -28,8 +29,9 @@ export interface LedgerEntry {
 export const LEDGER_KEY = 'ledger';
 export const LEDGER_INIT_FLAG = 'ledgerInitialized';
 const ZERO_64 = '0'.repeat(64);
+const MAX_LEDGER_ENTRIES = 5000; // safety limit to avoid unbounded growth
 
-/** Helper: produce a canonical JSON string with stable field order (excluding hash). */
+/** Produce deterministic JSON with sorted keys (excluding hash). */
 function canonical(entry: Omit<LedgerEntry, 'hash'>): string {
   const ordered: any = {};
   const keys = Object.keys(entry).sort();
@@ -39,50 +41,22 @@ function canonical(entry: Omit<LedgerEntry, 'hash'>): string {
   return JSON.stringify(ordered);
 }
 
-/** Compute hash for a ledger entry (without its hash field). */
 function computeHash(entryWithoutHash: Omit<LedgerEntry, 'hash'>): string {
   const json = canonical(entryWithoutHash);
   const hashBytes = sha256(utf8ToBytes(json));
   return bytesToHex(hashBytes);
 }
 
-/** Load the whole ledger array (decrypted) or return empty array if missing. */
 async function loadLedger(store: Store): Promise<LedgerEntry[]> {
   const existing = await store.get<LedgerEntry[]>(LEDGER_KEY);
   return existing ?? [];
 }
 
-/** Persist the ledger array back to storage. */
 async function saveLedger(store: Store, ledger: LedgerEntry[]): Promise<void> {
   await store.set(LEDGER_KEY, ledger);
 }
 
-/** Add a new entry to the ledger. */
-export async function addLedgerEntry(
-  store: Store,
-  kind: LedgerKind,
-  recordId: string,
-  data: any,
-): Promise<void> {
-  const ledger = await loadLedger(store);
-  const seq = ledger.length + 1;
-  const at = new Date().toISOString();
-  const prevHash = ledger.length === 0 ? ZERO_64 : ledger[ledger.length - 1].hash;
-  const entryWithoutHash: Omit<LedgerEntry, 'hash'> = {
-    seq,
-    at,
-    kind,
-    recordId,
-    data,
-    prevHash,
-  };
-  const hash = computeHash(entryWithoutHash);
-  const entry: LedgerEntry = { ...entryWithoutHash, hash };
-  ledger.push(entry);
-  await saveLedger(store, ledger);
-}
-
-/** Verify the full ledger chain. Returns an object describing the result. */
+/** Verify the current ledger chain; used before each append. */
 export async function verifyLedger(store: Store): Promise<{
   ok: boolean;
   entries: LedgerEntry[];
@@ -105,22 +79,51 @@ export async function verifyLedger(store: Store): Promise<{
   return { ok: true, entries: ledger };
 }
 
+/** Append a new entry after verifying integrity and size limits. */
+export async function addLedgerEntry(
+  store: Store,
+  kind: LedgerKind,
+  recordId: string,
+  data: any,
+): Promise<void> {
+  // Verify existing chain to enforce append‑only guarantee.
+  const verification = await verifyLedger(store);
+  if (!verification.ok) {
+    throw new Error('Ledger integrity compromised; cannot append new entry');
+  }
+  const ledger = verification.entries;
+  if (ledger.length >= MAX_LEDGER_ENTRIES) {
+    throw new Error('Ledger size limit exceeded');
+  }
+  const seq = ledger.length + 1;
+  const at = new Date().toISOString();
+  const prevHash = ledger.length === 0 ? ZERO_64 : ledger[ledger.length - 1].hash;
+  const entryWithoutHash: Omit<LedgerEntry, 'hash'> = {
+    seq,
+    at,
+    kind,
+    recordId,
+    data,
+    prevHash,
+  };
+  const hash = computeHash(entryWithoutHash);
+  const entry: LedgerEntry = { ...entryWithoutHash, hash };
+  ledger.push(entry);
+  await saveLedger(store, ledger);
+}
+
 /** Initialise ledger on first launch: import existing receipts/mileage as "imported" entries. */
 export async function initLedgerIfNeeded(store: Store): Promise<void> {
   const initFlag = await store.get<boolean>(LEDGER_INIT_FLAG);
-  if (initFlag) return; // already initialized
+  if (initFlag) return;
 
-  // Import existing receipts
   const receipts = await store.list<StoredRecord>('receipts');
   for (const r of receipts) {
     await addLedgerEntry(store, 'imported', r.id, r);
   }
-  // Import existing mileage entries
   const mileage = await store.list<StoredRecord>('mileage');
   for (const m of mileage) {
     await addLedgerEntry(store, 'imported', m.id, m);
   }
-
-  // Mark initialization
   await store.set(LEDGER_INIT_FLAG, true);
 }
