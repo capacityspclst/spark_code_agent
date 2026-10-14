@@ -3,7 +3,7 @@ import { getAllReceipts } from './receiptStore';
 import { getAllMileageEntries } from './mileageStore';
 import { getAllCategories } from './categories';
 import { encryptText, decryptText, deriveKey, randomBytes, toBase64, fromBase64 } from './crypto';
-import { verifyLedger } from './ledger';
+import { verifyLedger, getAllLedgerEntries, LedgerEntry } from './ledger';
 
 /**
  * Backup format version.
@@ -19,7 +19,7 @@ export interface BackupData {
   receipts: any[]; // Receipt objects
   mileage: any[]; // MileageEntry objects
   categories?: any; // optional categories data (raw storage shape)
-  ledger?: any[]; // ledger entries
+  ledger?: LedgerEntry[]; // ledger entries
 }
 
 /**
@@ -69,6 +69,37 @@ export function validateBackupStructure(obj: any): string | null {
   return null;
 }
 
+/** Verify a ledger array (used during restore). */
+function verifyLedgerArray(arr: LedgerEntry[]): {
+  ok: boolean;
+  firstBadSeq?: number;
+  reason?: string;
+} {
+  if (arr.length > MAX_LEDGER_ENTRIES) return { ok: false, reason: 'ledger exceeds max entries' };
+  for (let i = 0; i < arr.length; i++) {
+    const entry = arr[i];
+    const { hash, ...withoutHash } = entry;
+    const expectedHash = (function compute(entryNoHash: Omit<LedgerEntry, 'hash'>) {
+      const keys = Object.keys(entryNoHash).sort();
+      const ordered: any = {};
+      for (const k of keys) ordered[k] = (entryNoHash as any)[k];
+      const json = JSON.stringify(ordered);
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      const { sha256 } = require('@noble/hashes/sha2.js');
+      const { bytesToHex, utf8ToBytes } = require('@noble/hashes/utils.js');
+      return bytesToHex(sha256(utf8ToBytes(json)));
+    })(withoutHash as Omit<LedgerEntry, 'hash'>);
+    if (hash !== expectedHash) {
+      return { ok: false, firstBadSeq: entry.seq, reason: 'hash mismatch' };
+    }
+    const expectedPrev = i === 0 ? '0'.repeat(64) : arr[i - 1].hash;
+    if (entry.prevHash !== expectedPrev) {
+      return { ok: false, firstBadSeq: entry.seq, reason: 'prevHash mismatch' };
+    }
+  }
+  return { ok: true };
+}
+
 /**
  * Create an encrypted backup string.
  * The backup includes receipts, mileage entries, raw categories storage, and the ledger.
@@ -77,13 +108,13 @@ export async function createBackup(store: Store, passphrase: string): Promise<st
   const receipts = await getAllReceipts(store);
   const mileage = await getAllMileageEntries(store);
   const rawCategories = await store.get<any>('categories');
-  const ledger = await store.get<any>('ledger');
+  const ledgerEntries = await getAllLedgerEntries(store);
   const data: BackupData = {
     version: BACKUP_VERSION,
     receipts,
     mileage,
     categories: rawCategories ?? { custom: [], hidden: [], rename: {} },
-    ledger: ledger ?? [],
+    ledger: ledgerEntries,
   };
   const json = JSON.stringify(data);
   if (json.length > MAX_BACKUP_BYTES) {
@@ -134,11 +165,18 @@ export async function restoreBackup(store: Store, backupString: string, passphra
 
   // Restore ledger if present and verify it
   if (obj.ledger) {
-    await store.set('ledger', obj.ledger);
-    const verification = await verifyLedger(store);
+    const ledgerArr: LedgerEntry[] = obj.ledger;
+    const verification = verifyLedgerArray(ledgerArr);
     if (!verification.ok) {
-      await store.remove('ledger');
       throw new Error('Backup ledger verification failed');
     }
+    // Write entries individually (append‑only)
+    for (const entry of ledgerArr) {
+      const key = `ledger:${entry.seq}`;
+      await store.setItem(key, entry);
+    }
+    // Recreate index
+    const seqs = ledgerArr.map((e) => e.seq);
+    await store.setItem('ledger_index', seqs);
   }
 }
