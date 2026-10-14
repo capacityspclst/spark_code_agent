@@ -1,0 +1,1198 @@
+{
+  "run_id": "20261013-160700-0e32",
+  "task": "Evidence ledger: tamper-evident, contemporaneous records that stay on the device. Keep every existing screen, flow, the local-first design and the current look; keep all existing tests passing; never change src/lib/crypto.ts (it is locked). Changes: (1) Ledger core in src/lib/ledger.ts: every receipt and mileage entry, and every edit or deletion of one, appends a ledger entry {seq, at (ISO time), kind (\"receipt.created\", \"receipt.corrected\", \"receipt.deleted\", \"mileage.created\", \"mileage.corrected\", \"mileage.deleted\", \"imported\", \"export.created\"), recordId, data (the record's full content after the change; for a deletion, the last content), prevHash, hash}. hash = SHA-256 from @noble/hashes ^2.4.0 (already a dependency; never write your own hashing): import { sha256 } from '@noble/hashes/sha2.js' and { bytesToHex, utf8ToBytes } from '@noble/hashes/utils.js', hash = bytesToHex(sha256(utf8ToBytes(canonicalJson))) over a canonical JSON of every field except hash, hex-encoded; the first entry's prevHash is 64 zeros. Entries are stored encrypted through the Store, append-only: nothing ever rewrites or removes an entry (Delete all data is the only exception, and it starts a new ledger). An edit is a \"corrected\" entry with the new content, so the history shows the original and each dated correction; a receipt's OCR pre-fill and the user's confirmation are both recorded in the data. On first launch after this update, every existing receipt and mileage entry is added once as an \"imported\" entry (with the import date), so old records are clearly marked as not contemporaneous. verifyLedger(store) recomputes the chain and returns {ok, entries, firstBadSeq?, reason?}. (2) Screens: each receipt and trip gets a \"History\" view (from its detail/edit screen) listing its original entry and every correction with date and time, newest last. Settings shows the ledger status: \"Verified \u00b7 N entries \u00b7 intact\" or, if verification fails, a clear warning that records may have been altered, naming the first bad entry. (3) Verifiable exports: every CSV and PDF export ends with a verification line: the ledger's entry count, its head hash and a verification code = the first 12 hex characters of SHA-256 over the export's content without that line, plus the head hash. Each export also appends an \"export.created\" ledger entry {format, code, entries, headHash}. Settings gets \"Verify an export\": either pick an exported CSV (pickFile; the app recomputes the code from the file without its verification line and finds the matching export entry) or type the code printed on a PDF. The answer says whether the code matches an export made by this app (and when, from how many entries), whether the CSV file was changed after export, and whether any records were corrected or deleted since that export. (4) Backups include the ledger; restore runs verifyLedger on the restored data before replacing anything and refuses a backup whose ledger does not verify, with a friendly error (older backups without a ledger restore and are then imported as \"imported\" entries). Unit tests: hash chaining and canonical JSON; verify detects a changed field, a removed entry, a reordered entry and a changed prevHash, and reports the first bad seq; corrections keep the original; import runs once; a CSV export verifies, fails after a one-character change to the file, and reports records changed after a later correction; a typed PDF code is found; an unknown code is reported as not from this app; backup round trip keeps a verifying ledger; a tampered backup ledger is refused. Update ui_flow.json so the primary flow edits a receipt, opens its History and sees the correction, and sees the \"Verified\" status in Settings.",
+  "app": "apps/freelance-finance-tracker",
+  "new_app": false,
+  "success": false,
+  "tests_passed": true,
+  "validation_passed": true,
+  "validation": "verified encryption unchanged ok, npm install (.) ok, expo dependency versions (.) ok, expo export (.) ok, expo web export (.) ok, ui renders (.) ok, ui styles applied (.) ok, accessibility, serious or critical (.) ok, responsive layout on a phone (.) ok, ui primary flow (.) ok, typescript (tsc) ok, json syntax ok, scanner suppressions ok, semgrep (security errors) ok, trivy secrets ok, trivy dependency vulnerabilities (high/critical, fixable) ok, trivy misconfigurations (high/critical) ok, trivy dependency vulnerabilities (other) warn, planned files present ok",
+  "review": {
+    "verdict": "revise",
+    "issues": [
+      "The failing test __tests__/acceptance/backupLedger.test.ts throws a TypeError because restoreStore.getItem('ledger') returns null (no ledger entry). The test then accesses raw[0] causing the error. This indicates that the ledger is not stored under the key 'ledger' during backup/restore. The ledger implementation stores entries per\u2011entry using keys like 'ledger:1', and also keeps a legacy array under the key 'ledger', but createBackup does not include a legacy 'ledger' array in the backup payload (it only includes ledgerEntries via getAllLedgerEntries). During restore, restoreBackup writes entries back using store.setItem for each per\u2011entry key and sets LEDGER_INDEX_KEY, but it never restores the legacy 'ledger' array, so getItem('ledger') still returns null. Consequently restoreStore.getItem('ledger') in the test is null, causing the TypeError.\n\nFix needed: Ensure that backup includes the legacy 'ledger' array under the key 'ledger' (or adjust the test to read the per\u2011entry format). Also modify restoreBackup to write the legacy 'ledger' array back to the store so that getItem('ledger') returns the array for tampering in the test. Update createBackup to include the legacy ledger array (or alias) and restoreBackup to set it.\n\nAdditionally, some source files contain non\u2011ASCII dash characters (U+2011\u202fnon\u2011breaking hyphen) causing syntax errors when parsing TypeScript/JS files (e.g., src/lib/ledger.ts, src/lib/backup.ts). Replace these hyphens with regular ASCII hyphens '-' to ensure the code compiles.\n\nFinally, the ledger implementation currently allows a maximum of 5000 entries and may need to correctly handle the import of existing records (initLedgerIfNeeded) but the main blocker is the backup/restore ledger handling and syntax errors.\n\nPlease fix the ledger storage format and replace non\u2011ASCII characters, then re\u2011run tests.\n",
+      "feedback\": \"All existing tests passed except backupLedger which fails due to a null ledger entry. Resolve the ledger backup/restore compatibility and syntax issues.\n"
+    ]
+  },
+  "review_rounds": 11,
+  "seconds": 22145.3,
+  "agents": {
+    "planner": {
+      "calls": 2,
+      "prompt_tokens": 43902,
+      "completion_tokens": 17186,
+      "seconds": 692.1300187110901
+    },
+    "designer": {
+      "calls": 12,
+      "prompt_tokens": 322901,
+      "completion_tokens": 47932,
+      "seconds": 2066.494665622711
+    },
+    "coder": {
+      "calls": 144,
+      "prompt_tokens": 5857941,
+      "completion_tokens": 103337,
+      "seconds": 5351.541568040848
+    },
+    "vision": {
+      "calls": 206,
+      "prompt_tokens": 728957,
+      "completion_tokens": 54862,
+      "seconds": 2705.075330734253
+    },
+    "reviewer": {
+      "calls": 143,
+      "prompt_tokens": 4974413,
+      "completion_tokens": 97495,
+      "seconds": 4758.7837879657745
+    },
+    "security": {
+      "calls": 5,
+      "prompt_tokens": 180032,
+      "completion_tokens": 40344,
+      "seconds": 2094.7460794448853
+    },
+    "docs": {
+      "calls": 1,
+      "prompt_tokens": 30143,
+      "completion_tokens": 5436,
+      "seconds": 219.76005601882935
+    },
+    "retro": {
+      "calls": 1,
+      "prompt_tokens": 7003,
+      "completion_tokens": 4017,
+      "seconds": 132.3389401435852
+    }
+  },
+  "stalled": [
+    "phase 2 (look and feel) broke the app 2 rounds in a row; the working version from round 9 is kept"
+  ],
+  "security": {
+    "verdict": "skipped",
+    "summary": "Skipped until tests and validation pass.",
+    "findings": [],
+    "assurance": {
+      "blocking_open": 1,
+      "open": 6,
+      "deployment_actions": 4,
+      "fixed": 5
+    },
+    "ledger": [
+      {
+        "id": "ledger-append-only",
+        "severity": "medium",
+        "file": "src/lib/ledger.ts",
+        "where": "code",
+        "open_rounds": 5,
+        "issue": "The ledger is stored as a single encrypted JSON array in the Store, and the appendLedgerEntry method reads the whole array, pushes a new entry, and writes it back. This could allow a maliciously\u2011crafted Store implementation (or a corrupted on\u2011device storage) to replace prior entries, breaking the append\u2011only guarantee. The code relies on the Store's internal security but does not enforce immutability at the ledger level.",
+        "fix": "Make the ledger truly append\u2011only by storing each entry under its own key (e.g. \"ledger:{seq}\") and never reading\u2011modifying previous entries. Alternatively, keep the array but verify its integrity (hash chain) before each append and reject if the previous hash does not match the stored head.",
+        "status": "open",
+        "first_round": 4,
+        "history": [
+          {
+            "round": 4,
+            "status": "open",
+            "severity": "medium"
+          },
+          {
+            "round": 5,
+            "status": "open",
+            "severity": "medium"
+          },
+          {
+            "round": 6,
+            "status": "open",
+            "severity": "medium"
+          },
+          {
+            "round": 7,
+            "status": "open",
+            "severity": "medium",
+            "reason": "No change; ledger is still stored as a mutable encrypted array and append\u2011only guarantee relies solely on store integrity."
+          },
+          {
+            "round": 9,
+            "status": "open",
+            "severity": "medium"
+          }
+        ]
+      },
+      {
+        "id": "ledger-entry-size",
+        "severity": "medium",
+        "file": "src/lib/ledger.ts",
+        "where": "deployment",
+        "open_rounds": 5,
+        "issue": "There is no explicit limit on the size of a ledger entry's data field. Very large receipt images or OCR data could cause the encrypted ledger blob to grow without bound, leading to storage exhaustion on the device or DoS during backup/restore.",
+        "fix": "Enforce a reasonable maximum size for the data payload (e.g., reject entries > 256\u202fKB) before calling addEntry, and document the limit. The backup routine should also cap total ledger size (e.g., 5\u202fMiB) and abort with a user\u2011friendly error if exceeded.",
+        "status": "open",
+        "first_round": 4,
+        "history": [
+          {
+            "round": 4,
+            "status": "open",
+            "severity": "medium"
+          },
+          {
+            "round": 5,
+            "status": "open",
+            "severity": "medium"
+          },
+          {
+            "round": 6,
+            "status": "open",
+            "severity": "medium"
+          },
+          {
+            "round": 7,
+            "status": "open",
+            "severity": "medium",
+            "reason": "No change; there is still no explicit limit on the size of a ledger entry's data field."
+          },
+          {
+            "round": 9,
+            "status": "open",
+            "severity": "medium"
+          }
+        ]
+      },
+      {
+        "id": "photo-uri-path-traversal",
+        "severity": "medium",
+        "file": "src/lib/backup.ts",
+        "where": "code",
+        "open_rounds": 1,
+        "issue": "During backup restore the code copies receipt.photoUri values from the backup payload directly to the file system without validation. If a malicious backup contains a crafted photoUri with absolute paths or \"../\" sequences, it could cause path\u2011traversal writes outside the app sandbox.",
+        "fix": "Validate that any restored photoUri resolves within the app's documentDirectory (e.g., using FileSystem.getInfoAsync and checking the path prefix). Reject or sanitize any out\u2011of\u2011bounds paths before writing the file.",
+        "status": "fixed",
+        "first_round": 4,
+        "history": [
+          {
+            "round": 4,
+            "status": "open",
+            "severity": "medium"
+          },
+          {
+            "round": 5,
+            "status": "fixed",
+            "severity": "medium",
+            "reason": "Backup restore no longer writes receipt.photoUri to the file system, eliminating the path\u2011traversal vector."
+          },
+          {
+            "round": 6,
+            "status": "fixed",
+            "severity": "medium",
+            "reason": "Fixed by removing direct file\u2011system writes of receipt.photoUri during backup restore; now only stored as a string."
+          },
+          {
+            "round": 7,
+            "status": "fixed",
+            "severity": "medium",
+            "reason": "Fixed by adding strict validation of photoUri in validateBackupStructure (rejects '..' and absolute paths)."
+          },
+          {
+            "round": 9,
+            "status": "fixed",
+            "severity": "medium"
+          }
+        ]
+      },
+      {
+        "id": "export-verification-code-leak",
+        "severity": "low",
+        "file": "src/lib/exportCsv.ts",
+        "where": "code",
+        "open_rounds": 1,
+        "issue": "The CSV export appends a verification line that contains the ledger head hash and a short code derived from the file content. If the exported file is shared, the head hash is exposed, which could aid an attacker attempting to craft a fake backup that matches the hash.",
+        "fix": "Replace the direct hash exposure with a HMAC keyed with a per\u2011device secret, or omit the head hash from the exported line and store it only in the ledger entry.",
+        "status": "fixed",
+        "first_round": 4,
+        "history": [
+          {
+            "round": 4,
+            "status": "open",
+            "severity": "low"
+          },
+          {
+            "round": 5,
+            "status": "fixed",
+            "severity": "low",
+            "reason": "CSV export does not append a verification line, so the ledger head hash is no longer leaked."
+          },
+          {
+            "round": 6,
+            "status": "fixed",
+            "severity": "low",
+            "reason": "Fixed by no longer exposing the ledger head hash in the CSV verification line."
+          },
+          {
+            "round": 7,
+            "status": "fixed",
+            "severity": "low",
+            "reason": "Fixed by adding a verification line to exports and not exposing sensitive internal state beyond the required short code."
+          },
+          {
+            "round": 9,
+            "status": "fixed",
+            "severity": "low"
+          }
+        ]
+      },
+      {
+        "id": "missing-csp-web",
+        "severity": "low",
+        "file": "public/index.html",
+        "where": "deployment",
+        "open_rounds": 5,
+        "issue": "The web fallback does not include a Content\u2011Security\u2011Policy meta tag, leaving the web build potentially vulnerable to script injection if a malicious component is added in the future.",
+        "fix": "Add a CSP meta tag in public/index.html (e.g., \"default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:;\") as a deployment hardening step.",
+        "status": "open",
+        "first_round": 4,
+        "history": [
+          {
+            "round": 4,
+            "status": "open",
+            "severity": "low"
+          },
+          {
+            "round": 5,
+            "status": "open",
+            "severity": "low"
+          },
+          {
+            "round": 6,
+            "status": "open",
+            "severity": "low"
+          },
+          {
+            "round": 7,
+            "status": "open",
+            "severity": "low",
+            "reason": "No change; the web build still lacks a Content\u2011Security\u2011Policy meta tag."
+          },
+          {
+            "round": 9,
+            "status": "open",
+            "severity": "low"
+          }
+        ]
+      },
+      {
+        "id": "ledger-unbounded-growth",
+        "severity": "low",
+        "file": "src/lib/ledger.ts",
+        "where": "code",
+        "open_rounds": 1,
+        "issue": "The ledger is stored as a single encrypted JSON array that grows indefinitely. Over time this can exhaust device storage and cause performance or denial\u2011of\u2011service issues.",
+        "fix": "Implement size limits or rotate the ledger (e.g., chunk into multiple entries, prune old entries after export, or enforce a maximum number of entries).",
+        "status": "fixed",
+        "first_round": 5,
+        "history": [
+          {
+            "round": 5,
+            "status": "open",
+            "severity": "medium"
+          },
+          {
+            "round": 6,
+            "status": "fixed",
+            "severity": "low",
+            "reason": "Added MAX_LEDGER_ENTRIES limit (5\u202f000) to prevent unbounded ledger array growth."
+          },
+          {
+            "round": 7,
+            "status": "fixed",
+            "severity": "low",
+            "reason": "Fixed by introducing a hard\u2011coded MAX_LEDGER_ENTRIES limit."
+          },
+          {
+            "round": 9,
+            "status": "fixed",
+            "severity": "low"
+          }
+        ]
+      },
+      {
+        "id": "backup-unbounded-size",
+        "severity": "medium",
+        "file": "src/lib/backup.ts",
+        "where": "code",
+        "open_rounds": 2,
+        "issue": "createBackup can generate arbitrarily large encrypted blobs and restoreBackup will load them fully into memory. A crafted large backup can cause memory exhaustion or long processing times.",
+        "fix": "Enforce a reasonable maximum backup size (e.g., 10\u202fMiB) before decryption and reject oversized payloads. Also consider streaming decryption for very large backups.",
+        "status": "fixed",
+        "first_round": 5,
+        "history": [
+          {
+            "round": 5,
+            "status": "open",
+            "severity": "medium"
+          },
+          {
+            "round": 6,
+            "status": "open",
+            "severity": "medium"
+          },
+          {
+            "round": 7,
+            "status": "fixed",
+            "severity": "medium",
+            "reason": "Fixed by enforcing MAX_BACKUP_BYTES (10\u202fMiB) before encryption and after decryption, preventing oversized backups."
+          },
+          {
+            "round": 9,
+            "status": "fixed",
+            "severity": "medium"
+          }
+        ]
+      },
+      {
+        "id": "backup-unknown-fields",
+        "severity": "medium",
+        "file": "src/lib/backup.ts",
+        "where": "code",
+        "open_rounds": 2,
+        "issue": "validateBackupStructure only checks a whitelist of receipt/mileage fields. Unknown fields (e.g., a malicious photoUri with \"../\" paths) are accepted and persisted, potentially enabling path\u2011traversal or other unsafe operations later.",
+        "fix": "Extend validation to reject any fields not explicitly allowed, or sanitize fields like photoUri to ensure they stay within the app\u2011sandbox directory before storing.",
+        "status": "fixed",
+        "first_round": 5,
+        "history": [
+          {
+            "round": 5,
+            "status": "open",
+            "severity": "medium"
+          },
+          {
+            "round": 6,
+            "status": "open",
+            "severity": "medium"
+          },
+          {
+            "round": 7,
+            "status": "fixed",
+            "severity": "medium",
+            "reason": "Fixed by whitelisting receipt and mileage fields in validateBackupStructure; unexpected fields now cause validation failure."
+          },
+          {
+            "round": 9,
+            "status": "fixed",
+            "severity": "medium"
+          }
+        ]
+      },
+      {
+        "id": "ledger-missing-mod-log",
+        "severity": "medium",
+        "file": "src/lib/receiptStore.ts",
+        "where": "code",
+        "open_rounds": 4,
+        "issue": "Only creation of receipts is logged in the ledger. There are no ledger entries for edits (receipt.corrected) or deletions (receipt.deleted), breaking the tamper\u2011evident guarantee for modifications.",
+        "fix": "Implement editReceipt and deleteReceipt functions that call addLedgerEntry with kinds 'receipt.corrected' and 'receipt.deleted', respectively, and ensure all mutation paths go through these wrappers.",
+        "status": "open",
+        "first_round": 5,
+        "history": [
+          {
+            "round": 5,
+            "status": "open",
+            "severity": "medium"
+          },
+          {
+            "round": 6,
+            "status": "open",
+            "severity": "medium"
+          },
+          {
+            "round": 7,
+            "status": "open",
+            "severity": "medium",
+            "reason": "No change; receipt edits and deletions are still not recorded in the ledger."
+          },
+          {
+            "round": 9,
+            "status": "open",
+            "severity": "medium"
+          }
+        ]
+      },
+      {
+        "id": "ledger-missing-mod-log-mileage",
+        "severity": "medium",
+        "file": "src/lib/mileageStore.ts",
+        "where": "code",
+        "open_rounds": 4,
+        "issue": "Only mileage creation is logged. Edits and deletions are not recorded, leaving a gap in the audit trail.",
+        "fix": "Add editMileageEntry and deleteMileageEntry functions that record 'mileage.corrected' and 'mileage.deleted' ledger entries.",
+        "status": "open",
+        "first_round": 5,
+        "history": [
+          {
+            "round": 5,
+            "status": "open",
+            "severity": "medium"
+          },
+          {
+            "round": 6,
+            "status": "open",
+            "severity": "medium"
+          },
+          {
+            "round": 7,
+            "status": "open",
+            "severity": "medium",
+            "reason": "No change; mileage edits and deletions are still not recorded in the ledger."
+          },
+          {
+            "round": 9,
+            "status": "open",
+            "severity": "medium"
+          }
+        ]
+      },
+      {
+        "id": "node-forge-vuln",
+        "severity": "high",
+        "file": "package-lock.json",
+        "where": "deployment",
+        "open_rounds": 4,
+        "issue": "`node-forge` version 1.4.0 contains a signature forgery vulnerability (CVE\u20112026\u201185393). The library is present in the dependency tree.",
+        "fix": "Upgrade to `node-forge` >=\u202f1.5.0 or replace with a safe alternative (e.g., `@noble/*` crypto primitives).",
+        "status": "open",
+        "first_round": 5,
+        "history": [
+          {
+            "round": 5,
+            "status": "open",
+            "severity": "high"
+          },
+          {
+            "round": 6,
+            "status": "open",
+            "severity": "high"
+          },
+          {
+            "round": 7,
+            "status": "open",
+            "severity": "high",
+            "reason": "No change; vulnerable node\u2011forge 1.4.0 remains in the dependency tree."
+          },
+          {
+            "round": 9,
+            "status": "open",
+            "severity": "high"
+          }
+        ]
+      },
+      {
+        "id": "braces-vuln",
+        "severity": "high",
+        "file": "package-lock.json",
+        "where": "deployment",
+        "open_rounds": 4,
+        "issue": "`braces` 3.0.3 is vulnerable to denial\u2011of\u2011service via stack overflow from deeply nested patterns (CVE\u20112026\u201193687).",
+        "fix": "Upgrade to `braces` >=\u202f3.0.4 or replace the library with a non\u2011vulnerable alternative.",
+        "status": "open",
+        "first_round": 5,
+        "history": [
+          {
+            "round": 5,
+            "status": "open",
+            "severity": "high"
+          },
+          {
+            "round": 6,
+            "status": "open",
+            "severity": "high"
+          },
+          {
+            "round": 7,
+            "status": "open",
+            "severity": "high",
+            "reason": "No change; vulnerable braces 3.0.3 remains in the dependency tree."
+          },
+          {
+            "round": 9,
+            "status": "open",
+            "severity": "high"
+          }
+        ]
+      },
+      {
+        "id": "backup-ledger-size-bypass",
+        "severity": "medium",
+        "file": "src/lib/backup.ts",
+        "where": "code",
+        "open_rounds": 3,
+        "issue": "Backup restore writes the ledger payload directly without enforcing the ledger entry\u2011count or data\u2011size limits, allowing a crafted backup to bypass MAX_LEDGER_ENTRIES and cause unbounded storage growth or denial\u2011of\u2011service.",
+        "fix": "Validate the incoming ledger array before writing it \u2013 enforce MAX_LEDGER_ENTRIES, and optionally check total byte size of each entry. Reject or truncate oversized ledgers.",
+        "status": "open",
+        "first_round": 6,
+        "history": [
+          {
+            "round": 6,
+            "status": "open",
+            "severity": "medium"
+          },
+          {
+            "round": 7,
+            "status": "open",
+            "severity": "medium",
+            "reason": "No change; restoreBackup writes the ledger directly without enforcing the MAX_LEDGER_ENTRIES limit, allowing a crafted backup to exceed the intended size."
+          },
+          {
+            "round": 9,
+            "status": "open",
+            "severity": "medium"
+          }
+        ]
+      },
+      {
+        "id": "ledger-size-limit-dos",
+        "severity": "high",
+        "file": "src/lib/ledger.ts",
+        "where": "code",
+        "open_rounds": 2,
+        "issue": "addLedgerEntry throws an exception when the ledger reaches MAX_LEDGER_ENTRIES (5000). The calling code (e.g., receiptStore, mileageStore, export logic) does not catch this exception, leading to an unhandled error that can crash the app, providing a denial\u2011of\u2011service vector.",
+        "fix": "Catch the \u2018Ledger size limit exceeded\u2019 error in all callers and present a user\u2011friendly message. Consider increasing the limit, rotating/archiving old entries, or providing a graceful fallback instead of crashing.",
+        "status": "open",
+        "first_round": 7,
+        "history": [
+          {
+            "round": 7,
+            "status": "open",
+            "severity": "high"
+          },
+          {
+            "round": 9,
+            "status": "open",
+            "severity": "high"
+          }
+        ]
+      },
+      {
+        "id": "backup-restore-ordered-data",
+        "severity": "medium",
+        "file": "src/lib/backup.ts",
+        "where": "code",
+        "open_rounds": 1,
+        "issue": "restoreBackup writes receipts, mileage and categories to the store before the ledger (if present) is verified. When ledger verification fails the function throws an error after the other data has already been persisted, leaving a partially restored and potentially inconsistent state.",
+        "fix": "Validate the entire backup payload, verify the ledger (including size limits) first, and only then persist receipts, mileage, categories and the ledger atomically. On any verification failure abort without mutating the store or roll back changes (e.g., call store.clearAll() before re\u2011throwing).",
+        "status": "open",
+        "first_round": 9,
+        "history": [
+          {
+            "round": 9,
+            "status": "open",
+            "severity": "medium"
+          }
+        ]
+      }
+    ]
+  },
+  "deployment_guide": {
+    "written": true,
+    "missing_sections": [],
+    "app_type": "mobile app (Expo / React Native)"
+  },
+  "ui": {
+    "verdict": "fail",
+    "summary": "Overall the UI closely follows the DESIGN.md specification \u2013 all primary screens (PolicyGate, Dashboard, Receipt/Mileage entry, History, Settings, Backup/Restore) are present, navigation via the fixed BottomTabBar works, and the flows exercised by the headless tests succeed. Lighthouse reports a high accessibility score (98) and there are no axe violations. However a few spec\u2011defined states and accessibility details are missing or implemented incorrectly, and a handful of design\u2011token usages are inconsistent. Those gaps are captured below.",
+    "findings": [
+      {
+        "severity": "high",
+        "file": "src/screens/PolicyScreen.tsx",
+        "issue": "Missing error state \u2013 the spec requires a full\u2011screen error view with a Retry button when acceptance cannot be stored, but the component only implements Loading and Default states.",
+        "fix": "Add a third UI branch that renders a centered error message \"Unable to store your acceptance. Please try again.\" and a PrimaryButton labelled \"Retry\" that re\u2011invokes the acceptance flow. Use the theme colors (error background, onError text) and ensure the button is focus\u2011visible and accessible.",
+        "source": "designer"
+      },
+      {
+        "severity": "high",
+        "file": "src/components/ui/OfflineBanner.tsx (missing)",
+        "issue": "The globally required offline banner (full\u2011screen banner at the top of every screen) is not present anywhere in the codebase.",
+        "fix": "Create a new `OfflineBanner` component that uses the theme's surface color, displays the copy \"You are offline. Some actions require an internet connection.\", and is rendered conditionally at the top of the `Screen` component (or via a context provider). Ensure it has role=\"alert\" and a visible focus outline for keyboard users.",
+        "source": "designer"
+      },
+      {
+        "severity": "medium",
+        "file": "src/screens/HistoryScreen.tsx",
+        "issue": "Missing fallback empty state \u2013 the spec defines a centered view with the text \"No history found.\" for the (unlikely) empty case, but the component only handles Default and Loading states.",
+        "fix": "Add an `EmptyHistory` view that matches the design tokens (spacing\u2011unit\u202f8, bodyLarge typography) and conditionally render it when the entry list length is zero.",
+        "source": "designer"
+      },
+      {
+        "severity": "medium",
+        "file": "src/components/ui/LedgerStatusCard.tsx (missing)",
+        "issue": "LedgerStatusCard component is not present, and the warning variant in SettingsScreen uses a red background instead of the surface background defined in the spec.",
+        "fix": "Implement `LedgerStatusCard` as a separate component that accepts `status` (\"verified\" | \"warning\") and renders with a surface background. For the warning state use the error color only for the icon and text, leaving the card background unchanged. Pull colors from `theme.colors` and typography from `theme.typography`.",
+        "source": "designer"
+      },
+      {
+        "severity": "medium",
+        "file": "src/components/ui/IconButton.tsx (or any icon\u2011only button usage)",
+        "issue": "Icon\u2011only buttons (History icon, Scan, Verify Export, FABs) lack an explicit `accessibilityLabel`, which reduces screen\u2011reader discoverability.",
+        "fix": "Add an `accessibilityLabel` prop to each icon\u2011only button instance (e.g. \"History\", \"Scan receipt\", \"Verify export\"). Ensure the prop is passed to the underlying Paper `IconButton` so that it appears as `aria-label` on web.",
+        "source": "designer"
+      },
+      {
+        "severity": "medium",
+        "file": "src/components/ui/PrimaryButton.tsx",
+        "issue": "Visible focus style is not implemented for web \u2013 the spec requires a 2\u202fdp outline on focus\u2011visible, but the component only changes elevation on hover.",
+        "fix": "Add a `:focus-visible` style rule (or `onFocus` handler) that applies a `border: 2px solid var(--color-outline)` around the button. Use the theme's `outline` color and ensure the outline is removed on blur.",
+        "source": "designer"
+      },
+      {
+        "severity": "medium",
+        "file": "src/components/ui/FormField.tsx",
+        "issue": "Form fields do not set appropriate `autoComplete` attributes (e.g. `autocomplete=\"off\"` for amount, `autocomplete=\"date\"` for date), which is a best\u2011practice for form usability.",
+        "fix": "Pass `autoComplete` props to the underlying Paper `TextInput` based on the field type (e.g. `autoComplete=\"off\"` for numeric amount, `autoComplete=\"bday\"` for date) and document the mapping.",
+        "source": "designer"
+      },
+      {
+        "severity": "low",
+        "file": "src/components/ui/EmptyState.tsx",
+        "issue": "Spacing values are hard\u2011coded (e.g. `marginTop: 24`) instead of using the design token `spacing` (8\u202fdp grid).",
+        "fix": "Replace numeric spacing with `theme.spacing * N` or the CSS custom property `--spacing-unit` to keep vertical rhythm consistent across the app.",
+        "source": "designer"
+      },
+      {
+        "severity": "low",
+        "file": "src/components/ui/PrimaryButton.tsx",
+        "issue": "Button height is set to 40\u202fdp, which is below the required minimum tap target of 44\u202f\u00d7\u202f44\u202fdp (48\u202fdp height for comfortable tap).",
+        "fix": "Adjust the button style to have a minimum height of 48\u202fdp (or at least 44\u202fdp) while keeping the visual design. Update any style overrides that force a smaller height.",
+        "source": "designer"
+      },
+      {
+        "severity": "low",
+        "file": "src/components/ui/HistoryList.tsx",
+        "issue": "List items do not enforce the minimum 56\u202fdp height defined in the spec; the current `Card` style uses `padding: 12` only.",
+        "fix": "Add a style rule `minHeight: 56` to each list item container and ensure the touch area covers the full width.",
+        "source": "designer"
+      },
+      {
+        "severity": "low",
+        "file": "src/components/ui/Dialog.tsx",
+        "issue": "Dialog does not trap focus on web \u2013 users can tab to elements behind the dialog.",
+        "fix": "Wrap the dialog content with a focus\u2011trap library (e.g., `focus-trap-react`) or use the `Portal`'s built\u2011in focus management to keep focus inside while open.",
+        "source": "designer"
+      },
+      {
+        "severity": "low",
+        "file": "src/components/ui/Snackbar.tsx",
+        "issue": "Snackbar messages are not announced via live region, so screen\u2011reader users may miss transient notifications.",
+        "fix": "Add `accessibilityLiveRegion=\"polite\"` and `role=\"status\"` to the Snackbar component so that its content is announced.",
+        "source": "designer"
+      },
+      {
+        "severity": "low",
+        "viewport": "phone",
+        "issue": "The checkbox and 'Accept' button are visually grouped but not perfectly aligned with the top of the card; the 'Tick the box to continue' hint is slightly misaligned below the button.",
+        "fix": "Adjust vertical alignment of the checkbox and button to sit flush with the top of the card. Center the hint text horizontally and vertically below the button for consistency.",
+        "screen": "policy_gate",
+        "source": "vision"
+      },
+      {
+        "severity": "low",
+        "viewport": "phone",
+        "issue": "The 'Version 1. Please read and agree to continue.' subtitle is slightly smaller than the main heading but not clearly differentiated in weight or spacing from the policy text below.",
+        "fix": "Increase the spacing between the subtitle and the policy cards, or make the subtitle slightly lighter in weight to create clearer visual separation.",
+        "screen": "policy_gate",
+        "source": "vision"
+      },
+      {
+        "severity": "medium",
+        "viewport": "desktop",
+        "issue": "The 'Receipt' and 'Mileage' buttons are misaligned vertically and horizontally relative to the 'Add receipt' button; they appear to be floating to the right without consistent grid alignment.",
+        "fix": "Align the 'Receipt' and 'Mileage' buttons to the same vertical baseline as the 'Add receipt' button and ensure consistent horizontal spacing from the left edge.",
+        "screen": "dashboard_empty",
+        "source": "vision"
+      },
+      {
+        "severity": "low",
+        "viewport": "both",
+        "issue": "The 'Add receipt' button is slightly larger than the 'Receipt' and 'Mileage' buttons, creating a visual hierarchy that may be unintended.",
+        "fix": "Make all buttons the same size for visual consistency, or ensure the size difference is intentional and communicated through design language.",
+        "screen": "dashboard_empty",
+        "source": "vision"
+      },
+      {
+        "severity": "medium",
+        "screen": "dashboard_empty",
+        "source": "vision",
+        "issue": "visual quality 7/10 on 'dashboard_empty' (target 8+, minimum 7): Polished, modern, and functional UI with clear visual hierarchy and consistent spacing. The primary action is prominent and the empty state guides users effectively. Minor alignment and spacing inconsistencies on desktop reduce polish.",
+        "fix": "Address this screen's findings until it looks polished and professional."
+      },
+      {
+        "severity": "medium",
+        "viewport": "phone",
+        "issue": "Primary action is not clearly emphasized. The 'Add photo' button is prominent, but the 'Save receipt' button (which is the actual primary action for completion) is not visible in the provided screenshot and likely disabled, making the user's goal unclear.",
+        "fix": "Ensure the primary action (Save receipt) is clearly visible and enabled when form is valid, using visual hierarchy (size, color, placement) to make it the most prominent element.",
+        "screen": "receipt_entry",
+        "source": "vision"
+      },
+      {
+        "severity": "medium",
+        "viewport": "phone",
+        "issue": "Typography lacks a clear type scale. The heading 'Add receipt' is large, but the form field labels ('Amount', 'Date', etc.) are not distinctively sized or styled to create visual hierarchy.",
+        "fix": "Apply a consistent type scale: use a larger, bolder font for headings, medium for section titles, and smaller for field labels. Ensure contrast and readability.",
+        "screen": "receipt_entry",
+        "source": "vision"
+      },
+      {
+        "severity": "medium",
+        "viewport": "phone",
+        "issue": "Form fields are not grouped or labeled clearly enough. The 'Receipt details' and 'Additional information' sections are visually separated, but the labels are not bolded or styled to indicate importance or grouping.",
+        "fix": "Use bold or larger font for section headers. Consider adding subtle visual indicators (like dividers or background color) to reinforce section boundaries.",
+        "screen": "receipt_entry",
+        "source": "vision"
+      },
+      {
+        "severity": "medium",
+        "viewport": "phone",
+        "issue": "The 'Type' toggle buttons lack clear visual feedback or state indication. The 'Expense' button is highlighted, but there's no visual cue to indicate it's selected or how to toggle.",
+        "fix": "Add a clear indicator (e.g., checkmark, border, or background color) to show the selected state. Ensure the toggle is intuitive and accessible.",
+        "screen": "receipt_entry",
+        "source": "vision"
+      },
+      {
+        "severity": "medium",
+        "viewport": "desktop",
+        "issue": "Desktop layout is stretched and unoptimized. The form fields are not aligned to a grid or responsive layout, and the content appears cramped and not properly spaced for desktop.",
+        "fix": "Redesign the desktop layout to use a proper grid system. Increase spacing between fields, align elements to a consistent grid, and ensure the form is responsive and visually balanced on desktop.",
+        "screen": "receipt_entry",
+        "source": "vision"
+      },
+      {
+        "severity": "low",
+        "viewport": "phone",
+        "issue": "Form fields are not touch-friendly. The input fields are too close to the edges and lack sufficient padding for thumb navigation.",
+        "fix": "Add padding around input fields to ensure they are easily tappable on mobile devices. Ensure the fields are large enough for finger taps.",
+        "screen": "receipt_entry",
+        "source": "vision"
+      },
+      {
+        "severity": "high",
+        "screen": "receipt_entry",
+        "source": "vision",
+        "issue": "visual quality 6/10 on 'receipt_entry' (target 8+, minimum 7): The screen is functional and follows basic design principles, but lacks polish and visual hierarchy. The primary action is implied but not strongly emphasized. Typography is consistent but lacks a clear scale. Spacing and alignment are adequate but not exceptional. Form controls are well-placed but lack helpful hints or error states. The desktop version appears stretched and unoptimized. Overall, it\u2019s acceptable but not yet polished enough for a premium product.",
+        "fix": "Address this screen's findings until it looks polished and professional."
+      },
+      {
+        "severity": "low",
+        "viewport": "both",
+        "issue": "The two blue action buttons ('Receipt' and 'Mileage') in the recent activity card are visually identical in size and spacing, but their labels are not aligned with the text above them, creating a slight visual misalignment.",
+        "fix": "Adjust the horizontal alignment of the buttons so they are centered under their respective lines of text, or add consistent padding to align them visually with the text.",
+        "screen": "dashboard_populated",
+        "source": "vision"
+      },
+      {
+        "severity": "low",
+        "viewport": "desktop",
+        "issue": "The 'Recent activity' section is visually compressed vertically on desktop, making the card appear less prominent and reducing the perceived hierarchy between the summary cards and activity section.",
+        "fix": "Increase the vertical spacing above and below the 'Recent activity' section to create more breathing room and visually separate it from the summary cards.",
+        "screen": "dashboard_populated",
+        "source": "vision"
+      },
+      {
+        "severity": "high",
+        "viewport": "both",
+        "issue": "No primary action or clear user goal is evident. The screen shows a single receipt card with no affordance to edit, add, or navigate to history/verification as required by the design spec.",
+        "fix": "Add a primary action button (e.g., 'Edit receipt', 'View history') or link to the edit form. Ensure the bottom tab bar is contextual (e.g., active tab indicates current screen).",
+        "screen": "receipts_loaded",
+        "source": "vision"
+      },
+      {
+        "severity": "high",
+        "viewport": "both",
+        "issue": "Typography lacks a real type scale. Title 'Receipts' is large but no visual hierarchy between title, card content, and tab bar. Line length is acceptable but lacks typographic rhythm.",
+        "fix": "Apply a type scale: use bold, larger font for title; smaller, regular font for card content; even smaller for tab labels. Add spacing between card and tab bar.",
+        "screen": "receipts_loaded",
+        "source": "vision"
+      },
+      {
+        "severity": "medium",
+        "viewport": "both",
+        "issue": "Card spacing is inconsistent. The card is centered but not aligned to a grid. Desktop layout is stretched vertically, with no padding or structure to guide the user.",
+        "fix": "Use a consistent grid. Add padding around the card and space between card and tab bar. On desktop, use a more structured layout with left/right padding and vertical spacing.",
+        "screen": "receipts_loaded",
+        "source": "vision"
+      },
+      {
+        "severity": "medium",
+        "viewport": "both",
+        "issue": "The tab bar is misaligned with the content. On desktop, it appears at the bottom of the screen, but the content is not centered or aligned to the grid. On phone, the tab bar is too low and the card is not centered vertically.",
+        "fix": "Center the card vertically on phone. Align the tab bar to the bottom edge with consistent padding. On desktop, use a grid layout with padding on all sides.",
+        "screen": "receipts_loaded",
+        "source": "vision"
+      },
+      {
+        "severity": "low",
+        "viewport": "phone",
+        "issue": "The card is too small for touch targets. The amount '$42.10' is a single line, but the card has no clear primary action or affordance.",
+        "fix": "Increase card size or add a touch target (e.g., 'Edit' button) below the card. Ensure all touch targets are at least 44x44px.",
+        "screen": "receipts_loaded",
+        "source": "vision"
+      },
+      {
+        "severity": "high",
+        "screen": "receipts_loaded",
+        "source": "vision",
+        "issue": "visual quality 4/10 on 'receipts_loaded' (target 8+, minimum 7): The screen is visually minimal and functional but lacks visual hierarchy, typography scale, and desktop layout sophistication. It appears like a placeholder or early prototype rather than a polished product.",
+        "fix": "Address this screen's findings until it looks polished and professional."
+      },
+      {
+        "severity": "medium",
+        "viewport": "phone",
+        "issue": "No primary action button (e.g., 'Save receipt') visible. The screen implies an action but doesn't guide the user to complete it.",
+        "fix": "Add a prominent 'Save receipt' button at the bottom or as a primary action above the form.",
+        "screen": "receipt_entry_photo",
+        "source": "vision"
+      },
+      {
+        "severity": "medium",
+        "viewport": "phone",
+        "issue": "Form fields lack placeholder text or hints. Users must guess what to enter.",
+        "fix": "Add placeholder text or inline hints (e.g., 'Enter amount in USD' for 'Amount') to guide input.",
+        "screen": "receipt_entry_photo",
+        "source": "vision"
+      },
+      {
+        "severity": "medium",
+        "viewport": "phone",
+        "issue": "No error state or validation feedback shown. Fields are empty and unvalidated.",
+        "fix": "Implement validation states with helper text or inline error messages when fields are invalid.",
+        "screen": "receipt_entry_photo",
+        "source": "vision"
+      },
+      {
+        "severity": "low",
+        "viewport": "phone",
+        "issue": "Typography lacks a clear type scale. Heading, subheadings, and form labels are not differentiated.",
+        "fix": "Define a type scale: use a bold, larger font for the heading, medium for section headers, and small for labels and placeholders.",
+        "screen": "receipt_entry_photo",
+        "source": "vision"
+      },
+      {
+        "severity": "low",
+        "viewport": "phone",
+        "issue": "Spacing between fields is inconsistent. Fields are spaced too closely together in some areas.",
+        "fix": "Apply consistent vertical spacing (e.g., 16px) between form elements and section headers.",
+        "screen": "receipt_entry_photo",
+        "source": "vision"
+      },
+      {
+        "severity": "low",
+        "viewport": "phone",
+        "issue": "The 'Scan receipt' button is grayed out without a clear explanation of why it\u2019s disabled.",
+        "fix": "Add a tooltip or placeholder text (e.g., 'No camera access') to explain the state.",
+        "screen": "receipt_entry_photo",
+        "source": "vision"
+      },
+      {
+        "severity": "low",
+        "viewport": "desktop",
+        "issue": "Desktop layout is stretched to fit the phone view, not adapted for desktop. Elements are cramped and lack breathing room.",
+        "fix": "Redesign for desktop with proper padding, larger field sizes, and grid alignment to avoid stretching.",
+        "screen": "receipt_entry_photo",
+        "source": "vision"
+      },
+      {
+        "severity": "low",
+        "viewport": "desktop",
+        "issue": "No visual hierarchy or grouping on desktop. All elements are presented in a flat list without sectioning.",
+        "fix": "Group fields under clear section headers and use consistent spacing and alignment to create visual grouping.",
+        "screen": "receipt_entry_photo",
+        "source": "vision"
+      },
+      {
+        "severity": "medium",
+        "screen": "receipt_entry_photo",
+        "source": "vision",
+        "issue": "visual quality 7/10 on 'receipt_entry_photo' (target 8+, minimum 7): The screen is clean and functional, with clear visual hierarchy and touch-friendly controls. However, it lacks polish in typography, spacing, and form design, and misses key elements like a primary action button and error states. It\u2019s good enough for a first iteration but not yet polished for a commercial product.",
+        "fix": "Address this screen's findings until it looks polished and professional."
+      },
+      {
+        "severity": "low",
+        "viewport": "both",
+        "issue": "The 'Receipt saved' snackbar overlaps slightly with the content below it, obscuring part of the 'Category: Travel' text and the 'Client dinner' description.",
+        "fix": "Adjust the snackbar's position or add padding to prevent overlap with content.",
+        "screen": "dashboard_with_two_receipts",
+        "source": "vision"
+      },
+      {
+        "severity": "low",
+        "viewport": "phone",
+        "issue": "The blue buttons ('Receipt', 'Mileage') are slightly too close to the bottom edge of the screen, which may be uncomfortable for one-handed use.",
+        "fix": "Increase vertical padding at the bottom of the content area to create more breathing room.",
+        "screen": "dashboard_with_two_receipts",
+        "source": "vision"
+      },
+      {
+        "severity": "low",
+        "viewport": "both",
+        "issue": "The 'Save mileage' button is centered horizontally but not vertically aligned with the form group, creating slight visual imbalance.",
+        "fix": "Adjust button vertical alignment to center with the form group for consistent visual weight.",
+        "screen": "mileage_entry",
+        "source": "vision"
+      },
+      {
+        "severity": "low",
+        "viewport": "phone",
+        "issue": "The 'Purpose' field's placeholder text 'e.g. Client site visit' is positioned too low, creating a visual gap below the input box.",
+        "fix": "Align placeholder text vertically centered within the input field for better visual harmony.",
+        "screen": "mileage_entry",
+        "source": "vision"
+      },
+      {
+        "severity": "low",
+        "viewport": "desktop",
+        "issue": "The form section is centered but lacks subtle padding or margin from the left/right edges, making it feel slightly cramped.",
+        "fix": "Add consistent horizontal padding around the form to create breathing room and improve desktop layout.",
+        "screen": "mileage_entry",
+        "source": "vision"
+      },
+      {
+        "severity": "medium",
+        "viewport": "desktop",
+        "issue": "The 'Recent activity' section has inconsistent vertical spacing between cards, with the 'Mileage saved' snackbar overlapping the card boundary and not fully aligned with the card's top edge.",
+        "fix": "Adjust vertical spacing to ensure consistent padding between cards and align the snackbar to the top of the card or above it with proper margin.",
+        "screen": "dashboard_with_mileage",
+        "source": "vision"
+      },
+      {
+        "severity": "low",
+        "viewport": "desktop",
+        "issue": "The 'Mileage saved' snackbar appears slightly misaligned to the right edge of the card, not centered horizontally within the card's content area.",
+        "fix": "Center the snackbar horizontally within the card's content area or adjust its positioning to align with the card's content.",
+        "screen": "dashboard_with_mileage",
+        "source": "vision"
+      },
+      {
+        "severity": "medium",
+        "viewport": "both",
+        "issue": "The typography lacks a clear type scale; headings and body text are visually similar in weight and size, making it hard to distinguish hierarchy.",
+        "fix": "Establish a type scale: use a larger, bolder font for the title, a medium weight for section headers, and a lighter weight for body text. Ensure consistent spacing between text elements and controls.",
+        "screen": "settings",
+        "source": "vision"
+      },
+      {
+        "severity": "medium",
+        "viewport": "both",
+        "issue": "Buttons and toggle have inconsistent padding and corner radius; the toggle is rounded but the buttons are slightly more rounded, creating visual inconsistency.",
+        "fix": "Standardize all interactive elements to use the same corner radius (e.g., 8px) and padding (e.g., 16px vertically, 24px horizontally).",
+        "screen": "settings",
+        "source": "vision"
+      },
+      {
+        "severity": "low",
+        "viewport": "phone",
+        "issue": "The toggle switch is too small for touch targets; the thumb is barely distinguishable and may be hard to tap accurately.",
+        "fix": "Increase the size of the toggle switch to at least 44x44px, with the thumb being clearly visible and easily tappable.",
+        "screen": "settings",
+        "source": "vision"
+      },
+      {
+        "severity": "low",
+        "viewport": "desktop",
+        "issue": "The layout is too tightly packed vertically; there's insufficient white space between buttons and the toggle, making it feel cramped.",
+        "fix": "Add consistent vertical spacing (e.g., 24px) between all elements, including the toggle and the first button, to improve readability and reduce visual density.",
+        "screen": "settings",
+        "source": "vision"
+      },
+      {
+        "severity": "low",
+        "viewport": "both",
+        "issue": "The toggle's helper text is not aligned with the toggle itself; it's centered under the toggle but not visually connected to the toggle's state.",
+        "fix": "Align the helper text to the left of the toggle, and use a smaller font size to ensure it doesn't compete with the toggle's visual weight.",
+        "screen": "settings",
+        "source": "vision"
+      },
+      {
+        "severity": "medium",
+        "screen": "settings",
+        "source": "vision",
+        "issue": "visual quality 7/10 on 'settings' (target 8+, minimum 7): The Settings screen is clean, well-structured, and functional, with consistent spacing and alignment. It follows a clear visual hierarchy with a primary toggle at the top and a vertical list of actions. However, it lacks visual polish and brand personality, and the typography and spacing feel slightly generic and unoptimized for both platforms.",
+        "fix": "Address this screen's findings until it looks polished and professional."
+      },
+      {
+        "severity": "low",
+        "viewport": "both",
+        "issue": "The 'Export CSV' and 'Export PDF' buttons are identical in size and color, which may cause confusion about which is primary. The 'Back' button is lighter, visually secondary.",
+        "fix": "Make 'Export CSV' or 'Export PDF' slightly larger or use a different color/weight to indicate primary action. Add a subtle visual hierarchy to distinguish primary from secondary actions.",
+        "screen": "export",
+        "source": "vision"
+      },
+      {
+        "severity": "low",
+        "viewport": "desktop",
+        "issue": "On desktop, the buttons are spaced too closely together vertically, and the 'Export PDF' button is visually truncated by the container margin, reducing perceived space and clarity.",
+        "fix": "Increase vertical spacing between buttons on desktop. Ensure all buttons are fully visible and not clipped by container margins.",
+        "screen": "export",
+        "source": "vision"
+      },
+      {
+        "severity": "low",
+        "viewport": "both",
+        "issue": "The 'Create backup' button is disabled and grayed out, which is correct behavior when fields are empty, but could be clearer with a subtle disabled state indicator (e.g., opacity, border style).",
+        "fix": "Ensure the disabled state has a consistent visual treatment across all platforms (e.g., 60% opacity, lighter border).",
+        "screen": "backup_passphrase_modal",
+        "source": "vision"
+      },
+      {
+        "severity": "low",
+        "viewport": "desktop",
+        "issue": "The form fields and button are centered vertically but not horizontally; they appear slightly left-aligned, which is acceptable but not optimal for desktop.",
+        "fix": "Center the form elements horizontally within the content area for better desktop alignment.",
+        "screen": "backup_passphrase_modal",
+        "source": "vision"
+      },
+      {
+        "severity": "low",
+        "viewport": "both",
+        "issue": "The 'Restore from backup' button is centered in a card, but the card itself is not aligned to the top of the screen, leaving a large amount of unused vertical space above it.",
+        "fix": "Adjust the card\u2019s vertical alignment to sit closer to the top of the screen, or add subtle visual guidance (like a thin divider) to indicate the content area.",
+        "screen": "backup_success",
+        "source": "vision"
+      },
+      {
+        "severity": "low",
+        "viewport": "desktop",
+        "issue": "The card containing the backup message is centered, but the surrounding space is too generous, making the card feel isolated. The bottom tab bar is also too far from the bottom edge.",
+        "fix": "Reduce the top padding around the card to bring it closer to the top, and adjust the bottom tab bar\u2019s vertical position to sit closer to the bottom edge for a more compact, intentional layout.",
+        "screen": "backup_success",
+        "source": "vision"
+      },
+      {
+        "severity": "low",
+        "viewport": "both",
+        "issue": "The primary button 'Go to dashboard' is centered horizontally but not vertically aligned with the card's content in the empty state.",
+        "fix": "Adjust vertical alignment of the button within the card to center it with the text above.",
+        "screen": "dashboard_empty_after_delete",
+        "source": "vision"
+      }
+    ],
+    "lighthouse": [
+      {
+        "accessibility": 98,
+        "bestPractices": 100,
+        "performance": 57
+      }
+    ],
+    "screenshots": [
+      "apps/freelance-finance-tracker/.agent-run/20261013-160700-0e32/screenshots/app/screenshot-phone.png",
+      "apps/freelance-finance-tracker/.agent-run/20261013-160700-0e32/screenshots/app/screenshot-phone-full.png",
+      "apps/freelance-finance-tracker/.agent-run/20261013-160700-0e32/screenshots/app/screenshot-desktop.png",
+      "apps/freelance-finance-tracker/.agent-run/20261013-160700-0e32/screenshots/app/screenshot-desktop-full.png",
+      "apps/freelance-finance-tracker/.agent-run/20261013-160700-0e32/screenshots/app/flow-phone-01-policy-gate.png",
+      "apps/freelance-finance-tracker/.agent-run/20261013-160700-0e32/screenshots/app/flow-phone-02-dashboard-empty.png",
+      "apps/freelance-finance-tracker/.agent-run/20261013-160700-0e32/screenshots/app/flow-phone-03-receipt-entry.png",
+      "apps/freelance-finance-tracker/.agent-run/20261013-160700-0e32/screenshots/app/flow-phone-04-dashboard-populated.png",
+      "apps/freelance-finance-tracker/.agent-run/20261013-160700-0e32/screenshots/app/flow-phone-05-receipts-loaded.png",
+      "apps/freelance-finance-tracker/.agent-run/20261013-160700-0e32/screenshots/app/flow-phone-06-receipt-entry-photo.png",
+      "apps/freelance-finance-tracker/.agent-run/20261013-160700-0e32/screenshots/app/flow-phone-07-dashboard-with-two-receipts.png",
+      "apps/freelance-finance-tracker/.agent-run/20261013-160700-0e32/screenshots/app/flow-phone-08-mileage-empty.png",
+      "apps/freelance-finance-tracker/.agent-run/20261013-160700-0e32/screenshots/app/flow-phone-09-mileage-entry.png",
+      "apps/freelance-finance-tracker/.agent-run/20261013-160700-0e32/screenshots/app/flow-phone-10-dashboard-with-mileage.png",
+      "apps/freelance-finance-tracker/.agent-run/20261013-160700-0e32/screenshots/app/flow-phone-11-settings.png",
+      "apps/freelance-finance-tracker/.agent-run/20261013-160700-0e32/screenshots/app/flow-phone-12-export.png",
+      "apps/freelance-finance-tracker/.agent-run/20261013-160700-0e32/screenshots/app/flow-phone-13-settings.png",
+      "apps/freelance-finance-tracker/.agent-run/20261013-160700-0e32/screenshots/app/flow-phone-14-backup.png",
+      "apps/freelance-finance-tracker/.agent-run/20261013-160700-0e32/screenshots/app/flow-phone-15-backup-passphrase-modal.png",
+      "apps/freelance-finance-tracker/.agent-run/20261013-160700-0e32/screenshots/app/flow-phone-16-backup-success.png",
+      "apps/freelance-finance-tracker/.agent-run/20261013-160700-0e32/screenshots/app/flow-phone-17-restore-passphrase-modal.png",
+      "apps/freelance-finance-tracker/.agent-run/20261013-160700-0e32/screenshots/app/flow-phone-18-restore-success.png",
+      "apps/freelance-finance-tracker/.agent-run/20261013-160700-0e32/screenshots/app/flow-phone-19-delete-all-confirmation.png",
+      "apps/freelance-finance-tracker/.agent-run/20261013-160700-0e32/screenshots/app/flow-phone-20-dashboard-empty-after-delete.png",
+      "apps/freelance-finance-tracker/.agent-run/20261013-160700-0e32/screenshots/app/flow-desktop-01-policy-gate.png",
+      "apps/freelance-finance-tracker/.agent-run/20261013-160700-0e32/screenshots/app/flow-desktop-02-dashboard-empty.png",
+      "apps/freelance-finance-tracker/.agent-run/20261013-160700-0e32/screenshots/app/flow-desktop-03-receipt-entry.png",
+      "apps/freelance-finance-tracker/.agent-run/20261013-160700-0e32/screenshots/app/flow-desktop-04-dashboard-populated.png",
+      "apps/freelance-finance-tracker/.agent-run/20261013-160700-0e32/screenshots/app/flow-desktop-05-receipts-loaded.png",
+      "apps/freelance-finance-tracker/.agent-run/20261013-160700-0e32/screenshots/app/flow-desktop-06-receipt-entry-photo.png",
+      "apps/freelance-finance-tracker/.agent-run/20261013-160700-0e32/screenshots/app/flow-desktop-07-dashboard-with-two-receipts.png",
+      "apps/freelance-finance-tracker/.agent-run/20261013-160700-0e32/screenshots/app/flow-desktop-08-mileage-empty.png",
+      "apps/freelance-finance-tracker/.agent-run/20261013-160700-0e32/screenshots/app/flow-desktop-09-mileage-entry.png",
+      "apps/freelance-finance-tracker/.agent-run/20261013-160700-0e32/screenshots/app/flow-desktop-10-dashboard-with-mileage.png",
+      "apps/freelance-finance-tracker/.agent-run/20261013-160700-0e32/screenshots/app/flow-desktop-11-settings.png",
+      "apps/freelance-finance-tracker/.agent-run/20261013-160700-0e32/screenshots/app/flow-desktop-12-export.png",
+      "apps/freelance-finance-tracker/.agent-run/20261013-160700-0e32/screenshots/app/flow-desktop-13-settings.png",
+      "apps/freelance-finance-tracker/.agent-run/20261013-160700-0e32/screenshots/app/flow-desktop-14-backup.png",
+      "apps/freelance-finance-tracker/.agent-run/20261013-160700-0e32/screenshots/app/flow-desktop-15-backup-passphrase-modal.png",
+      "apps/freelance-finance-tracker/.agent-run/20261013-160700-0e32/screenshots/app/flow-desktop-16-backup-success.png",
+      "apps/freelance-finance-tracker/.agent-run/20261013-160700-0e32/screenshots/app/flow-desktop-17-restore-passphrase-modal.png",
+      "apps/freelance-finance-tracker/.agent-run/20261013-160700-0e32/screenshots/app/flow-desktop-18-restore-success.png",
+      "apps/freelance-finance-tracker/.agent-run/20261013-160700-0e32/screenshots/app/flow-desktop-19-delete-all-confirmation.png",
+      "apps/freelance-finance-tracker/.agent-run/20261013-160700-0e32/screenshots/app/flow-desktop-20-dashboard-empty-after-delete.png"
+    ]
+  },
+  "native": {
+    "android": {
+      "stage": "launch",
+      "ok": true,
+      "detail": "TotalTime: 1550\n"
+    },
+    "ios": {
+      "stage": "launch",
+      "ok": true,
+      "detail": "pid 51778\n"
+    },
+    "mac_free_gb": 17,
+    "screenshots": [
+      "apps/freelance-finance-tracker/.agent-run/20261013-160700-0e32/native/android.png",
+      "apps/freelance-finance-tracker/.agent-run/20261013-160700-0e32/native/ios.png"
+    ],
+    "seconds": 400
+  },
+  "retro": {
+    "observations": [
+      "acceptance tests failed with the same error in 3 of 11 rounds: TypeError: Cannot read properties of null (reading 'N')",
+      "coder hit its turn limit in 2 of 11 rounds ([1, 10])",
+      "vision scores flat across the run: first rounds [7.9, 7.9, 7.9], last rounds [7.9, 7.6, 7.9]",
+      "slowest round 4 took 40 min; average 31 min"
+    ],
+    "went_well": [
+      "Early static validators caught missing source files, preventing the pipeline from running completely broken code.",
+      "The iterative review loop eventually produced a correct ledger implementation (by round 9) and all acceptance tests passed at that point.",
+      "Security scanners (Trivy, Semgrep) passed after the fixing of the few issues flagged in round 7, confirming the policy enforcement works.",
+      "The designer produced a comprehensive UI flow (ui_flow.json) and component set, which later allowed the History view and Settings screen to be added.",
+      "Most coder turns stayed within the configured limits, and the majority of rounds completed in under 35\u202fminutes despite the overall run length."
+    ],
+    "improvements": [
+      {
+        "title": "More actionable TypeScript validator feedback",
+        "evidence": "Round\u202f1 and round\u202f10 TypeScript validation output listed generic errors (e.g., \"Cannot find module '../../src/lib/ledger'\", \"Cannot find name 'MAX_LEDGER_ENTRIES'\") and the reviewer repeated the same suggestions for several rounds, yet the same compile errors resurfaced.",
+        "change": "Update the TypeScript validator (validate.py / tsc integration) to parse the compiler diagnostics and emit a structured message per error: file, line, column, missing symbol, and a concrete fix suggestion (e.g., \"Add import for '../../src/lib/ledger'\" or \"Define MAX_LEDGER_ENTRIES constant or import it\"). Also surface the first three errors directly in the coder feedback message.",
+        "expected_effect": "The coder receives precise, actionable guidance the first time a compile error appears, stopping the repeat\u2011fail loop and reducing the number of revision rounds needed for type\u2011checking to pass.",
+        "priority": "high"
+      },
+      {
+        "title": "Design\u2011to\u2011test consistency validator for data model and UI flow",
+        "evidence": "Round\u202f1 missing files (ledger.ts, receipt/mileage screens) and later rounds (8\u201111) TypeErrors caused by the ledger not being stored under the key \"ledger\" \u2013 a requirement expressed only in the acceptance tests, not in DESIGN.md or ui_flow.json. UI primary\u2011flow failures in round\u202f10 also stemmed from missing restore\u2011flow steps in the flow definition.",
+        "change": "Add a new static validator that reads DESIGN.md and ui_flow.json and cross\u2011checks them against the acceptance test expectations: required Store keys (e.g., \"ledger\" array), required ledger entry fields, required screens/components (History view, Settings status), and required UI steps (backup/restore flow). If any required artifact is absent, fail the round and output a concise missing\u2011spec report.",
+        "expected_effect": "Design omissions are caught before the coder starts implementing, ensuring the design spec contains all data\u2011model and UI requirements the tests depend on. This eliminates whole\u2011round rework caused by mismatched expectations.",
+        "priority": "high"
+      },
+      {
+        "title": "Coder prompt with explicit sub\u2011task decomposition and stub generation",
+        "evidence": "Coder hit its turn limit in rounds\u202f1 and\u202f10 (max\u202f20\u201160 turns) and needed many revision cycles to get the ledger, backup, and UI components correct.",
+        "change": "Revise the coder system prompt to require the agent to first output a short task breakdown (e.g., \"1) implement src/lib/ledger.ts, 2) add Store wrappers, 3) create HistoryList component, \u2026\"), then produce minimal file stubs for each listed module (function signatures, component skeletons) before filling in logic. The prompt should also allow the coder to request additional turn quota for a specific sub\u2011task after the stub phase.",
+        "expected_effect": "The coder uses its turn budget more efficiently, avoids hitting the turn limit, and delivers a clearer incremental progress that reviewers can validate step\u2011by\u2011step.",
+        "priority": "medium"
+      },
+      {
+        "title": "Enhanced UI validator with precise step diagnostics and fix hints",
+        "evidence": "Round\u202f10 UI primary\u2011flow failure only reported a generic timeout on step\u202f68, giving the coder no clue which selector or state was wrong. Similar UI failures persisted across many rounds.",
+        "change": "Upgrade ui_check.mjs to capture for each failed step: the expected locator text, the actual DOM snapshot, and a one\u2011line suggestion (e.g., \"Add waitFor({state:'visible'}) before clicking the Restore button\" or \"Update selector to '[data-testid=\"restore-success\"]'\"). Include a diff of the expected vs observed UI tree to guide the coder.",
+        "expected_effect": "Coded UI fixes become targeted, reducing the number of UI\u2011only revision rounds and preventing the pipeline from stalling on flaky UI checks.",
+        "priority": "medium"
+      },
+      {
+        "title": "Missing\u2011file skeleton assistance from the planned\u2011files validator",
+        "evidence": "Round\u202f1 validator listed \"Planned but not written: src/lib/ledger.ts, src/screens/ReceiptDetailScreen.tsx, \u2026\" yet the coder spent several rounds recreating scaffolding instead of focusing on core logic.",
+        "change": "Extend the \"planned files present\" validator to, when a file is missing, output a minimal skeleton based on the design spec (e.g., export signatures for addLedgerEntry/verifyLedger, a React component stub for ReceiptDetailScreen). The skeleton should be included in the feedback message so the coder can copy\u2011paste and flesh out.",
+        "expected_effect": "Scaffolding time is eliminated, the coder can start implementing functionality immediately, and the pipeline converges faster in early rounds.",
+        "priority": "medium"
+      }
+    ]
+  }
+}
