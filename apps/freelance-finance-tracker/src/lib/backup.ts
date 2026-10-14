@@ -3,7 +3,7 @@ import { getAllReceipts } from './receiptStore';
 import { getAllMileageEntries } from './mileageStore';
 import { getAllCategories } from './categories';
 import { encryptText, decryptText, deriveKey, randomBytes, toBase64, fromBase64 } from './crypto';
-import { verifyLedger, getAllLedgerEntries, LEDGER_ENTRY_PREFIX, LEDGER_INDEX_KEY, MAX_LEDGER_ENTRIES, ZERO_64, LEDGER_INIT_FLAG } from './ledger';
+import { verifyLedger } from './ledger';
 
 /**
  * Backup format version.
@@ -69,35 +69,6 @@ export function validateBackupStructure(obj: any): string | null {
   return null;
 }
 
-/** Verify a ledger array (used during restore). */
-function verifyLedgerArray(arr: any[]): {
-  ok: boolean;
-  firstBadSeq?: number;
-  reason?: string;
-} {
-  if (arr.length > MAX_LEDGER_ENTRIES) return { ok: false, reason: 'ledger exceeds max entries' };
-  for (let i = 0; i < arr.length; i++) {
-    const entry = arr[i];
-    const { hash, ...withoutHash } = entry;
-    const keys = Object.keys(withoutHash).sort();
-    const ordered: any = {};
-    for (const k of keys) ordered[k] = (withoutHash as any)[k];
-    const json = JSON.stringify(ordered);
-    // compute hash using noble
-    const { sha256 } = require('@noble/hashes/sha2.js');
-    const { bytesToHex, utf8ToBytes } = require('@noble/hashes/utils.js');
-    const expectedHash = bytesToHex(sha256(utf8ToBytes(json)));
-    if (hash !== expectedHash) {
-      return { ok: false, firstBadSeq: entry.seq, reason: 'hash mismatch' };
-    }
-    const expectedPrev = i === 0 ? ZERO_64 : arr[i - 1].hash;
-    if (entry.prevHash !== expectedPrev) {
-      return { ok: false, firstBadSeq: entry.seq, reason: 'prevHash mismatch' };
-    }
-  }
-  return { ok: true };
-}
-
 /**
  * Create an encrypted backup string.
  * The backup includes receipts, mileage entries, raw categories storage, and the ledger.
@@ -106,13 +77,13 @@ export async function createBackup(store: Store, passphrase: string): Promise<st
   const receipts = await getAllReceipts(store);
   const mileage = await getAllMileageEntries(store);
   const rawCategories = await store.get<any>('categories');
-  const ledgerEntries = await getAllLedgerEntries(store);
+  const ledger = await store.get<any>('ledger');
   const data: BackupData = {
     version: BACKUP_VERSION,
     receipts,
     mileage,
     categories: rawCategories ?? { custom: [], hidden: [], rename: {} },
-    ledger: ledgerEntries,
+    ledger: ledger ?? [],
   };
   const json = JSON.stringify(data);
   if (json.length > MAX_BACKUP_BYTES) {
@@ -163,20 +134,11 @@ export async function restoreBackup(store: Store, backupString: string, passphra
 
   // Restore ledger if present and verify it
   if (obj.ledger) {
-    const ledgerArr = obj.ledger;
-    const verification = verifyLedgerArray(ledgerArr);
+    await store.set('ledger', obj.ledger);
+    const verification = await verifyLedger(store);
     if (!verification.ok) {
+      await store.remove('ledger');
       throw new Error('Backup ledger verification failed');
     }
-    // Write entries individually using same key pattern
-    for (const entry of ledgerArr) {
-      const key = `${LEDGER_ENTRY_PREFIX}${entry.seq}`;
-      await store.setItem(key, entry);
-    }
-    // Recreate index
-    const seqs = ledgerArr.map((e: any) => e.seq);
-    await store.setItem(LEDGER_INDEX_KEY, seqs);
-    // Mark ledger as initialized to avoid re-import
-    await store.set<boolean>(LEDGER_INIT_FLAG, true);
   }
 }
