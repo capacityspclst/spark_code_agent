@@ -19,14 +19,17 @@ import RestoreScreen from '../screens/RestoreScreen';
 import DeleteAllDataScreen from '../screens/DeleteAllDataScreen';
 import BackupSuccessScreen from '../screens/BackupSuccessScreen';
 import RestoreSuccessScreen from '../screens/RestoreSuccessScreen';
-import { theme } from '../theme';
 import CategoriesScreen from '../screens/CategoriesScreen';
+import ReceiptDetailScreen from '../screens/ReceiptDetailScreen';
+import ReceiptHistoryScreen from '../screens/ReceiptHistoryScreen';
+import MileageHistoryScreen from '../screens/MileageHistoryScreen';
+import VerifyExportScreen from '../screens/VerifyExportScreen';
+import { theme } from '../theme';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
 const SettingsStack = createNativeStackNavigator();
 
-// Tab icons are decorative: the tab's label names it (aria-hidden keeps axe from flagging an unlabelled image).
 const tabIcon = (name: React.ComponentProps<typeof MaterialCommunityIcons>['name']) =>
   ({ color, size }: { color: string; size: number }) => <MaterialCommunityIcons name={name} color={color} size={size} aria-hidden />;
 
@@ -44,6 +47,10 @@ function SettingsStackScreen() {
       <SettingsStack.Screen name="AppLock" component={AppLockScreen} options={{ title: 'App lock' }} />
       <SettingsStack.Screen name="TaxSettings" component={TaxSettingsScreen} options={{ title: 'Tax settings' }} />
       <SettingsStack.Screen name="DeleteAllData" component={DeleteAllDataScreen} options={{ title: 'Delete all data' }} />
+      <SettingsStack.Screen name="ReceiptDetail" component={ReceiptDetailScreen} />
+      <SettingsStack.Screen name="ReceiptHistory" component={ReceiptHistoryScreen} />
+      <SettingsStack.Screen name="MileageHistory" component={MileageHistoryScreen} />
+      <SettingsStack.Screen name="VerifyExport" component={VerifyExportScreen} options={{ title: 'Verify export' }} />
     </SettingsStack.Navigator>
   );
 }
@@ -94,7 +101,6 @@ function Tabs() {
           tabBarLabel: 'Settings',
           tabBarAccessibilityLabel: 'Settings',
         }}
-        // Removed recursive tabPress listener that caused navigation loops.
       />
     </Tab.Navigator>
   );
@@ -102,7 +108,6 @@ function Tabs() {
 
 const navTheme = { ...DefaultTheme, colors: { ...DefaultTheme.colors, background: theme.colors.background, primary: theme.colors.primary } };
 
-/** Main app after the policy is accepted: tabs, plus the policy as a read‑only page. */
 export default function Navigation() {
   return (
     <NavigationContainer theme={navTheme}>
@@ -113,7 +118,6 @@ export default function Navigation() {
         </Stack.Screen>
         <Stack.Screen name="ReceiptEntry" options={{ title: 'Add receipt' }} component={ReceiptEntryScreen} />
         <Stack.Screen name="MileageEntry" options={{ title: 'Add mileage' }} component={MileageEntryScreen} />
-        {/* Other modal screens can be added here if needed */}
       </Stack.Navigator>
     </NavigationContainer>
   );

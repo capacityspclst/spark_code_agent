@@ -1,5 +1,5 @@
 import { Store } from './storage/types';
-import { sha256 } from '@noble/hashes/sha256';
+import { sha256 } from '@noble/hashes/sha2';
 import { utf8ToBytes, bytesToHex } from '@noble/hashes/utils';
 import { getLedger, setLedger } from './ledgerHelpers';
 
@@ -43,7 +43,6 @@ export async function appendEntryForReceipt(kind: string, recordId: string, data
 }
 
 export async function appendEntryForMileage(kind: string, recordId: string, data: any, store: Store): Promise<void> {
-  // Reuse receipt implementation
   await appendEntryForReceipt(kind, recordId, data, store);
 }
 
