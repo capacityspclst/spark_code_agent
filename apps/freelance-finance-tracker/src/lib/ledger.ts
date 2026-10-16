@@ -1,4 +1,8 @@
-// Minimal Ledger stub to satisfy build. Full implementation to be added later.
+import { Store } from './storage/types';
+import { sha256 } from '@noble/hashes/sha2.js';
+import { utf8ToBytes, bytesToHex } from '@noble/hashes/utils.js';
+import { getLedger, setLedger } from './ledgerHelpers';
+
 export interface LedgerEntry {
   seq: number;
   at: string; // ISO timestamp
@@ -9,7 +13,49 @@ export interface LedgerEntry {
   hash: string;
 }
 
-// Append a ledger entry (placeholder).
-export async function appendLedgerEntry(entry: LedgerEntry): Promise<void> {
-  // No-op: real implementation will store encrypted entry.
+/** Compute canonical JSON string with deterministic key order (excluding hash). */
+export function canonicalJson(entry: Omit<LedgerEntry, 'hash'>): string {
+  const sorted: any = {};
+  const keys = Object.keys(entry).sort();
+  for (const k of keys) {
+    sorted[k] = (entry as any)[k];
+  }
+  return JSON.stringify(sorted);
+}
+
+/** Compute hash for entry (without hash field). */
+export function computeHash(entry: Omit<LedgerEntry, 'hash'>): string {
+  const json = canonicalJson(entry);
+  return bytesToHex(sha256(utf8ToBytes(json)));
+}
+
+/** Append a new ledger entry and persist the ledger. */
+export async function appendEntryForReceipt(kind: string, recordId: string, data: any, store: Store): Promise<void> {
+  const ledger = await getLedger(store);
+  const seq = ledger.length ? ledger[ledger.length - 1].seq + 1 : 1;
+  const at = new Date().toISOString();
+  const prevHash = ledger.length ? ledger[ledger.length - 1].hash : '0'.repeat(64);
+  const entryWithoutHash: Omit<LedgerEntry, 'hash'> = { seq, at, kind, recordId, data, prevHash };
+  const hash = computeHash(entryWithoutHash);
+  const entry: LedgerEntry = { ...entryWithoutHash, hash };
+  ledger.push(entry);
+  await setLedger(store, ledger);
+}
+
+export async function appendEntryForMileage(kind: string, recordId: string, data: any, store: Store): Promise<void> {
+  // Reuse receipt implementation
+  await appendEntryForReceipt(kind, recordId, data, store);
+}
+
+export async function appendEntryForExport(format: 'csv' | 'pdf', code: string, entriesCount: number, headHash: string, store: Store): Promise<void> {
+  const ledger = await getLedger(store);
+  const seq = ledger.length ? ledger[ledger.length - 1].seq + 1 : 1;
+  const at = new Date().toISOString();
+  const prevHash = ledger.length ? ledger[ledger.length - 1].hash : '0'.repeat(64);
+  const data = { format, code, entries: entriesCount, headHash };
+  const entryWithoutHash: Omit<LedgerEntry, 'hash'> = { seq, at, kind: 'export.created', recordId: '', data, prevHash };
+  const hash = computeHash(entryWithoutHash);
+  const entry: LedgerEntry = { ...entryWithoutHash, hash };
+  ledger.push(entry);
+  await setLedger(store, ledger);
 }

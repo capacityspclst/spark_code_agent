@@ -1,4 +1,5 @@
 import { Store } from './storage/types';
+import { getLedger } from './ledgerHelpers';
 
 export interface LedgerVerificationResult {
   ok: boolean;
@@ -8,19 +9,33 @@ export interface LedgerVerificationResult {
 }
 
 /**
- * Very basic verification stub: checks that entries is an array and that each entry has a numeric seq.
- * Real implementation should recompute hashes and chain integrity.
+ * Verify the ledger chain.
  */
-export async function verifyLedger(store: Store, entries: any[]): Promise<LedgerVerificationResult> {
+export async function verifyLedger(store: Store): Promise<LedgerVerificationResult> {
+  const entries = await getLedger(store);
   if (!Array.isArray(entries)) {
     return { ok: false, entries: [], reason: 'Ledger entries not an array' };
   }
+  let prevHash = '0'.repeat(64);
   for (let i = 0; i < entries.length; i++) {
     const e = entries[i];
-    if (typeof e.seq !== 'number') {
-      return { ok: false, entries, firstBadSeq: i, reason: 'Missing seq' };
+    // seq continuity
+    const expectedSeq = i + 1;
+    if (e.seq !== expectedSeq) {
+      return { ok: false, entries, firstBadSeq: e.seq, reason: `Seq mismatch at ${e.seq}` };
     }
-    // further checks omitted for brevity
+    // prevHash match
+    if (e.prevHash !== prevHash) {
+      return { ok: false, entries, firstBadSeq: e.seq, reason: 'prevHash mismatch' };
+    }
+    // recompute hash
+    const { hash, ...withoutHash } = e;
+    const json = JSON.stringify(Object.keys(withoutHash).sort().reduce((obj, key) => ({ ...obj, [key]: (withoutHash as any)[key] }), {}));
+    const computed = bytesToHex(sha256(utf8ToBytes(json)));
+    if (hash !== computed) {
+      return { ok: false, entries, firstBadSeq: e.seq, reason: 'hash mismatch' };
+    }
+    prevHash = e.hash;
   }
   return { ok: true, entries };
 }
