@@ -32,7 +32,7 @@ import textwrap
 # ----------------------------------------------------------------------
 PROJECT_ROOT = Path(__file__).resolve().parent
 # NOTE: The acceptance tests live under __tests__/acceptance (no leading space)
-TESTS_DIR = PROJECT_ROOT / " __tests__" / "acceptance"
+TESTS_DIR = PROJECT_ROOT / "__tests__" / "acceptance"
 
 # ----------------------------------------------------------------------
 # Test definitions per milestone
@@ -1586,6 +1586,8 @@ def run_jest(limit: int | None) -> int:
     result = subprocess.run(
         jest_cmd,
         cwd=PROJECT_ROOT,
+        # Same flag as the app's `npm test`: the tests use dynamic import().
+        env={**os.environ, "NODE_OPTIONS": (os.environ.get("NODE_OPTIONS", "") + " --experimental-vm-modules").strip()},
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
         text=True,
