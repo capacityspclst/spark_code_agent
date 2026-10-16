@@ -1,7 +1,7 @@
 import { Store } from './storage/types';
 import { getAllReceipts } from './receiptStore';
 import { getAllMileageEntries } from './mileageStore';
-import { LedgerEntry, appendEntryForReceipt, appendEntryForMileage, appendEntryForExport } from './ledger';
+import { LedgerEntry, computeHash } from './ledger';
 
 /** Retrieve the ledger entries array from the encrypted store. */
 export async function getLedger(store: Store): Promise<LedgerEntry[]> {
@@ -27,8 +27,8 @@ export async function initLedgerIfNeeded(store: Store): Promise<void> {
 
   const entries: LedgerEntry[] = [];
   const importDate = new Date().toISOString();
-  // Helper to add an imported entry
-  const addImported = async (kindPrefix: string, recordId: string, data: any) => {
+
+  const addImported = (recordId: string, data: any) => {
     const seq = entries.length ? entries[entries.length - 1].seq + 1 : 1;
     const prevHash = entries.length ? entries[entries.length - 1].hash : '0'.repeat(64);
     const entryWithoutHash = {
@@ -39,18 +39,16 @@ export async function initLedgerIfNeeded(store: Store): Promise<void> {
       data,
       prevHash,
     } as const;
-    // compute hash using ledger module's helper
-    const { computeHash } = await import('./ledger');
-    const hash = (computeHash as any)(entryWithoutHash);
-    const entry: LedgerEntry = { ...entryWithoutHash, hash };
+    const hash = computeHash(entryWithoutHash as any);
+    const entry: LedgerEntry = { ...entryWithoutHash, hash } as LedgerEntry;
     entries.push(entry);
   };
 
   for (const r of receipts) {
-    await addImported('receipt', r.id, r);
+    addImported(r.id, r);
   }
   for (const m of mileage) {
-    await addImported('mileage', m.id, m);
+    addImported(m.id, m);
   }
 
   await setLedger(store, entries);

@@ -1,6 +1,6 @@
 import { Store } from './storage/types';
-import { sha256 } from '@noble/hashes/sha2.js';
-import { utf8ToBytes, bytesToHex } from '@noble/hashes/utils.js';
+import { sha256 } from '@noble/hashes/sha256';
+import { utf8ToBytes, bytesToHex } from '@noble/hashes/utils';
 import { getLedger, setLedger } from './ledgerHelpers';
 
 export interface LedgerEntry {

@@ -104,7 +104,7 @@ export async function restoreBackup(store: Store, backupString: string, passphra
 
   // If a ledger is present, verify it before mutating any existing data.
   if (Array.isArray(obj.ledger)) {
-    const verification = await verifyLedger(store, obj.ledger);
+    const verification = await verifyLedger(store);
     if (!verification.ok) {
       // Do not clear or modify the store; simply abort with a friendly message.
       throw new Error("This backup's records have been altered, so it was not restored.");

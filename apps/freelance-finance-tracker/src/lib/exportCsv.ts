@@ -2,6 +2,9 @@ import { getAllReceipts } from './receiptStore';
 import { getAllMileageEntries } from './mileageStore';
 import type { Receipt, MileageEntry } from './models';
 import type { Store } from './storage/types';
+import { sha256 } from '@noble/hashes/sha256';
+import { utf8ToBytes, bytesToHex } from '@noble/hashes/utils';
+import { appendEntryForExport } from './ledger';
 
 /** Escape a cell for CSV output according to RFC 4180.
  * Numbers output as plain numbers.
@@ -28,9 +31,7 @@ function csvEscape(value: any): string {
   return escaped;
 }
 
-/** Generate a CSV string containing receipts and mileage entries.
- * Accepts an optional Store for testing; defaults to the global encrypted store.
- */
+/** Generate a CSV string containing receipts and mileage entries, with a verification line. */
 export async function generateCsv(store?: Store): Promise<string> {
   let s = store;
   if (!s) {
@@ -41,35 +42,43 @@ export async function generateCsv(store?: Store): Promise<string> {
       s = null as any;
     }
   }
-  try {
-    const receipts: Receipt[] = s ? await getAllReceipts(s) : [];
-    const mileage: MileageEntry[] = s ? await getAllMileageEntries(s) : [];
-    const lines: string[] = [];
-    // Header for receipts
-    lines.push('id,amount,date,category,type,notes');
-    for (const r of receipts) {
-      lines.push([
-        csvEscape(r.id),
-        csvEscape(r.amount),
-        csvEscape(r.date),
-        csvEscape(r.category),
-        csvEscape(r.type),
-        csvEscape(r.notes),
-      ].join(','));
-    }
-    // Header for mileage
-    lines.push('id,miles,date,purpose');
-    for (const m of mileage) {
-      lines.push([
-        csvEscape(m.id),
-        csvEscape(m.miles),
-        csvEscape(m.date),
-        csvEscape(m.purpose),
-      ].join(','));
-    }
-    return lines.join('\n');
-  } catch {
-    // Minimal CSV on failure
-    return 'id,amount,date,category,type,notes\nid,miles,date,purpose';
+  const receipts: Receipt[] = s ? await getAllReceipts(s) : [];
+  const mileage: MileageEntry[] = s ? await getAllMileageEntries(s) : [];
+  const lines: string[] = [];
+  // Header for receipts
+  lines.push('id,amount,date,category,type,notes');
+  for (const r of receipts) {
+    lines.push([
+      csvEscape(r.id),
+      csvEscape(r.amount),
+      csvEscape(r.date),
+      csvEscape(r.category),
+      csvEscape(r.type),
+      csvEscape(r.notes),
+    ].join(','));
   }
+  // Header for mileage
+  lines.push('id,miles,date,purpose');
+  for (const m of mileage) {
+    lines.push([
+      csvEscape(m.id),
+      csvEscape(m.miles),
+      csvEscape(m.date),
+      csvEscape(m.purpose),
+    ].join(','));
+  }
+  // verification line
+  const contentWithoutVerification = lines.join('\n');
+  const hashHex = bytesToHex(sha256(utf8ToBytes(contentWithoutVerification)));
+  const code = hashHex.slice(0, 12);
+
+  // get ledger info
+  const ledger = await getLedger(s ?? (await (await import('./storage')).getStore()));
+  const entriesCount = ledger.length + 1; // this export entry will be added
+  const headHash = ledger.length ? ledger[ledger.length - 1].hash : '0'.repeat(64);
+
+  // Append ledger entry for export
+  await appendEntryForExport('csv', code, entriesCount, headHash, s);
+  lines.push(`# verification: entries=${entriesCount}, headHash=${headHash}, code=${code}`);
+  return lines.join('\n');
 }
