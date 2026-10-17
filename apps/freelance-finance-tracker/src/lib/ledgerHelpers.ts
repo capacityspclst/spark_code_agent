@@ -19,8 +19,8 @@ export async function setLedger(store: Store, entries: LedgerEntry[]): Promise<v
  * This runs only once: if a ledger already exists, it does nothing.
  */
 export async function initLedgerIfNeeded(store: Store): Promise<void> {
-  const existing = await store.get<any>('ledger');
-  if (existing) return; // ledger already initialized
+  const existing = await getLedger(store);
+  if (existing.length > 0) return; // ledger already initialized
 
   const receipts = await getAllReceipts(store);
   const mileage = await getAllMileageEntries(store);

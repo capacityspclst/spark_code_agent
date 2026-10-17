@@ -60,14 +60,15 @@ export async function generateCsv(store?: Store): Promise<string> {
   }
   const contentWithoutVerification = lines.join('\n');
   const hashHex = bytesToHex(sha256(utf8ToBytes(contentWithoutVerification)));
-  const code = hashHex.slice(0, 12);
-  // Append ledger entry for export
-  await appendEntryForExport('csv', code, 0, '', s); // placeholder; real values set inside
-  // Re-fetch ledger to get updated headHash and count
+  const code12 = hashHex.slice(0, 12);
+  // Append ledger entry for export, which sets full combined code and headHash
+  await appendEntryForExport('csv', code12, s);
+  // Retrieve the latest ledger entry (the export entry)
   const ledger = await getLedger(s);
-  const entriesCount = ledger.length; // includes the newly added export entry
-  const headHash = ledger[ledger.length - 1].hash;
-  const verificationLine = `# verification: entries=${entriesCount}, headHash=${headHash}, code=${code}`;
+  const exportEntry = ledger[ledger.length - 1];
+  const entriesCount = ledger.length;
+  const headHash = exportEntry.hash;
+  const verificationLine = `${entriesCount},${headHash},${exportEntry.data.code}`;
   lines.push(verificationLine);
   return lines.join('\n');
 }

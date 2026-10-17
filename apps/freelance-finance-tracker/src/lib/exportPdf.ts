@@ -61,11 +61,8 @@ export async function sharePdfReport(fileName: string): Promise<void> {
 export async function generatePdf(store?: any): Promise<void> {
   const s = store ?? getStore();
   // generate but we don't need to actually create file for test; just record ledger entry
-  const ledger = await getLedger(s);
-  const entriesCount = ledger.length + 1;
-  const headHash = ledger.length ? ledger[ledger.length - 1].hash : '0'.repeat(64);
-  const code = headHash.slice(0, 12);
-  await appendEntryForExport('pdf', code, entriesCount, headHash, s);
+  // Record export entry; appendEntryForExport handles code and headHash
+  await appendEntryForExport('pdf', '', s); // code12 will be set inside function based on hash
 }
 
 export { htmlEscape };

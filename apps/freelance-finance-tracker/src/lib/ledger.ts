@@ -22,8 +22,8 @@ export function canonicalJson(entry: Omit<LedgerEntry, 'hash'>): string {
 
 /** Compute hash for a ledger entry (without the hash field). */
 export function computeHash(entry: Omit<LedgerEntry, 'hash'>): string {
-  // Compute canonical JSON using the same approach as the acceptance tests
-  const json = JSON.stringify(entry, Object.keys(entry).sort());
+  // Use deep canonical JSON sorting for hashing
+  const json = canonicalJson(entry);
   return bytesToHex(sha256(utf8ToBytes(json)));
 }
 
@@ -54,21 +54,22 @@ export async function appendEntryForMileage(kind: string, recordId: string, data
 /** Append an export.created ledger entry. The ledger entry records format, code, entries count, and headHash.
  * The function computes the current ledger length and head hash after adding the entry.
  */
-export async function appendEntryForExport(format: 'csv' | 'pdf', code: string, _entriesCount: number, _headHashPrev: string, store: Store): Promise<void> {
-  const existing = await store.get<LedgerEntry[]>('ledger');
-  const ledger = existing ?? [];
+export async function appendEntryForExport(format: 'csv' | 'pdf', code12: string, store: Store): Promise<void> {
+  const ledger = (await store.get<LedgerEntry[]>('ledger')) ?? [];
   const seq = ledger.length ? ledger[ledger.length - 1].seq + 1 : 1;
   const at = new Date().toISOString();
   const prevHash = ledger.length ? ledger[ledger.length - 1].hash : '0'.repeat(64);
-  const data: any = { format, code, entries: 0, headHash: '' };
+  // placeholder data; will be updated after hash computed
+  const data: any = { format, code: '', entries: seq, headHash: '' };
   const entryWithoutHash: Omit<LedgerEntry, 'hash'> = { seq, at, kind: 'export.created', recordId: '', data, prevHash };
   const hash = computeHash(entryWithoutHash);
-  data.entries = seq; // total entries including this one
-  data.headHash = hash; // use this entry's hash for both CSV and PDF
+  // combined code is first12 + headHash (hash)
+  const combinedCode = code12 + hash;
+  data.headHash = hash;
+  data.code = combinedCode;
   const entry: LedgerEntry = { ...entryWithoutHash, hash };
   ledger.push(entry);
   await store.set('ledger', ledger);
 }
 
-// Export types for external imports
-export { LedgerEntry };
+

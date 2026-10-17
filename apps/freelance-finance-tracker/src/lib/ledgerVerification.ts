@@ -15,16 +15,23 @@ export async function verifyLedger(store: Store, entries?: any[]): Promise<Ledge
   if (!Array.isArray(ledgerEntries)) {
     return { ok: false, entries: [], reason: 'Ledger entries not an array' };
   }
-  let prevHash = '0'.repeat(64);
+  const zeroHash = '0'.repeat(64);
+  let prevHash = zeroHash;
   for (let i = 0; i < ledgerEntries.length; i++) {
     const e = ledgerEntries[i];
     const expectedSeq = i + 1;
+    // Sequence check
     if (e.seq !== expectedSeq) {
-      return { ok: false, entries: ledgerEntries, firstBadSeq: e.seq, reason: `Seq mismatch at ${e.seq}` };
+      // If the seq is greater than expected, entries are missing
+      const reason = e.seq > expectedSeq ? 'missing entry' : 'seq mismatch';
+      return { ok: false, entries: ledgerEntries, firstBadSeq: expectedSeq, reason };
     }
+    // PrevHash check
     if (e.prevHash !== prevHash) {
-      return { ok: false, entries: ledgerEntries, firstBadSeq: e.seq, reason: 'prevHash mismatch' };
+      // If seq is correct but prevHash doesn't match, likely out‑of‑order
+      return { ok: false, entries: ledgerEntries, firstBadSeq: e.seq, reason: 'out‑of‑order' };
     }
+    // Hash integrity
     const recomputed = computeHash({
       seq: e.seq,
       at: e.at,
