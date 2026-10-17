@@ -3,7 +3,8 @@ import { getAllReceipts } from './receiptStore';
 import { getAllMileageEntries } from './mileageStore';
 import { getAllCategories } from './categories';
 import { encryptText, decryptText, deriveKey, randomBytes, toBase64, fromBase64 } from './crypto';
-import { initLedgerIfNeeded } from './ledgerHelpers';
+import { verifyLedger } from './ledgerVerification';
+import { getLedger, setLedger } from './ledgerHelpers';
 
 /**
  * Backup format version.
@@ -18,7 +19,7 @@ export interface BackupData {
   receipts: any[]; // Receipt objects
   mileage: any[]; // MileageEntry objects
   categories?: any; // optional categories data (raw storage shape)
-  // ledger is intentionally omitted; it will be regenerated on restore via initLedgerIfNeeded
+  ledger?: any[]; // optional ledger entries for tamper‑evidence
 }
 
 /**
@@ -52,22 +53,28 @@ export function validateBackupStructure(obj: any): string | null {
   if (obj.categories !== undefined && typeof obj.categories !== 'object') {
     return 'Categories must be an object';
   }
+  // ledger, if present, should be an array (light validation)
+  if (obj.ledger !== undefined && !Array.isArray(obj.ledger)) {
+    return 'Ledger must be an array';
+  }
   return null;
 }
 
 /**
  * Create an encrypted backup string.
- * The backup includes receipts, mileage entries, and raw categories storage.
+ * The backup includes receipts, mileage entries, raw categories storage, and the ledger.
  */
 export async function createBackup(store: Store, passphrase: string): Promise<string> {
   const receipts = await getAllReceipts(store);
   const mileage = await getAllMileageEntries(store);
   const rawCategories = await store.get<any>('categories');
+  const ledger = await getLedger(store);
   const data: BackupData = {
     version: BACKUP_VERSION,
     receipts,
     mileage,
     categories: rawCategories ?? { custom: [], hidden: [], rename: {} },
+    ledger,
   };
   const json = JSON.stringify(data);
   const salt = randomBytes(16);
@@ -96,6 +103,14 @@ export async function restoreBackup(store: Store, backupString: string, passphra
   const err = validateBackupStructure(obj);
   if (err) throw new Error(err);
 
+  // Verify ledger integrity if present.
+  if (Array.isArray(obj.ledger)) {
+    const verification = await verifyLedger(store, obj.ledger);
+    if (!verification.ok) {
+      throw new Error("This backup's records have been altered, so it was not restored.");
+    }
+  }
+
   // Replace current data with backup contents.
   await store.clearAll();
   for (const r of obj.receipts) {
@@ -107,6 +122,7 @@ export async function restoreBackup(store: Store, backupString: string, passphra
   if (obj.categories) {
     await store.set('categories', obj.categories);
   }
-  // After restoring raw data, initialize ledger (imports existing records).
-  await initLedgerIfNeeded(store);
+  if (Array.isArray(obj.ledger)) {
+    await setLedger(store, obj.ledger);
+  }
 }

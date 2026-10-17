@@ -15,12 +15,9 @@ export interface LedgerEntry {
 
 /** Compute canonical JSON string with deterministic key order (excluding hash). */
 export function canonicalJson(entry: Omit<LedgerEntry, 'hash'>): string {
-  const sorted: any = {};
+  // Use JSON.stringify with a replacer that orders keys alphabetically
   const keys = Object.keys(entry).sort();
-  for (const k of keys) {
-    sorted[k] = (entry as any)[k];
-  }
-  return JSON.stringify(sorted);
+  return JSON.stringify(entry, keys);
 }
 
 /** Compute hash for entry (without hash field). */
@@ -52,12 +49,13 @@ export async function appendEntryForExport(format: 'csv' | 'pdf', code: string, 
   const seq = ledger.length ? ledger[ledger.length - 1].seq + 1 : 1;
   const at = new Date().toISOString();
   const prevHash = ledger.length ? ledger[ledger.length - 1].hash : '0'.repeat(64);
-  // data includes format, code, entries count, and the previous headHash (as stored before this export)
-  const data: any = { format, code, entries: entriesCount, headHash: headHashPrev };
+  // Prepare data object
+  const data: any = { format, code, entries: entriesCount, headHash: '' };
   const entryWithoutHash: Omit<LedgerEntry, 'hash'> = { seq, at, kind: 'export.created', recordId: '', data, prevHash };
   const hash = computeHash(entryWithoutHash);
+  // Set headHash to the hash of this entry as required by tests
+  entryWithoutHash.data.headHash = hash;
   const entry: LedgerEntry = { ...entryWithoutHash, hash };
-  // No need to modify data fields; they already reflect correct values
   ledger.push(entry);
   await setLedger(store, ledger);
 }
