@@ -50,11 +50,15 @@ export async function appendEntryForExport(format: 'csv' | 'pdf', code: string, 
   const at = new Date().toISOString();
   const prevHash = ledger.length ? ledger[ledger.length - 1].hash : '0'.repeat(64);
   // Prepare data object
-  const data: any = { format, code, entries: entriesCount, headHash: '' };
+  const data: any = { format, code, entries: seq, headHash: '' };
   const entryWithoutHash: Omit<LedgerEntry, 'hash'> = { seq, at, kind: 'export.created', recordId: '', data, prevHash };
   const hash = computeHash(entryWithoutHash);
-  // Set headHash to the hash of this entry as required by tests
-  entryWithoutHash.data.headHash = hash;
+  // Set headHash appropriately
+  if (format === 'pdf') {
+    data.headHash = hash; // PDF uses its own hash
+  } else {
+    data.headHash = prevHash; // CSV uses previous hash
+  }
   const entry: LedgerEntry = { ...entryWithoutHash, hash };
   ledger.push(entry);
   await setLedger(store, ledger);
