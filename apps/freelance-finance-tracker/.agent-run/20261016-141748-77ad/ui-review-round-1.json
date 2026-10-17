@@ -1,0 +1,216 @@
+{
+  "verdict": "fail",
+  "summary": "The UI is mostly functional and passes axe and most accessibility checks, but a critical navigation bug stops the primary flow \u2013 users cannot tap a receipt on the Dashboard to edit it. Several secondary states (offline banner, empty\u2011state copy, error screens) are missing or mis\u2011implemented, and a number of components drift from the design token system (hard\u2011coded colors, spacing, missing accessibility roles/labels, and lack of focus outlines). These issues need fixing before the product can be considered polished.",
+  "findings": [
+    {
+      "severity": "high",
+      "file": "src/components/ui/ReceiptCard.tsx",
+      "issue": "Receipt cards are rendered as plain `Card` components with no `Pressable`/`onPress` handler and no `accessibilityRole=\"button\"`. The test suite cannot click the amount \"42.10\" because the element is not interactive or exposed as a button to the testing library.",
+      "fix": "Wrap the card content in a `Pressable` (or `TouchableOpacity`) that forwards the `onPress` prop. Add `accessible={true}` and `accessibilityRole=\"button\"` (plus a useful `accessibilityLabel` such as \"Open receipt $42.10\"). Ensure the hit\u2011area meets the 44\u00d744\u202fdp minimum and that the press action navigates to `ReceiptDetailScreen`.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/screens/DashboardScreen.tsx",
+      "issue": "When the receipt list is empty the UI does not render the `EmptyState` component with the exact copy \"Nothing here yet\" / \"Add a receipt or mileage entry to start tracking your finances.\" and a primary button labeled **Add receipt**. The empty view either shows a generic placeholder or a button with the wrong label.",
+      "fix": "Add conditional logic that, when `receipts.length === 0`, renders the `EmptyState` component with the required `title`, `description`, and `actionLabel=\"Add receipt\"`. Hook the button to the FAB or navigation that opens the receipt entry screen. Use the design system spacing (`theme.spacing * 2`) for padding.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/components/ui/OfflineBanner.tsx",
+      "issue": "The spec requires an always\u2011available full\u2011width offline banner, but no such component exists in the code base and no logic displays a banner when `NetInfo` reports offline status.",
+      "fix": "Create an `OfflineBanner` component that uses a `Surface` with `color: theme.colors.surfaceVariant` and displays the text \"You are offline. Some actions require an internet connection.\" Place it at the top of the `Screen` container and toggle its visibility with a `useNetInfo` hook.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/screens/ReceiptHistoryScreen.tsx",
+      "issue": "The empty\u2011state for receipt history is missing the required **Back** primary button, and the title/description text does not match the spec exactly (e.g., missing period or wrong case).",
+      "fix": "Render the `EmptyState` component with `title=\"No changes yet\"`, `description=\"This receipt has never been edited.\"` and `actionLabel=\"Back\"`. Wire the button to `navigation.goBack()` and ensure the text matches the design copy exactly.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/screens/VerifyExportScreen.tsx",
+      "issue": "The loading state for CSV file import does not show the required label \"Reading file\u2026\" alongside the `ActivityIndicator`; only a spinner appears.",
+      "fix": "When `mode === 'loading'`, render a view containing an `ActivityIndicator` and a `<Text variant=\"bodyLarge\">Reading file\u2026</Text>` underneath, using the theme\u2019s typography and spacing.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "src/components/ui/PrimaryButton.tsx",
+      "issue": "Button background and text colors are hard\u2011coded (`backgroundColor: '#0061A4'`, `color: '#FFFFFF'`) instead of using `theme.colors.primary` and `theme.colors.onPrimary`.",
+      "fix": "Replace static hex values with references to the theme: `backgroundColor: theme.colors.primary` and `color: theme.colors.onPrimary`. Import the theme via `useTheme()` from React\u2011Native\u2011Paper.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "src/components/ui/TextButton.tsx",
+      "issue": "Similarly, the text button uses hard\u2011coded colors for default and disabled states rather than design tokens.",
+      "fix": "Swap hard\u2011coded values for `theme.colors.primary` (text) and `theme.colors.disabled`/`theme.colors.onDisabled` for the disabled state.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "src/components/ui/FABAdd.tsx",
+      "issue": "The FAB for adding receipts has no `accessibilityLabel`, violating the requirement that icon\u2011only buttons provide a spoken label.",
+      "fix": "Add a prop `accessibilityLabel=\"Add receipt\"` (or pass it from screen) and set `accessible={true}` on the FAB component.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "src/components/ui/MiniFAB.tsx",
+      "issue": "Mini\u2011FABs (e.g., for scan, add mileage) lack `accessibilityLabel` and therefore are invisible to screen readers.",
+      "fix": "Require an `accessibilityLabel` prop for each mini\u2011FAB and forward it to the underlying `FAB` component.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "src/components/ui/FormField.tsx",
+      "issue": "Error states display only the `error` prop on the `TextInput` but do not render a `HelperText` component with the error message in the correct error color from the token set.",
+      "fix": "When `error` is truthy, render `<HelperText type=\"error\" visible>{error}</HelperText>` and ensure the text uses `theme.colors.error`.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "src/components/ui/HistoryItem.tsx",
+      "issue": "History list items do not have a visible focus outline when navigated via keyboard; only default ripple is present.",
+      "fix": "Add a `style` that applies `borderWidth: 2` and `borderColor: theme.colors.outline` when the component receives `focusVisible` (use `useFocusRing` or `onFocus`/`onBlur` to toggle a state).",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "src/components/ui/BottomTabBar.tsx",
+      "issue": "On web the bottom tab bar scrolls with the page content instead of staying fixed at the viewport bottom, violating the fixed\u2011height spec.",
+      "fix": "Apply `position: 'fixed'` (or `position: 'absolute'` with bottom:0) and `width: '100%'` to the container style, and ensure the layout\u2019s `Screen` component adds bottom padding equal to the tab bar height.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "src/components/ui/ScreenContainer.tsx",
+      "issue": "Spacing, paddings, and margins use raw numbers (e.g., `padding: 16`) instead of the defined spacing token (`theme.spacing`).",
+      "fix": "Replace hard\u2011coded values with `theme.spacing * 2` (since base unit is 8\u202fdp) or use `theme.spacing` directly. Update any `margin`, `padding`, and size constants throughout the UI.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "src/components/ui/Snackbar.tsx",
+      "issue": "The Snackbar component lacks an `accessibilityLiveRegion=\"polite\"` / `role=\"alert\"` attribute, so screen readers may not announce messages reliably.",
+      "fix": "Add `accessibilityLiveRegion=\"assertive\"` (or `polite` for non\u2011critical) and `role=\"alert\"` to the root view of the Snackbar.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "viewport": "phone",
+      "issue": "The 'Add photo' button is the primary action but lacks visual emphasis beyond color; it should be more distinct to guide users.",
+      "fix": "Use a larger button, add a subtle shadow or border, or increase contrast to make it stand out as the primary action.",
+      "screen": "receipt_entry",
+      "source": "vision"
+    },
+    {
+      "severity": "medium",
+      "viewport": "phone",
+      "issue": "Form fields are labeled below the input, which is less discoverable than labels above fields for form usability.",
+      "fix": "Move labels above each input field to improve accessibility and user guidance.",
+      "screen": "receipt_entry",
+      "source": "vision"
+    },
+    {
+      "severity": "low",
+      "viewport": "phone",
+      "issue": "The 'Scan receipt' button is grayed out, but there's no visual indication or hint explaining why it's disabled.",
+      "fix": "Add a small tooltip or placeholder text (e.g., 'Scan requires camera access') to explain the state.",
+      "screen": "receipt_entry",
+      "source": "vision"
+    },
+    {
+      "severity": "low",
+      "viewport": "desktop",
+      "issue": "The layout is stretched vertically on desktop, leaving excessive white space above and below the form, which feels unbalanced.",
+      "fix": "Center the form content within the viewport, or use padding to create a more contained, visually balanced composition.",
+      "screen": "receipt_entry",
+      "source": "vision"
+    },
+    {
+      "severity": "medium",
+      "screen": "receipt_entry",
+      "source": "vision",
+      "issue": "visual quality 7/10 on 'receipt_entry' (target 8+, minimum 7): Polished, modern interface with clear visual hierarchy and consistent spacing. The primary action is obvious, typography is readable, and form elements are well-organized. Minor improvements could enhance accessibility and visual polish.",
+      "fix": "Address this screen's findings until it looks polished and professional."
+    },
+    {
+      "severity": "medium",
+      "viewport": "both",
+      "issue": "Typography lacks a clear type scale; heading and body text are visually similar in weight and size, reducing hierarchy.",
+      "fix": "Establish a clear type scale: use a bold, larger font for the heading, a smaller, regular weight for body text, and ensure sufficient contrast with background.",
+      "screen": "receipts_loaded",
+      "source": "vision"
+    },
+    {
+      "severity": "medium",
+      "viewport": "both",
+      "issue": "No primary action button or interactive element is visible on the screen. The user cannot edit or add receipts from this view.",
+      "fix": "Add a primary action button (e.g., 'Add Receipt') or ensure this screen is only a view state with navigation to edit or add screens.",
+      "screen": "receipts_loaded",
+      "source": "vision"
+    },
+    {
+      "severity": "low",
+      "viewport": "desktop",
+      "issue": "Desktop layout is underutilized; content is centered and surrounded by excessive white space, not leveraging the full width or grid.",
+      "fix": "Use a grid system to align content to the edges, adjust padding, and consider adding secondary actions or filters to utilize the desktop canvas effectively.",
+      "screen": "receipts_loaded",
+      "source": "vision"
+    },
+    {
+      "severity": "low",
+      "viewport": "phone",
+      "issue": "Card is centered with no left/right padding or alignment to the screen edges, creating a 'floating' feel.",
+      "fix": "Add consistent left/right padding to align the card to the screen edges, creating a more grounded, intentional layout.",
+      "screen": "receipts_loaded",
+      "source": "vision"
+    },
+    {
+      "severity": "medium",
+      "screen": "receipts_loaded",
+      "source": "vision",
+      "issue": "visual quality 7/10 on 'receipts_loaded' (target 8+, minimum 7): Polished, clean layout with consistent spacing and clear visual hierarchy. The card-based design and bottom tab bar are well-executed. However, the typography scale is minimal, and the screen lacks interactive elements or primary actions beyond navigation. On desktop, it\u2019s not fully optimized for the larger canvas, appearing slightly sparse.",
+      "fix": "Address this screen's findings until it looks polished and professional."
+    }
+  ],
+  "lighthouse": [
+    {
+      "accessibility": 98,
+      "bestPractices": 100,
+      "performance": 57
+    }
+  ],
+  "vision_scores": [
+    {
+      "screen": "policy_gate",
+      "score": 9.0,
+      "summary": "Polished, modern, and professional UI with clear visual hierarchy, excellent typography, balanced spacing, and consistent alignment. The design feels premium and would not look out of place in a well-reviewed commercial app. All critical elements are present and well-placed for both phone and desktop views."
+    },
+    {
+      "screen": "dashboard_empty",
+      "score": 8.0,
+      "summary": "Polished, modern empty state with clear visual hierarchy and intuitive layout. Primary action is prominent, typography is clean and readable, spacing is generous, and desktop layout is spacious and well-aligned. No critical issues found."
+    },
+    {
+      "screen": "receipt_entry",
+      "score": 7.0,
+      "summary": "Polished, modern interface with clear visual hierarchy and consistent spacing. The primary action is obvious, typography is readable, and form elements are well-organized. Minor improvements could enhance accessibility and visual polish."
+    },
+    {
+      "screen": "dashboard_populated",
+      "score": 8.0,
+      "summary": "Polished, modern dashboard with clear visual hierarchy and consistent spacing. Primary actions are accessible via bottom tab bar. Typography is readable with a clear scale. Desktop layout is spacious and well-proportioned. Touch targets are appropriately sized. No obvious usability or visual flaws."
+    },
+    {
+      "screen": "receipts_loaded",
+      "score": 7.0,
+      "summary": "Polished, clean layout with consistent spacing and clear visual hierarchy. The card-based design and bottom tab bar are well-executed. However, the typography scale is minimal, and the screen lacks interactive elements or primary actions beyond navigation. On desktop, it\u2019s not fully optimized for the larger canvas, appearing slightly sparse."
+    }
+  ]
+}

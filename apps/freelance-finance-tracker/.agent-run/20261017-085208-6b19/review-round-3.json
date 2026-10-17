@@ -1,0 +1,29 @@
+{
+  "verdict": "revise",
+  "issues": [
+    "src/lib/ledger.ts canonicalJson only sorts top-level keys, causing hash mismatches with tests that require fully recursive canonical JSON (sorted keys at every level). This leads to failing hash verification tests (R8 hash computation).",
+    "src/lib/ledgerVerification.ts verification logic incorrectly prioritizes sequence mismatch over prevHash checks, causing out\u2011of\u2011order detection to be reported as 'missing entry' and missing prevHash detection to be reported as 'out\u2011of\u2011order'. Tests expect reason 'prevhash' for prevHash mismatches and correct firstBadSeq for out\u2011of\u2011order cases.",
+    "src/lib/exportCsv.ts does not generate the verification line in the format required by the acceptance tests. Tests expect a line starting with \"# verification:\" containing key\u2011value pairs and a 12\u2011hex\u2011character code (M7), while other tests (M9) expect a CSV\u2011style line \"<entryCount>,<headHash>,<verificationCode>\" where verificationCode is the 12\u2011hex prefix of the content hash concatenated with the headHash (76 hex chars). The current implementation generates only \"<entryCount>,<headHash>,<code12>\" without the prefix, causing multiple CSV verification failures.",
+    "src/lib/exportPdf.ts generates an export.created ledger entry with an empty verification code (code12) and never computes a proper verification code. Tests expect a non\u2011empty 12\u2011hex code and correct headHash handling for PDF exports (R28).",
+    "src/lib/ledgerHelpers.ts initLedgerIfNeeded imports existing receipts/mileage only once, but it does not set the proper initial prevHash chain for imported entries when other entries already exist, potentially violating R11, R12, R13 requirements.",
+    "ui_flow.json primary flow test fails because the Save receipt button remains disabled after editing a receipt (field validation or missing required field). This indicates that receipt editing does not correctly enable the Save button, breaking UI flow (R5\u2011R7).",
+    "src/lib/ledgerVerification.ts returns reason strings like \"out\u2011of\u2011order\" for prevHash mismatches, while tests look for the substring \"prevhash\". The reason text must match test expectations.",
+    "src/lib/ledgerVerification.ts does not correctly identify missing entries versus out\u2011of\u2011order entries, leading to wrong firstBadSeq values in tests (expected seq number of the bad entry vs expected of the missing sequence).",
+    "src/lib/exportCsv.ts verification line lacks the combined verification code (code12 + headHash) required by tests expecting a 76\u2011character code, causing regex mismatches.",
+    "src/lib/exportPdf.ts appendEntryForExport is called with an empty code and does not compute the verification code based on the PDF content, resulting in failing PDF export ledger entry tests (missing code, invalid headHash)."
+  ],
+  "missing_requirements": [],
+  "wrong_tests": [
+    {
+      "test": "M7: CSV export verification line format",
+      "reason": "The test expects a verification line starting with \"# verification:\" and a 12\u2011character code, while the current specification (R26\u2011R27) defines the verification line as a CSV line \"<entryCount>,<headHash>,<verificationCode>\" where verificationCode is 12\u2011hex chars + headHash. The test expectations are inconsistent with the spec, causing mismatches.",
+      "fix": "Update the test to match the CSV specification (or adjust the implementation to satisfy both formats, but the spec is authoritative)."
+    },
+    {
+      "test": "M9: CSV export verification line format and content",
+      "reason": "The test expects a combined verification code of 76 hex characters (12\u2011char prefix + 64\u2011char headHash) and a CSV\u2011style line without a \"# verification:\" prefix, which contradicts the format expected in M7. This inconsistency makes it impossible for a single implementation to satisfy both.",
+      "fix": "Align the test with the official spec: the verification line should be \"<entryCount>,<headHash>,<verificationCode>\" where verificationCode = first 12 hex chars of SHA\u2011256(content) concatenated with headHash."
+    }
+  ],
+  "feedback": "The current implementation fails several core requirements: ledger entry hashing does not use fully canonical JSON, verification logic misclassifies errors, CSV/PDF export verification lines and codes are malformed, and PDF export does not record a proper verification code. Additionally, UI flow tests indicate the receipt save button remains disabled, suggesting missing validation handling. Please address the issues above, implement fully recursive canonical JSON, correct ledger verification logic, generate verification lines and codes according to the specification, compute PDF export verification codes, ensure imported entries are correctly added once, and fix UI validation to enable the Save button. Update tests if they conflict with the spec."
+}

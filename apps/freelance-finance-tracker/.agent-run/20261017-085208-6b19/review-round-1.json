@@ -1,0 +1,34 @@
+{
+  "verdict": "revise",
+  "issues": [
+    "R8: Mileage entry fields are not fully implemented or tested \u2013 missing proper handling of mileage entry fields in ledger (ledger.ts uses generic appendEntry but does not ensure required fields or correct data shape).",
+    "R11: The initLedgerIfNeeded function in ledgerHelpers.ts incorrectly checks existence of a ledger by reading raw store key 'ledger' directly; it should use getLedger/store.get('ledger') which returns encrypted data. This leads to import not running, causing M7 test failures (imported entries not added).",
+    "R15: computeHash uses JSON.stringify(entry, Object.keys(entry).sort()) which may not produce the canonical JSON required by tests (they use a custom canonical function that sorts recursively). This causes mismatched hashes (M8 hash computation failures).",
+    "R17: The first entry's prevHash is set to '0'.repeat(64) in appendEntry, but initLedgerIfNeeded also creates entries with prevHash using this same logic, which may conflict with the expected initial ledger entry when the ledger already contains an import entry. May cause verification errors.",
+    "R20: verifyLedger is not called from Settings screen or backup-restore routine as required (no evidence of usage in SettingsScreen.tsx or backup.ts).",
+    "R28: appendEntryForExport in ledger.ts incorrectly sets data.entries and data.headHash after computing hash, but it uses placeholder values and returns wrong values (entries count and headHash are not correctly set). This leads to mismatched export verification lines (M9 test failures).",
+    "R40+R41+R42+R43+R44: The ledger verification logic in ledgerVerification.ts does not correctly detect missing entries, reordered entries, or prevHash mismatches according to test expectations \u2013 it only checks seq and prevHash, but missing entries cause seq mismatch rather than explicit 'missing entry' reason, and reordered entries cause a 'seq mismatch' reason not containing 'order' substring, causing test failures.",
+    "TypeScript error: src/lib/ledger.ts line 74 export declaration conflicts with exported declaration of 'LedgerEntry' \u2013 duplicate export causing tsc error.",
+    "UI flow failure: In ui_flow.json the primary flow cannot click 'Save receipt' because required fields are not filled (Amount, Date, Category). This indicates receipt entry creation flow is broken after ledger changes (missing required field handling or disabled Save button).",
+    "CSV export verification line parsing expects a format \"# verification: entries=<N>, headHash=<HASH>, code=<CODE>\", but generateCsv produces a line with space after colon and lower case keys; tests expect specific pattern and numeric entryCount > 0, but code returns NaN for entriesCount in M9 test due to mismatch."
+  ],
+  "missing_requirements": [
+    "R8",
+    "R11",
+    "R13",
+    "R52"
+  ],
+  "wrong_tests": [
+    {
+      "test": "M8 hash computation and canonical JSON",
+      "reason": "The test expects hash based on a strictly canonical JSON (sorted keys recursively) while computeHash uses JSON.stringify with shallow key sorting, leading to mismatched hash values. The test is correct per spec; implementation must use proper canonical JSON.",
+      "fix": "Implement a true canonical JSON serialization (deep key sorting, no whitespace) and use it for hash computation."
+    },
+    {
+      "test": "M8 ledger verification detects reordered entries and reports out\u2011of\u2011order",
+      "reason": "The test expects the verification reason to contain the word \"order\" (e.g., \"out\u2011of\u2011order\"), but verifyLedger returns \"Seq mismatch at X\". This does not meet the requirement R19 which specifies reason describing type of corruption, but \"order\" is appropriate. Implementation should return a reason containing \"order\" for out\u2011of\u2011order entries.",
+      "fix": "Update verifyLedger to return reason strings like \"out\u2011of\u2011order\" when sequence numbers are not consecutive."
+    }
+  ],
+  "feedback": "The ledger implementation does not meet many of the detailed requirements: hashing, canonical JSON, import on first launch, export entry creation, verification logic, and UI flow integration are flawed or missing. Adjust the ledger core, canonical serialization, import logic, export entry handling, and verification to satisfy the specifications and make the failing acceptance tests pass."
+}

@@ -1,0 +1,391 @@
+{
+  "run_id": "20261016-171111-0d4d",
+  "task": "Evidence ledger: tamper-evident, contemporaneous records that stay on the device. Keep every existing screen, flow, the local-first design and the current look; keep all existing tests passing; never change src/lib/crypto.ts (it is locked). Changes: (1) Ledger core in src/lib/ledger.ts: every receipt and mileage entry, and every edit or deletion of one, appends a ledger entry {seq, at (ISO time), kind (\"receipt.created\", \"receipt.corrected\", \"receipt.deleted\", \"mileage.created\", \"mileage.corrected\", \"mileage.deleted\", \"imported\", \"export.created\"), recordId, data (the record's full content after the change; for a deletion, the last content), prevHash, hash}. hash = SHA-256 from @noble/hashes ^2.4.0 (already a dependency; never write your own hashing): import { sha256 } from '@noble/hashes/sha2.js' and { bytesToHex, utf8ToBytes } from '@noble/hashes/utils.js', hash = bytesToHex(sha256(utf8ToBytes(canonicalJson))) over a canonical JSON of every field except hash, hex-encoded; the first entry's prevHash is 64 zeros. Entries are stored encrypted through the Store, append-only: nothing ever rewrites or removes an entry (Delete all data is the only exception, and it starts a new ledger). An edit is a \"corrected\" entry with the new content, so the history shows the original and each dated correction; a receipt's OCR pre-fill and the user's confirmation are both recorded in the data. On first launch after this update, every existing receipt and mileage entry is added once as an \"imported\" entry (with the import date), so old records are clearly marked as not contemporaneous. verifyLedger(store) recomputes the chain and returns {ok, entries, firstBadSeq?, reason?}. (2) Screens: each receipt and trip gets a \"History\" view (from its detail/edit screen) listing its original entry and every correction with date and time, newest last. Settings shows the ledger status: \"Verified \u00b7 N entries \u00b7 intact\" or, if verification fails, a clear warning that records may have been altered, naming the first bad entry. (3) Verifiable exports: every CSV and PDF export ends with a verification line: the ledger's entry count, its head hash and a verification code = the first 12 hex characters of SHA-256 over the export's content without that line, plus the head hash. Each export also appends an \"export.created\" ledger entry {format, code, entries, headHash}. Settings gets \"Verify an export\": either pick an exported CSV (pickFile; the app recomputes the code from the file without its verification line and finds the matching export entry) or type the code printed on a PDF. The answer says whether the code matches an export made by this app (and when, from how many entries), whether the CSV file was changed after export, and whether any records were corrected or deleted since that export. (4) Backups include the ledger; restore runs verifyLedger on the restored data before replacing anything and refuses a backup whose ledger does not verify, with a friendly error (older backups without a ledger restore and are then imported as \"imported\" entries). Unit tests: hash chaining and canonical JSON; verify detects a changed field, a removed entry, a reordered entry and a changed prevHash, and reports the first bad seq; corrections keep the original; import runs once; a CSV export verifies, fails after a one-character change to the file, and reports records changed after a later correction; a typed PDF code is found; an unknown code is reported as not from this app; backup round trip keeps a verifying ledger; a tampered backup ledger is refused. Update ui_flow.json so the primary flow edits a receipt, opens its History and sees the correction, and sees the \"Verified\" status in Settings.",
+  "app": "apps/freelance-finance-tracker",
+  "new_app": true,
+  "success": false,
+  "tests_passed": false,
+  "validation_passed": false,
+  "validation": "verified encryption unchanged ok, npm install (.) ok, expo dependency versions (.) ok, expo export (.) ok, expo web export (.) ok, ui renders (.) ok, ui styles applied (.) ok, accessibility, serious or critical (.) ok, responsive layout on a phone (.) ok, ui primary flow (.) FAIL, typescript (tsc) FAIL, json syntax ok, scanner suppressions ok, semgrep (security errors) ok, trivy secrets ok, trivy dependency vulnerabilities (high/critical, fixable) ok, trivy misconfigurations (high/critical) ok, trivy dependency vulnerabilities (other) warn, planned files present ok, planned files fully implemented ok",
+  "review": {
+    "verdict": "revise",
+    "issues": [
+      "TypeScript error: src/lib/ledger.ts declares export { LedgerEntry } twice (line 1 and at end), causing duplicate export name conflict (TS2484). This needs to be fixed by removing the duplicate export or consolidating the export.",
+      "M7 test failure: Ledger import on first launch does not create imported entries. initLedgerIfNeeded incorrectly checks for existing ledger using store.get<any>('ledger') which returns undefined even after adding entries due to encryption layer returning decrypted data only after setLedger is called. The import logic should ensure imported entries are added when no ledger exists and that they are stored encrypted correctly.",
+      "M7 test also expects imported entries for both receipt and mileage (2 total) but getLedger returned empty, indicating initLedgerIfNeeded didn't add any entries. Ensure getAllReceipts and getAllMileageEntries return data and that setLedger stores entries properly.",
+      "M7 test failure also suggests that addReceipt/addMileageEntry may not have been called before initLedgerIfNeeded in that test. The test adds receipt and mileage, then calls initLedgerIfNeeded. However, initLedgerIfNeeded checks if ledger exists, not if receipts/mileage exist. Ensure that after adding records, initLedgerIfNeeded correctly creates imported entries.",
+      "M7 test logic may need to clear existing ledger flag or correctly detect uninitialized state. The current early return `if (existing) return;` may treat an empty but existing ledger as truthy. Use a more specific check (e.g., if (existing !== null && existing.length > 0) return;).",
+      "M7 test failure could also be due to store.get<any>('ledger') returning undefined because the ledger key never set. Ensure initLedgerIfNeeded sets the ledger even if no entries exist, and that the test creates imported entries accordingly.",
+      "M7 test expects getLedger to return entries with kind 'imported', but ledger entries are being stored encrypted via Store abstraction. The test accesses getLedger which uses store.get('ledger') which decrypts data, so encryption may be fine. However, the duplicate export in ledger.ts may cause runtime errors preventing ledger creation.",
+      "M7 test also expects the imported entries' recordId to match 'r1' and 'm1' but the test data uses receipt id 'r1' and mileage id 'm1' which are added via addReceipt/addMileageEntry. Ensure that receiptStore and mileageStore correctly store these records before import.",
+      "M7 test failure also indicates that initLedgerIfNeeded may be called before receipts and mileage are persisted. In the test, receipts and mileage are added, then initLedgerIfNeeded is called. If addReceipt/addMileageEntry store data asynchronously, ensure initLedgerIfNeeded waits for those writes to complete before reading them.",
+      "M7 test also expects import entries to have kind 'imported', but ledger.ts's appendEntryForExport uses kind 'export.created' and other functions use generic appendEntry. Ensure that import entries are created with kind 'imported' as required by R11.",
+      "M7 test also expects imported entries' at timestamps to be after importStart. Ensure that initLedgerIfNeeded uses the current time for each imported entry.",
+      "M7 test failure also indicates that ledger entries may not be persisted because store.set('ledger', ledger) may be using the wrong key or encryption mechanism. Verify Store implementation stores data under key 'ledger' correctly.",
+      "M7 test failure also indicates that getLedger may be returning an empty array due to getLedger using store.get<LedgerEntry[]>('ledger') which returns undefined if key not set. Ensure setLedger is called after building entries.",
+      "M7 test failure also indicates that initLedgerIfNeeded may be incorrectly short-circuited if any ledger key exists, even empty. This prevents import from happening. Adjust logic to only skip if ledger already contains entries.",
+      "M7 test failure also suggests a mismatch between expected and actual ledger entries count. The test expects exactly 2 imported entries, but got 0. This is a core logic bug that must be fixed.",
+      "M7 test failure also indicates that the import process may be missing mileage entries (R8 is untested but required for import). Ensure mileage entries are imported properly.",
+      "M7 test failure also indicates that the import should happen only once (R12). Ensure that a flag is set after import to avoid repeated imports on subsequent launches.",
+      "M7 test also expects a ledger entry for each receipt and mileage record, but initLedgerIfNeeded may be skipping due to existing ledger (perhaps from previous tests). Reset state between tests or clear ledger before import call.",
+      "M7 test failure also may be due to test environment using a fresh raw store each test, but initLedgerIfNeeded may be reading a stale ledger from store.get<any>('ledger') which returns null initially. However, the code returns early if existing (even if empty). The check should be `if (existing !== undefined && existing !== null) return;` but currently `if (existing) return;` treats [] as falsy, so that is okay. But if existing is {} or something, could be truthy.",
+      "M7 test also fails because the receipt and mileage entries are added using addReceipt/addMileageEntry, but those functions may also call ledger append functions themselves, causing ledger entries before import and interfering with import. Ensure initLedgerIfNeeded only adds imported entries for records that don't already have a ledger entry, or that test expectations align with existing ledger entries. Currently, addReceipt likely appends a receipt.created entry, so after adding receipts and mileage, ledger already has entries, so initLedgerIfNeeded sees existing ledger and returns early, resulting in no imported entries. To satisfy test, modify initLedgerIfNeeded to always add imported entries when no imported entries exist, even if other ledger entries exist. Or adjust test expectations. But per spec, imported entries should be added only on first launch after update, meaning when ledger is empty. The test creates receipt and mileage then calls initLedgerIfNeeded, expecting imported entries to be added. However, addReceipt may have already added receipt.created entries, causing ledger not empty. To satisfy test, ensure addReceipt does NOT append ledger entries before import on first launch. Alternatively, modify initLedgerIfNeeded to add imported entries regardless of existing ledger entries, but only if no imported entries exist for those records.",
+      "M7 test also expects that import occurs only once (R12). A flag should be stored, e.g., 'ledgerInitialized' in store, to prevent re-imports on subsequent calls.",
+      "M7 test also expects that imported entries are added after the receipt.created entries if they exist. However, spec may expect imported entries to be the first entries. Ensure that imported entries have the earliest seq numbers (starting from 1) and that any subsequent receipt.created entries have higher seq.",
+      "M7 test also expects that imported entries have kind 'imported', not 'receipt.created' or 'mileage.created'. Ensure that the import logic uses kind 'imported'.",
+      "M7 test also expects that the ledger verification works (verifyLedger) but currently that function may not be implemented correctly (see separate file). Ensure verifyLedger recomputes hashes and prevHash correctly.",
+      "Additional failures: M7 test failing due to missing imported entries; M11 test failure in hash verification (line 272) expects second.hash to equal expectedHash but got different. This indicates computeHash may produce different hash than expected canonical JSON ordering. The test likely uses a specific canonical JSON implementation. The canonicalJson function currently sorts keys alphabetically, but the test may expect sorting of nested objects as well or omission of fields like 'hash'. Ensure canonicalJson excludes the 'hash' field (already Omit) and sorts keys recursively to ensure deterministic serialization. The current implementation only sorts top-level keys, but nested objects (like receipt data) may have their own key order affecting final JSON string. The test likely constructs an entry with nested data and expects canonical JSON to sort nested keys as well. Update canonicalJson to recursively sort all objects (deep canonicalization) before stringifying.",
+      "Hash mismatch: second.hash does not match expectedHash calculated by test's canonical JSON (which sorts keys recursively). Update canonicalJson to perform deep sorting of object keys at all levels before JSON.stringify.",
+      "M11 test also expects verifyLedger to catch mismatches, but verifyLedger implementation may be missing or incorrect. Ensure verifyLedger recomputes hash using computeHash, checks prevHash matches previous entry's hash, and reports firstBadSeq and reason appropriately.",
+      "R28 export.created ledger entry after CSV & PDF export likely fails because appendEntryForExport doesn't set data.entries and data.headHash correctly as per spec. It currently sets entries to seq and headHash to its own hash, but spec requires entries = total ledger entries at export time and headHash = hash of latest ledger entry (which may be after adding export entry). Ensure correct values are recorded.",
+      "R28 also expects format to be \"CSV\" or \"PDF\" (uppercase) but code uses 'csv'/'pdf' lowercase. Adjust to match spec.",
+      "R28 export.created entry's recordId should be perhaps empty or undefined. Currently set to '' which may be fine.",
+      "R30 CSV verification recompute expects verification line format \"<entryCount>,<headHash>,<verificationCode>\" but current exportCsv implementation may not produce that. Ensure CSV export includes verification line matching format and that verificationCode is first 12 hex chars of SHA-256 over content without verification line concatenated with headHash.",
+      "R30 also expects verificationCode to be computed from export content without verification line, not from headHash alone. Verify exportCsv implementation does this correctly.",
+      "R31 PDF code typing verification expects verifyExportCode to locate ledger entry by code. Ensure exportVerification module implements this correctly and that ledger entry's data includes format, code, entries, headHash.",
+      "R32 detection of altered CSV file expects verification to fail when file content changed. Ensure verifyExportCode recomputes verificationCode and compares with stored code, returning known:false if mismatch.",
+      "R33 detection of later corrections after export expects verification result to indicate records corrected after export. Ensure verifyExportCode checks ledger entries after export entry's seq and reports accordingly.",
+      "Overall, multiple core functionalities (ledger creation, hash calculation, import, export verification) are not correctly implemented, causing many test failures. The code needs substantial fixes to meet requirements."
+    ],
+    "missing_requirements": [
+      "R5",
+      "R6",
+      "R7",
+      "R8",
+      "R9",
+      "R10",
+      "R11",
+      "R12",
+      "R13",
+      "R14",
+      "R15",
+      "R16",
+      "R17",
+      "R18",
+      "R19",
+      "R20",
+      "R21",
+      "R22",
+      "R23",
+      "R24",
+      "R25",
+      "R26",
+      "R27",
+      "R28",
+      "R29",
+      "R30",
+      "R31",
+      "R32",
+      "R33",
+      "R34",
+      "R35",
+      "R36",
+      "R37",
+      "R38",
+      "R39",
+      "R40",
+      "R41",
+      "R42",
+      "R43",
+      "R44",
+      "R45",
+      "R46",
+      "R47",
+      "R48",
+      "R49",
+      "R50",
+      "R51",
+      "R52",
+      "R53",
+      "R54",
+      "R55"
+    ],
+    "feedback": "Several critical issues prevent the ledger functionality from working and cause test failures. Fix the duplicate export in ledger.ts, correct canonical JSON hashing to match test expectations, ensure initLedgerIfNeeded correctly adds imported entries on first launch, handle import flagging, adjust export.created entries to match spec, and implement verifyLedger and export verification correctly. Also address missing and incorrect implementations for many listed requirements."
+  },
+  "review_rounds": 12,
+  "seconds": 25830.4,
+  "agents": {
+    "coder": {
+      "calls": 294,
+      "prompt_tokens": 14751527,
+      "completion_tokens": 332417,
+      "seconds": 16947.700598716736
+    },
+    "designer": {
+      "calls": 10,
+      "prompt_tokens": 282351,
+      "completion_tokens": 33747,
+      "seconds": 1440.71803689003
+    },
+    "vision": {
+      "calls": 50,
+      "prompt_tokens": 178110,
+      "completion_tokens": 11303,
+      "seconds": 545.8307926654816
+    },
+    "reviewer": {
+      "calls": 156,
+      "prompt_tokens": 6448004,
+      "completion_tokens": 113188,
+      "seconds": 5669.649575471878
+    },
+    "retro": {
+      "calls": 1,
+      "prompt_tokens": 10747,
+      "completion_tokens": 5156,
+      "seconds": 175.84214115142822
+    }
+  },
+  "stalled": [
+    "phase 1 (function) did not finish in 12 rounds"
+  ],
+  "security": {
+    "verdict": "skipped",
+    "summary": "Skipped until tests and validation pass.",
+    "findings": [],
+    "assurance": {
+      "blocking_open": 0,
+      "open": 0,
+      "deployment_actions": 0,
+      "fixed": 0
+    },
+    "ledger": []
+  },
+  "deployment_guide": {
+    "written": false
+  },
+  "ui": {
+    "verdict": "fail",
+    "summary": "Overall the UI follows the design spec \u2013 the component library, design tokens, layout, and accessibility landmarks are in place and axe reports no violations. All major screens exist and use the MD3 theme, but the primary user flow is broken: the \"Save receipt\" button cannot be activated, causing the acceptance test to time\u2011out. A few secondary states (policy\u2011gate error, dashboard loading, receipt\u2011history empty) are missing or incomplete, and some minor accessibility and token\u2011usage inconsistencies remain.",
+    "findings": [
+      {
+        "severity": "high",
+        "file": "src/screens/ReceiptEntryScreen.tsx",
+        "issue": "\"Save receipt\" button is not clickable after filling the form \u2013 the test step times out. Likely the button remains disabled or its label is hidden from the accessibility tree, preventing the locator from finding it.",
+        "fix": "Ensure the button\u2019s `disabled` prop is correctly bound to form validation and that the label \"Save receipt\" remains in the accessibility tree (use `accessibilityLabel`). During the saving state keep the button focusable and announce progress via `announceForAccessibility`. Add unit tests for the enable/disable logic.",
+        "source": "designer"
+      },
+      {
+        "severity": "medium",
+        "file": "src/screens/PolicyScreen.tsx",
+        "issue": "Error state defined in DESIGN.md (full\u2011screen error view with \"Retry\" button) is not implemented \u2013 the screen only shows loading and default states.",
+        "fix": "Add an error branch that renders a centered view with the copy \"Unable to store your acceptance. Please try again.\" and a primary button labeled \"Retry\" that re\u2011executes the acceptance store operation.",
+        "source": "designer"
+      },
+      {
+        "severity": "medium",
+        "file": "src/screens/DashboardScreen.tsx",
+        "issue": "Loading state (centered ActivityIndicator) is missing; the dashboard shows empty or populated content immediately.",
+        "fix": "Introduce a `loading` boolean in the screen\u2019s state. While loading, render a centered `<ActivityIndicator size=\"large\" />` matching the spec.",
+        "source": "designer"
+      },
+      {
+        "severity": "medium",
+        "file": "src/screens/ReceiptHistoryScreen.tsx",
+        "issue": "Empty state (title \"No changes yet\", description \"This receipt has never been edited.\", Back button) is not present; only the populated list is rendered.",
+        "fix": "Detect when the history array is empty and render the `EmptyState` component with the specified copy and a primary \"Back\" button that navigates back.",
+        "source": "designer"
+      },
+      {
+        "severity": "medium",
+        "file": "src/components/ui/Screen.tsx",
+        "issue": "Offline banner (full\u2011width banner with copy \"You are offline\u2026\") is not added to the global screen wrapper, so it never appears on any screen.",
+        "fix": "Wrap the `Screen` component\u2019s children with an `OfflineBanner` that becomes visible when `NetInfo.isConnected` is false. Use the exact copy from the spec.",
+        "source": "designer"
+      },
+      {
+        "severity": "low",
+        "file": "src/components/ui/PrimaryButton.tsx",
+        "issue": "Focus-visible style is not defined; on web the button shows no visual outline when tabbed to, which can violate WCAG focus indication guidelines.",
+        "fix": "Add a `:focus-visible` CSS rule using `outline: 2px solid var(--color-outline)` (or theme.colors.outline) to satisfy visible focus requirements.",
+        "source": "designer"
+      },
+      {
+        "severity": "low",
+        "file": "src/components/ui/FormField.tsx",
+        "issue": "Some fields use hard\u2011coded colors (e.g., placeholder text color) instead of the design tokens, and numeric fields lack `keyboardType=\"numeric\"` and appropriate `autoComplete` hints.",
+        "fix": "Replace any literal color values with `theme.colors.placeholder` or similar token references. Add `keyboardType=\"numeric\"` and `autoComplete=\"off\"` for amount fields, and set `autoComplete` for date, category, and type fields as appropriate.",
+        "source": "designer"
+      },
+      {
+        "severity": "low",
+        "file": "src/components/ui/HistoryItem.tsx",
+        "issue": "ARIA role for list items is missing; the component renders `List.Item` without an explicit `role=\"listitem\"`, which can reduce screen\u2011reader clarity when the list is read.",
+        "fix": "Add `role=\"listitem\"` to the root element of `HistoryItem` and ensure each item has an accessible label describing the kind and date (e.g., `${kind} on ${date}`).",
+        "source": "designer"
+      },
+      {
+        "severity": "low",
+        "file": "src/components/ui/ScreenContainer.tsx",
+        "issue": "The main scroll view lacks `role=\"main\"`, which is required by the accessibility landmarks spec.",
+        "fix": "Add `role=\"main\"` (or `accessibilityRole=\"main\"` on React Native) to the `ScrollView` that houses the page content.",
+        "source": "designer"
+      },
+      {
+        "severity": "low",
+        "file": "src/components/ui/MiniFAB.tsx",
+        "issue": "Mini\u2011FABs have the correct touch target size but no visible focus outline on web, making keyboard navigation harder.",
+        "fix": "Apply a focus-visible style similar to PrimaryButton, using the theme\u2019s outline color.",
+        "source": "designer"
+      },
+      {
+        "severity": "medium",
+        "viewport": "desktop",
+        "issue": "The 'Receipt' and 'Mileage' buttons are not aligned with the 'Add receipt' button vertically; they appear slightly offset.",
+        "fix": "Align the 'Receipt' and 'Mileage' buttons vertically with the 'Add receipt' button for consistent visual grouping.",
+        "screen": "dashboard_empty",
+        "source": "vision"
+      },
+      {
+        "severity": "low",
+        "viewport": "desktop",
+        "issue": "The 'Add receipt' button has a subtle drop shadow that doesn't match the flat design of the other buttons.",
+        "fix": "Remove or unify the drop shadow on all buttons to maintain visual consistency.",
+        "screen": "dashboard_empty",
+        "source": "vision"
+      },
+      {
+        "severity": "medium",
+        "viewport": "phone",
+        "issue": "The 'Add photo' button is visually dominant but lacks a clear affordance for the primary action \u2014 it's not immediately obvious this is the main entry point without reading the label.",
+        "fix": "Add a subtle icon (e.g., camera) to the button or use a more prominent visual treatment (e.g., larger size, bolder color) to reinforce it as the primary action.",
+        "screen": "receipt_entry",
+        "source": "vision"
+      },
+      {
+        "severity": "medium",
+        "viewport": "phone",
+        "issue": "The 'Scan receipt' button is grayed out, but its disabled state is not clearly communicated \u2014 it lacks a visual indicator (like a faded border or text) to show it's inactive.",
+        "fix": "Apply a consistent disabled state style (e.g., grayed-out border, opacity reduction) to clearly communicate it's not interactive.",
+        "screen": "receipt_entry",
+        "source": "vision"
+      },
+      {
+        "severity": "low",
+        "viewport": "phone",
+        "issue": "The 'Type' toggle buttons are visually separated but lack clear spacing between them, making the interaction feel cramped.",
+        "fix": "Add consistent padding between the toggle buttons to improve spacing and usability.",
+        "screen": "receipt_entry",
+        "source": "vision"
+      },
+      {
+        "severity": "low",
+        "viewport": "both",
+        "issue": "The form field labels ('Amount', 'Date', etc.) are positioned above the inputs, which is correct, but the vertical spacing between sections is inconsistent \u2014 the 'Additional information' section is too close to the 'Receipt details' section.",
+        "fix": "Increase vertical spacing between sections to create clearer visual separation and improve readability.",
+        "screen": "receipt_entry",
+        "source": "vision"
+      },
+      {
+        "severity": "medium",
+        "screen": "receipt_entry",
+        "source": "vision",
+        "issue": "visual quality 7/10 on 'receipt_entry' (target 8+, minimum 7): Polished, modern UI with clear visual hierarchy and consistent spacing. The primary action is obvious (Add photo), typography is readable, and form elements are well-organized. Minor improvements could enhance usability and visual polish.",
+        "fix": "Address this screen's findings until it looks polished and professional."
+      },
+      {
+        "severity": "low",
+        "viewport": "phone",
+        "issue": "The 'Receipt saved' notification bar partially obscures the 'Date' and 'Category' text in the recent activity card, reducing readability.",
+        "fix": "Adjust the notification bar height or position it to avoid overlapping critical information.",
+        "screen": "dashboard_populated",
+        "source": "vision"
+      },
+      {
+        "severity": "low",
+        "viewport": "phone",
+        "issue": "The 'Receipt' and 'Mileage' buttons are positioned too close to each other and to the edge of the card, reducing breathing room.",
+        "fix": "Increase horizontal padding within the card or reduce button size slightly to improve spacing.",
+        "screen": "dashboard_populated",
+        "source": "vision"
+      },
+      {
+        "severity": "low",
+        "viewport": "desktop",
+        "issue": "The 'Receipt saved' notification bar is positioned too high and overlaps the 'Recent activity' heading, creating visual clutter.",
+        "fix": "Lower the notification bar or adjust its z-index to avoid overlapping the heading.",
+        "screen": "dashboard_populated",
+        "source": "vision"
+      }
+    ],
+    "lighthouse": [
+      {
+        "accessibility": 98,
+        "bestPractices": 100,
+        "performance": 57
+      }
+    ],
+    "screenshots": [
+      "apps/freelance-finance-tracker/.agent-run/20261016-171111-0d4d/screenshots/app/screenshot-phone.png",
+      "apps/freelance-finance-tracker/.agent-run/20261016-171111-0d4d/screenshots/app/screenshot-phone-full.png",
+      "apps/freelance-finance-tracker/.agent-run/20261016-171111-0d4d/screenshots/app/screenshot-desktop.png",
+      "apps/freelance-finance-tracker/.agent-run/20261016-171111-0d4d/screenshots/app/screenshot-desktop-full.png",
+      "apps/freelance-finance-tracker/.agent-run/20261016-171111-0d4d/screenshots/app/flow-phone-01-policy-gate.png",
+      "apps/freelance-finance-tracker/.agent-run/20261016-171111-0d4d/screenshots/app/flow-phone-02-dashboard-empty.png",
+      "apps/freelance-finance-tracker/.agent-run/20261016-171111-0d4d/screenshots/app/flow-phone-03-receipt-entry.png",
+      "apps/freelance-finance-tracker/.agent-run/20261016-171111-0d4d/screenshots/app/flow-phone-04-dashboard-populated.png",
+      "apps/freelance-finance-tracker/.agent-run/20261016-171111-0d4d/screenshots/app/flow-phone-05-receipts-loaded.png",
+      "apps/freelance-finance-tracker/.agent-run/20261016-171111-0d4d/screenshots/app/flow-desktop-01-policy-gate.png",
+      "apps/freelance-finance-tracker/.agent-run/20261016-171111-0d4d/screenshots/app/flow-desktop-02-dashboard-empty.png",
+      "apps/freelance-finance-tracker/.agent-run/20261016-171111-0d4d/screenshots/app/flow-desktop-03-receipt-entry.png",
+      "apps/freelance-finance-tracker/.agent-run/20261016-171111-0d4d/screenshots/app/flow-desktop-04-dashboard-populated.png",
+      "apps/freelance-finance-tracker/.agent-run/20261016-171111-0d4d/screenshots/app/flow-desktop-05-receipts-loaded.png"
+    ]
+  },
+  "native": null,
+  "retro": {
+    "observations": [
+      "acceptance tests failed with the same error in 6 of 12 rounds: FAIL __tests__/acceptance/mN.test.ts",
+      "acceptance tests failed with the same error in 4 of 12 rounds: \u274c Acceptance tests failed (exit code N).",
+      "validator 'ui primary flow (.)' blocked 10 of 12 rounds",
+      "validator 'typescript (tsc)' blocked 7 of 12 rounds",
+      "coder hit its turn limit in 6 of 12 rounds ([1, 2, 3, 5, 6, 11])",
+      "vision scores flat across the run: first rounds [8.0, 7.8, 7.8], last rounds [8.0, 8.0, 7.8]",
+      "slowest round 6 took 72 min; average 36 min"
+    ],
+    "went_well": [
+      "The designer kept updating ui_flow.json and added new screen stubs in several rounds, showing the pipeline could evolve the UI design.",
+      "The reviewer consistently pinpointed the same import\u2011path problems (e.g., '@noble/hashes/sha2.js' vs '@noble/hashes/sha256') and duplicate export errors, giving a reliable signal of the root cause.",
+      "Static validators (planned\u2011files, TypeScript, UI primary flow) caught missing files and UI mismatches early, preventing later runtime crashes.",
+      "Vision scores stayed high (\u22488.0) throughout the run, meaning the visual UI checks were stable and did not become a bottleneck.",
+      "The multi\u2011agent feedback loop (reviewer \u2192 coder \u2192 validator) kept the pipeline from dead\u2011locking despite the complex ledger requirements."
+    ],
+    "improvements": [
+      {
+        "title": "Structured, actionable reviewer feedback",
+        "evidence": "Rounds\u202f1,\u202f3,\u202f5,\u202f8,\u202f11 all reported the same TypeScript import errors and duplicate export errors, yet the coder kept receiving narrative comments (e.g., \"Ledger imports from '@noble/hashes/sha2.js'\u2026\"), and the errors persisted for 12 rounds. The same pattern appears for the UI\u2011flow validator (blocked in 10/12 rounds).",
+        "change": "Update the reviewer prompt to require JSON output for each issue: {file, line, issue, suggestedFix}. Add a pre\u2011coder step that translates this JSON into concise patch\u2011style diffs (e.g., \"replace '@noble/hashes/sha2.js' with '@noble/hashes/sha256' in src/lib/ledger.ts\"). Feed the diff directly to the coder instead of free\u2011form prose.",
+        "expected_effect": "Coder receives precise line\u2011level fixes, eliminates repeated TypeScript/ES\u2011module errors and duplicate export warnings, cuts the number of turn\u2011limit hits, and accelerates convergence.",
+        "priority": "high"
+      },
+      {
+        "title": "Repeat\u2011failure guard with automated debugging sub\u2011agent",
+        "evidence": "Identical failures appeared across multiple rounds: \"FAIL __tests__/acceptance/mN.test.ts\" in rounds\u202f1,\u202f3,\u202f6,\u202f8,\u202f9,\u202f12; TypeScript errors in rounds\u202f1\u20115,\u202f11\u201112; UI primary flow validator blocked in 10 of 12 rounds. The pipeline kept iterating without a deeper analysis.",
+        "change": "Introduce a guard: if the same validator error (exact message) occurs in three consecutive rounds, pause the coder, spawn a dedicated debugging agent that runs `tsc`, `npm ls`, and a custom import\u2011path checker, then returns a concise \"RootCause\" summary (e.g., \"incorrect import path for @noble/hashes, duplicate export of LedgerEntry\"). Reset the coder turn counter after the summary.",
+        "expected_effect": "Stops endless loops, provides a focused root\u2011cause analysis, lets the coder apply the correct fix in one go, reducing total rounds and overall runtime.",
+        "priority": "high"
+      },
+      {
+        "title": "Enforce planned\u2011file generation before coding",
+        "evidence": "The \"planned files present\" validator reported missing files in rounds\u202f1 (5 files),\u202f2 (4 files) and\u202f3 (ui_flow.json). Those files never appeared, contributing to UI\u2011flow validator failures in rounds\u202f1\u201112.",
+        "change": "Modify the planner prompt to output an explicit \"file manifest\" list. Add a pre\u2011coder checkpoint: if any file from the manifest is absent, the pipeline returns to the designer to create a skeleton (auto\u2011generated empty .tsx/.json files). Upgrade the \"planned files present\" validator to a hard stop that returns the missing\u2011file list as actionable tasks.",
+        "expected_effect": "All required source files exist before the coder starts, UI\u2011flow validator can succeed, and subsequent rounds focus on logic rather than missing artefacts, cutting wasted coder turns.",
+        "priority": "medium-high"
+      },
+      {
+        "title": "Early import\u2011path static validator",
+        "evidence": "Rounds\u202f1\u20115 repeatedly failed with \"Must use import to load ES Module\" and \"Attempted to import the module \u2026 not listed in the 'exports'\" for imports like '@noble/hashes/sha2.js' or '@noble/hashes/sha256' (see round\u202f2 expo\u2011export warnings and round\u202f4 UI build errors). These same import mistakes also caused TypeScript errors in rounds\u202f1\u20115,\u202f11\u201112.",
+        "change": "Add a new static validator that parses every `import` statement, resolves it against the installed package's `exports` field, and flags mismatches. It should output the correct path suggestion (e.g., change '@noble/hashes/sha2.js' \u2192 '@noble/hashes/sha256'). Run this validator immediately after the designer step and before coding begins.",
+        "expected_effect": "Import\u2011resolution errors are caught early, preventing Jest and tsc crashes, eliminating a major source of repetitive test failures, and reducing the number of rounds needed for convergence.",
+        "priority": "medium"
+      },
+      {
+        "title": "Diff\u2011mode coder with reduced turn limit",
+        "evidence": "Coder consumed 14.7\u202fM prompt tokens and hit its turn limit in 6 of 12 rounds (1,\u202f2,\u202f3,\u202f5,\u202f6,\u202f11). Round\u202f6 lasted 72\u202fminutes, inflating the total run time (average 36\u202fmin per round).",
+        "change": "Revise the coder prompt to request only incremental diffs (or patch\u2011style updates) instead of full file rewrites. Provide a small helper tool that computes and displays the diff to the reviewer. Lower the per\u2011round turn limit to 30 (from 20\u201160) and require the coder to include a \"summary of changes\" after each turn. Introduce a helper agent that can split large files into logical chunks to keep each turn lightweight.",
+        "expected_effect": "Significant reduction in token usage and per\u2011round runtime, fewer turn\u2011limit breaches, faster feedback cycles, and overall quicker convergence.",
+        "priority": "medium"
+      }
+    ]
+  }
+}

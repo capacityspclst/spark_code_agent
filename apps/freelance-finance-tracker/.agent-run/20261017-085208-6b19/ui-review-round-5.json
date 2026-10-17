@@ -1,0 +1,178 @@
+{
+  "verdict": "fail",
+  "summary": "Overall the UI implements the design spec very well: all required screens exist, they use the Material\u20113 theme tokens, interactive components have proper touch\u2011targets and focus outlines, landmarks and headings are present, and axe reports zero accessibility violations. Lighthouse shows excellent a11y and best\u2011practice scores. However a few gaps remain: some required states are missing or not wired, a few design\u2011token shortcuts are still hard\u2011coded, the offline banner isn\u2019t rendered on every screen, navigation to the primary actions is not guaranteed from all signed\u2011in screens, and the receipt\u2011save flow cannot be completed automatically because required fields are never auto\u2011filled nor does the UI provide a shortcut for test automation. These issues are medium\u2011high severity because they hinder the primary user flow and can cause confusion in production.",
+  "findings": [
+    {
+      "severity": "high",
+      "file": "src/screens/ReceiptDetailScreen.tsx",
+      "issue": "The \"Save receipt\" button remains disabled when the form is empty and there is no default data or auto\u2011fill (OCR) to enable it, causing the main receipt\u2011edit flow to be blocked. The UI flow test times\u2011out at this step.",
+      "fix": "Implement OCR auto\u2011population for Amount, Date, Category, and Type when a photo is captured, and mark the fields as valid, or provide a quick\u2011fill option (e.g., dummy data in dev mode). Ensure the Save button becomes enabled once required fields have values, and expose a programmatic way for automated tests to fill the fields before clicking Save.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/screens/PolicyScreen.tsx",
+      "issue": "The error state (full\u2011screen error view with \"Retry\" button) is defined in DESIGN.md but the component only shows a loading spinner and the accept UI; the error UI is missing.",
+      "fix": "Add an error view that displays the copy \"Unable to store your acceptance. Please try again.\" and a PrimaryButton labelled \"Retry\" that re\u2011attempts the policy persistence.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/screens/DashboardScreen.tsx",
+      "issue": "The Empty state is present, but the Loading state (centered ActivityIndicator) is never shown when receipts are being fetched; the component jumps straight to Empty or Populated.",
+      "fix": "Introduce a loading flag while the store query runs and render a centered ActivityIndicator when true, matching the spec's \"Loading\" state.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/screens/ReceiptHistoryScreen.tsx",
+      "issue": "The Error state is implemented via a Snackbar, but the spec requires a full\u2011screen error view (or at least a visible error message with retry). The Snackbar may be dismissed before the user sees the error.",
+      "fix": "Add a dedicated error view with the copy \"Failed to load history. Check your device storage.\" and a \"Retry\" button that re\u2011loads the history.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/screens/SettingsScreen.tsx",
+      "issue": "The VerificationStatus component renders only the verified state; the compromised state UI (red warning with specific entry) is not conditionally displayed.",
+      "fix": "Wire the ledger verification result to the VerificationStatus component and render the compromised variant with the copy \"\u26a0 Ledger corrupted at entry #42: hash mismatch.\" when verification fails.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "src/components/ui/PrimaryButton.tsx",
+      "issue": "Button colors are hard\u2011coded (e.g., backgroundColor: '#0061A4') in a few custom style overrides, bypassing the theme tokens.",
+      "fix": "Replace hard\u2011coded colors with `theme.colors.primary` and `theme.colors.onPrimary` via the `useTheme` hook or `style={ { backgroundColor: colors.primary } }`.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "src/components/ui/EmptyState.tsx",
+      "issue": "The illustration image uses an inline style for width/height (e.g., width: 120, height: 120) instead of spacing tokens.",
+      "fix": "Apply spacing from the theme (`theme.spacing * 15` etc.) or CSS custom properties to keep sizing consistent.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "src/components/ui/Screen.tsx",
+      "issue": "The container uses a hard\u2011coded max\u2011width of 440dp, while the spec defines 420dp.",
+      "fix": "Update the max\u2011width to 420dp using the design token or a constant.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "src/components/ui/ScreenHeader.tsx",
+      "issue": "Missing `role=\"heading\"` and appropriate `aria-level` attribute on the screen title, which could affect screen\u2011reader navigation.",
+      "fix": "Add `accessibilityRole=\"header\"` and `accessibilityLevel={1}` (or use `<Text variant=\"headlineMedium\" accessibilityRole=\"header\">`).",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "src/components/ui/VerificationStatus.tsx",
+      "issue": "The component does not expose a focus outline for keyboard navigation; focus styles are only applied on native touch.",
+      "fix": "Add a visible 2dp outline using `theme.colors.outline` when the component receives focus (e.g., `onFocus`/`onBlur`).",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "src/components/ui/BottomTabBar.tsx",
+      "issue": "Icons in the BottomNavigation lack `accessibilityLabel` for screen readers; they rely on the label text only.",
+      "fix": "Add `accessibilityLabel` prop to each tab route based on its label (e.g., \"Dashboard\", \"Receipt\", \"Mileage\", \"Settings\").",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "src/components/ui/VerifyExportForm.tsx",
+      "issue": "Result panel uses a plain `<View>` with background colors set via hex values instead of token `primaryContainer`/`error` colors.",
+      "fix": "Use theme colors (`colors.primaryContainer` for success, `colors.error` for error) to style the result panel.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "src/components/ui/FABAdd.tsx",
+      "issue": "The FAB does not have a visible focus outline for keyboard navigation on web.",
+      "fix": "Add `style={{ outline: focused ? '2px solid var(--color-outline)' : undefined }}` and manage focus state.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "viewport": "both",
+      "issue": "The checkbox and 'Accept' button are slightly misaligned vertically with the surrounding card boundaries.",
+      "fix": "Adjust padding or margin on the checkbox container to align it with the button\u2019s baseline.",
+      "screen": "policy_gate",
+      "source": "vision"
+    },
+    {
+      "severity": "low",
+      "viewport": "both",
+      "issue": "The 'Tick the box to continue.' hint is positioned below the button but not centered horizontally with the button or checkbox group.",
+      "fix": "Center the hint text horizontally under the checkbox group for visual consistency.",
+      "screen": "policy_gate",
+      "source": "vision"
+    },
+    {
+      "severity": "medium",
+      "viewport": "phone",
+      "issue": "The secondary 'Receipt' and 'Mileage' buttons are visually identical in size and color to the primary 'Add receipt' button, creating ambiguity about their hierarchy and action priority.",
+      "fix": "Make the 'Add receipt' button visually distinct (e.g., larger, bolder, different color or border) to reinforce it as the primary action. Consider reducing the size or opacity of the secondary buttons to indicate secondary importance.",
+      "screen": "dashboard_empty",
+      "source": "vision"
+    },
+    {
+      "severity": "low",
+      "viewport": "phone",
+      "issue": "The 'Add receipt' button is slightly misaligned vertically with the text above it, and the 'Receipt' and 'Mileage' buttons are not perfectly aligned with each other or the center axis.",
+      "fix": "Adjust button positions to ensure perfect vertical and horizontal alignment with the center axis and each other. Use a consistent grid system to maintain alignment.",
+      "screen": "dashboard_empty",
+      "source": "vision"
+    },
+    {
+      "severity": "low",
+      "viewport": "desktop",
+      "issue": "The 'Receipt' and 'Mileage' buttons are too close to the bottom edge and not visually balanced with the primary button above them.",
+      "fix": "Increase vertical spacing between the primary button and the secondary buttons, and add padding to the bottom of the content area to create a more balanced composition.",
+      "screen": "dashboard_empty",
+      "source": "vision"
+    },
+    {
+      "severity": "medium",
+      "screen": "dashboard_empty",
+      "source": "vision",
+      "issue": "visual quality 7/10 on 'dashboard_empty' (target 8+, minimum 7): Polished, modern UI with clear visual hierarchy and consistent spacing. The primary action is obvious and well-placed. Typography is readable with a clear scale. Desktop layout is spacious and properly aligned. Minor alignment inconsistencies and lack of visual distinction between secondary buttons could be improved, but overall it\u2019s a strong, professional design.",
+      "fix": "Address this screen's findings until it looks polished and professional."
+    }
+  ],
+  "lighthouse": [
+    {
+      "accessibility": 98,
+      "bestPractices": 100,
+      "performance": 57
+    }
+  ],
+  "vision_scores": [
+    {
+      "screen": "policy_gate",
+      "score": 8.0,
+      "summary": "A polished, professional policy gate screen with clear visual hierarchy, consistent spacing, and thoughtful typography. The primary action is unambiguous and disabled until conditions are met. No critical usability issues are present, though minor spacing and label alignment tweaks could elevate it to exceptional."
+    },
+    {
+      "screen": "dashboard_empty",
+      "score": 7.0,
+      "summary": "Polished, modern UI with clear visual hierarchy and consistent spacing. The primary action is obvious and well-placed. Typography is readable with a clear scale. Desktop layout is spacious and properly aligned. Minor alignment inconsistencies and lack of visual distinction between secondary buttons could be improved, but overall it\u2019s a strong, professional design."
+    },
+    {
+      "screen": "receipt_entry",
+      "score": 8.0,
+      "summary": "Polished, modern interface with clear visual hierarchy and consistent spacing. Primary action is obvious and touch-friendly. Typography is readable with a clear scale. Desktop layout uses space effectively without stretching. No critical issues found."
+    },
+    {
+      "screen": "dashboard_populated",
+      "score": 8.0,
+      "summary": "Polished, modern dashboard with clear visual hierarchy and consistent spacing. Primary actions are accessible via bottom tab bar. Typography is readable with a clear scale. Empty states are present and guide next steps. Desktop version maintains layout integrity without stretching. Touch targets are appropriately sized. No major usability or visual flaws."
+    },
+    {
+      "screen": "receipts_loaded",
+      "score": 8.0,
+      "summary": "Polished, minimalist design with strong visual hierarchy and consistent spacing. The card-based layout and bottom navigation are clean and intuitive. Typography is readable and well-scaled. No critical issues found."
+    }
+  ]
+}

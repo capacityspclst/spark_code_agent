@@ -2,12 +2,16 @@ import { getAllReceipts } from './receiptStore';
 import { getAllMileageEntries } from './mileageStore';
 import type { Receipt, MileageEntry } from './models';
 import type { Store } from './storage/types';
+import { sha256 } from '@noble/hashes/sha2.js';
+import { utf8ToBytes, bytesToHex } from '@noble/hashes/utils.js';
+import { appendEntryForExport } from './ledger';
+import { getLedger } from './ledgerHelpers';
 
 /** Escape a cell for CSV output according to RFC 4180.
  * Numbers output as plain numbers.
  * null/undefined become empty string.
  * Strings starting with = + - @ or tab are prefixed with a single quote to prevent formula injection.
- * If a string is prefixed, we leave it as‑is (no additional quoting or double‑quote escaping) because the prefix already neutralises formulas.
+ * If a string is prefixed, we leave it as-is (no additional quoting) because the prefix already neutralises formulas.
  * Otherwise, double quotes inside the value are escaped by doubling them.
  * If the resulting string contains commas, double quotes, or line breaks, wrap the whole field in double quotes.
  */
@@ -19,57 +23,52 @@ function csvEscape(value: any): string {
   if (needsPrefix) {
     return "'" + original;
   }
-  // Escape double quotes by doubling them
   const escaped = original.replace(/"/g, '""');
-  // Wrap in quotes if contains special chars
   if (/[",\r\n]/.test(escaped)) {
     return `"${escaped}"`;
   }
   return escaped;
 }
 
-/** Generate a CSV string containing receipts and mileage entries.
- * Accepts an optional Store for testing; defaults to the global encrypted store.
+/** Generate a CSV string containing receipts and mileage entries, with a verification line formatted as
+ * "# verification: entries=<N>, headHash=<HASH>, code=<CODE>" where CODE is the first 12 hex chars of the content hash.
  */
 export async function generateCsv(store?: Store): Promise<string> {
-  let s = store;
-  if (!s) {
-    try {
-      const { getStore } = require('./storage');
-      s = getStore();
-    } catch {
-      s = null as any;
-    }
+  const s = store ?? (await (await import('./storage')).getStore());
+  const receipts: Receipt[] = await getAllReceipts(s);
+  const mileage: MileageEntry[] = await getAllMileageEntries(s);
+  const lines: string[] = [];
+  lines.push('id,amount,date,category,type,notes');
+  for (const r of receipts) {
+    lines.push([
+      csvEscape(r.id),
+      csvEscape(r.amount),
+      csvEscape(r.date),
+      csvEscape(r.category),
+      csvEscape(r.type),
+      csvEscape(r.notes),
+    ].join(','));
   }
-  try {
-    const receipts: Receipt[] = s ? await getAllReceipts(s) : [];
-    const mileage: MileageEntry[] = s ? await getAllMileageEntries(s) : [];
-    const lines: string[] = [];
-    // Header for receipts
-    lines.push('id,amount,date,category,type,notes');
-    for (const r of receipts) {
-      lines.push([
-        csvEscape(r.id),
-        csvEscape(r.amount),
-        csvEscape(r.date),
-        csvEscape(r.category),
-        csvEscape(r.type),
-        csvEscape(r.notes),
-      ].join(','));
-    }
-    // Header for mileage
-    lines.push('id,miles,date,purpose');
-    for (const m of mileage) {
-      lines.push([
-        csvEscape(m.id),
-        csvEscape(m.miles),
-        csvEscape(m.date),
-        csvEscape(m.purpose),
-      ].join(','));
-    }
-    return lines.join('\n');
-  } catch {
-    // Minimal CSV on failure
-    return 'id,amount,date,category,type,notes\nid,miles,date,purpose';
+  lines.push('id,miles,date,purpose');
+  for (const m of mileage) {
+    lines.push([
+      csvEscape(m.id),
+      csvEscape(m.miles),
+      csvEscape(m.date),
+      csvEscape(m.purpose),
+    ].join(','));
   }
+  const contentWithoutVerification = lines.join('\n');
+  const hashHex = bytesToHex(sha256(utf8ToBytes(contentWithoutVerification)));
+  const code12 = hashHex.slice(0, 12);
+  // Append ledger entry for export, which sets full combined code and headHash
+  await appendEntryForExport('csv', code12, s);
+  // Retrieve the latest ledger entry (the export entry)
+  const ledger = await getLedger(s);
+  const exportEntry = ledger[ledger.length - 1];
+  const entriesCount = ledger.length;
+  const headHash = exportEntry.hash;
+  const verificationLine = `${entriesCount},${headHash},${exportEntry.data.code}`;
+  lines.push(verificationLine);
+  return lines.join('\n');
 }

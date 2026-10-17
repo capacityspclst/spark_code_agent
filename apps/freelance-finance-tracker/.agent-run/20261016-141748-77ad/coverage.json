@@ -1,0 +1,721 @@
+{
+  "requirements": [
+    {
+      "id": "R1",
+      "section": "general",
+      "kind": "constraint",
+      "text": "Keep every existing screen, flow, the local\u2011first design and the current look."
+    },
+    {
+      "id": "R2",
+      "section": "general",
+      "kind": "constraint",
+      "text": "Keep all existing tests passing."
+    },
+    {
+      "id": "R3",
+      "section": "general",
+      "kind": "constraint",
+      "text": "Never modify src/lib/crypto.ts (it is locked)."
+    },
+    {
+      "id": "R4",
+      "section": "general",
+      "kind": "constraint",
+      "text": "Use the SHA\u2011256 implementation from @noble/hashes ^2.4.0 by importing { sha256 } from '@noble/hashes/sha2.js' and { bytesToHex, utf8ToBytes } from '@noble/hashes/utils.js' and do not write your own hashing function."
+    },
+    {
+      "id": "R5",
+      "section": "1",
+      "kind": "logic",
+      "text": "When a receipt is created, src/lib/ledger.ts must append a ledger entry object with fields: seq, at (ISO\u20118601 timestamp), kind set to \"receipt.created\", recordId, data containing the full receipt content after creation, prevHash, and hash."
+    },
+    {
+      "id": "R6",
+      "section": "1",
+      "kind": "logic",
+      "text": "When a receipt is edited, src/lib/ledger.ts must append a ledger entry with kind \"receipt.corrected\" containing the new receipt content in data and linking via prevHash to the previous entry."
+    },
+    {
+      "id": "R7",
+      "section": "1",
+      "kind": "logic",
+      "text": "When a receipt is deleted, src/lib/ledger.ts must append a ledger entry with kind \"receipt.deleted\" containing the last receipt content in data and linking via prevHash."
+    },
+    {
+      "id": "R8",
+      "section": "1",
+      "kind": "logic",
+      "text": "When a mileage entry is created, src/lib/ledger.ts must append a ledger entry with kind \"mileage.created\" and the fields seq, at, recordId, data, prevHash, hash."
+    },
+    {
+      "id": "R9",
+      "section": "1",
+      "kind": "logic",
+      "text": "When a mileage entry is edited, src/lib/ledger.ts must append a ledger entry with kind \"mileage.corrected\" containing the new mileage content in data and linking via prevHash."
+    },
+    {
+      "id": "R10",
+      "section": "1",
+      "kind": "logic",
+      "text": "When a mileage entry is deleted, src/lib/ledger.ts must append a ledger entry with kind \"mileage.deleted\" containing the last mileage content in data and linking via prevHash."
+    },
+    {
+      "id": "R11",
+      "section": "1",
+      "kind": "logic",
+      "text": "On the first launch after the update, the app must create exactly one \"imported\" ledger entry for each pre\u2011existing receipt and each pre\u2011existing mileage entry, using kind \"imported\", data with the original record content, at set to the import date, and recordId referencing the original record."
+    },
+    {
+      "id": "R12",
+      "section": "1",
+      "kind": "logic",
+      "text": "The \"imported\" entries added on first launch must be added only once per existing receipt and mileage entry."
+    },
+    {
+      "id": "R13",
+      "section": "1",
+      "kind": "logic",
+      "text": "All ledger entries must be stored encrypted through the Store module and must never be rewritten or removed, preserving an append\u2011only storage model."
+    },
+    {
+      "id": "R14",
+      "section": "1",
+      "kind": "logic",
+      "text": "The only operation that may clear the ledger and start a new empty ledger is the \"Delete all data\" action."
+    },
+    {
+      "id": "R15",
+      "section": "1",
+      "kind": "logic",
+      "text": "The hash for each ledger entry must be calculated as bytesToHex(sha256(utf8ToBytes(canonicalJson))) where canonicalJson is a deterministic JSON serialization of all entry fields except the hash."
+    },
+    {
+      "id": "R16",
+      "section": "1",
+      "kind": "logic",
+      "text": "The first ledger entry must have its prevHash field set to a 64\u2011character string of zeros (\"0\" repeated 64 times)."
+    },
+    {
+      "id": "R17",
+      "section": "1",
+      "kind": "logic",
+      "text": "For every ledger entry after the first, its prevHash field must equal the hash field of the immediately preceding ledger entry, forming a hash chain."
+    },
+    {
+      "id": "R18",
+      "section": "1",
+      "kind": "logic",
+      "text": "Implement a function verifyLedger(store) that decrypts all stored ledger entries, recomputes each entry's hash and prevHash linkage, and returns an object { ok: boolean, entries: LedgerEntry[], firstBadSeq?: number, reason?: string }."
+    },
+    {
+      "id": "R19",
+      "section": "1",
+      "kind": "logic",
+      "text": "If verifyLedger finds a mismatch, it must set ok to false, set firstBadSeq to the sequence number of the first corrupted entry, and include a reason string describing the type of corruption (e.g., \"hash mismatch\", \"prevHash mismatch\", \"missing entry\")."
+    },
+    {
+      "id": "R20",
+      "section": "1",
+      "kind": "logic",
+      "text": "verifyLedger must be callable from the Settings screen and from the backup\u2011restore routine."
+    },
+    {
+      "id": "R21",
+      "section": "2",
+      "kind": "ui",
+      "text": "Add a History view reachable from each receipt\u2019s detail/edit screen that lists the original ledger entry for that receipt followed by all \"receipt.corrected\" entries, ordered from oldest to newest (newest last)."
+    },
+    {
+      "id": "R22",
+      "section": "2",
+      "kind": "ui",
+      "text": "Add a History view reachable from each mileage/trip detail screen that lists the original \"mileage.created\" entry followed by all \"mileage.corrected\" entries, ordered oldest to newest."
+    },
+    {
+      "id": "R23",
+      "section": "2",
+      "kind": "ui",
+      "text": "Each entry shown in a History view must display the entry\u2019s date and time taken from the at field in a human\u2011readable format."
+    },
+    {
+      "id": "R24",
+      "section": "2",
+      "kind": "ui",
+      "text": "The Settings screen must show the ledger status text \"Verified \u00b7 N entries \u00b7 intact\" when verifyLedger returns ok true, where N is the total number of ledger entries."
+    },
+    {
+      "id": "R25",
+      "section": "2",
+      "kind": "ui",
+      "text": "When verifyLedger returns ok false, the Settings screen must display a clear warning that records may have been altered and must include the sequence number (or identifier) of the first bad entry."
+    },
+    {
+      "id": "R26",
+      "section": "3",
+      "kind": "logic",
+      "text": "When exporting data to CSV or PDF, the export file must end with a verification line formatted as \"<entryCount>,<headHash>,<verificationCode>\" where entryCount is the total number of ledger entries at export time, headHash is the hash of the latest ledger entry, and verificationCode is defined in R27."
+    },
+    {
+      "id": "R27",
+      "section": "3",
+      "kind": "logic",
+      "text": "The verificationCode must be computed as the first 12 hexadecimal characters of SHA\u2011256 over the export content excluding the verification line, concatenated with the headHash."
+    },
+    {
+      "id": "R28",
+      "section": "3",
+      "kind": "logic",
+      "text": "After each CSV or PDF export, src/lib/ledger.ts must append a ledger entry of kind \"export.created\" with fields: format (\"CSV\" or \"PDF\"), code (the verificationCode), entries (the ledger entry count at export time), and headHash (the hash of the latest ledger entry)."
+    },
+    {
+      "id": "R29",
+      "section": "3",
+      "kind": "ui",
+      "text": "The Settings screen must contain a \"Verify an export\" action that allows the user to either pick an exported CSV file via a file picker or manually type a verification code printed on a PDF export."
+    },
+    {
+      "id": "R30",
+      "section": "3",
+      "kind": "logic",
+      "text": "When a CSV file is selected, the app must recompute the verificationCode from the file contents without its verification line, locate a matching \"export.created\" ledger entry, and report whether the code matches an export made by this app."
+    },
+    {
+      "id": "R31",
+      "section": "3",
+      "kind": "logic",
+      "text": "When a verification code is typed (e.g., from a PDF), the app must locate a matching \"export.created\" ledger entry and, if found, report the export date and the number of ledger entries at export time."
+    },
+    {
+      "id": "R32",
+      "section": "3",
+      "kind": "logic",
+      "text": "The export verification result must indicate whether the CSV file has been altered after export (i.e., whether the computed code differs from the stored code)."
+    },
+    {
+      "id": "R33",
+      "section": "3",
+      "kind": "logic",
+      "text": "The export verification result must indicate whether any receipt or mileage records have been corrected or deleted after the export (by checking for ledger entries after the export\u2019s headHash)."
+    },
+    {
+      "id": "R34",
+      "section": "3",
+      "kind": "logic",
+      "text": "If the computed or typed verification code does not correspond to any \"export.created\" ledger entry, the app must report that the code is unknown and not from this app."
+    },
+    {
+      "id": "R35",
+      "section": "4",
+      "kind": "logic",
+      "text": "Backups must include the complete encrypted ledger (all ledger entries)."
+    },
+    {
+      "id": "R36",
+      "section": "4",
+      "kind": "logic",
+      "text": "When restoring from a backup, the restore routine must call verifyLedger on the restored ledger before applying any restored data."
+    },
+    {
+      "id": "R37",
+      "section": "4",
+      "kind": "logic",
+      "text": "If verifyLedger returns ok false for a backup, the restore routine must abort the restore and must not replace any existing data."
+    },
+    {
+      "id": "R38",
+      "section": "4",
+      "kind": "ui",
+      "text": "If a backup fails verification, the app must display a friendly error message informing the user that the backup appears tampered."
+    },
+    {
+      "id": "R39",
+      "section": "4",
+      "kind": "logic",
+      "text": "If a restored backup does not contain a ledger (e.g., an older backup), the restore process must import each restored receipt and mileage entry as a new \"imported\" ledger entry."
+    },
+    {
+      "id": "R40",
+      "section": "general",
+      "kind": "logic",
+      "text": "Create a unit test that constructs two ledger entries, verifies that the second entry\u2019s hash equals bytesToHex(sha256(utf8ToBytes(canonicalJson))) of its fields, and asserts that the second entry\u2019s prevHash matches the first entry\u2019s hash."
+    },
+    {
+      "id": "R41",
+      "section": "general",
+      "kind": "logic",
+      "text": "Create a unit test that mutates a field of an existing ledger entry, runs verifyLedger, and asserts that ok is false, firstBadSeq points to the mutated entry, and reason indicates a field change."
+    },
+    {
+      "id": "R42",
+      "section": "general",
+      "kind": "logic",
+      "text": "Create a unit test that removes a ledger entry from storage, runs verifyLedger, and asserts that verification fails with firstBadSeq set to the missing entry\u2019s sequence number."
+    },
+    {
+      "id": "R43",
+      "section": "general",
+      "kind": "logic",
+      "text": "Create a unit test that swaps the order of two ledger entries, runs verifyLedger, and asserts that verification fails with firstBadSeq set to the first out\u2011of\u2011order entry."
+    },
+    {
+      "id": "R44",
+      "section": "general",
+      "kind": "logic",
+      "text": "Create a unit test that changes the prevHash of a ledger entry to an incorrect value, runs verifyLedger, and asserts that verification fails with an appropriate reason."
+    },
+    {
+      "id": "R45",
+      "section": "general",
+      "kind": "logic",
+      "text": "Create a unit test that creates a receipt, edits it, and then checks that both a \"receipt.created\" entry and a \"receipt.corrected\" entry exist in the ledger."
+    },
+    {
+      "id": "R46",
+      "section": "general",
+      "kind": "logic",
+      "text": "Create a unit test that simulates the first launch after the update and verifies that each pre\u2011existing receipt and mileage record receives exactly one \"imported\" ledger entry."
+    },
+    {
+      "id": "R47",
+      "section": "general",
+      "kind": "logic",
+      "text": "Create a unit test that generates a CSV export, reads the file, extracts the verification line, and asserts that the entryCount, headHash, and verificationCode match the ledger state at export time."
+    },
+    {
+      "id": "R48",
+      "section": "general",
+      "kind": "logic",
+      "text": "Create a unit test that modifies a CSV export file by changing a single character, runs the export verification routine, and asserts that verification fails indicating the file was altered."
+    },
+    {
+      "id": "R49",
+      "section": "general",
+      "kind": "logic",
+      "text": "Create a unit test that after a CSV export performs a receipt correction, runs the export verification routine, and asserts that the result reports that records have been corrected since the export."
+    },
+    {
+      "id": "R50",
+      "section": "general",
+      "kind": "logic",
+      "text": "Create a unit test that generates a PDF export, records the printed verification code, and confirms that an \"export.created\" ledger entry with that code exists."
+    },
+    {
+      "id": "R51",
+      "section": "general",
+      "kind": "logic",
+      "text": "Create a unit test that provides an unknown verification code to the export verification routine and asserts that the result reports the code as not from this app."
+    },
+    {
+      "id": "R52",
+      "section": "general",
+      "kind": "logic",
+      "text": "Create a unit test that backs up the app, restores from that backup, runs verifyLedger on the restored data, and asserts that verification succeeds and the restored ledger matches the original."
+    },
+    {
+      "id": "R53",
+      "section": "general",
+      "kind": "logic",
+      "text": "Create a unit test that tampers with a backup\u2019s ledger (e.g., flips a bit in an entry), attempts a restore, and asserts that the restore is aborted and that a friendly error is shown."
+    },
+    {
+      "id": "R54",
+      "section": "2",
+      "kind": "ui",
+      "text": "Update ui_flow.json so that the primary flow for editing a receipt includes a step that opens the new History view and displays any correction entries."
+    },
+    {
+      "id": "R55",
+      "section": "2",
+      "kind": "ui",
+      "text": "Update ui_flow.json so that the primary flow includes a step to open Settings and display the ledger status text \"Verified \u00b7 N entries \u00b7 intact\" when verification succeeds."
+    }
+  ],
+  "coverage": {
+    "R5": {
+      "status": "covered",
+      "test": "appends a receipt.created entry with required fields",
+      "quote": "expect(entry?.data).toEqual(receipt);",
+      "gap": "",
+      "verified": true
+    },
+    "R6": {
+      "status": "covered",
+      "test": "appends a receipt.corrected entry linking via prevHash",
+      "quote": "expect(correctedEntry?.prevHash).toBe(createdEntry?.hash);",
+      "gap": "",
+      "verified": true
+    },
+    "R7": {
+      "status": "covered",
+      "test": "appends a receipt.deleted entry with last content and correct prevHash",
+      "quote": "expect(deleted?.prevHash).toBe(created?.hash);",
+      "gap": "",
+      "verified": true
+    },
+    "R8": {
+      "status": "partial",
+      "test": "appends a mileage.created entry with required fields",
+      "quote": "expect(entry?.data).toEqual(mileage);",
+      "gap": "does not check seq, at, prevHash, or hash fields",
+      "verified": true
+    },
+    "R9": {
+      "status": "covered",
+      "test": "appends a mileage.corrected entry linking via prevHash",
+      "quote": "expect(correctedEntry?.prevHash).toBe(createdEntry?.hash);",
+      "gap": "",
+      "verified": true
+    },
+    "R10": {
+      "status": "covered",
+      "test": "appends a mileage.deleted entry with correct prevHash",
+      "quote": "expect(deleted?.prevHash).toBe(created?.hash);",
+      "gap": "",
+      "verified": true
+    },
+    "R11": {
+      "status": "partial",
+      "test": "adds imported entries for existing receipts and mileage only once",
+      "quote": "expect(ledger.filter(e => e.kind === 'imported')).toHaveLength(2);",
+      "gap": "does not verify data contains original record content or that at timestamps are set to import date",
+      "verified": true
+    },
+    "R12": {
+      "status": "covered",
+      "test": "adds imported entries for existing receipts and mileage only once",
+      "quote": "expect(ledger.filter(e => e.kind === 'imported')).toHaveLength(2);",
+      "gap": "",
+      "verified": true
+    },
+    "R13": {
+      "status": "partial",
+      "test": "raw ledger storage does not contain plaintext ledger fields",
+      "quote": "expect(rawData).not.toMatch(/\"kind\"/);",
+      "gap": "does not verify that ledger entries are never rewritten or removed (append\u2011only model)",
+      "verified": true
+    },
+    "R14": {
+      "status": "covered",
+      "test": "clears ledger entries after data reset",
+      "quote": "expect(ledgerAfter).toHaveLength(0);",
+      "gap": "",
+      "verified": true
+    },
+    "R15": {
+      "status": "covered",
+      "test": "hash is correctly computed from canonical JSON",
+      "quote": "expect(entry?.hash).toBe(expectedHash);",
+      "gap": "",
+      "verified": true
+    },
+    "R16": {
+      "status": "covered",
+      "test": "first entry has prevHash of 64 zeros and each entry links via prevHash",
+      "quote": "expect(entries[0].prevHash).toBe('0'.repeat(64));",
+      "gap": "",
+      "verified": true
+    },
+    "R17": {
+      "status": "covered",
+      "test": "first entry has prevHash of 64 zeros and each entry links via prevHash",
+      "quote": "expect(entries[i].prevHash).toBe(entries[i - 1].hash);",
+      "gap": "",
+      "verified": true
+    },
+    "R18": {
+      "status": "covered",
+      "test": "creates created, corrected, deleted entries and verifies chain",
+      "quote": "expect(verification.ok).toBe(true);",
+      "gap": "",
+      "verified": true
+    },
+    "R19": {
+      "status": "covered",
+      "test": "detects changed data field and reports hash mismatch",
+      "quote": "expect(verification.reason?.toLowerCase()).toContain('hash mismatch');",
+      "gap": "",
+      "verified": true
+    },
+    "R20": {
+      "status": "covered",
+      "test": "calls verifyLedger during restoreBackup",
+      "quote": "expect(spy).toHaveBeenCalled();",
+      "gap": "",
+      "verified": true
+    },
+    "R26": {
+      "status": "covered",
+      "test": "ends with a verification line <entryCount>,<headHash>,<verificationCode>",
+      "quote": "expect(parts).toHaveLength(3);",
+      "gap": "",
+      "verified": true
+    },
+    "R27": {
+      "status": "covered",
+      "test": "ends with a verification line <entryCount>,<headHash>,<verificationCode>",
+      "quote": "expect(code).toBe(expectedCode);",
+      "gap": "",
+      "verified": true
+    },
+    "R28": {
+      "status": "covered",
+      "test": "records export.created entry with correct fields for CSV",
+      "quote": "expect(data?.format).toBe('csv');",
+      "gap": "",
+      "verified": true
+    },
+    "R30": {
+      "status": "covered",
+      "test": "recomputes verificationCode from CSV content and matches ledger entry",
+      "quote": "expect(result.known).toBe(true);",
+      "gap": "",
+      "verified": true
+    },
+    "R31": {
+      "status": "covered",
+      "test": "recognises a PDF verification code and reports export details",
+      "quote": "expect(result.entries).toBe(exportEntry?.seq);",
+      "gap": "",
+      "verified": true
+    },
+    "R32": {
+      "status": "covered",
+      "test": "fails verification when CSV content is altered",
+      "quote": "expect(result.known).toBe(false);",
+      "gap": "",
+      "verified": true
+    },
+    "R33": {
+      "status": "covered",
+      "test": "indicates that records were corrected since export",
+      "quote": "expect((result as any).laterChanges).toBe(true);",
+      "gap": "",
+      "verified": true
+    },
+    "R34": {
+      "status": "covered",
+      "test": "reports code as not from this app when unknown",
+      "quote": "expect(result.known).toBe(false);",
+      "gap": "",
+      "verified": true
+    },
+    "R35": {
+      "status": "covered",
+      "test": "backup contains ledger entries",
+      "quote": "expect(ledger).toHaveLength(2);",
+      "gap": "",
+      "verified": true
+    },
+    "R36": {
+      "status": "covered",
+      "test": "calls verifyLedger during restoreBackup",
+      "quote": "expect(spy).toHaveBeenCalled();",
+      "gap": "",
+      "verified": true
+    },
+    "R37": {
+      "status": "covered",
+      "test": "does not replace data when backup verification fails",
+      "quote": "await expect(restoreBackup(targetStore, tamperedBackup, passphrase)).rejects.toThrow(/friendly.*error/i);",
+      "gap": "",
+      "verified": true
+    },
+    "R39": {
+      "status": "covered",
+      "test": "creates imported ledger entries when restoring a backup lacking a ledger",
+      "quote": "expect(imported).toBeDefined();",
+      "gap": "",
+      "verified": true
+    },
+    "R40": {
+      "status": "covered",
+      "test": "second entry hash matches computed hash and prevHash links to first",
+      "quote": "expect(second.hash).toBe(expectedHash);",
+      "gap": "",
+      "verified": true
+    },
+    "R41": {
+      "status": "covered",
+      "test": "detects changed data field and reports hash mismatch",
+      "quote": "expect(verification.ok).toBe(false);",
+      "gap": "",
+      "verified": true
+    },
+    "R42": {
+      "status": "covered",
+      "test": "detects missing entry and reports missing entry",
+      "quote": "expect(verification.firstBadSeq).toBe(removedSeq);",
+      "gap": "",
+      "verified": true
+    },
+    "R43": {
+      "status": "covered",
+      "test": "detects reordered entries and reports out\u2011of\u2011order",
+      "quote": "expect(verification.firstBadSeq).toBe(ledger[0].seq);",
+      "gap": "",
+      "verified": true
+    },
+    "R44": {
+      "status": "covered",
+      "test": "detects incorrect prevHash and reports prevHash mismatch",
+      "quote": "expect(verification.reason?.toLowerCase()).toContain('prevhash');",
+      "gap": "",
+      "verified": true
+    },
+    "R45": {
+      "status": "covered",
+      "test": "creates created, corrected, deleted entries and verifies chain",
+      "quote": "expect(receiptEntries[1].kind).toBe('receipt.corrected');",
+      "gap": "",
+      "verified": true
+    },
+    "R46": {
+      "status": "covered",
+      "test": "adds imported entries for existing receipts and mileage only once",
+      "quote": "expect(ledger.filter(e => e.kind === 'imported')).toHaveLength(2);",
+      "gap": "",
+      "verified": true
+    },
+    "R47": {
+      "status": "covered",
+      "test": "ends with a verification line <entryCount>,<headHash>,<verificationCode>",
+      "quote": "expect(parts).toHaveLength(3);",
+      "gap": "",
+      "verified": true
+    },
+    "R48": {
+      "status": "covered",
+      "test": "fails verification after file tampering",
+      "quote": "expect(recomputedCode).not.toBe(code);",
+      "gap": "",
+      "verified": true
+    },
+    "R49": {
+      "status": "covered",
+      "test": "indicates that records were corrected since export",
+      "quote": "expect((result as any).laterChanges).toBe(true);",
+      "gap": "",
+      "verified": true
+    },
+    "R50": {
+      "status": "covered",
+      "test": "records export.created entry with correct fields for PDF",
+      "quote": "expect(exportEntry?.data?.code).toMatch(/^[0-9a-f]{12}$/);",
+      "gap": "",
+      "verified": true
+    },
+    "R51": {
+      "status": "covered",
+      "test": "reports code as not from this app when unknown",
+      "quote": "expect(result.known).toBe(false);",
+      "gap": "",
+      "verified": true
+    },
+    "R52": {
+      "status": "partial",
+      "test": "restores ledger identical to the original after backup",
+      "quote": "expect(ledgerRestored).toEqual(ledgerOriginal);",
+      "gap": "does not also run verifyLedger on the restored data and assert verification succeeds in the same test",
+      "verified": true
+    },
+    "R53": {
+      "status": "covered",
+      "test": "does not replace data when backup verification fails",
+      "quote": "await expect(restoreBackup(targetStore, tamperedBackup, passphrase)).rejects.toThrow(/friendly.*error/i);",
+      "gap": "",
+      "verified": true
+    }
+  },
+  "uncovered": [
+    {
+      "id": "R8",
+      "section": "1",
+      "kind": "logic",
+      "text": "When a mileage entry is created, src/lib/ledger.ts must append a ledger entry with kind \"mileage.created\" and the fields seq, at, recordId, data, prevHash, hash.",
+      "status": "partial",
+      "gap": "does not check seq, at, prevHash, or hash fields"
+    },
+    {
+      "id": "R11",
+      "section": "1",
+      "kind": "logic",
+      "text": "On the first launch after the update, the app must create exactly one \"imported\" ledger entry for each pre\u2011existing receipt and each pre\u2011existing mileage entry, using kind \"imported\", data with the original record content, at set to the import date, and recordId referencing the original record.",
+      "status": "partial",
+      "gap": "does not verify data contains original record content or that at timestamps are set to import date"
+    },
+    {
+      "id": "R13",
+      "section": "1",
+      "kind": "logic",
+      "text": "All ledger entries must be stored encrypted through the Store module and must never be rewritten or removed, preserving an append\u2011only storage model.",
+      "status": "partial",
+      "gap": "does not verify that ledger entries are never rewritten or removed (append\u2011only model)"
+    },
+    {
+      "id": "R52",
+      "section": "general",
+      "kind": "logic",
+      "text": "Create a unit test that backs up the app, restores from that backup, runs verifyLedger on the restored data, and asserts that verification succeeds and the restored ledger matches the original.",
+      "status": "partial",
+      "gap": "does not also run verifyLedger on the restored data and assert verification succeeds in the same test"
+    }
+  ],
+  "ui": [
+    {
+      "id": "R21",
+      "section": "2",
+      "kind": "ui",
+      "text": "Add a History view reachable from each receipt\u2019s detail/edit screen that lists the original ledger entry for that receipt followed by all \"receipt.corrected\" entries, ordered from oldest to newest (newest last)."
+    },
+    {
+      "id": "R22",
+      "section": "2",
+      "kind": "ui",
+      "text": "Add a History view reachable from each mileage/trip detail screen that lists the original \"mileage.created\" entry followed by all \"mileage.corrected\" entries, ordered oldest to newest."
+    },
+    {
+      "id": "R23",
+      "section": "2",
+      "kind": "ui",
+      "text": "Each entry shown in a History view must display the entry\u2019s date and time taken from the at field in a human\u2011readable format."
+    },
+    {
+      "id": "R24",
+      "section": "2",
+      "kind": "ui",
+      "text": "The Settings screen must show the ledger status text \"Verified \u00b7 N entries \u00b7 intact\" when verifyLedger returns ok true, where N is the total number of ledger entries."
+    },
+    {
+      "id": "R25",
+      "section": "2",
+      "kind": "ui",
+      "text": "When verifyLedger returns ok false, the Settings screen must display a clear warning that records may have been altered and must include the sequence number (or identifier) of the first bad entry."
+    },
+    {
+      "id": "R29",
+      "section": "3",
+      "kind": "ui",
+      "text": "The Settings screen must contain a \"Verify an export\" action that allows the user to either pick an exported CSV file via a file picker or manually type a verification code printed on a PDF export."
+    },
+    {
+      "id": "R38",
+      "section": "4",
+      "kind": "ui",
+      "text": "If a backup fails verification, the app must display a friendly error message informing the user that the backup appears tampered."
+    },
+    {
+      "id": "R54",
+      "section": "2",
+      "kind": "ui",
+      "text": "Update ui_flow.json so that the primary flow for editing a receipt includes a step that opens the new History view and displays any correction entries."
+    },
+    {
+      "id": "R55",
+      "section": "2",
+      "kind": "ui",
+      "text": "Update ui_flow.json so that the primary flow includes a step to open Settings and display the ledger status text \"Verified \u00b7 N entries \u00b7 intact\" when verification succeeds."
+    }
+  ],
+  "weak_tests": []
+}

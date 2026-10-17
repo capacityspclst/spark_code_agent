@@ -1,16 +1,16 @@
 # Security assurance: freelance-finance-tracker
 
-Pipeline run `20261013-090628-ea44`, 2026-10-13. Generated from the run's recorded results.
+Pipeline run `20261017-085208-6b19`, 2026-10-17. Generated from the run's recorded results.
 
 ## Verdict
 
 No critical or high security findings remain open, and every blocking scanner check passed.
-The run was approved after 3 round(s).
+The run was not approved after 6 round(s).
 
 ## What was checked
 
 - **Semgrep** (1.178.0, 1409 vendored rules: security-audit, OWASP Top 10, secrets, injection, XSS, JWT, insecure transport, language packs). Static analysis of the code.
-- **Trivy** (Version: 0.74.0, vulnerability DB 2026-10-13). Known-vulnerable dependencies in lockfiles, committed secrets, and Terraform/Docker/Kubernetes misconfigurations.
+- **Trivy** (Version: 0.74.0, vulnerability DB 2026-10-16). Known-vulnerable dependencies in lockfiles, committed secrets, and Terraform/Docker/Kubernetes misconfigurations.
 - **Suppression check.** `nosemgrep`, `trivy:ignore` and scanner ignore files are rejected.
 - **Security review** by an AI reviewer each round once tests and scanners passed, against a fixed severity rubric, tracking every finding to fixed or open.
 - **Isolation.** All generated code, tests and scanners ran in a sandbox container with no secrets.

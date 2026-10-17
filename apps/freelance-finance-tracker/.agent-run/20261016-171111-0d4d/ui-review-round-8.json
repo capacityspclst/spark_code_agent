@@ -1,0 +1,134 @@
+{
+  "verdict": "fail",
+  "summary": "The app\u2019s UI is broadly aligned with DESIGN.md \u2013 all major screens exist, the bottom\u2011tab bar is always visible, and most components are built on React\u2011Native\u2011Paper primitives that consume the MD3 theme tokens. Accessibility is generally good (no axe violations) and the mobile\u2011first layout is respected in the Screen wrapper. However, critical breakages prevent the primary user flow: the **Edit** button on the receipt detail screen is not rendered or not focusable, causing the test suite to time\u2011out at step\u202f22. Several required error/retry states are missing (policy\u2011gate error view, receipt\u2011history error snackbar) and a handful of components still use hard\u2011coded colors or lack visible focus outlines, which are medium\u2011severity usability issues. These gaps must be addressed before the product can be considered polished and production\u2011ready.",
+  "findings": [
+    {
+      "severity": "high",
+      "file": "src/screens/ReceiptDetailScreen.tsx",
+      "issue": "The \"Edit\" button is not present / not focusable, so users cannot enter the edit form. The button also lacks an accessibilityLabel, breaking the primary edit\u2011receipt flow (flow step 22 timed out).",
+      "fix": "Render a PrimaryButton labelled \"Edit\" with `accessibilityLabel=\"Edit receipt\"`, ensure it is focusable (tab\u2011order), and hook it to navigate to the edit state. Add visible focus styling (outline using `theme.colors.outline`).",
+      "source": "designer"
+    },
+    {
+      "severity": "high",
+      "file": "src/screens/PolicyScreen.tsx",
+      "issue": "The error state for the policy gate (full\u2011screen error view with copy \"Unable to store your acceptance. Please try again.\" and a Retry button) is missing, leaving the app stuck if storing acceptance fails.",
+      "fix": "Add a dedicated error component that displays the required message and a PrimaryButton labelled \"Retry\" that re\u2011invokes the acceptance storage logic. Use theme colors for background and text.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/screens/ReceiptHistoryScreen.tsx",
+      "issue": "The error Snackbar view for loading history is not implemented; the spec requires a Snackbar with the message \"Failed to load history. Check your device storage.\" on load failure.",
+      "fix": "Add a Snackbar that appears on history\u2011load errors with the exact copy and style it using the theme's error colors.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/components/ui/VerificationStatus.tsx",
+      "issue": "Hard\u2011coded color values (`#0061A4`, `#B00020`, etc.) are used instead of the design tokens (`theme.colors.primary`, `theme.colors.error`).",
+      "fix": "Replace all literal color strings with references to `theme.colors` and `theme.colors.outline` for borders.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/components/ui/PrimaryButton.tsx",
+      "issue": "Buttons lack a visible focus outline on web; the design calls for a 2\u202fdp outline with `theme.colors.outline` when focus\u2011visible.",
+      "fix": "Add `style={{ borderWidth: isFocused ? 2 : 0, borderColor: theme.colors.outline }}` (or use Paper\u2019s `rippleColor` and `theme` focus styling) and ensure the focus state is tracked via `onFocus`/`onBlur`.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "src/components/ui/EmptyState.tsx",
+      "issue": "The illustration image does not have an `accessibilityLabel`/`alt` text. Spec requires \"Empty state illustration\".",
+      "fix": "Add `accessibilityLabel=\"Empty state illustration\"` (or `alt` on web) to the Image component.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "src/components/ui/FABAdd.tsx",
+      "issue": "Icon\u2011only FAB lacks an `accessibilityLabel` (e.g., \"Add receipt\").",
+      "fix": "Pass `accessibilityLabel=\"Add receipt\"` prop to the FAB component.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "src/components/ui/ScreenContainer.tsx",
+      "issue": "The container does not enforce the max\u2011width of 420\u202fdp on larger viewports, violating the layout spec for desktop.",
+      "fix": "Add a `maxWidth: 420` style (or `width: '100%', maxWidth: 420, alignSelf: 'center'`) to the wrapper that applies on all platforms.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "src/components/ui/Screen.tsx",
+      "issue": "The global `Screen` component does not include the required full\u2011width offline banner on every screen.",
+      "fix": "Compose the `Screen` component to always render the `<OfflineBanner />` (visible when `!isOnline`) at the top of the main content.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "viewport": "both",
+      "issue": "The 'Accept' button has a slight gap above it and below the checkbox group, which feels inconsistent with the tight vertical spacing around the checkbox and the 'Tick the box to continue' hint.",
+      "fix": "Reduce the top margin of the Accept button to align with the spacing used for the checkbox and the hint text.",
+      "screen": "policy_gate",
+      "source": "vision"
+    },
+    {
+      "severity": "medium",
+      "viewport": "desktop",
+      "issue": "The 'Receipt' and 'Mileage' buttons are misaligned vertically and horizontally compared to the 'Add receipt' button, creating an inconsistent visual grouping.",
+      "fix": "Center-align the 'Receipt' and 'Mileage' buttons with the 'Add receipt' button, or group them into a consistent container with equal spacing.",
+      "screen": "dashboard_empty",
+      "source": "vision"
+    },
+    {
+      "severity": "low",
+      "viewport": "desktop",
+      "issue": "The 'Add receipt' button is centered, but the 'Receipt' and 'Mileage' buttons are not aligned with its vertical center, creating an asymmetrical layout.",
+      "fix": "Adjust the vertical alignment of the 'Receipt' and 'Mileage' buttons to be centered with the 'Add receipt' button for a balanced composition.",
+      "screen": "dashboard_empty",
+      "source": "vision"
+    },
+    {
+      "severity": "medium",
+      "screen": "dashboard_empty",
+      "source": "vision",
+      "issue": "visual quality 7/10 on 'dashboard_empty' (target 8+, minimum 7): Polished, modern UI with clear hierarchy and consistent spacing. The primary action is obvious, typography is readable, and the layout is well-organized. Minor issues with button alignment and spacing on desktop, but overall it feels like a commercial product.",
+      "fix": "Address this screen's findings until it looks polished and professional."
+    }
+  ],
+  "lighthouse": [
+    {
+      "accessibility": 98,
+      "bestPractices": 100,
+      "performance": 57
+    }
+  ],
+  "vision_scores": [
+    {
+      "screen": "policy_gate",
+      "score": 9.0,
+      "summary": "Polished, modern, and highly usable policy gate screen. Clear visual hierarchy, excellent typography, consistent spacing, and intuitive form design. The design feels premium and would not look out of place in a commercial app. Minor spacing adjustments could elevate it to 10."
+    },
+    {
+      "screen": "dashboard_empty",
+      "score": 7.0,
+      "summary": "Polished, modern UI with clear hierarchy and consistent spacing. The primary action is obvious, typography is readable, and the layout is well-organized. Minor issues with button alignment and spacing on desktop, but overall it feels like a commercial product."
+    },
+    {
+      "screen": "receipt_entry",
+      "score": 8.0,
+      "summary": "Polished, modern UI with clear visual hierarchy and consistent spacing. Primary action is prominent, typography is readable, and form elements are well-designed. No critical issues found."
+    },
+    {
+      "screen": "dashboard_populated",
+      "score": 8.0,
+      "summary": "Polished, modern dashboard with clear visual hierarchy and consistent spacing. Primary actions are accessible via bottom tab bar. Typography is readable and well-scaled. Empty states are minimal but functional. Desktop version maintains clean layout without stretching. Touch targets are appropriately sized. No browser defaults or layout issues visible."
+    },
+    {
+      "screen": "receipts_loaded",
+      "score": 8.0,
+      "summary": "Polished, modern UI with clear visual hierarchy and consistent spacing. The card design is clean and well-aligned, typography is readable, and the bottom navigation is intuitive. No critical issues found."
+    }
+  ]
+}

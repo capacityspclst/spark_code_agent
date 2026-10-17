@@ -2,12 +2,14 @@
 import { KEY_BYTES, randomBytes } from '../crypto';
 import type { KeyProvider, RawStore } from './types';
 
-export function createMemoryRawStore(): RawStore & { dump(): string } {
+export function createMemoryRawStore(): RawStore & { dump(): string; getItem?(key: string): Promise<string | null> } {
   const kv = new Map<string, string>();
   const records = new Map<string, Map<string, string>>();
   const col = (c: string) => records.get(c) ?? records.set(c, new Map()).get(c)!;
   return {
     async getValue(k) { return kv.get(k) ?? null; },
+    // Alias for tests expecting getItem
+    async getItem(k) { return kv.get(k) ?? null; },
     async setValue(k, v) { kv.set(k, v); },
     async deleteValue(k) { kv.delete(k); },
     async listRecords(c) { return [...col(c).values()]; },
