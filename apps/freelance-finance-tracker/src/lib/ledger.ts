@@ -59,14 +59,10 @@ export async function appendEntryForExport(format: 'csv' | 'pdf', code12: string
   const seq = ledger.length ? ledger[ledger.length - 1].seq + 1 : 1;
   const at = new Date().toISOString();
   const prevHash = ledger.length ? ledger[ledger.length - 1].hash : '0'.repeat(64);
-  // placeholder data; will be updated after hash computed
-  const data: any = { format, code: '', entries: seq, headHash: '' };
+  const data: any = { format, code: code12, entries: seq, headHash: '' };
   const entryWithoutHash: Omit<LedgerEntry, 'hash'> = { seq, at, kind: 'export.created', recordId: '', data, prevHash };
   const hash = computeHash(entryWithoutHash);
-  // combined code is first12 + headHash (hash)
-  const combinedCode = code12 + hash;
   data.headHash = hash;
-  data.code = combinedCode;
   const entry: LedgerEntry = { ...entryWithoutHash, hash };
   ledger.push(entry);
   await store.set('ledger', ledger);
