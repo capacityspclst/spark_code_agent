@@ -1,0 +1,165 @@
+{
+  "verdict": "fail",
+  "summary": "The UI roughly follows the design system but key parts of the primary user flow are broken and several accessibility, copy and token\u2011usage details are missing. A test that clicks a receipt entry on the Dashboard times\u2011out, indicating the receipt item is not exposed as an interactable button (high severity). Multiple screens lack the exact copy strings defined in DESIGN.md, the offline banner is not present, and several components still use hard\u2011coded colors or lack visible focus outlines, which reduces WCAG compliance. Layout and touch\u2011target sizing are mostly correct but a few small icons fall short of the 44\u202f\u00d7\u202f44\u202fdp minimum. The overall product needs focused fixes before it can be considered polished.",
+  "findings": [
+    {
+      "severity": "high",
+      "file": "src/components/ui/ReceiptCard.tsx",
+      "issue": "Receipt cards in the Dashboard are rendered as plain Views without an accessibilityRole=\"button\" or an accessibilityLabel. The test can\u2019t locate the \"42.10\" button, breaking the primary flow (clicking a receipt to edit).",
+      "fix": "Wrap the card in a Pressable/TouchableOpacity, set `accessibilityRole=\"button\"`, provide an `accessibilityLabel` that includes the amount (e.g., `Receipt for $${receipt.amount}`), and ensure the onPress navigates to ReceiptDetailScreen. Add a visible focus outline (2\u202fdp, theme.colors.outline) for keyboard navigation.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/screens/PolicyScreen.tsx",
+      "issue": "The error state UI shows a generic retry button but does not display the required copy: \"Unable to store your acceptance. Please try again.\" and the button lacks the disabled styling when the store write fails.",
+      "fix": "Add a full\u2011screen error view that renders the exact copy and a `PrimaryButton` labelled \"Retry\". Ensure the button respects the disabled state and uses theme colors.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/screens/DashboardScreen.tsx",
+      "issue": "The EmptyState screen uses a title \"No receipts yet\" and a description that differs from the spec (\"Add a receipt to start tracking\"), causing a mismatch with the design copy.",
+      "fix": "Update the EmptyState component props to `title=\"Nothing here yet\"`, `description=\"Add a receipt or mileage entry to start tracking your finances.\"`, and ensure the primary action button is labelled \"Add receipt\".",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/screens/ReceiptHistoryScreen.tsx",
+      "issue": "Empty state copy does not match the required title \"No changes yet\" and description \"This receipt has never been edited.\"; the Back button label is missing or uses a different string.",
+      "fix": "Replace the empty state view with the exact copy and a `PrimaryButton` labelled \"Back\" that navigates back to the receipt detail.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/screens/VerifyExportScreen.tsx",
+      "issue": "Loading indicator lacks the copy \"Reading file\u2026\" and the success/error result panels do not render the exact messages defined (e.g., missing \"Export verified. 45 entries exported on ... No changes after export.\").",
+      "fix": "When the file is being processed, display an `ActivityIndicator` together with a `Text` component containing \"Reading file\u2026\". Ensure the result panel and snackbar texts use the exact strings from the spec for success, file altered, code not found, and no matching export cases.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/components/ui/OfflineBanner.tsx",
+      "issue": "The global offline banner defined in the design spec is not implemented anywhere, so users never see the message \"You are offline. Some actions require an internet connection.\"",
+      "fix": "Create an `OfflineBanner` component that renders a full\u2011width `Surface` with the specified text using theme colors, and include it at the top of the `Screen` component so it appears on every screen when `NetInfo.isInternetReachable` is false.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "src/components/ui/PrimaryButton.tsx",
+      "issue": "Hard\u2011coded color values (`#0061A4`, `#FFFFFF`) are used instead of `theme.colors.primary` and `theme.colors.onPrimary`, violating the token usage rule.",
+      "fix": "Replace all literal colors with references to the theme (`theme.colors.primary`, `theme.colors.onPrimary`, etc.) via the Paper `theme` prop or a custom style helper.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "src/components/ui/PrimaryButton.tsx",
+      "issue": "Focus-visible state does not show a 2\u202fdp outline using `theme.colors.outline`, making keyboard navigation unclear.",
+      "fix": "Add a `style` that applies a border of `2dp` with `borderColor: theme.colors.outline` when the button receives focus (`onFocus`/`onBlur` handling) or use Paper\u2019s `android_ripple` and web `:focus-visible` CSS.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "src/screens/ReceiptDetailScreen.tsx",
+      "issue": "The History icon\u2011only button has a touch area smaller than 44\u202f\u00d7\u202f44\u202fdp, failing the minimum touch\u2011target requirement.",
+      "fix": "Wrap the History icon in a `Pressable` with `hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}` or increase the button size to meet the 44\u202fdp requirement, and add a visible label for accessibility.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "src/components/ui/Screen.tsx",
+      "issue": "The screen container applies only `paddingHorizontal: 16` but does not constrain the content width to a max of 420\u202fdp on larger viewports, which can cause horizontal stretch on desktop.",
+      "fix": "Add a style rule to the root `View` that sets `maxWidth: 420`, `alignSelf: 'center'`, and applies `marginHorizontal: 'auto'` (or equivalent) so the layout remains phone\u2011first on desktop.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "src/components/ui/BottomTabBar.tsx",
+      "issue": "Icons in the bottom tab use default color values instead of the theme\u2019s `primary` (selected) and `onSurfaceVariant` (unselected) colors, breaking contrast token usage.",
+      "fix": "Pass `activeColor={theme.colors.primary}` and `inactiveColor={theme.colors.onSurfaceVariant}` to the `BottomNavigation` component, and ensure the label colors follow the same token references.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "viewport": "both",
+      "issue": "The checkbox label 'I have read and agree to the Terms of Use and Privacy Policy.' is split across two lines, which may cause confusion about the checkbox's scope.",
+      "fix": "Reformat the checkbox label to fit on one line if possible, or ensure the checkbox visually encompasses the entire statement.",
+      "screen": "policy_gate",
+      "source": "vision"
+    },
+    {
+      "severity": "low",
+      "viewport": "both",
+      "issue": "The 'Accept' button is centered horizontally but not vertically aligned with the checkbox container, creating a slight visual misalignment.",
+      "fix": "Adjust the vertical alignment of the 'Accept' button to center it with the checkbox container for better visual harmony.",
+      "screen": "policy_gate",
+      "source": "vision"
+    },
+    {
+      "severity": "low",
+      "viewport": "both",
+      "issue": "The 'Tick the box to continue.' hint text is styled in teal, which matches the version text above, but lacks a clear visual distinction from the main content.",
+      "fix": "Use a lighter weight or smaller font size for the hint text to reduce visual weight and improve focus on the primary action.",
+      "screen": "policy_gate",
+      "source": "vision"
+    },
+    {
+      "severity": "low",
+      "viewport": "phone",
+      "issue": "The 'Receipt saved' notification banner overlaps slightly with the recent activity card, obscuring part of the 'Date' text.",
+      "fix": "Adjust the notification banner's height or position to ensure it doesn't obscure any content.",
+      "screen": "dashboard_populated",
+      "source": "vision"
+    },
+    {
+      "severity": "low",
+      "viewport": "phone",
+      "issue": "The 'Receipt' and 'Mileage' buttons are vertically stacked but not aligned with the top of the activity card, creating inconsistent vertical rhythm.",
+      "fix": "Align the buttons to the top of the activity card or adjust the card's padding to create consistent vertical spacing.",
+      "screen": "dashboard_populated",
+      "source": "vision"
+    },
+    {
+      "severity": "low",
+      "viewport": "desktop",
+      "issue": "The 'Receipt' and 'Mileage' buttons are not centered horizontally within their card, and the card's right edge is not flush with the container's right edge, creating a slight asymmetry.",
+      "fix": "Center the buttons within the card and align the card's right edge with the container's right edge for a more balanced layout.",
+      "screen": "dashboard_populated",
+      "source": "vision"
+    }
+  ],
+  "lighthouse": [
+    {
+      "accessibility": 98,
+      "bestPractices": 100,
+      "performance": 57
+    }
+  ],
+  "vision_scores": [
+    {
+      "screen": "policy_gate",
+      "score": 8.0,
+      "summary": "A polished, professional policy gate screen with clear visual hierarchy, consistent spacing, and touch-friendly controls. The design feels like a commercial product, not a prototype. Minor improvements could enhance accessibility and visual polish."
+    },
+    {
+      "screen": "dashboard_empty",
+      "score": 8.0,
+      "summary": "Polished, modern empty state with clear visual hierarchy and appropriate spacing. Primary action is prominent and distinct. Typography is clean and readable. Desktop layout is spacious and well-aligned. No critical issues found."
+    },
+    {
+      "screen": "receipt_entry",
+      "score": 8.0,
+      "summary": "Polished, modern interface with clear visual hierarchy and consistent spacing. Primary action is prominent, typography is readable, and form elements are well-structured. No critical issues found. Desktop version scales appropriately without stretching or crowding."
+    },
+    {
+      "screen": "dashboard_populated",
+      "score": 8.0,
+      "summary": "Polished, modern dashboard with clear visual hierarchy and consistent spacing. Primary actions are easily accessible via bottom tab bar. Typography is readable with a clear scale. Empty states are present but not shown in this populated view. Desktop layout is spacious and well-aligned. Touch targets are appropriately sized. No major usability or design flaws visible."
+    },
+    {
+      "screen": "receipts_loaded",
+      "score": 8.0,
+      "summary": "Polished, minimalist design with strong visual hierarchy and consistent spacing. The primary action (bottom tab bar) is clear, typography is clean and readable, and the layout uses space effectively on both phone and desktop. No critical issues found."
+    }
+  ]
+}
