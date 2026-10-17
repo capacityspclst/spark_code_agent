@@ -22,8 +22,22 @@ export function canonicalJson(entry: Omit<LedgerEntry, 'hash'>): string {
 
 /** Compute hash for a ledger entry (without the hash field). */
 export function computeHash(entry: Omit<LedgerEntry, 'hash'>): string {
-  // Use deep canonical JSON sorting for hashing
-  const json = canonicalJson(entry);
+  // Deep canonical JSON: recursively sort object keys
+  function sortDeep(value: any): any {
+    if (Array.isArray(value)) {
+      return value.map(sortDeep);
+    } else if (value && typeof value === 'object') {
+      const ordered: any = {};
+      const keys = Object.keys(value).sort();
+      for (const k of keys) {
+        ordered[k] = sortDeep(value[k]);
+      }
+      return ordered;
+    }
+    return value;
+  }
+  const canonical = sortDeep(entry);
+  const json = JSON.stringify(canonical);
   return bytesToHex(sha256(utf8ToBytes(json)));
 }
 
