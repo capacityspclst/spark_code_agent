@@ -47,9 +47,6 @@ function SettingsStackScreen() {
       <SettingsStack.Screen name="AppLock" component={AppLockScreen} options={{ title: 'App lock' }} />
       <SettingsStack.Screen name="TaxSettings" component={TaxSettingsScreen} options={{ title: 'Tax settings' }} />
       <SettingsStack.Screen name="DeleteAllData" component={DeleteAllDataScreen} options={{ title: 'Delete all data' }} />
-      <SettingsStack.Screen name="ReceiptDetail" component={ReceiptDetailScreen} />
-      <SettingsStack.Screen name="ReceiptHistory" component={ReceiptHistoryScreen} />
-      <SettingsStack.Screen name="MileageHistory" component={MileageHistoryScreen} />
       <SettingsStack.Screen name="VerifyExport" component={VerifyExportScreen} options={{ title: 'Verify export' }} />
     </SettingsStack.Navigator>
   );
@@ -118,6 +115,9 @@ export default function Navigation() {
         </Stack.Screen>
         <Stack.Screen name="ReceiptEntry" options={{ title: 'Add receipt' }} component={ReceiptEntryScreen} />
         <Stack.Screen name="MileageEntry" options={{ title: 'Add mileage' }} component={MileageEntryScreen} />
+        <Stack.Screen name="ReceiptDetail" component={ReceiptDetailScreen} options={{ title: 'Receipt detail' }} />
+        <Stack.Screen name="ReceiptHistory" component={ReceiptHistoryScreen} options={{ title: 'Receipt history' }} />
+        <Stack.Screen name="MileageHistory" component={MileageHistoryScreen} options={{ title: 'Mileage history' }} />
       </Stack.Navigator>
     </NavigationContainer>
   );
