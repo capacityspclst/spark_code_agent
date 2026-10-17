@@ -14,7 +14,8 @@ export async function verifyExportCode(
 ): Promise<{ known: boolean; entries?: number; headHash?: string; laterChanges?: boolean; message?: string }> {
   const ledger = await getLedger(store);
   // Extract a 12‑char hex code fragment from the input, ignoring any surrounding text.
-  const match = code.match(/[0-9a-f]{12}/i);
+  // Accept full verification code which is 12-char prefix + headHash (total 76 hex chars)
+  const match = code.match(/[0-9a-f]{12}[0-9a-f]{64}/i);
   const codeFragment = match ? match[0] : '';
   if (!codeFragment) {
     return { known: false, message: 'Invalid verification code format' };

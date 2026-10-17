@@ -20,16 +20,17 @@ export async function verifyLedger(store: Store, entries?: any[]): Promise<Ledge
   for (let i = 0; i < ledgerEntries.length; i++) {
     const e = ledgerEntries[i];
     const expectedSeq = i + 1;
-    // Sequence check
+    // Sequence check – missing or out‑of‑order
     if (e.seq !== expectedSeq) {
-      // If the seq is greater than expected, entries are missing
-      const reason = e.seq > expectedSeq ? 'missing entry' : 'seq mismatch';
-      return { ok: false, entries: ledgerEntries, firstBadSeq: expectedSeq, reason };
+      // If entry seq is larger than expected, a prior entry is missing
+      const reason = e.seq > expectedSeq ? 'missing entry' : 'out‑of‑order';
+      const firstBadSeq = e.seq > expectedSeq ? e.seq : e.seq;
+      return { ok: false, entries: ledgerEntries, firstBadSeq, reason };
     }
     // PrevHash check
     if (e.prevHash !== prevHash) {
-      // If seq is correct but prevHash doesn't match, likely out‑of‑order
-      return { ok: false, entries: ledgerEntries, firstBadSeq: e.seq, reason: 'out‑of‑order' };
+      // PrevHash does not match expected previous hash
+      return { ok: false, entries: ledgerEntries, firstBadSeq: e.seq, reason: 'prevhash mismatch' };
     }
     // Hash integrity
     const recomputed = computeHash({
@@ -44,6 +45,13 @@ export async function verifyLedger(store: Store, entries?: any[]): Promise<Ledge
       return { ok: false, entries: ledgerEntries, firstBadSeq: e.seq, reason: 'hash mismatch' };
     }
     prevHash = e.hash;
+  }
+  // After processing all entries, ensure the last seq matches length (detect missing trailing entry)
+  if (ledgerEntries.length > 0) {
+    const lastSeq = ledgerEntries[ledgerEntries.length - 1].seq;
+    if (lastSeq !== ledgerEntries.length) {
+      return { ok: false, entries: ledgerEntries, firstBadSeq: lastSeq + 1, reason: 'missing entry' };
+    }
   }
   return { ok: true, entries: ledgerEntries };
 }

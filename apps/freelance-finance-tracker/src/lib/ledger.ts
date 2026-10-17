@@ -57,11 +57,25 @@ async function appendEntry(kind: string, recordId: string, data: any, store: Sto
 
 /** Append a receipt ledger entry. */
 export async function appendEntryForReceipt(kind: string, recordId: string, data: any, store: Store): Promise<void> {
+  // Prevent duplicate receipt.created entries (e.g., when addReceipt already logged one)
+  if (kind === 'receipt.created') {
+    const existing = await store.get<LedgerEntry[]>('ledger');
+    if (existing?.some(e => e.recordId === recordId && e.kind === kind)) {
+      return;
+    }
+  }
   await appendEntry(kind, recordId, data, store);
 }
 
 /** Append a mileage ledger entry. */
 export async function appendEntryForMileage(kind: string, recordId: string, data: any, store: Store): Promise<void> {
+  // Prevent duplicate mileage.created entries similarly
+  if (kind === 'mileage.created') {
+    const existing = await store.get<LedgerEntry[]>('ledger');
+    if (existing?.some(e => e.recordId === recordId && e.kind === kind)) {
+      return;
+    }
+  }
   await appendEntry(kind, recordId, data, store);
 }
 
@@ -73,10 +87,14 @@ export async function appendEntryForExport(format: 'csv' | 'pdf', code12: string
   const seq = ledger.length ? ledger[ledger.length - 1].seq + 1 : 1;
   const at = new Date().toISOString();
   const prevHash = ledger.length ? ledger[ledger.length - 1].hash : '0'.repeat(64);
+  // temporary data, will set full code after hash computed
   const data: any = { format, code: code12, entries: seq, headHash: '' };
   const entryWithoutHash: Omit<LedgerEntry, 'hash'> = { seq, at, kind: 'export.created', recordId: '', data, prevHash };
   const hash = computeHash(entryWithoutHash);
+  // full verification code = code12 + headHash (hash of this entry)
+  const fullCode = code12 + hash;
   data.headHash = hash;
+  data.code = fullCode;
   const entry: LedgerEntry = { ...entryWithoutHash, hash };
   ledger.push(entry);
   await store.set('ledger', ledger);
