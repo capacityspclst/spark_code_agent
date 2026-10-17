@@ -4,7 +4,7 @@ import { getAllMileageEntries } from './mileageStore';
 import { getAllCategories } from './categories';
 import { encryptText, decryptText, deriveKey, randomBytes, toBase64, fromBase64 } from './crypto';
 import { verifyLedger } from './ledgerVerification';
-import { getLedger, setLedger } from './ledgerHelpers';
+import { getLedger, setLedger, importMissingAsImported } from './ledgerHelpers';
 
 /**
  * Backup format version.
@@ -116,5 +116,9 @@ export async function restoreBackup(store: Store, backupString: string, passphra
   for (const r of obj.receipts) await store.put('receipts', r);
   for (const m of obj.mileage) await store.put('mileage', m);
   if (obj.categories) await store.set('categories', obj.categories);
-  if (Array.isArray(obj.ledger)) await setLedger(store, obj.ledger);
+  if (Array.isArray(obj.ledger)) {
+    await setLedger(store, obj.ledger);
+    // Import any records that lack an imported entry (legacy handling)
+    await importMissingAsImported(store);
+  }
 }

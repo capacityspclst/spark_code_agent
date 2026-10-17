@@ -41,7 +41,7 @@ export default function ReceiptDetailScreen() {
 
   return (
     <Screen title="Receipt detail">
-      <PrimaryButton label="Edit" onPress={() => navigation.navigate('ReceiptEntry' as any)} />
+      <PrimaryButton label="Edit" onPress={() => navigation.navigate('ReceiptEntry' as any, { recordId })} />
       <PrimaryButton label="History" onPress={() => navigation.navigate('ReceiptHistory' as any, { recordId })} />
     </Screen>
   );

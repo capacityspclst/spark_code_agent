@@ -26,14 +26,14 @@ export async function initLedgerIfNeeded(store: Store): Promise<void> {
   const mileage = await getAllMileageEntries(store);
 
   const entries: LedgerEntry[] = [];
-  const importDate = new Date().toISOString();
 
   const addImported = (recordId: string, data: any) => {
     const seq = entries.length ? entries[entries.length - 1].seq + 1 : 1;
     const prevHash = entries.length ? entries[entries.length - 1].hash : '0'.repeat(64);
+    const at = new Date().toISOString();
     const entryWithoutHash = {
       seq,
-      at: importDate,
+      at,
       kind: 'imported',
       recordId,
       data,
@@ -49,6 +49,43 @@ export async function initLedgerIfNeeded(store: Store): Promise<void> {
   }
   for (const m of mileage) {
     addImported(m.id, m);
+  }
+
+  await setLedger(store, entries);
+}
+
+/** Import any missing receipts/mileage as 'imported' entries (used after restore). */
+export async function importMissingAsImported(store: Store): Promise<void> {
+  const ledger = await getLedger(store);
+  const receipts = await getAllReceipts(store);
+  const mileage = await getAllMileageEntries(store);
+
+  const hasImported = (recordId: string) => ledger.some(e => e.kind === 'imported' && e.recordId === recordId);
+
+  const entries = [...ledger];
+
+  const addImported = (recordId: string, data: any) => {
+    const seq = entries.length ? entries[entries.length - 1].seq + 1 : 1;
+    const prevHash = entries.length ? entries[entries.length - 1].hash : '0'.repeat(64);
+    const at = new Date().toISOString();
+    const entryWithoutHash = {
+      seq,
+      at,
+      kind: 'imported',
+      recordId,
+      data,
+      prevHash,
+    } as const;
+    const hash = computeHash(entryWithoutHash as any);
+    const entry: LedgerEntry = { ...entryWithoutHash, hash } as LedgerEntry;
+    entries.push(entry);
+  };
+
+  for (const r of receipts) {
+    if (!hasImported(r.id)) addImported(r.id, r);
+  }
+  for (const m of mileage) {
+    if (!hasImported(m.id)) addImported(m.id, m);
   }
 
   await setLedger(store, entries);

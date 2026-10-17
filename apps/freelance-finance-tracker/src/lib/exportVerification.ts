@@ -13,16 +13,21 @@ export async function verifyExportCode(
   store: Store,
 ): Promise<{ known: boolean; entries?: number; headHash?: string; laterChanges?: boolean; message?: string }> {
   const ledger = await getLedger(store);
-  // Accept either full verification code (12+64) or just the 12‑char fragment.
-  const codeFragment = code.length > 12 ? code.slice(0, 12) : code;
+  // Extract a 12‑char hex code fragment from the input, ignoring any surrounding text.
+  const match = code.match(/[0-9a-f]{12}/i);
+  const codeFragment = match ? match[0] : '';
+  if (!codeFragment) {
+    return { known: false, message: 'Invalid verification code format' };
+  }
   const entry = ledger.find(
     (e: LedgerEntry) => e.kind === 'export.created' && e.data?.code === codeFragment,
   );
   if (!entry) {
     return { known: false, message: 'Verification code not from this app' };
   }
-  const laterChanges = ledger.some((e: LedgerEntry) => e.seq > entry.seq);
-  // For CSV the headHash is the previous hash stored in the entry data; for PDF it's the entry's own hash.
+  // Determine if there are later ledger entries beyond this export.
+  const laterChanges = ledger.length > (entry.data?.entries ?? entry.seq);
+  // For both CSV and PDF the headHash stored in the entry data is the entry's own hash.
   const headHash = entry.data?.headHash ?? entry.hash;
   return {
     known: true,
