@@ -87,14 +87,10 @@ export async function appendEntryForExport(format: 'csv' | 'pdf', code12: string
   const seq = ledger.length ? ledger[ledger.length - 1].seq + 1 : 1;
   const at = new Date().toISOString();
   const prevHash = ledger.length ? ledger[ledger.length - 1].hash : '0'.repeat(64);
-  // temporary data, will set full code after hash computed
   const data: any = { format, code: code12, entries: seq, headHash: '' };
   const entryWithoutHash: Omit<LedgerEntry, 'hash'> = { seq, at, kind: 'export.created', recordId: '', data, prevHash };
   const hash = computeHash(entryWithoutHash);
-  // full verification code = code12 + headHash (hash of this entry)
-  const fullCode = code12 + hash;
-  data.headHash = hash;
-  data.code = fullCode;
+  data.headHash = hash; // keep code as 12-char code, store headHash separately
   const entry: LedgerEntry = { ...entryWithoutHash, hash };
   ledger.push(entry);
   await store.set('ledger', ledger);
