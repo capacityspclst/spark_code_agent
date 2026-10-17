@@ -1,11 +1,11 @@
 # Security assurance: freelance-finance-tracker
 
-Pipeline run `20261016-171111-0d4d`, 2026-10-17. Generated from the run's recorded results.
+Pipeline run `20261017-085208-6b19`, 2026-10-17. Generated from the run's recorded results.
 
 ## Verdict
 
 No critical or high security findings remain open, and every blocking scanner check passed.
-The run was not approved after 12 round(s).
+The run was not approved after 6 round(s).
 
 ## What was checked
 
