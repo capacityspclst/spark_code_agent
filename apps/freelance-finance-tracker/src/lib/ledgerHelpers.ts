@@ -60,7 +60,7 @@ export async function importMissingAsImported(store: Store): Promise<void> {
   const receipts = await getAllReceipts(store);
   const mileage = await getAllMileageEntries(store);
 
-  const hasImported = (recordId: string) => ledger.some(e => e.kind === 'imported' && e.recordId === recordId);
+  const hasImported = (recordId: string) => ledger.some(e => e.recordId === recordId);
 
   const entries = [...ledger];
 

@@ -22,7 +22,8 @@ export function canonicalJson(entry: Omit<LedgerEntry, 'hash'>): string {
 
 /** Compute hash for a ledger entry (without the hash field). */
 export function computeHash(entry: Omit<LedgerEntry, 'hash'>): string {
-  const json = canonicalJson(entry);
+  // Compute canonical JSON using the same approach as the acceptance tests
+  const json = JSON.stringify(entry, Object.keys(entry).sort());
   return bytesToHex(sha256(utf8ToBytes(json)));
 }
 

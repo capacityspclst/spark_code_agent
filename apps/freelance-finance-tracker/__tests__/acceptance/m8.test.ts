@@ -174,7 +174,12 @@ describe('M8: ledger hash chain properties', () => {
     expect(entry).toBeDefined();
     const { seq, at, kind, recordId, data, prevHash } = entry!;
     const obj = { seq, at, kind, recordId, data, prevHash };
-    const canonical = JSON.stringify(obj, Object.keys(obj).sort());
+    // Canonical JSON: keys sorted at every level, no whitespace. (A key array as JSON.stringify's replacer
+    // also filters nested objects, so it would hash the record data as {}.)
+    const canon = (v: any): string => Array.isArray(v) ? '[' + v.map(canon).join(',') + ']'
+      : v && typeof v === 'object' ? '{' + Object.keys(v).sort().map((k) => JSON.stringify(k) + ':' + canon(v[k])).join(',') + '}'
+      : JSON.stringify(v);
+    const canonical = canon(obj);
     const expectedHash = bytesToHex(sha256(utf8ToBytes(canonical)));
     expect(entry?.hash).toBe(expectedHash);
   });
