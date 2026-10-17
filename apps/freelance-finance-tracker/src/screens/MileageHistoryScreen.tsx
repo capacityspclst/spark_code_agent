@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, ActivityIndicator } from 'react-native';
+import { ActivityIndicator } from 'react-native';
 import { Screen, EmptyState } from '../components/ui';
 import { getLedger } from '../lib/ledgerHelpers';
 import { useNavigation, useRoute, NavigationProp } from '@react-navigation/native';
@@ -31,6 +31,7 @@ export default function MileageHistoryScreen() {
     return (
       <Screen title="Mileage history">
         <EmptyState
++          icon="history"
           title="No changes yet"
           body="This mileage entry has never been edited."
           actionLabel="Back"

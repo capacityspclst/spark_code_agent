@@ -30,7 +30,7 @@ function csvEscape(value: any): string {
   return escaped;
 }
 
-/** Generate a CSV string containing receipts and mileage entries, with a verification line. */
+/** Generate a CSV string containing receipts and mileage entries, with a verification line formatted as "entries,headHash,code". */
 export async function generateCsv(store?: Store): Promise<string> {
   const s = store ?? (await (await import('./storage')).getStore());
   const receipts: Receipt[] = await getAllReceipts(s);
@@ -58,11 +58,12 @@ export async function generateCsv(store?: Store): Promise<string> {
   }
   const contentWithoutVerification = lines.join('\n');
   const hashHex = bytesToHex(sha256(utf8ToBytes(contentWithoutVerification)));
-  const code = hashHex.slice(0, 12);
+  const codeFragment = hashHex.slice(0, 12);
   const ledger = await getLedger(s);
   const entriesCount = ledger.length + 1;
   const headHash = ledger.length ? ledger[ledger.length - 1].hash : '0'.repeat(64);
-  await appendEntryForExport('csv', code, entriesCount, headHash, s);
-  lines.push(`# verification: entries=${entriesCount}, headHash=${headHash}, code=${code}`);
+  const fullCode = codeFragment + headHash;
+  await appendEntryForExport('csv', fullCode, entriesCount, headHash, s);
+  lines.push(`${entriesCount},${headHash},${fullCode}`);
   return lines.join('\n');
 }

@@ -28,7 +28,13 @@ export default function ReceiptDetailScreen() {
   if (!receipt) {
     return (
       <Screen title="Receipt detail">
-        <EmptyState title="Not found" body="Receipt not found" actionLabel="Back" onAction={() => navigation.goBack()} />
+        <EmptyState
++          icon="receipt-outline"
+          title="Not found"
+          body="Receipt not found"
+          actionLabel="Back"
+          onAction={() => navigation.goBack()}
+        />
       </Screen>
     );
   }
@@ -36,7 +42,7 @@ export default function ReceiptDetailScreen() {
   return (
     <Screen title="Receipt detail">
       <PrimaryButton label="Edit" onPress={() => navigation.navigate('ReceiptEntry' as any)} />
-      <PrimaryButton label="History" onPress={() => navigation.navigate('ReceiptHistory', { recordId })} />
+      <PrimaryButton label="History" onPress={() => navigation.navigate('ReceiptHistory' as any, { recordId })} />
     </Screen>
   );
 }

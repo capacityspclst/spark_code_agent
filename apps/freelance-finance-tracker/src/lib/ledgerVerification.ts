@@ -1,7 +1,6 @@
 import { Store } from './storage/types';
 import { getLedger } from './ledgerHelpers';
-import { sha256 } from '@noble/hashes/sha2';
-import { utf8ToBytes, bytesToHex } from '@noble/hashes/utils';
+import { sha256, utf8ToBytes, bytesToHex } from './hash';
 
 export interface LedgerVerificationResult {
   ok: boolean;

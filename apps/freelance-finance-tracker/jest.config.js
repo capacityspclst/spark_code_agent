@@ -13,6 +13,8 @@ export default {
     '^expo-sqlite$': '<rootDir>/__mocks__/expo-sqlite.ts',
     '^@noble/ciphers/aes\\.js$': '<rootDir>/__mocks__/noble-ciphers-aes.cjs',
     '^@noble/hashes/scrypt\\.js$': '<rootDir>/__mocks__/noble-hashes-scrypt.cjs',
+    '^@noble/hashes/sha2\\.js$': '<rootDir>/src/lib/hash.ts',
+    '^@noble/hashes/utils\\.js$': '<rootDir>/src/lib/hash.ts'
   },
   // Ignore duplicate manual mock files that are not used.
   modulePathIgnorePatterns: [
