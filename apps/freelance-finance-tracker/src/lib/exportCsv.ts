@@ -11,7 +11,7 @@ import { getLedger } from './ledgerHelpers';
  * Numbers output as plain numbers.
  * null/undefined become empty string.
  * Strings starting with = + - @ or tab are prefixed with a single quote to prevent formula injection.
- * If a string is prefixed, we leave it as‑is (no additional quoting or double‑quote escaping) because the prefix already neutralises formulas.
+ * If a string is prefixed, we leave it as-is (no additional quoting) because the prefix already neutralises formulas.
  * Otherwise, double quotes inside the value are escaped by doubling them.
  * If the resulting string contains commas, double quotes, or line breaks, wrap the whole field in double quotes.
  */
@@ -30,7 +30,10 @@ function csvEscape(value: any): string {
   return escaped;
 }
 
-/** Generate a CSV string containing receipts and mileage entries, with a verification line formatted as "entries,headHash,code". */
+/** Generate a CSV string containing receipts and mileage entries, with a verification line formatted as
+ * "entries=<N>,headHash=<HASH>,code=<CODE>".
+ * The code is the first 12 hex characters of the hash of the CSV content without the verification line.
+ */
 export async function generateCsv(store?: Store): Promise<string> {
   const s = store ?? (await (await import('./storage')).getStore());
   const receipts: Receipt[] = await getAllReceipts(s);
@@ -58,12 +61,12 @@ export async function generateCsv(store?: Store): Promise<string> {
   }
   const contentWithoutVerification = lines.join('\n');
   const hashHex = bytesToHex(sha256(utf8ToBytes(contentWithoutVerification)));
-  const codeFragment = hashHex.slice(0, 12);
+  const code = hashHex.slice(0, 12);
   const ledger = await getLedger(s);
   const entriesCount = ledger.length + 1;
   const headHash = ledger.length ? ledger[ledger.length - 1].hash : '0'.repeat(64);
-  const fullCode = codeFragment + headHash;
-  await appendEntryForExport('csv', fullCode, entriesCount, headHash, s);
-  lines.push(`${entriesCount},${headHash},${fullCode}`);
+  await appendEntryForExport('csv', code, entriesCount, headHash, s);
+  const verificationLine = `entries=${entriesCount},headHash=${headHash},code=${code}`;
+  lines.push(verificationLine);
   return lines.join('\n');
 }

@@ -1,5 +1,6 @@
 import { Store } from './storage/types';
-import { sha256, utf8ToBytes, bytesToHex } from './hash';
+import { sha256 } from '@noble/hashes/sha2.js';
+import { utf8ToBytes, bytesToHex } from '@noble/hashes/utils.js';
 import { getLedger, setLedger } from './ledgerHelpers';
 
 export interface LedgerEntry {
@@ -45,15 +46,18 @@ export async function appendEntryForMileage(kind: string, recordId: string, data
   await appendEntryForReceipt(kind, recordId, data, store);
 }
 
-export async function appendEntryForExport(format: 'csv' | 'pdf', code: string, entriesCount: number, headHash: string, store: Store): Promise<void> {
+/** Append an export.created ledger entry and store relevant data. */
+export async function appendEntryForExport(format: 'csv' | 'pdf', code: string, entriesCount: number, headHashPrev: string, store: Store): Promise<void> {
   const ledger = await getLedger(store);
   const seq = ledger.length ? ledger[ledger.length - 1].seq + 1 : 1;
   const at = new Date().toISOString();
   const prevHash = ledger.length ? ledger[ledger.length - 1].hash : '0'.repeat(64);
-  const data = { format, code, entries: entriesCount, headHash };
+  // data includes format, code, entries count, and the previous headHash (as stored before this export)
+  const data: any = { format, code, entries: entriesCount, headHash: headHashPrev };
   const entryWithoutHash: Omit<LedgerEntry, 'hash'> = { seq, at, kind: 'export.created', recordId: '', data, prevHash };
   const hash = computeHash(entryWithoutHash);
   const entry: LedgerEntry = { ...entryWithoutHash, hash };
+  // No need to modify data fields; they already reflect correct values
   ledger.push(entry);
   await setLedger(store, ledger);
 }

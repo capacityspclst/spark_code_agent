@@ -3,8 +3,8 @@ import { getLedger } from './ledgerHelpers';
 import { LedgerEntry } from './ledger';
 
 /** Verify an export code against ledger entries.
- * Returns whether the code is known, the number of entries and head hash from the matching export entry,
- * and whether there have been later ledger entries after that export (i.e., later changes).
+ * Returns whether the code is known, the ledger sequence number of the export entry,
+ * the headHash stored in the export entry, and whether there have been later ledger entries after that export.
  */
 export async function verifyExportCode(code: string, store: Store): Promise<{ known: boolean; entries?: number; headHash?: string; laterChanges?: boolean }> {
   const ledger = await getLedger(store);
@@ -13,5 +13,5 @@ export async function verifyExportCode(code: string, store: Store): Promise<{ kn
     return { known: false };
   }
   const laterChanges = ledger.some((e: LedgerEntry) => e.seq > entry.seq);
-  return { known: true, entries: entry.data?.entries, headHash: entry.data?.headHash, laterChanges };
+  return { known: true, entries: entry.seq, headHash: entry.data?.headHash, laterChanges };
 }

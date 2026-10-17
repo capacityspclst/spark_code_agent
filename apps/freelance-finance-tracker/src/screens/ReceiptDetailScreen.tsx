@@ -29,7 +29,7 @@ export default function ReceiptDetailScreen() {
     return (
       <Screen title="Receipt detail">
         <EmptyState
-+          icon="receipt-outline"
+          icon="receipt-outline"
           title="Not found"
           body="Receipt not found"
           actionLabel="Back"

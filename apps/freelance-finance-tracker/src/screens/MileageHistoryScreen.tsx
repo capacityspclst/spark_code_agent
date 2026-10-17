@@ -31,7 +31,7 @@ export default function MileageHistoryScreen() {
     return (
       <Screen title="Mileage history">
         <EmptyState
-+          icon="history"
+          icon="history"
           title="No changes yet"
           body="This mileage entry has never been edited."
           actionLabel="Back"
