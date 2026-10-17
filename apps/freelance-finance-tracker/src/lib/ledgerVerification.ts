@@ -1,6 +1,6 @@
 import { Store } from './storage/types';
 import { getLedger } from './ledgerHelpers';
-import { sha256, utf8ToBytes, bytesToHex } from '@noble/hashes/sha2.js';
+import { computeHash } from './ledger';
 
 export interface LedgerVerificationResult {
   ok: boolean;
@@ -25,10 +25,15 @@ export async function verifyLedger(store: Store, entries?: any[]): Promise<Ledge
     if (e.prevHash !== prevHash) {
       return { ok: false, entries: ledgerEntries, firstBadSeq: e.seq, reason: 'prevHash mismatch' };
     }
-    const { hash, ...withoutHash } = e;
-    const json = JSON.stringify(Object.keys(withoutHash).sort().reduce((obj, key) => ({ ...obj, [key]: (withoutHash as any)[key] }), {}));
-    const computed = bytesToHex(sha256(utf8ToBytes(json)));
-    if (hash !== computed) {
+    const recomputed = computeHash({
+      seq: e.seq,
+      at: e.at,
+      kind: e.kind,
+      recordId: e.recordId,
+      data: e.data,
+      prevHash: e.prevHash,
+    } as any);
+    if (e.hash !== recomputed) {
       return { ok: false, entries: ledgerEntries, firstBadSeq: e.seq, reason: 'hash mismatch' };
     }
     prevHash = e.hash;

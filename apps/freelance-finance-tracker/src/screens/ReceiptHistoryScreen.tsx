@@ -31,6 +31,7 @@ export default function ReceiptHistoryScreen() {
     return (
       <Screen title="Receipt history">
         <EmptyState
+          icon="history"
           title="No changes yet"
           body="This receipt has never been edited."
           actionLabel="Back"

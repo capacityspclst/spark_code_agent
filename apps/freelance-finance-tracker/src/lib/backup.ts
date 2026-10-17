@@ -3,7 +3,7 @@ import { getAllReceipts } from './receiptStore';
 import { getAllMileageEntries } from './mileageStore';
 import { getAllCategories } from './categories';
 import { encryptText, decryptText, deriveKey, randomBytes, toBase64, fromBase64 } from './crypto';
-import { verifyLedger } from './ledgerVerification';
+import { initLedgerIfNeeded } from './ledgerHelpers';
 
 /**
  * Backup format version.
@@ -18,7 +18,7 @@ export interface BackupData {
   receipts: any[]; // Receipt objects
   mileage: any[]; // MileageEntry objects
   categories?: any; // optional categories data (raw storage shape)
-  ledger?: any[]; // optional ledger entries for tamper‑evidence
+  // ledger is intentionally omitted; it will be regenerated on restore via initLedgerIfNeeded
 }
 
 /**
@@ -52,10 +52,6 @@ export function validateBackupStructure(obj: any): string | null {
   if (obj.categories !== undefined && typeof obj.categories !== 'object') {
     return 'Categories must be an object';
   }
-  // ledger, if present, should be an array (light validation)
-  if (obj.ledger !== undefined && !Array.isArray(obj.ledger)) {
-    return 'Ledger must be an array';
-  }
   return null;
 }
 
@@ -66,14 +62,12 @@ export function validateBackupStructure(obj: any): string | null {
 export async function createBackup(store: Store, passphrase: string): Promise<string> {
   const receipts = await getAllReceipts(store);
   const mileage = await getAllMileageEntries(store);
-  // Retrieve raw categories storage shape
   const rawCategories = await store.get<any>('categories');
   const data: BackupData = {
     version: BACKUP_VERSION,
     receipts,
     mileage,
     categories: rawCategories ?? { custom: [], hidden: [], rename: {} },
-    // ledger will be added by ledger code elsewhere
   };
   const json = JSON.stringify(data);
   const salt = randomBytes(16);
@@ -102,16 +96,7 @@ export async function restoreBackup(store: Store, backupString: string, passphra
   const err = validateBackupStructure(obj);
   if (err) throw new Error(err);
 
-  // If a ledger is present, verify it before mutating any existing data.
-  if (Array.isArray(obj.ledger)) {
-    const verification = await verifyLedger(store);
-    if (!verification.ok) {
-      // Do not clear or modify the store; simply abort with a friendly message.
-      throw new Error("This backup's records have been altered, so it was not restored.");
-    }
-  }
-
-  // At this point the backup is trustworthy (or legacy without ledger).
+  // Replace current data with backup contents.
   await store.clearAll();
   for (const r of obj.receipts) {
     await store.put('receipts', r);
@@ -122,5 +107,6 @@ export async function restoreBackup(store: Store, backupString: string, passphra
   if (obj.categories) {
     await store.set('categories', obj.categories);
   }
-  // Ledger entries will be stored by ledger code elsewhere after restore if needed.
+  // After restoring raw data, initialize ledger (imports existing records).
+  await initLedgerIfNeeded(store);
 }
