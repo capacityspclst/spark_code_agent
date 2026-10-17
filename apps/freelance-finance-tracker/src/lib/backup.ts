@@ -105,7 +105,8 @@ export async function restoreBackup(store: Store, backupString: string, passphra
   if (err) throw new Error(err);
 
   // Verify ledger if present
-  if (Array.isArray(obj.ledger)) {
+  const hasLedger = Array.isArray(obj.ledger);
+  if (hasLedger) {
     const verification = await verifyLedger(store, obj.ledger);
     if (!verification.ok) {
       throw new Error('Backup verification failed: friendly error');
@@ -116,9 +117,12 @@ export async function restoreBackup(store: Store, backupString: string, passphra
   for (const r of obj.receipts) await store.put('receipts', r);
   for (const m of obj.mileage) await store.put('mileage', m);
   if (obj.categories) await store.set('categories', obj.categories);
-  if (Array.isArray(obj.ledger)) {
+  if (hasLedger) {
     await setLedger(store, obj.ledger);
-    // Import any records that lack an imported entry (legacy handling)
+    // Ensure any records lacking an imported entry are added (e.g., receipts added after ledger creation)
+    await importMissingAsImported(store);
+  } else {
+    // Legacy backup without ledger: after restoring data, import receipts/mileage as imported entries
     await importMissingAsImported(store);
   }
 }

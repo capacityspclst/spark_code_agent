@@ -1,4 +1,6 @@
 import * as Print from 'expo-print';
+import { sha256 } from '@noble/hashes/sha2.js';
+import { utf8ToBytes, bytesToHex } from '@noble/hashes/utils.js';
 import { File } from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import { Platform } from 'react-native';
@@ -60,9 +62,14 @@ export async function sharePdfReport(fileName: string): Promise<void> {
 /** Generate PDF and record ledger entry. Returns void for tests. */
 export async function generatePdf(store?: any): Promise<void> {
   const s = store ?? getStore();
-  // generate but we don't need to actually create file for test; just record ledger entry
-  // Record export entry; appendEntryForExport handles code and headHash
-  await appendEntryForExport('pdf', '', s); // code12 will be set inside function based on hash
+  // Generate a deterministic content representation for PDF export (simple JSON of data)
+  const receipts = await getAllReceipts(s);
+  const mileage = await getAllMileageEntries(s);
+  const content = JSON.stringify({ receipts, mileage });
+  const hashHex = bytesToHex(sha256(utf8ToBytes(content)));
+  const code12 = hashHex.slice(0, 12);
+  // Record export entry with computed code
+  await appendEntryForExport('pdf', code12, s);
 }
 
 export { htmlEscape };
