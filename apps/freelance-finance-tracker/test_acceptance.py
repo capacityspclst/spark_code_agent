@@ -809,7 +809,12 @@ MILESTONE_TESTS = {
                     expect(entry).toBeDefined();
                     const { seq, at, kind, recordId, data, prevHash } = entry!;
                     const obj = { seq, at, kind, recordId, data, prevHash };
-                    const canonical = JSON.stringify(obj, Object.keys(obj).sort());
+                    // Canonical JSON: keys sorted at every level, no whitespace. (A key array as JSON.stringify's replacer
+                    // also filters nested objects, so it would hash the record data as {}.)
+                    const canon = (v: any): string => Array.isArray(v) ? '[' + v.map(canon).join(',') + ']'
+                      : v && typeof v === 'object' ? '{' + Object.keys(v).sort().map((k) => JSON.stringify(k) + ':' + canon(v[k])).join(',') + '}'
+                      : JSON.stringify(v);
+                    const canonical = canon(obj);
                     const expectedHash = bytesToHex(sha256(utf8ToBytes(canonical)));
                     expect(entry?.hash).toBe(expectedHash);
                   });
@@ -1270,13 +1275,11 @@ MILESTONE_TESTS = {
                     await initLedgerIfNeeded(store);
                     const receipt = { id: 'r_enc', amount: 10, date: '2023-05-01', category: 'Supplies', type: 'expense', notes: '' };
                     await appendEntryForReceipt('receipt.created', receipt.id, receipt, store);
-                    // Attempt to read raw encrypted data
-                    const rawData = await (rawStore as any).getItem('ledger');
-                    expect(rawData).not.toBeNull();
-                    if (typeof rawData === 'string') {
-                      expect(rawData).not.toMatch(/\"kind\"/);
-                      expect(rawData).not.toMatch(/\"recordId\"/);
-                    }
+                    // Everything the raw store holds (the memory store's dump): ledger fields must not be readable.
+                    const rawData = rawStore.dump();
+                    expect(rawData.length).toBeGreaterThan(0);
+                    expect(rawData).not.toMatch(/recordId/);
+                    expect(rawData).not.toMatch(/receipt\\.created/);
                   });
                 });
                 
@@ -1470,7 +1473,12 @@ MILESTONE_TESTS = {
                     const second = ledger[1];
                     const { seq, at, kind, recordId, data, prevHash } = second;
                     const obj = { seq, at, kind, recordId, data, prevHash };
-                    const canonical = JSON.stringify(obj, Object.keys(obj).sort());
+                    // Canonical JSON: keys sorted at every level, no whitespace. (A key array as JSON.stringify's replacer
+                    // also filters nested objects, so it would hash the record data as {}.)
+                    const canon = (v: any): string => Array.isArray(v) ? '[' + v.map(canon).join(',') + ']'
+                      : v && typeof v === 'object' ? '{' + Object.keys(v).sort().map((k) => JSON.stringify(k) + ':' + canon(v[k])).join(',') + '}'
+                      : JSON.stringify(v);
+                    const canonical = canon(obj);
                     const expectedHash = bytesToHex(sha256(utf8ToBytes(canonical)));
                     expect(second.hash).toBe(expectedHash);
                     expect(second.prevHash).toBe(first.hash);
