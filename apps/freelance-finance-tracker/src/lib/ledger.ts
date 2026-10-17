@@ -53,6 +53,8 @@ async function appendEntry(kind: string, recordId: string, data: any, store: Sto
   const entry: LedgerEntry = { ...entryWithoutHash, hash };
   ledger.push(entry);
   await store.set('ledger', ledger);
+  // Track the highest sequence number ever assigned to detect deletions
+  await store.set('ledgerSeqCount', seq);
 }
 
 /** Append a receipt ledger entry. */
@@ -87,12 +89,14 @@ export async function appendEntryForExport(format: 'csv' | 'pdf', code12: string
   const seq = ledger.length ? ledger[ledger.length - 1].seq + 1 : 1;
   const at = new Date().toISOString();
   const prevHash = ledger.length ? ledger[ledger.length - 1].hash : '0'.repeat(64);
-  const data: any = { format, code: code12, entries: seq, headHash: '' };
+  // Compute hash for this entry without full code yet
+  const data: any = { format, code: '', entries: seq, headHash: '' };
   const entryWithoutHash: Omit<LedgerEntry, 'hash'> = { seq, at, kind: 'export.created', recordId: '', data, prevHash };
   const hash = computeHash(entryWithoutHash);
   data.headHash = hash;
-  // store only the 12-char code; full verification code constructed elsewhere
-  data.code = code12;
+  // Full verification code = 12-char prefix + headHash
+  const fullCode = `${code12}${hash}`;
+  data.code = fullCode;
   const entry: LedgerEntry = { ...entryWithoutHash, hash };
   ledger.push(entry);
   await store.set('ledger', ledger);

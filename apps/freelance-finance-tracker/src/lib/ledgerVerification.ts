@@ -15,6 +15,10 @@ export async function verifyLedger(store: Store, entries?: any[]): Promise<Ledge
   if (!Array.isArray(ledgerEntries)) {
     return { ok: false, entries: [], reason: 'Ledger entries not an array' };
   }
+  // Empty ledger is invalid – at least the init entry should exist
+  if (ledgerEntries.length === 0) {
+    return { ok: false, entries: [], firstBadSeq: 1, reason: 'missing entry' };
+  }
   const zeroHash = '0'.repeat(64);
   let prevHash = zeroHash;
   for (let i = 0; i < ledgerEntries.length; i++) {
@@ -22,7 +26,6 @@ export async function verifyLedger(store: Store, entries?: any[]): Promise<Ledge
     const expectedSeq = i + 1;
     // Sequence check – missing or out‑of‑order
     if (e.seq !== expectedSeq) {
-      // Determine if missing entry or out‑of‑order
       const hasExpectedSeqLater = ledgerEntries.some(entry => entry.seq === expectedSeq);
       const reason = hasExpectedSeqLater ? 'out‑of‑order' : 'missing entry';
       const firstBadSeq = e.seq;
@@ -30,7 +33,6 @@ export async function verifyLedger(store: Store, entries?: any[]): Promise<Ledge
     }
     // PrevHash check
     if (e.prevHash !== prevHash) {
-      // PrevHash does not match expected previous hash
       return { ok: false, entries: ledgerEntries, firstBadSeq: e.seq, reason: 'prevhash mismatch' };
     }
     // Hash integrity
@@ -47,14 +49,25 @@ export async function verifyLedger(store: Store, entries?: any[]): Promise<Ledge
     }
     prevHash = e.hash;
   }
-  // After processing all entries, detect any missing sequence numbers
-  if (ledgerEntries.length > 0) {
-    const seqSet = new Set(ledgerEntries.map(e => e.seq));
-    const maxSeq = Math.max(...seqSet);
-    for (let i = 1; i <= maxSeq; i++) {
-      if (!seqSet.has(i)) {
+  // Detect missing trailing entries using stored highest seq count
+  const storedSeqCount = await store.get<number>('ledgerSeqCount');
+  const highestSeq = ledgerEntries.length ? Math.max(...ledgerEntries.map(e => e.seq)) : 0;
+  const expectedCount = storedSeqCount ?? highestSeq;
+  if (expectedCount > ledgerEntries.length) {
+    // Find first missing sequence number after the existing entries
+    const existingSeqs = new Set(ledgerEntries.map(e => e.seq));
+    for (let i = 1; i <= expectedCount; i++) {
+      if (!existingSeqs.has(i)) {
         return { ok: false, entries: ledgerEntries, firstBadSeq: i, reason: 'missing entry' };
       }
+    }
+  }
+  // Also check for any gaps within the range (should have been caught above)
+  const seqSet = new Set(ledgerEntries.map(e => e.seq));
+  const maxSeq = Math.max(...seqSet);
+  for (let i = 1; i <= maxSeq; i++) {
+    if (!seqSet.has(i)) {
+      return { ok: false, entries: ledgerEntries, firstBadSeq: i, reason: 'missing entry' };
     }
   }
   return { ok: true, entries: ledgerEntries };

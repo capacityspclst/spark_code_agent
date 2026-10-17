@@ -13,22 +13,22 @@ export async function verifyExportCode(
   store: Store,
 ): Promise<{ known: boolean; entries?: number; headHash?: string; laterChanges?: boolean; message?: string }> {
   const ledger = await getLedger(store);
-  // Extract a 12‑char hex code fragment from the input, ignoring any surrounding text.
-  // Accept full verification code which is 12-char prefix + headHash (total 76 hex chars)
-  const match = code.match(/[0-9a-f]{12}[0-9a-f]{64}/i);
-  const codeFragment = match ? match[0] : '';
-  if (!codeFragment) {
+  // Normalize code: trim and lower case
+  const codeNorm = code.trim().toLowerCase();
+  // Basic validation: must be a hex string of appropriate length (at least 12 chars)
+  if (!/^[0-9a-f]+$/i.test(codeNorm) || codeNorm.length < 12) {
     return { known: false, message: 'Invalid verification code format' };
   }
+  // Find ledger entry with matching full verification code (12-char prefix + headHash)
   const entry = ledger.find(
-    (e: LedgerEntry) => e.kind === 'export.created' && e.data?.code === codeFragment,
+    (e: LedgerEntry) => e.kind === 'export.created' && e.data?.code?.toLowerCase() === codeNorm,
   );
   if (!entry) {
     return { known: false, message: 'Verification code not from this app' };
   }
   // Determine if there are later ledger entries beyond this export.
-  const laterChanges = ledger.length > (entry.data?.entries ?? entry.seq);
-  // For both CSV and PDF the headHash stored in the entry data is the entry's own hash.
+  const laterChanges = ledger.length > entry.seq;
+  // The headHash is stored in the entry data (same as entry.hash)
   const headHash = entry.data?.headHash ?? entry.hash;
   return {
     known: true,

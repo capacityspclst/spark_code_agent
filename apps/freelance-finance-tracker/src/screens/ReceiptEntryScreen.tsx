@@ -34,6 +34,22 @@ export default function ReceiptEntryScreen() {
   const [categories, setCategories] = useState<Array<{ id: string; name: string }>>([]);
   const [preFilled, setPreFilled] = useState<Partial<ParsedReceipt>>({});
   const [marked, setMarked] = useState<{ amount: boolean; date: boolean; category: boolean }>({ amount: false, date: false, category: false });
+  // Load receipt for editing if editRecordId is present
+  useEffect(() => {
+    if (editRecordId) {
+      (async () => {
+        const receipt = await getAllReceipts(getStore()).then(arr => arr.find(r => r.id === editRecordId));
+        if (receipt) {
+          setAmount(String(receipt.amount));
+          setDate(receipt.date);
+          setCategory(receipt.category);
+          setType(receipt.type as ReceiptType);
+          setNotes(receipt.notes ?? '');
+          if (receipt.photoUri) setPhotoUri(receipt.photoUri);
+        }
+      })();
+    }
+  }, [editRecordId]);
 
   // Load categories for dropdown (hidden filtered)
   useEffect(() => {

@@ -53,6 +53,8 @@ export async function initLedgerIfNeeded(store: Store): Promise<void> {
   }
 
   await setLedger(store, entries);
+  // Record the highest sequence number for verification of missing trailing entries
+  await store.set('ledgerSeqCount', entries.length);
   await store.set('ledgerInitialized', true);
 }
 
