@@ -6,7 +6,7 @@ import { Snackbar, Text } from 'react-native-paper';
 import ReceiptImagePicker from '../components/ui/ReceiptImagePicker';
 import { v4 as uuidv4 } from 'uuid';
 import { getStore } from '../lib/storage';
-import { addReceipt } from '../lib/receiptStore';
+import { addReceipt, editReceipt } from '../lib/receiptStore';
 import { validateReceiptAmount } from '../lib/validation';
 import { Receipt, ReceiptType } from '../lib/models';
 import { setPendingSnack } from '../lib/uiState';
@@ -19,6 +19,9 @@ import { theme, layout } from '../theme';
 
 export default function ReceiptEntryScreen() {
   const navigation = useNavigation<NavigationProp<any>>();
+  const route = useNavigation<any>();
+  const params = (route as any).getState?.()?.routes?.[ (route as any).getState?.()?.index || 0 ].params || {};
+  const editRecordId: string | undefined = params.recordId;
   const [amount, setAmount] = useState('');
   const [date, setDate] = useState('');
   const [category, setCategory] = useState('');

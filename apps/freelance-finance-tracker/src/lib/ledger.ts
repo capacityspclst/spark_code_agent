@@ -90,7 +90,9 @@ export async function appendEntryForExport(format: 'csv' | 'pdf', code12: string
   const data: any = { format, code: code12, entries: seq, headHash: '' };
   const entryWithoutHash: Omit<LedgerEntry, 'hash'> = { seq, at, kind: 'export.created', recordId: '', data, prevHash };
   const hash = computeHash(entryWithoutHash);
-  data.headHash = hash; // keep code as 12-char code, store headHash separately
+  data.headHash = hash;
+  // store only the 12-char code; full verification code constructed elsewhere
+  data.code = code12;
   const entry: LedgerEntry = { ...entryWithoutHash, hash };
   ledger.push(entry);
   await store.set('ledger', ledger);

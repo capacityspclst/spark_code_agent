@@ -47,12 +47,14 @@ export async function verifyLedger(store: Store, entries?: any[]): Promise<Ledge
     }
     prevHash = e.hash;
   }
-  // After processing all entries, check for missing trailing entries (gap after last seq)
+  // After processing all entries, detect any missing sequence numbers
   if (ledgerEntries.length > 0) {
-    const maxSeq = Math.max(...ledgerEntries.map(e => e.seq));
-    if (maxSeq > ledgerEntries.length) {
-      // missing entry after the last present one
-      return { ok: false, entries: ledgerEntries, firstBadSeq: ledgerEntries.length + 1, reason: 'missing entry' };
+    const seqSet = new Set(ledgerEntries.map(e => e.seq));
+    const maxSeq = Math.max(...seqSet);
+    for (let i = 1; i <= maxSeq; i++) {
+      if (!seqSet.has(i)) {
+        return { ok: false, entries: ledgerEntries, firstBadSeq: i, reason: 'missing entry' };
+      }
     }
   }
   return { ok: true, entries: ledgerEntries };
