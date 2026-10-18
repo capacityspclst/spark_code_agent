@@ -1,0 +1,403 @@
+{
+  "run_id": "20261017-145118-5b98",
+  "task": "Evidence ledger: tamper-evident, contemporaneous records that stay on the device. Keep every existing screen, flow, the local-first design and the current look; keep all existing tests passing; never change src/lib/crypto.ts (it is locked). Changes: (1) Ledger core in src/lib/ledger.ts: every receipt and mileage entry, and every edit or deletion of one, appends a ledger entry {seq, at (ISO time), kind (\"receipt.created\", \"receipt.corrected\", \"receipt.deleted\", \"mileage.created\", \"mileage.corrected\", \"mileage.deleted\", \"imported\", \"export.created\"), recordId, data (the record's full content after the change; for a deletion, the last content), prevHash, hash}. hash = SHA-256 from @noble/hashes ^2.4.0 (already a dependency; never write your own hashing): import { sha256 } from '@noble/hashes/sha2.js' and { bytesToHex, utf8ToBytes } from '@noble/hashes/utils.js', hash = bytesToHex(sha256(utf8ToBytes(canonicalJson))) over a canonical JSON of every field except hash, hex-encoded; the first entry's prevHash is 64 zeros. Entries are stored encrypted through the Store, append-only: nothing ever rewrites or removes an entry (Delete all data is the only exception, and it starts a new ledger). An edit is a \"corrected\" entry with the new content, so the history shows the original and each dated correction; a receipt's OCR pre-fill and the user's confirmation are both recorded in the data. On first launch after this update, every existing receipt and mileage entry is added once as an \"imported\" entry (with the import date), so old records are clearly marked as not contemporaneous. verifyLedger(store) recomputes the chain and returns {ok, entries, firstBadSeq?, reason?}. (2) Screens: each receipt and trip gets a \"History\" view (from its detail/edit screen) listing its original entry and every correction with date and time, newest last. Settings shows the ledger status: \"Verified \u00b7 N entries \u00b7 intact\" or, if verification fails, a clear warning that records may have been altered, naming the first bad entry. (3) Verifiable exports: every CSV and PDF export ends with a verification line: the ledger's entry count, its head hash and a verification code = the first 12 hex characters of SHA-256 over the export's content without that line, plus the head hash. Each export also appends an \"export.created\" ledger entry {format, code, entries, headHash}. Settings gets \"Verify an export\": either pick an exported CSV (pickFile; the app recomputes the code from the file without its verification line and finds the matching export entry) or type the code printed on a PDF. The answer says whether the code matches an export made by this app (and when, from how many entries), whether the CSV file was changed after export, and whether any records were corrected or deleted since that export. (4) Backups include the ledger; restore runs verifyLedger on the restored data before replacing anything and refuses a backup whose ledger does not verify, with a friendly error (older backups without a ledger restore and are then imported as \"imported\" entries). Unit tests: hash chaining and canonical JSON; verify detects a changed field, a removed entry, a reordered entry and a changed prevHash, and reports the first bad seq; corrections keep the original; import runs once; a CSV export verifies, fails after a one-character change to the file, and reports records changed after a later correction; a typed PDF code is found; an unknown code is reported as not from this app; backup round trip keeps a verifying ledger; a tampered backup ledger is refused. Update ui_flow.json so the primary flow edits a receipt, opens its History and sees the correction, and sees the \"Verified\" status in Settings.",
+  "app": "apps/freelance-finance-tracker",
+  "new_app": true,
+  "success": false,
+  "tests_passed": false,
+  "validation_passed": false,
+  "validation": "verified encryption unchanged ok, npm install (.) ok, expo dependency versions (.) ok, expo export (.) ok, expo web export (.) ok, ui renders (.) ok, ui styles applied (.) ok, accessibility, serious or critical (.) ok, responsive layout on a phone (.) ok, ui primary flow (.) FAIL, typescript (tsc) ok, json syntax ok, scanner suppressions ok, semgrep (security errors) ok, trivy secrets ok, trivy dependency vulnerabilities (high/critical, fixable) ok, trivy misconfigurations (high/critical) ok, trivy dependency vulnerabilities (other) warn, planned files present ok, planned files fully implemented ok",
+  "review": {
+    "verdict": "revise",
+    "issues": [
+      "Backup verification fails: src/lib/backup.ts throws \"Backup verification failed: friendly error\" during restore because verifyLedger is called with the restored ledger entries but the store passed to verifyLedger is the current (empty) store, not the restored data, causing verification to fail. The restore routine must verify the ledger from the backup data itself before clearing the store or must use the restored ledger entries correctly.",
+      "History view for receipts never appears: ui_flow.json step 26 expects a \"History\" button on the receipt detail screen, but src/components/ui/HistoryItem.tsx and HistoryList are not integrated into the UI (ReceiptHistoryScreen not linked from any screen). The navigation entry and button need to be added so the History screen is reachable and displays entries.",
+      "Verification status text not displayed: SettingsScreen does not call verifyLedger on mount nor render the VerificationStatus component, so the ledger status text is never shown as required by R24/R25.",
+      "Export verification line not generated correctly: src/lib/exportCsv.ts does not append the verification line in the required \"<entryCount>,<headHash>,<verificationCode>\" format, causing M7/M9 tests to fail.",
+      "Export created ledger entry not recorded: The export functions do not call appendEntryForExport (or equivalent) to add an \"export.created\" ledger entry, so export verification cannot find a matching entry (M9 test fails).",
+      "Ledger import on first launch may run multiple times: initLedgerIfNeeded uses a flag 'ledgerInitialized' but the flag is stored in the same encrypted store; if the flag itself is part of the ledger data it may not persist correctly across restores, causing R12 failures.",
+      "Missing ledger entry for receipt creation: addReceipt does not append a \"receipt.created\" entry; tests expecting receipt.created entries (R5) will fail.",
+      "Missing deletion ledger entries: receipt deletion functionality does not exist in receiptStore; should implement deleteReceipt with appropriate ledger entry (R7).",
+      "Ledger sequence count handling is inconsistent: ledgerSeqCount is set to entries.length but should reflect the highest seq value, potentially causing missing entry detection failures (R11 test expects proper seq handling).",
+      "verifyLedger should accept an explicit ledger array from backup for verification; currently it recomputes from store after clearing, causing false failures."
+    ],
+    "missing_requirements": [
+      "R5",
+      "R6",
+      "R7",
+      "R8",
+      "R9",
+      "R10",
+      "R11",
+      "R12",
+      "R13",
+      "R14",
+      "R15",
+      "R16",
+      "R17",
+      "R18",
+      "R20",
+      "R21",
+      "R22",
+      "R23",
+      "R24",
+      "R25",
+      "R26",
+      "R27",
+      "R28",
+      "R29",
+      "R30",
+      "R31",
+      "R32",
+      "R33",
+      "R34"
+    ],
+    "wrong_tests": [],
+    "feedback": "The current implementation does not fully satisfy the ledger, UI, export, and backup requirements. Several key functions (receipt creation ledger entry, deletion, export verification, History navigation, Settings verification status) are missing or incorrect, leading to failing acceptance tests. Update the store interactions, ledger append calls, UI flow, and export logic to meet all listed requirements."
+  },
+  "review_rounds": 12,
+  "seconds": 38328.4,
+  "agents": {
+    "coder": {
+      "calls": 328,
+      "prompt_tokens": 17975732,
+      "completion_tokens": 521445,
+      "seconds": 28032.12066078186
+    },
+    "designer": {
+      "calls": 12,
+      "prompt_tokens": 338408,
+      "completion_tokens": 38792,
+      "seconds": 1550.854942560196
+    },
+    "vision": {
+      "calls": 60,
+      "prompt_tokens": 213732,
+      "completion_tokens": 14787,
+      "seconds": 718.4594392776489
+    },
+    "reviewer": {
+      "calls": 131,
+      "prompt_tokens": 5376333,
+      "completion_tokens": 128214,
+      "seconds": 6129.110166549683
+    },
+    "escalation": {
+      "calls": 9,
+      "prompt_tokens": 318394,
+      "completion_tokens": 11320,
+      "seconds": 119.59790372848511
+    },
+    "fixer": {
+      "calls": 15,
+      "prompt_tokens": 423926,
+      "completion_tokens": 23962,
+      "seconds": 261.2630047798157
+    },
+    "retro": {
+      "calls": 1,
+      "prompt_tokens": 20016,
+      "completion_tokens": 4660,
+      "seconds": 172.73417687416077
+    }
+  },
+  "stalled": [
+    "phase 1 (function) did not finish in 12 rounds"
+  ],
+  "security": {
+    "verdict": "skipped",
+    "summary": "Skipped until tests and validation pass.",
+    "findings": [],
+    "assurance": {
+      "blocking_open": 0,
+      "open": 0,
+      "deployment_actions": 0,
+      "fixed": 0
+    },
+    "ledger": []
+  },
+  "deployment_guide": {
+    "written": false
+  },
+  "ui": {
+    "verdict": "fail",
+    "summary": "Overall the UI follows the DESIGN.md closely, most screens, components and theming are present, and automated accessibility (axe) checks report no violations. However the primary navigation is broken \u2013 the bottom\u2011tab bar does not expose a \"Dashboard\" tab that the UI\u2011flow can click \u2013 which stops the main user journey. In addition several secondary states (empty/error screens, loading copy, offline banner) are either missing or not fully wired, and a few components still use hard\u2011coded sizes or colors instead of the design tokens. These issues range from high\u2011severity navigation failures to medium\u2011severity missing user\u2011feedback states and low\u2011severity token\u2011usage inconsistencies.",
+    "findings": [
+      {
+        "severity": "high",
+        "file": "src/navigation/index.tsx",
+        "issue": "The BottomNavigation does not expose a tab labelled \"Dashboard\" (or the tab is not accessible via role=\"tab\" and name=\"Dashboard\"), causing the UI\u2011flow test to time\u2011out and breaking the primary navigation path.",
+        "fix": "Add a Dashboard route to the BottomNavigation with `label: \"Dashboard\"` and ensure the tab button has `accessibilityRole=\"tab\"`, `accessibilityLabel=\"Dashboard\"` and visible text. Verify that the tab is focusable and meets the 44\u202f\u00d7\u202f44\u202fdp touch target.",
+        "source": "designer"
+      },
+      {
+        "severity": "medium",
+        "file": "src/screens/ReceiptHistoryScreen.tsx",
+        "issue": "Empty state (title \"No changes yet\", description \"This receipt has never been edited.\", Back button) defined in DESIGN.md is not rendered when the receipt has no history entries.",
+        "fix": "Import and use the `EmptyState` component for the empty case, passing the required copy and wiring the Back button to navigation. Ensure the same layout and spacing as other empty states.",
+        "source": "designer"
+      },
+      {
+        "severity": "medium",
+        "file": "src/screens/MileageHistoryScreen.tsx",
+        "issue": "Missing empty state view for mileage entries \u2013 the spec requires the same EmptyState as ReceiptHistoryScreen but the component currently shows a blank list.",
+        "fix": "Reuse the `EmptyState` component with the specified copy for the mileage empty state and provide navigation back to the previous screen.",
+        "source": "designer"
+      },
+      {
+        "severity": "medium",
+        "file": "src/screens/PolicyScreen.tsx",
+        "issue": "Loading state should display \"Checking policy version\u2026\" alongside the spinner, but the current implementation only shows an ActivityIndicator without the copy, and the error state (full\u2011screen error view with Retry) is absent.",
+        "fix": "Add a centered text element with the copy \"Checking policy version\u2026\" when loading. Implement a full\u2011screen error view that displays the required message and a Retry button that re\u2011attempts acceptance storage.",
+        "source": "designer"
+      },
+      {
+        "severity": "medium",
+        "file": "src/screens/VerifyExportScreen.tsx",
+        "issue": "Design specifies several error feedback mechanisms (Snackbar for code not found, no matching export, file altered, etc.) but the component only shows a generic error or lacks some of these distinct messages.",
+        "fix": "Add distinct `Snackbar` components (or a unified error panel) that display the exact copy defined in the spec for each error case, and ensure they are triggered based on the verification result.",
+        "source": "designer"
+      },
+      {
+        "severity": "low",
+        "file": "src/components/ui/**/*.tsx",
+        "issue": "Several components use hard\u2011coded spacing values (e.g., `padding: 16`, `marginVertical: 12`) and colour literals instead of the design tokens (`theme.spacing`, `theme.colors`). This bypasses the theme system and can cause visual inconsistencies.",
+        "fix": "Replace all literal numbers and colour strings with the appropriate token references (`theme.spacing * 2`, `theme.colors.surface`, etc.) and import the theme via `useTheme()` where needed.",
+        "source": "designer"
+      },
+      {
+        "severity": "low",
+        "file": "src/components/ui/**/*.tsx",
+        "issue": "Focus\u2011visible outlines are not defined for interactive elements (Buttons, List.Items, FormFields), so keyboard navigation does not show a clear focus indicator.",
+        "fix": "Add a 2\u202fdp outline style (`borderColor: theme.colors.outline`, `borderWidth: 2`) to the `style` of components when `isFocused` or `focusVisible` is true, using React\u2011Native\u2011Paper\u2019s `onFocus`/`onBlur` handlers or the `useFocusRing` hook on web.",
+        "source": "designer"
+      },
+      {
+        "severity": "low",
+        "file": "src/components/ui/OfflineBanner.tsx (new file)",
+        "issue": "The spec requires a full\u2011width offline banner on every screen, but no such component exists and no offline detection logic is referenced.",
+        "fix": "Create an `OfflineBanner` component that listens to NetInfo (or `navigator.onLine` on web) and displays the copy \"You are offline. Some actions require an internet connection.\" at the top of the `Screen` component. Insert it into the `Screen` layout so it appears on all screens.",
+        "source": "designer"
+      },
+      {
+        "severity": "low",
+        "viewport": "both",
+        "issue": "The checkbox and 'Accept' button are vertically aligned, but the checkbox is slightly inset from the left edge of its container, while the button is centered \u2014 inconsistent alignment within the same group.",
+        "fix": "Align the checkbox and button to the left edge of their container for visual consistency.",
+        "screen": "policy_gate",
+        "source": "vision"
+      },
+      {
+        "severity": "low",
+        "viewport": "both",
+        "issue": "The 'Tick the box to continue.' hint is centered horizontally but positioned below the button, creating a small visual disconnect with the button\u2019s placement.",
+        "fix": "Move the hint to the left, aligned with the checkbox, to reinforce the action relationship.",
+        "screen": "policy_gate",
+        "source": "vision"
+      },
+      {
+        "severity": "medium",
+        "viewport": "both",
+        "issue": "The 'Add receipt' button is visually distinct but its placement is slightly off-center relative to the 'Receipt' and 'Mileage' buttons, creating an asymmetrical grouping that could be improved for visual balance.",
+        "fix": "Reposition the 'Add receipt' button to be centered horizontally with the 'Receipt' and 'Mileage' buttons, or align all three buttons in a consistent horizontal row with equal spacing.",
+        "screen": "dashboard_empty",
+        "source": "vision"
+      },
+      {
+        "severity": "low",
+        "viewport": "phone",
+        "issue": "The 'Add receipt' button has a subtle shadow and rounded corners, but the 'Receipt' and 'Mileage' buttons lack the same visual treatment, creating a slight inconsistency in button styling.",
+        "fix": "Apply the same rounded corners and shadow effect to the 'Receipt' and 'Mileage' buttons to maintain visual consistency across all primary action buttons.",
+        "screen": "dashboard_empty",
+        "source": "vision"
+      },
+      {
+        "severity": "medium",
+        "viewport": "phone",
+        "issue": "The 'Add photo' button is the primary action but lacks a clear visual hierarchy to distinguish it from the 'Scan receipt' button. The 'Scan receipt' button is grayed out, which is good, but the primary action should be more visually emphasized (e.g., larger, bolder, or higher contrast).",
+        "fix": "Increase the size and contrast of the 'Add photo' button. Consider using a slightly different shape or adding a subtle animation on hover or tap to reinforce its primary status.",
+        "screen": "receipt_entry",
+        "source": "vision"
+      },
+      {
+        "severity": "medium",
+        "viewport": "phone",
+        "issue": "The 'Receipt details' and 'Additional information' section headers are not bolded or visually weighted to establish clear hierarchy. This makes it harder for users to scan the form and understand the structure.",
+        "fix": "Apply bold styling or a slightly larger font size to the section headers to improve visual hierarchy and scanning ease.",
+        "screen": "receipt_entry",
+        "source": "vision"
+      },
+      {
+        "severity": "low",
+        "viewport": "phone",
+        "issue": "The 'Type' section header 'Type' is not bolded or styled to match the section headers above it, creating a visual inconsistency.",
+        "fix": "Apply the same styling (bold, consistent font weight) to the 'Type' header to maintain visual consistency.",
+        "screen": "receipt_entry",
+        "source": "vision"
+      },
+      {
+        "severity": "low",
+        "viewport": "phone",
+        "issue": "The 'Notes' field is cut off at the bottom of the screen, indicating the form does not extend to the full height of the screen or the container is not properly sized.",
+        "fix": "Ensure the form container or scrollable area extends to the full height of the screen to prevent content from being cut off.",
+        "screen": "receipt_entry",
+        "source": "vision"
+      },
+      {
+        "severity": "low",
+        "viewport": "both",
+        "issue": "The 'Scan receipt' button is grayed out, but there is no visual indicator (like a tooltip or hover state) explaining why it's disabled. This could confuse users who might think it's broken.",
+        "fix": "Add a subtle visual cue (e.g., a small tooltip or a descriptive label) explaining that the scan feature is unavailable or requires a specific condition.",
+        "screen": "receipt_entry",
+        "source": "vision"
+      },
+      {
+        "severity": "medium",
+        "screen": "receipt_entry",
+        "source": "vision",
+        "issue": "visual quality 7/10 on 'receipt_entry' (target 8+, minimum 7): Polished, modern UI with clear hierarchy and consistent spacing. The primary action is obvious and touch-friendly. Typography is readable with a clear scale. Grouping is logical. Color use is minimal but effective. No major usability or layout flaws. Could be more visually distinctive or refined for a premium feel.",
+        "fix": "Address this screen's findings until it looks polished and professional."
+      },
+      {
+        "severity": "medium",
+        "viewport": "both",
+        "issue": "The 'Recent activity' section has a dark overlay banner that partially obscures the content below it, potentially hiding important details like the date or category.",
+        "fix": "Adjust the banner to be fully transparent or ensure it doesn't overlap content. Alternatively, make the banner a floating toast that appears above the activity list without obscuring it.",
+        "screen": "dashboard_populated",
+        "source": "vision"
+      },
+      {
+        "severity": "low",
+        "viewport": "phone",
+        "issue": "The 'Receipt' and 'Mileage' buttons are placed side-by-side with no spacing or alignment guide, which may look cramped on smaller screens.",
+        "fix": "Add consistent horizontal spacing between the buttons and align them to a vertical center or baseline for better visual harmony.",
+        "screen": "dashboard_populated",
+        "source": "vision"
+      },
+      {
+        "severity": "low",
+        "viewport": "desktop",
+        "issue": "The 'Recent activity' section is too narrow, forcing the buttons to be placed at the bottom right of the card, which doesn't utilize the available desktop real estate.",
+        "fix": "Expand the card width to fill more space, or allow the buttons to be positioned inline with the activity text for better desktop layout.",
+        "screen": "dashboard_populated",
+        "source": "vision"
+      },
+      {
+        "severity": "medium",
+        "viewport": "both",
+        "issue": "The screen lacks any primary action button (e.g., Edit or History) visible on the card, which is critical for the user flow described in the design spec.",
+        "fix": "Add a prominent 'Edit' button on the card, aligned with the design spec's primary flow. Consider adding a 'History' button if not already present.",
+        "screen": "receipts_loaded",
+        "source": "vision"
+      },
+      {
+        "severity": "medium",
+        "viewport": "both",
+        "issue": "The bottom navigation bar is visually disconnected from the content area, appearing as a separate layer rather than an integrated part of the screen.",
+        "fix": "Style the navigation bar to visually integrate with the content area (e.g., use a subtle background or shadow) and ensure it is clearly part of the screen's hierarchy.",
+        "screen": "receipts_loaded",
+        "source": "vision"
+      },
+      {
+        "severity": "low",
+        "viewport": "phone",
+        "issue": "The card's padding and spacing are not optimized for touch targets; the amount field is too close to the edge and lacks sufficient padding on the right side.",
+        "fix": "Increase padding on the right side of the card and ensure all interactive elements have adequate touch target space.",
+        "screen": "receipts_loaded",
+        "source": "vision"
+      },
+      {
+        "severity": "low",
+        "viewport": "desktop",
+        "issue": "The desktop layout lacks visual hierarchy; the card is centered but there is no clear visual emphasis on the primary action or the title.",
+        "fix": "Add subtle visual hierarchy (e.g., a slight shadow, padding, or alignment) to the card to make it stand out more clearly against the background.",
+        "screen": "receipts_loaded",
+        "source": "vision"
+      },
+      {
+        "severity": "medium",
+        "screen": "receipts_loaded",
+        "source": "vision",
+        "issue": "visual quality 7/10 on 'receipts_loaded' (target 8+, minimum 7): Polished, clean layout with consistent spacing and typography. The card is well-aligned and visually distinct. However, the primary action (Edit/History) is missing from the screen, and the navigation bar is not visually integrated with the content. Desktop layout is appropriately scaled but lacks visual hierarchy to guide the user.",
+        "fix": "Address this screen's findings until it looks polished and professional."
+      }
+    ],
+    "lighthouse": [
+      {
+        "accessibility": 98,
+        "bestPractices": 100,
+        "performance": 57
+      }
+    ],
+    "screenshots": [
+      "apps/freelance-finance-tracker/.agent-run/20261017-145118-5b98/screenshots/app/screenshot-phone.png",
+      "apps/freelance-finance-tracker/.agent-run/20261017-145118-5b98/screenshots/app/screenshot-phone-full.png",
+      "apps/freelance-finance-tracker/.agent-run/20261017-145118-5b98/screenshots/app/screenshot-desktop.png",
+      "apps/freelance-finance-tracker/.agent-run/20261017-145118-5b98/screenshots/app/screenshot-desktop-full.png",
+      "apps/freelance-finance-tracker/.agent-run/20261017-145118-5b98/screenshots/app/flow-phone-01-policy-gate.png",
+      "apps/freelance-finance-tracker/.agent-run/20261017-145118-5b98/screenshots/app/flow-phone-02-dashboard-empty.png",
+      "apps/freelance-finance-tracker/.agent-run/20261017-145118-5b98/screenshots/app/flow-phone-03-receipt-entry.png",
+      "apps/freelance-finance-tracker/.agent-run/20261017-145118-5b98/screenshots/app/flow-phone-04-dashboard-populated.png",
+      "apps/freelance-finance-tracker/.agent-run/20261017-145118-5b98/screenshots/app/flow-phone-05-receipts-loaded.png",
+      "apps/freelance-finance-tracker/.agent-run/20261017-145118-5b98/screenshots/app/flow-desktop-01-policy-gate.png",
+      "apps/freelance-finance-tracker/.agent-run/20261017-145118-5b98/screenshots/app/flow-desktop-02-dashboard-empty.png",
+      "apps/freelance-finance-tracker/.agent-run/20261017-145118-5b98/screenshots/app/flow-desktop-03-receipt-entry.png",
+      "apps/freelance-finance-tracker/.agent-run/20261017-145118-5b98/screenshots/app/flow-desktop-04-dashboard-populated.png",
+      "apps/freelance-finance-tracker/.agent-run/20261017-145118-5b98/screenshots/app/flow-desktop-05-receipts-loaded.png"
+    ]
+  },
+  "native": null,
+  "retro": {
+    "observations": [
+      "acceptance tests failed with the same error in 3 of 12 rounds: failing: __tests__/acceptance/m11.test.ts: M11: CSV verification recompute matches ledger recomputes verificationCode from CSV content and matches ledger entry; __tests__/acceptance/m11.test.ts: M11: PDF export creates ledger entry with verification code adds export.created entry for PDF with a verification code; __tests__/acceptance/m11.test.ts: M11: backup contains ledger entries restoring backup yields ledger entries; __tests__/acceptance/m11.test.ts: M11: export.created ledger entry after CSV export records export.created entry with correct fields for CSV; __tests__/acceptance/m11.test.ts: M11: exp",
+      "validator 'ui primary flow (.)' blocked 12 of 12 rounds",
+      "coder hit its turn limit in 5 of 12 rounds ([1, 2, 5, 9, 10])",
+      "vision scores flat across the run: first rounds [7.8, 7.8, 8.0], last rounds [7.6, 7.6, 7.6]",
+      "slowest round 7 took 92 min; average 53 min"
+    ],
+    "went_well": [
+      "The pipeline ran a full 12\u2011round iterative loop (\u224810\u202fh) and kept all agents active, showing robust orchestration across planner, designer, coder and reviewers.",
+      "The UI validator consistently flagged broken UI flows, preventing regressions from reaching the test suite.",
+      "Acceptance\u2011test execution was reliable; each round produced a complete Jest summary with explicit failing test names, giving a clear signal of what was still broken.",
+      "The code reviewer detected a wide range of issues (CSV export format, ledger entry creation, TypeScript errors) and supplied detailed diagnostic text each round.",
+      "Static validation (TypeScript compilation) caught errors early, stopping the coder from shipping code that would not even compile."
+    ],
+    "improvements": [
+      {
+        "title": "Make UI validator emit precise, actionable diagnostics",
+        "evidence": "Rounds\u202f1\u201112: validator 'ui primary flow (.)' blocked every round. Example round\u202f1: \"click button \\\"Save receipt\\\"\" failed because the button was DISABLED and required fields were empty; round\u202f12: \"click tab \\\"Dashboard\\\"\" failed with \"0 matching element(s)\". The validator only reported a timeout, giving the coder no guidance on why the UI was disabled or missing.",
+        "change": "Modify ui_check.mjs (UI validator) to parse Playwright errors and output a structured report: element selector, visibility state, disabled reason (e.g., missing required field), and a one\u2011line synthesis suggestion (e.g., \"Enable Save button when Amount, Date and Category are non\u2011empty\"). Include the affected screen name and a short fix hint.",
+        "expected_effect": "Coder receives concrete UI\u2011fix instructions instead of a generic timeout, allowing the UI flow to pass after one iteration and eliminating the 12\u2011round UI blocker.",
+        "priority": "high"
+      },
+      {
+        "title": "Enforce structured, checklist\u2011style reviewer feedback",
+        "evidence": "Reviewer messages (round\u202f1,\u202f2,\u202f5,\u202f7,\u202f10\u2026) are long paragraphs with multiple issues combined (e.g., CSV export line format, ledger entry missing, TypeScript missing imports). The coder repeatedly failed to act on the same CSV verification issue across rounds\u202f2\u20117, indicating the feedback was not parsed into actionable steps.",
+        "change": "Update the code\u2011reviewer prompt to require a Markdown checklist per round: each item must contain file path, line range, exact symptom, expected behaviour, and a suggested code change snippet. Example:\n```\n- **src/lib/exportCsv.ts: line\u202f42** \u2013 verification line includes \"# verification:\" prefix; test expects plain \"<N>,<hash>,<code>\". Replace with `${entryCount},${headHash},${code12}`.\n```",
+        "expected_effect": "Coder can copy\u2011paste or directly apply the suggested edits, reducing repeated failures and cutting down the number of rounds needed to converge.",
+        "priority": "high"
+      },
+      {
+        "title": "Raise and make coder turn limit dynamic",
+        "evidence": "Observations: coder hit its turn limit in 5 of 12 rounds (rounds\u202f1,\u202f2,\u202f5,\u202f9,\u202f10). Each time the round ended with the message \"coder_turn_limit\": true, causing the pipeline to pause and waste ~30\u202fmin per pause (see round\u202f1\u202f=\u202f2002\u202fs, round\u202f2\u202f=\u202f2697\u202fs).",
+        "change": "Increase the per\u2011round turn ceiling from 20\u201160 to 30\u201180 turns and add a policy: if the coder reaches the upper bound, automatically grant an extra 20\u2011turn buffer for the same round before forcing a new round.",
+        "expected_effect": "Fewer forced round breaks, lower total runtime, and smoother progress, especially for complex ledger\u2011hash logic that needs many small edits.",
+        "priority": "medium"
+      },
+      {
+        "title": "Break acceptance\u2011test requirements into atomic sub\u2011tasks in the planner",
+        "evidence": "Across rounds\u202f1\u201112, the same families of acceptance failures recur (CSV export verification format, ledger \"imported\" entry creation, export\u2011created entry code, backup verification). The planner\u2019s acceptance\u2011test rules treat these as a monolithic block, so the coder receives overwhelming, unrelated failures each round.",
+        "change": "Revise the planner prompt and acceptance\u2011test rule generator to decompose each high\u2011level requirement (e.g., \"CSV export must contain verification line\") into separate, versioned test goals with explicit expected values. Emit a roadmap like:\n1. Implement CSV verification line format.\n2. Add ledger entry on receipt creation.\n3. Generate export.created ledger entry with 12\u2011char code.\n4. Verify backup restore calls verifyLedger.\nEach round the planner should surface only the next unfinished sub\u2011task as the primary acceptance target.",
+        "expected_effect": "Coder focuses on one concrete goal per round, fixes it, and sees that specific test pass before moving on, dramatically reducing repeated unrelated failures.",
+        "priority": "medium"
+      },
+      {
+        "title": "Upgrade static validator to surface concrete fix suggestions",
+        "evidence": "Round\u202f5 and\u202f10 TypeScript errors (e.g., \"Cannot find name 'getAllReceipts'\" and \"Cannot find name 'PrimaryButton'\") were reported only as a generic \"validator: typescript (tsc)\" failure. The coder never added the missing imports despite repeated reports, indicating the error details were not actionable.",
+        "change": "Enhance validate.py to parse tsc output and for each error emit a JSON block with fields: file, line, error code, missing identifier, and a one\u2011line fix hint (e.g., \"Add `import { getAllReceipts } from '../../src/lib/receiptStore'` at the top of the file\"). Feed this block into the reviewer feedback so it appears in the checklist style.",
+        "expected_effect": "Missing imports and type errors are corrected immediately, allowing the code to compile and subsequent acceptance tests to run, cutting down many failure cycles.",
+        "priority": "high"
+      }
+    ]
+  }
+}
