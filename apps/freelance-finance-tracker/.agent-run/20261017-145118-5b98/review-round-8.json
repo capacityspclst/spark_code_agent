@@ -1,0 +1,20 @@
+{
+  "verdict": "revise",
+  "issues": [
+    "CSV export verification line format does not match the expected \"<entryCount>,<headHash>,<verificationCode>\" (R26). The code currently writes a line \"<entriesCount>,<headHash>,<combinedCode>\" without the required prefixes and does not include \"entries=...\" etc. This causes failing tests M7 and M11 expecting a verification line starting with \"# verification:\" and matching specific regex patterns.",
+    "Export.created ledger entries store an incorrect verification code format. appendEntryForExport writes `data.code = \":${code12}${hash}\"` which yields a code longer than 12 hex chars, causing tests expecting a 12\u2011character hex code to fail (M11 export.created entry tests).",
+    "History view navigation button \"History\" is not visible in the UI flow. ui_flow.json expects a button with label \"History\" on the receipt edit screen, but ReceiptDetailScreen renders a PrimaryButton with label \"History\" which may not be recognized as a button with role=\"button\" and visible text \"History\" during UI tests, leading to ui_flow primary flow failure.",
+    "Ledger entry creation for receipt and mileage is duplicated. appendEntryForReceipt and appendEntryForMileage skip creation when kind is \"receipt.created\"/\"mileage.created\" but receiptStore.addReceipt also logs a receipt.created entry via some other mechanism, leading to missing ledger entries for created receipts in some tests (R5, R8).",
+    "verifyExportCode does not handle CSV verification line format: it looks for a full code matching the combined 12\u2011char prefix + headHash, but tests compute the code from CSV content without the verification line and expect the function to locate the matching export entry. The implementation never parses the verification line from the file, causing verification failures (R30, R32).",
+    "exportCsv generates verification line without the required '# verification:' prefix and without fields 'entries=', 'headHash=' and 'code=' as regex expects, causing M7 CSV verification line tests to fail.",
+    "exportPdf does not actually generate a PDF file or content; it only records a ledger entry. Tests expecting generatePdf to produce a PDF with an export.created ledger entry with correct fields fail because the ledger entry `code` does not match the required 12\u2011hex\u2011character pattern."
+  ],
+  "missing_requirements": [
+    "R8",
+    "R11",
+    "R13",
+    "R52"
+  ],
+  "wrong_tests": [],
+  "feedback": "Adjust CSV and PDF export implementations to follow the exact verification line format and ledger entry field specifications. Ensure ledger entries are created correctly for receipt and mileage creation without duplication, and expose a visible History button that UI tests can locate. Update export verification logic to parse CSV files and verify codes correctly. Also ensure export.created entries store a 12\u2011character code as required."
+}
