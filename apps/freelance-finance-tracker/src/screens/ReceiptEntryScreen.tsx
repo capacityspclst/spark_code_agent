@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { View } from 'react-native';
-import { useNavigation, NavigationProp } from '@react-navigation/native';
+import { useNavigation, useRoute, NavigationProp } from '@react-navigation/native';
 import { PrimaryButton, Screen, FormField, ChoiceField } from '../components/ui';
 import { Snackbar, Text } from 'react-native-paper';
 import ReceiptImagePicker from '../components/ui/ReceiptImagePicker';
 import { v4 as uuidv4 } from 'uuid';
 import { getStore } from '../lib/storage';
-import { addReceipt, editReceipt } from '../lib/receiptStore';
+import { addReceipt, editReceipt, getAllReceipts } from '../lib/receiptStore';
 import { validateReceiptAmount } from '../lib/validation';
 import { Receipt, ReceiptType } from '../lib/models';
 import { setPendingSnack } from '../lib/uiState';
@@ -19,9 +19,9 @@ import { theme, layout } from '../theme';
 
 export default function ReceiptEntryScreen() {
   const navigation = useNavigation<NavigationProp<any>>();
-  const route = useNavigation<any>();
-  const params = (route as any).getState?.()?.routes?.[ (route as any).getState?.()?.index || 0 ].params || {};
-  const editRecordId: string | undefined = params.recordId;
+  const route = useRoute<any>();
+  const { recordId: editRecordId } = route.params || {};
+
   const [amount, setAmount] = useState('');
   const [date, setDate] = useState('');
   const [category, setCategory] = useState('');
@@ -38,7 +38,8 @@ export default function ReceiptEntryScreen() {
   useEffect(() => {
     if (editRecordId) {
       (async () => {
-        const receipt = await getAllReceipts(getStore()).then(arr => arr.find(r => r.id === editRecordId));
+        const all = await getAllReceipts(getStore());
+        const receipt = all.find((r) => r.id === editRecordId);
         if (receipt) {
           setAmount(String(receipt.amount));
           setDate(receipt.date);
@@ -77,7 +78,7 @@ export default function ReceiptEntryScreen() {
     }
     setError('');
     setSaving(true);
-    const id = uuidv4();
+    const id = editRecordId || uuidv4();
     const receipt: Receipt = {
       id,
       amount: Number(amount),
@@ -89,7 +90,11 @@ export default function ReceiptEntryScreen() {
     };
     try {
       if (photoUri) receipt.photoUri = await persistPhoto(photoUri, id);
-      await addReceipt(getStore(), receipt);
+      if (editRecordId) {
+        await editReceipt(getStore(), receipt);
+      } else {
+        await addReceipt(getStore(), receipt);
+      }
       setPendingSnack('Receipt saved');
       navigation.navigate('Main', { screen: 'Dashboard' });
     } catch (e) {

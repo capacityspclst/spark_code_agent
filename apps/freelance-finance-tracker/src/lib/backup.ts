@@ -119,7 +119,8 @@ export async function restoreBackup(store: Store, backupString: string, passphra
   if (obj.categories) await store.set('categories', obj.categories);
   if (hasLedger) {
     await setLedger(store, obj.ledger);
-    // No import of missing entries; ledger already reflects all records.
+    // After restoring ledger, import any missing records as imported entries
+    await importMissingAsImported(store);
   } else {
     // Legacy backup without ledger: after restoring data, import receipts/mileage as imported entries
     await importMissingAsImported(store);
