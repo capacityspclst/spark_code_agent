@@ -9,8 +9,7 @@ export async function getAllReceipts(store: Store): Promise<Receipt[]> {
 
 export async function addReceipt(store: Store, receipt: Receipt): Promise<void> {
   await store.put('receipts', receipt as unknown as StoredRecord);
-  // Ledger entry for creation
-  await appendEntryForReceipt('receipt.created', receipt.id, receipt, store);
+  // No ledger entry here; caller should explicitly append if needed.
 }
 
 export async function editReceipt(store: Store, receipt: Receipt): Promise<void> {

@@ -12,6 +12,7 @@ export async function getLedger(store: Store): Promise<LedgerEntry[]> {
 /** Store the ledger entries array back into the encrypted store. */
 export async function setLedger(store: Store, entries: LedgerEntry[]): Promise<void> {
   await store.set('ledger', entries);
+  await store.set('ledgerSeqCount', entries.length);
 }
 
 /**

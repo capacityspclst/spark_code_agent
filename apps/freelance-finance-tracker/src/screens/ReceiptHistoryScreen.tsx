@@ -45,6 +45,7 @@ export default function ReceiptHistoryScreen() {
   return (
     <Screen title="Receipt history">
       <HistoryList entries={items} />
+      <PrimaryButton label="Dashboard" onPress={() => navigation.navigate('Dashboard' as any)} />
     </Screen>
   );
 }
