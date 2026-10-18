@@ -1,0 +1,18 @@
+{
+  "verdict": "revise",
+  "issues": [
+    "Failure in __tests__/acceptance/m9.test.ts: CSV export verification line is formatted incorrectly. The test expects a plain line \"<entryCount>,<headHash>,<verificationCode>\" (three comma\u2011separated values) but generateCsv currently prefixes the line with \"# verification:\" and splits the components with \"entries=\u2026\" etc., causing the parsed entry count to be NaN and the verification code format to be wrong. Update generateCsv to output exactly \"{entryCount},{headHash},{verificationCode}\" where verificationCode = first 12 hex chars of SHA\u2011256(content) + headHash, and remove the \"# verification:\" prefix and labelled fields.",
+    "Failure in __tests__/acceptance/m9.test.ts: verifyExportCode logic does not match the combined verification code. The function only compares the provided code to e.data?.code (which stores only the 12\u2011char prefix) and never uses the headHash part. Adjust ledger.appendEntryForExport to store the combined code (or compute it on the fly) and modify verifyExportCode to locate a ledger entry where e.data?.code + e.data?.headHash equals the supplied code (lower\u2011cased), returning the correct known status and ledger metadata.",
+    "Failure in __tests__/acceptance/m7.test.ts: initLedgerIfNeeded does not create \"imported\" entries. The test adds a receipt and mileage before calling initLedgerIfNeeded, but the ledger ends up with zero entries of kind \"imported\". This is because initLedgerIfNeeded checks a 'ledgerInitialized' flag and an existing ledger, but the flag is never set and getLedger returns an empty array, causing the import loop to be skipped. Ensure that initLedgerIfNeeded always imports existing records on first run (when the flag is unset) and correctly sets the ledger entries with kind \"imported\", proper seq, at, prevHash, and hash. Remove the early return that skips import when a ledger already contains entries unless the flag indicates a prior import.",
+    "Failure in __tests__/acceptance/m10.test.ts: backup round\u2011trip test expects the restored ledger to be exactly equal to the original. In backup.createBackup we encrypt the ledger and store it, but restoreBackup verifies the ledger using the *current* store (which is empty) instead of the ledger from the backup. Also restoreBackup calls importMissingAsImported after setting the restored ledger, which adds extra imported entries, causing the ledger array lengths to differ. Modify restoreBackup to replace the ledger with the one from the backup without adding extra imported entries, and only run importMissingAsImported when the restored backup lacks a ledger.",
+    "Failure in UI flow: The primary flow cannot find the \"History\" button after editing a receipt. The button is defined in the UI but not added to the navigation flow or receipt detail screen, so the UI test times out. Add a \"History\" button to ReceiptDetailScreen (and MileageDetailScreen) with an accessible label \"History\" and ensure ui_flow.json includes a step that clicks this button, navigating to the new History screen."
+  ],
+  "missing_requirements": [
+    "R8",
+    "R11",
+    "R13",
+    "R52"
+  ],
+  "wrong_tests": [],
+  "feedback": "Fix the CSV export format and verification logic, ensure verifyExportCode matches the combined code, correct ledger import on first launch to generate \"imported\" entries, adjust backup restore to preserve the original ledger without extra entries, and expose the History view in the UI flow. Once these changes are made and all acceptance tests pass, you can resubmit for approval."
+}

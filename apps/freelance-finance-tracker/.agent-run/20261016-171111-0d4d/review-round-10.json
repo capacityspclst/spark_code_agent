@@ -1,0 +1,16 @@
+{
+  "verdict": "revise",
+  "issues": [
+    "Export ledger entries are incorrect: R28 expects data fields {format, code, entries, headHash} matching the ledger state at export time, but src/lib/exportCsv.ts and src/lib/ledger.ts create mismatched data (entries count and headHash are wrong, and appendEntryForExport misuse leads to hash inconsistencies). This causes test failures for export.created entry verification (expected headHash differs, code mismatch).",
+    "Verification of later changes after export (R33) fails because verifyExportCode never checks for later ledger entries; it only returns laterChanges flag based on seq > entry.seq but the test expects laterChanges true after a correction, which is not set correctly due to incorrect ledger entry data.",
+    "Ledger initialization (R11) adds imported entries but uses a static importDate for all entries, causing timestamps to be identical and may violate test expectations for chronological ordering.",
+    "appendEntryForExport incorrectly constructs the export ledger entry: it sets data.entries to seq instead of the ledger entry count, and headHash logic is wrong (CSV should use previous hash, PDF should use latest hash). This leads to mismatched values in tests."
+  ],
+  "missing_requirements": [
+    "R8",
+    "R11",
+    "R13",
+    "R52"
+  ],
+  "feedback": "Fix the export ledger entry creation to correctly record format, code, entries (ledger length at export), and headHash (previous hash for CSV, current hash for PDF). Adjust verifyExportCode to correctly report laterChanges based on ledger entries after the export. Ensure initLedgerIfNeeded adds imported entries with unique timestamps (e.g., incremental or actual import time). Update appendEntryForExport signature and usage accordingly. After these fixes, re-run acceptance tests."
+}

@@ -1,0 +1,33 @@
+{
+  "verdict": "revise",
+  "issues": [
+    "src/lib/exportCsv.ts: generateCsv creates a verification line with only a 12\u2011character code and no prefix, whereas the specification (R26\u2011R27) requires the line to be '<entryCount>,<headHash>,<verificationCode>' where verificationCode = first 12 hex chars of SHA\u2011256(content)\u202f+\u202fheadHash (total 76 hex chars). This causes M9 tests to fail (code length mismatch) and also mismatches expectations in export tests (M7).",
+    "src/lib/ledger.ts: appendEntryForExport stores the headHash incorrectly \u2013 it sets data.headHash to the new entry's own hash after computing the hash, instead of the hash of the ledger's previous head as required by R28. This corrupts the export ledger entry and breaks verification of exports.",
+    "src/lib/backup.ts: restoreBackup always calls importMissingAsImported after setting the restored ledger, even when the backup already contains a complete ledger. This adds duplicate 'imported' entries for records that already have ledger entries, causing M10 backup round\u2011trip test to fail (restored ledger differs from original). The function should only import missing records when the restored backup lacks a ledger (legacy backup).",
+    "src/lib/exportVerification.ts: verifyExportCode only matches ledger entries where e.data?.code equals the supplied code. After fixing export entry creation to store the full 76\u2011character verification code, this function will work, but currently it does not handle the case where a CSV export line is prefixed with '# verification:' (as expected by the outdated M7 tests). Since the current specification does not include that prefix, the M7 tests are outdated.",
+    "src/lib/ledgerHelpers.ts: initLedgerIfNeeded creates imported ledger entries without first clearing any existing ledger, potentially mixing imported entries with pre\u2011existing ledger records on a fresh run. While not currently causing a test failure, this could violate the append\u2011only model when the app is launched after a previous version that already had a ledger."
+  ],
+  "missing_requirements": [
+    "R26",
+    "R27",
+    "R28",
+    "R31",
+    "R34",
+    "R35",
+    "R36",
+    "R37"
+  ],
+  "wrong_tests": [
+    {
+      "test": "M7: CSV export verification line generates verification line and validates it",
+      "reason": "The test expects the verification line to start with '# verification:' and the code field to be only the first 12 hex characters. The task specification (R26\u2011R27) defines the verification line as '<entryCount>,<headHash>,<verificationCode>' where verificationCode is 12 hex characters of the content hash concatenated with the headHash (total 76 characters). Thus the test contradicts the required behavior.",
+      "fix": "Update the test to match the specification: expect the verification line without the '# verification:' prefix and ensure the code part is 76 hex characters (12\u2011char content hash + 64\u2011char headHash)."
+    },
+    {
+      "test": "M7: CSV export verification line fails verification after file tampering",
+      "reason": "Same mismatch as above: the test uses the outdated '# verification:' format and expects only a 12\u2011character code, which does not align with the specification requiring a 76\u2011character verification code without a prefix.",
+      "fix": "Modify the test to verify that after tampering the computed 76\u2011character verification code no longer matches the code stored in the ledger, using the correct line format."
+    }
+  ],
+  "feedback": "The core ledger functionality is mostly correct, but the export CSV implementation and ledger export entry creation do not follow the specification, leading to failing acceptance tests. Additionally, the backup restore logic unintentionally adds duplicate imported entries. Update generateCsv, appendEntryForExport, and restoreBackup to conform to the spec, and adjust the outdated M7 tests as described. After fixing these issues, re-run the test suite to ensure all acceptance tests pass."
+}

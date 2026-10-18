@@ -45,7 +45,12 @@ export default function ReceiptsScreen() {
         <FlatList
           data={receipts}
           keyExtractor={(item) => item.id}
-          renderItem={({ item }) => <ReceiptCard receipt={item} />}
+          renderItem={({ item }) => (
+            <ReceiptCard
+              receipt={item}
+              onPress={() => navigation.navigate('ReceiptDetail', { recordId: item.id })}
+            />
+          )}
         />
       )}
     </Screen>

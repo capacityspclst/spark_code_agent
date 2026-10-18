@@ -1,0 +1,2 @@
+restoreBackup must run verifyLedger on the decrypted backup's ledger BEFORE replacing anything in the store, and refuse a backup whose ledger does not verify, with a friendly error (e.g. "This backup's records have been altered, so it was not restored."); the existing data must stay untouched. The current restore tests only corrupt the encrypted file, which decryption already rejects, so they don't check this: implement it anyway, it is required by the task (section 4).
+

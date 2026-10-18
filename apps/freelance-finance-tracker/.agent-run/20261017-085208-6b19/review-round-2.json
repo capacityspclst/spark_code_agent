@@ -1,0 +1,38 @@
+{
+  "verdict": "revise",
+  "issues": [
+    "ReceiptEntryScreen.tsx never loads an existing receipt when navigated with { recordId } for editing: it has no code reading route.params.recordId or pre-filling amount/date/category/notes, and onSave always calls addReceipt (create) with a brand-new uuidv4() id, never editReceipt. This causes the static 'ui primary flow' failure: after clicking Edit from ReceiptDetailScreen and filling Notes, the Amount/Date/Category fields are empty (confirmed in the failure output: 'form fields now: Amount=\"\", Date=\"\", Category=\"\", Notes=\"Office supplies updated\"'), so validate() returns a non-empty error and the Save receipt button stays disabled, timing out the click.",
+    "ledger.ts's canonicalJson/computeHash does only a shallow top-level key sort (Object.keys(entry).sort()) and leaves nested object (e.g. `data`) key order as-is / uses JSON.stringify default ordering for nested objects, which is not fully deterministic canonical JSON; this directly causes the M8 test 'hash is correctly computed from canonical JSON' to fail with a mismatched expected hash, and causes downstream hash-chain tests (M11 'hash computation and prevHash linking') to fail too.",
+    "ledgerVerification.ts's verify logic is wrong: it only checks seq continuity and then prevHash, but conflates 'missing entry' and 'out-of-order' detection incorrectly, failing M8 tests 'detects missing entry and reports missing entry' (expected ok=false but got ok=true) and 'detects reordered entries' (expected firstBadSeq=2, got 1), and 'detects incorrect prevHash' (expected reason to contain 'prevhash' but got 'out\u2011of\u2011order').",
+    "appendEntryForExport in ledger.ts stores a combined code (`code12 + hash`) in `data.code`, not the required 12-hex-character verificationCode (R27/R28); this causes multiple failures: M9 'recognizes a valid CSV export and matches ledger entry' fails, M11 'export.created entry with correct fields for CSV/PDF' expects `/^[0-9a-f]{12}$/` but receives a ~76-character string, and 'verify PDF export via typed code' fails because the typed 12-char code never matches the stored combined code.",
+    "M7 test 'ledger import on first launch adds imported entries ... only once' and M11 'import creates correct imported entries' both fail with 0 imported entries instead of 2 \u2014 confirmed the add*Receipt/addMileageEntry calls happen before initLedgerIfNeeded in the test, and per ledgerHelpers.ts initLedgerIfNeeded only works if receipts/mileage already exist and ledger is empty; this should work per the code shown, but the test failure indicates the actual bug differs (likely store encryption/read-after-write timing or addReceipt not actually persisting before initLedgerIfNeeded reads it) \u2014 needs root-cause investigation by the coder since the code logically looks correct but the test demonstrably fails.",
+    "CSV export verification round-trip fails (M7 'generates verification line and validates it' and 'fails verification after file tampering', M11 'CSV verification recompute matches ledger') \u2014 tied to the malformed code format described above, since exportVerification.ts's verifyExportCode matches a 12-char hex fragment from input but the stored `data.code` is the long combined string, so regex matching behaves unpredictably and consistently fails to locate matching entries.",
+    "Given 19 failing acceptance tests directly tied to R8, R11, R15-R19, R26-R28, R30-R31, R33, R35/R52 (backup/restore ledger length mismatch), and the static validation primary-flow failure, the implementation does not meet the stated requirements despite files being present."
+  ],
+  "missing_requirements": [
+    "R6",
+    "R7",
+    "R8",
+    "R11",
+    "R12",
+    "R15",
+    "R16",
+    "R17",
+    "R18",
+    "R19",
+    "R21",
+    "R26",
+    "R27",
+    "R28",
+    "R30",
+    "R31",
+    "R32",
+    "R33",
+    "R34",
+    "R35",
+    "R52",
+    "R54"
+  ],
+  "wrong_tests": [],
+  "feedback": "Multiple core pieces of the ledger are broken: (1) canonical JSON hashing is only shallow-sorted, producing hashes that don't match the expected deterministic hash used across hash-chain and verification tests \u2014 implement a recursive canonicalization (sort keys at every nesting level) before hashing. (2) verifyLedger's logic for distinguishing missing/reordered/prevHash-mismatch entries is incorrect; rework it to check hash recomputation first (field tampering), then seq continuity (missing/reordered), then prevHash linkage, producing the specific reason strings the tests expect ('hash mismatch', 'prevHash mismatch', 'missing entry', 'out-of-order'/reordered). (3) appendEntryForExport conflates the 12-char verification code with the full combined code+headHash string in a single `data.code` field; per R27/R28 the ledger entry's `code` field must be exactly the 12-hex-char verificationCode, and `headHash` must be stored separately \u2014 fix generation and all downstream consumers (exportCsv.ts, exportPdf.ts, exportVerification.ts, VerifyExportScreen) to use the correct separated fields. (4) The 'imported entries created once on first launch' flow is failing in both the m7 and m11 acceptance tests with 0 entries found instead of 2 \u2014 trace why initLedgerIfNeeded doesn't see the receipts/mileage added just before it (check store encryption/caching or race conditions). (5) The most severe defect: ReceiptEntryScreen.tsx is only wired for creating new receipts \u2014 editing an existing receipt (navigated to with a recordId param from ReceiptDetailScreen's Edit button) does not load existing values nor call editReceipt, which breaks the primary UI flow (Edit \u2192 fields are blank \u2192 Save disabled). This must be fixed so that when recordId is present the form loads the existing receipt's data and calls editReceipt (which already correctly appends a receipt.corrected ledger entry) instead of creating a new receipt via addReceipt. All these issues need fixing before this can be approved; with 19 failing acceptance tests and a failing primary UI flow, the task is not yet complete."
+}

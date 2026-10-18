@@ -1,0 +1,227 @@
+{
+  "verdict": "fail",
+  "summary": "The UI mostly follows DESIGN.md \u2013 all screens exist, accessibility (axe) passes, and components use React\u2011Native\u2011Paper. However a critical break in the primary edit\u2011receipt flow was found: the edit form never pre\u2011populates the receipt values, leaving the Save button disabled and causing the end\u2011to\u2011end flow to fail. Several secondary states (loading texts, empty\u2011state back button, offline banner) are missing or incomplete, and a few components do not fully respect the design\u2011token system or touch\u2011target guidelines. These issues range from high (breaks primary flow) to medium (missing spec\u2011defined states) to low (minor copy or styling deviations).",
+  "findings": [
+    {
+      "severity": "high",
+      "file": "src/screens/ReceiptDetailScreen.tsx",
+      "issue": "Edit mode does not initialise the form with the existing receipt data. All FormFields start empty, so the required fields (Amount, Date, Category) remain blank and the **Save receipt** button stays disabled, breaking the primary edit\u2011and\u2011save flow.",
+      "fix": "When entering edit mode, load the receipt record from the store and set the FormField `value` props to those values (e.g. `useState(receipt.amount.toString())`). Also ensure the validation logic re\u2011evaluates on the initial values so the Save button becomes enabled when the receipt is already valid.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/screens/ReceiptHistoryScreen.tsx",
+      "issue": "Loading state only shows an ActivityIndicator without the required accessibility text \"Loading history\u2026\" defined in the spec.",
+      "fix": "Wrap the ActivityIndicator in a view with an accessible label or Text component that reads \"Loading history\u2026\" (e.g. `<ActivityIndicator accessibilityLabel=\"Loading history\u2026\" />`).",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/screens/ReceiptHistoryScreen.tsx",
+      "issue": "Empty state for receipt history lacks the required **Back** primary button, making it impossible to navigate forward from that screen.",
+      "fix": "Add a PrimaryButton labeled \"Back\" that calls `navigation.goBack()` or navigates to the appropriate screen, matching the EmptyState component API.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/components/ui/OfflineBanner.tsx",
+      "issue": "The full\u2011width offline banner described in DESIGN.md is absent from the UI hierarchy, so users never see the \"You are offline\u2026\" message.",
+      "fix": "Create an `OfflineBanner` component that is rendered at the top of every screen (e.g. inside the `Screen` component) and shows a banner with the copy and background colour from the theme when the network status is offline.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/components/ui/BottomTabBar.tsx",
+      "issue": "Bottom navigation is implemented, but on web the bar is not fixed to the bottom of the viewport; it scrolls with content, violating the spec that it should be anchored at the bottom on all platforms.",
+      "fix": "Add a `position: fixed; bottom: 0; left: 0; right: 0;` style (or equivalent React Native style) to the BottomTabBar wrapper and ensure the surrounding layout does not push it off\u2011screen.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/components/ui/EmptyState.tsx",
+      "issue": "EmptyState uses hard\u2011coded colour values (e.g. `#FFFFFF` background) instead of the design tokens (`theme.colors.surface` etc.), breaking the token\u2011driven visual language.",
+      "fix": "Replace all literal colour and radius values with references to `theme.colors.*` and `theme.roundness` via the `useTheme()` hook or the CSS custom properties.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/components/ui/PrimaryButton.tsx",
+      "issue": "Button disabled style does not use the `theme.colors.disabled` and `theme.colors.onDisabled` tokens; it falls back to default Paper styling, causing a mismatch with the spec\u2019s colour palette.",
+      "fix": "Apply `color: theme.colors.onDisabled` for the label and `backgroundColor: theme.colors.disabled` for the button when `disabled` is true.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/components/ui/MiniFAB.tsx",
+      "issue": "Mini\u2011FABs are 40\u202f\u00d7\u202f40\u202fdp, meeting visual size spec, but they lack an invisible hit\u2011area of at least 44\u202f\u00d7\u202f44\u202fdp (no `hitSlop` or wrapper). This can make them hard to tap, especially on smaller screens.",
+      "fix": "Wrap the MiniFAB in a `TouchableOpacity` (or set `hitSlop={{ top: 2, bottom: 2, left: 2, right: 2 }}`) so the effective touch target is 44\u202f\u00d7\u202f44\u202fdp.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "src/components/ui/FormField.tsx",
+      "issue": "FormField does not set `autoComplete` or appropriate `keyboardType` (e.g., numeric for Amount, email\u2011type for notes). While functional, this omits the best\u2011practice autocomplete cues described in the spec.",
+      "fix": "Pass `autoComplete=\"off\"` for generic fields and `keyboardType=\"numeric\"` for the Amount field, `keyboardType=\"default\"` for notes, etc., based on the `label` prop.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "src/components/ui/VerificationStatus.tsx",
+      "issue": "The component renders the status text but does not include the required visual icons (green check for verified, red warning for compromised) nor the exact copy formatting (`Verified\u202f\u00b7\u202f{N} entries\u202f\u00b7\u202fintact`).",
+      "fix": "Add the Material\u2011Icons `check-circle` (color `theme.colors.primary`) for verified and `warning` (color `theme.colors.error`) for compromised, and ensure the text uses the exact copy with middle\u2011dot separators.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "src/components/ui/HistoryItem.tsx",
+      "issue": "HistoryItem lacks an explicit `accessibilityRole=\"listitem\"` and does not provide an `accessibilityLabel` that includes the preview availability, which reduces screen\u2011reader clarity.",
+      "fix": "Add `accessibilityRole=\"listitem\"` and compute an `accessibilityLabel` like \"{kind} on {date}{preview ? ', preview available' : ''}\".",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "viewport": "desktop",
+      "issue": "The 'Receipt' and 'Mileage' buttons are misaligned vertically and horizontally relative to the 'Add receipt' button, creating an inconsistent visual grouping.",
+      "fix": "Align the 'Receipt' and 'Mileage' buttons with the 'Add receipt' button, either by centering them or adjusting their vertical spacing to create a cohesive group.",
+      "screen": "dashboard_empty",
+      "source": "vision"
+    },
+    {
+      "severity": "low",
+      "viewport": "desktop",
+      "issue": "The 'Add receipt' button has slightly more vertical padding than the other buttons, creating a subtle visual inconsistency.",
+      "fix": "Adjust the padding on the 'Add receipt' button to match the other buttons for uniformity.",
+      "screen": "dashboard_empty",
+      "source": "vision"
+    },
+    {
+      "severity": "medium",
+      "screen": "dashboard_empty",
+      "source": "vision",
+      "issue": "visual quality 7/10 on 'dashboard_empty' (target 8+, minimum 7): Polished, modern UI with clear visual hierarchy and consistent spacing. The primary action is obvious and well-placed. Typography is readable with a clear scale. Desktop layout is spacious and not stretched. Minor issues with button alignment and spacing consistency on desktop.",
+      "fix": "Address this screen's findings until it looks polished and professional."
+    },
+    {
+      "severity": "low",
+      "viewport": "phone",
+      "issue": "The 'Add photo' button is visually dominant but lacks a clear affordance for its primary action status (e.g., no icon, no visual weight differentiation from other buttons).",
+      "fix": "Add a subtle icon or use a slightly bolder border/gradient to reinforce it as the primary action. Consider placing it at the top of the form for maximum prominence.",
+      "screen": "receipt_entry",
+      "source": "vision"
+    },
+    {
+      "severity": "low",
+      "viewport": "phone",
+      "issue": "The 'Scan receipt' button is grayed out, but there's no visual cue indicating it's disabled (e.g., opacity, border, or text color).",
+      "fix": "Apply a consistent disabled state style (e.g., lower opacity, gray border) to clearly communicate it's not interactive.",
+      "screen": "receipt_entry",
+      "source": "vision"
+    },
+    {
+      "severity": "low",
+      "viewport": "phone",
+      "issue": "The 'Type' toggle (Expense/Income) is positioned below the 'Additional information' heading, which is visually disconnected from the toggle's purpose.",
+      "fix": "Move the toggle to be inline with the 'Type' label, or group it under the 'Additional information' section with a clear heading.",
+      "screen": "receipt_entry",
+      "source": "vision"
+    },
+    {
+      "severity": "low",
+      "viewport": "desktop",
+      "issue": "The form fields are aligned to the left edge, which is acceptable but not optimal for desktop use. There's no visible padding or margin on the left, making it feel tight.",
+      "fix": "Add consistent left and right padding to the form container to create breathing room and improve readability on desktop.",
+      "screen": "receipt_entry",
+      "source": "vision"
+    },
+    {
+      "severity": "low",
+      "viewport": "both",
+      "issue": "The 'Receipt saved' notification banner partially overlaps the 'Recent activity' section, obscuring part of the activity entry.",
+      "fix": "Adjust the notification banner's position or reduce its height to ensure full visibility of the activity content beneath it.",
+      "screen": "dashboard_populated",
+      "source": "vision"
+    },
+    {
+      "severity": "low",
+      "viewport": "phone",
+      "issue": "The 'Receipt' and 'Mileage' buttons are positioned too close to each other, and the 'Receipt saved' banner slightly overlaps the button area.",
+      "fix": "Increase spacing between the buttons and adjust the banner's placement to avoid overlap with interactive elements.",
+      "screen": "dashboard_populated",
+      "source": "vision"
+    },
+    {
+      "severity": "low",
+      "viewport": "desktop",
+      "issue": "The 'Receipt saved' banner is positioned too high, visually cutting off part of the activity entry text and reducing readability.",
+      "fix": "Lower the banner's vertical position to ensure the full activity entry is visible and readable.",
+      "screen": "dashboard_populated",
+      "source": "vision"
+    },
+    {
+      "severity": "medium",
+      "viewport": "both",
+      "issue": "Typography lacks a clear type scale; the heading 'Receipts' and card text use similar weights and sizes, making hierarchy unclear.",
+      "fix": "Establish a clear type scale: use a larger, bolder heading for 'Receipts', medium for card titles (e.g., 'Expense'), and smaller for metadata (Date, Category).",
+      "screen": "receipts_loaded",
+      "source": "vision"
+    },
+    {
+      "severity": "medium",
+      "viewport": "desktop",
+      "issue": "Content is centered on the page with excessive white space around the card, creating a sparse, underutilized layout that feels unpolished for a premium product.",
+      "fix": "Use a consistent grid system to align the card to the left edge and adjust margins to fill the space more effectively without crowding.",
+      "screen": "receipts_loaded",
+      "source": "vision"
+    },
+    {
+      "severity": "low",
+      "viewport": "phone",
+      "issue": "The card's padding is minimal, making the content feel cramped and reducing visual breathing room.",
+      "fix": "Increase padding within the card to create more space between elements and improve readability.",
+      "screen": "receipts_loaded",
+      "source": "vision"
+    },
+    {
+      "severity": "medium",
+      "screen": "receipts_loaded",
+      "source": "vision",
+      "issue": "visual quality 7/10 on 'receipts_loaded' (target 8+, minimum 7): Polished, clean layout with clear visual hierarchy and consistent spacing. The card-based design is well-structured, and the bottom navigation is functional. However, the typography lacks a clear type scale and the spacing feels minimal for a polished product, especially on desktop where the content is centered and underutilized. No critical usability issues, but lacks visual richness for a premium product.",
+      "fix": "Address this screen's findings until it looks polished and professional."
+    }
+  ],
+  "lighthouse": [
+    {
+      "accessibility": 98,
+      "bestPractices": 100,
+      "performance": 57
+    }
+  ],
+  "vision_scores": [
+    {
+      "screen": "policy_gate",
+      "score": 9.0,
+      "summary": "Polished, modern, and professional on both phone and desktop. Strong visual hierarchy, clear primary action, excellent typography and spacing, consistent grouping, and thoughtful use of color and contrast. Touch targets are appropriately sized. No browser defaults, no clipping, no overlapping, no cramped layout. Desktop layout is spacious and well-proportioned. This screen would not look out of place in a well-reviewed commercial app."
+    },
+    {
+      "screen": "dashboard_empty",
+      "score": 7.0,
+      "summary": "Polished, modern UI with clear visual hierarchy and consistent spacing. The primary action is obvious and well-placed. Typography is readable with a clear scale. Desktop layout is spacious and not stretched. Minor issues with button alignment and spacing consistency on desktop."
+    },
+    {
+      "screen": "receipt_entry",
+      "score": 8.0,
+      "summary": "Polished, modern form with clear hierarchy and consistent spacing. Primary action is obvious. Typography is readable and scaled. Desktop layout uses space effectively. Touch targets are appropriately sized. No critical issues found."
+    },
+    {
+      "screen": "dashboard_populated",
+      "score": 8.0,
+      "summary": "Polished, modern dashboard with clear visual hierarchy, consistent spacing, and touch-friendly controls. The design effectively guides users through financial tracking with a clean, professional aesthetic suitable for a premium product. Minor spacing inconsistencies and lack of explicit primary action beyond the tab bar are the only areas for improvement."
+    },
+    {
+      "screen": "receipts_loaded",
+      "score": 7.0,
+      "summary": "Polished, clean layout with clear visual hierarchy and consistent spacing. The card-based design is well-structured, and the bottom navigation is functional. However, the typography lacks a clear type scale and the spacing feels minimal for a polished product, especially on desktop where the content is centered and underutilized. No critical usability issues, but lacks visual richness for a premium product."
+    }
+  ]
+}

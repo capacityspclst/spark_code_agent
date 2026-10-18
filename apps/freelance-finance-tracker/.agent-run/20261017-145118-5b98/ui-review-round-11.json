@@ -1,0 +1,215 @@
+{
+  "verdict": "fail",
+  "summary": "The UI implementation is generally well\u2011structured and follows the design tokens, component library, and accessibility guidelines described in DESIGN.md. However, the primary navigation (bottom tab bar) is not rendered or not reachable, causing the primary flow to break. Several required screen states (loading, empty, error) are missing or incorrectly wired, and a few accessibility details (focus\u2011visible outlines, ARIA roles, visible focus on the bottom tab bar) are omitted. The components use the theme tokens but there are several instances of hard\u2011coded colors, missing style classes, and missing touch\u2011target sizing. These issues prevent the app from satisfying the polished product bar.",
+  "findings": [
+    {
+      "severity": "high",
+      "file": "src/navigation/index.tsx",
+      "issue": "Bottom tab navigator is never added to the UI; the BottomTabBar component is defined but not used, so the \"Dashboard\" tab cannot be clicked, breaking the primary flow.",
+      "fix": "Wrap the main stack navigator in a BottomTabNavigator (e.g. createBottomTabNavigator) and include the BottomTabBar component as the tabBar. Ensure routes for Dashboard, Mileage, Settings, etc., are declared so the tab icons are rendered and testable.",
+      "source": "designer"
+    },
+    {
+      "severity": "high",
+      "file": "src/screens/PolicyScreen.tsx",
+      "issue": "The Accept button is enabled before the policy checkbox is checked, contrary to DESIGN.md which specifies it should be disabled until checked.",
+      "fix": "Add a state variable tracking the checkbox status and set the Accept button's `disabled` prop accordingly. Use `primary` color token for the label and ensure the button displays the disabled style from the theme.",
+      "source": "designer"
+    },
+    {
+      "severity": "high",
+      "file": "src/components/ui/BottomTabBar.tsx",
+      "issue": "The BottomTabBar component lacks ARIA `role=\"navigation\"` and visible focus styling (2\u202fdp outline) for selected/unselected tabs, making it inaccessible for keyboard navigation and failing WCAG focus visibility.",
+      "fix": "Add `accessibilityRole=\"navigation\"` to the container, and apply a focus\u2011visible style using `theme.colors.outline` and a 2\u202fdp border when a tab receives focus. Ensure each tab item has `accessibilityState={{ selected: true/false }}` and a proper label.",
+      "source": "designer"
+    },
+    {
+      "severity": "high",
+      "file": "src/screens/DashboardScreen.tsx",
+      "issue": "Missing Loading state UI: the screen never shows a centered ActivityIndicator during data fetch as required by DESIGN.md.",
+      "fix": "Add a conditional rendering that displays `<ActivityIndicator size=\"large\" />` centered with the copy \"Checking receipts\u2026\" (or blank) while the receipt list is being loaded.",
+      "source": "designer"
+    },
+    {
+      "severity": "high",
+      "file": "src/screens/ReceiptHistoryScreen.tsx",
+      "issue": "Missing Empty state UI: when a receipt has no history the screen should show the `EmptyState` component with title \"No changes yet\" and description \"This receipt has never been edited.\", but the code only displays a blank view.",
+      "fix": "Render the `<EmptyState>` component with the specified copy and a primary \"Back\" button when the history array is empty.",
+      "source": "designer"
+    },
+    {
+      "severity": "high",
+      "file": "src/screens/ReceiptHistoryScreen.tsx",
+      "issue": "Error handling is shown via a Snackbar only; the DESIGN.md expects the error to be displayed as a Snackbar but also to keep the screen accessible. The Snackbar currently lacks an `accessibilityLiveRegion=\"assertive\"` attribute.",
+      "fix": "Add `accessibilityLiveRegion=\"assertive\"` to the Snackbar component to announce errors to screen readers.",
+      "source": "designer"
+    },
+    {
+      "severity": "high",
+      "file": "src/screens/VerifyExportScreen.tsx",
+      "issue": "Loading spinner for file reading does not display the required copy \"Reading file\u2026\" and lacks role=\"status\" for assistive tech.",
+      "fix": "Wrap the spinner in a view with `accessibilityRole=\"status\"` and include a `<Text>` element with the copy \"Reading file\u2026\" to satisfy the design spec.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/components/ui/FormField.tsx",
+      "issue": "FormField uses `TextInput` but does not set `error` state styling from the theme (e.g., red outline). Errors appear only via HelperText, violating the DESIGN spec's error state visual cue.",
+      "fix": "Pass the `error` prop to `TextInput` and ensure the border color uses `theme.colors.error`. Also add `accessibilityState={{ invalid: true }}` when in error.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/components/ui/PrimaryButton.tsx",
+      "issue": "Button's disabled state shows the primary text color (#0061A4) instead of the design token `color-on-disabled` (#212121), and the ripple effect remains visible on disabled buttons.",
+      "fix": "Update the button style to use `theme.colors.onDisabled` for disabled label color and disable the ripple/elevation when `disabled` is true.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/components/ui/EmptyState.tsx",
+      "issue": "EmptyState component uses a hard\u2011coded icon color and lacks the correct spacing (`spacing * 2` horizontal padding). It does not apply the design token `spacing-unit` for vertical gaps.",
+      "fix": "Replace hard\u2011coded colors with theme color tokens (`theme.colors.onSurfaceVariant` for icon). Apply padding using `theme.spacing * 2` horizontally and vertical gaps using the base 8\u202fdp unit.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/components/ui/VerificationStatus.tsx",
+      "issue": "The component does not include the required green check or red warning icons from the design tokens, nor does it announce the verification status via live region.",
+      "fix": "Add `<Icon name=\"check-circle\" color={theme.colors.primary} />` for verified and `<Icon name=\"alert-circle\" color={theme.colors.error} />` for compromised. Wrap text in a view with `accessibilityLiveRegion=\"polite\"`.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "src/components/ui/Screen.tsx",
+      "issue": "Screen component only includes `SafeAreaView` but omits the global `ScrollView` with horizontal padding of 16\u202fdp defined in the DESIGN spec.",
+      "fix": "Wrap children in a `<ScrollView contentContainerStyle={{ paddingHorizontal: theme.spacing * 2 }}>` to satisfy the layout.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "src/components/ui/ReceiptCard.tsx",
+      "issue": "ReceiptCard uses a hard-coded elevation value and background color instead of the theme's surface/elevation tokens.",
+      "fix": "Apply `elevation={theme.elevation.level1}` (or appropriate level) and `backgroundColor={theme.colors.surface}`.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "src/components/ui/HistoryItem.tsx",
+      "issue": "Missing focusable wrapper; list items are not keyboard navigable and lack a 2\u202fdp outline on focus-visible.",
+      "fix": "Wrap each HistoryItem in a `Pressable` with `android_ripple` and a focus-visible style using `outlineWidth: 2` and `outlineColor: theme.colors.outline`.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "src/components/ui/OfflineBanner.tsx",
+      "issue": "Offline banner is present but uses a hard\u2011coded background color (`#FFEB3B`) instead of a token and does not respect the theme's `surfaceVariant`.",
+      "fix": "Update the banner to use `theme.colors.surfaceVariant` for background and `theme.colors.onSurface` for text.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "viewport": "desktop",
+      "issue": "The 'Receipt' and 'Mileage' buttons are misaligned vertically and horizontally relative to the 'Add receipt' button; they appear to be shifted right and slightly lower, breaking visual alignment on desktop.",
+      "fix": "Center-align the 'Receipt' and 'Mileage' buttons vertically with the 'Add receipt' button and ensure consistent horizontal spacing.",
+      "screen": "dashboard_empty",
+      "source": "vision"
+    },
+    {
+      "severity": "low",
+      "viewport": "phone",
+      "issue": "The 'Add receipt' button has a slight visual misalignment with the icon above it; the button appears to be offset slightly to the right.",
+      "fix": "Center the 'Add receipt' button horizontally under the icon to ensure visual alignment.",
+      "screen": "dashboard_empty",
+      "source": "vision"
+    },
+    {
+      "severity": "medium",
+      "screen": "dashboard_empty",
+      "source": "vision",
+      "issue": "visual quality 7/10 on 'dashboard_empty' (target 8+, minimum 7): Polished, modern UI with clear hierarchy and consistent spacing. The primary action is obvious, typography is readable, and alignment is clean. Minor issues with button spacing and icon alignment on desktop, but overall it meets commercial app standards.",
+      "fix": "Address this screen's findings until it looks polished and professional."
+    },
+    {
+      "severity": "medium",
+      "viewport": "both",
+      "issue": "The 'Recent activity' card is partially obscured by a dark banner ('Receipt saved') that overlaps its content, making the date and category text less readable.",
+      "fix": "Adjust the banner's position or opacity to ensure the underlying content remains fully legible. Consider animating the banner to slide out or fade rather than overlap.",
+      "screen": "dashboard_populated",
+      "source": "vision"
+    },
+    {
+      "severity": "low",
+      "viewport": "desktop",
+      "issue": "The 'Receipt saved' banner is slightly misaligned vertically with the card content below it, creating a visual disconnect.",
+      "fix": "Center the banner horizontally and vertically within the card, or adjust padding to align it with the card\u2019s content.",
+      "screen": "dashboard_populated",
+      "source": "vision"
+    },
+    {
+      "severity": "low",
+      "viewport": "both",
+      "issue": "The receipt card is centered vertically but has significant white space above and below, which may feel sparse on desktop and less intentional on phone.",
+      "fix": "Adjust vertical spacing to better align with a grid; consider adding a subtle divider or padding above/below the card to ground it visually.",
+      "screen": "receipts_loaded",
+      "source": "vision"
+    },
+    {
+      "severity": "low",
+      "viewport": "phone",
+      "issue": "The bottom navigation icons are slightly too close to the edge on phone, reducing touch target area margin.",
+      "fix": "Increase padding around the bottom navigation bar to ensure comfortable touch targets and visual breathing room.",
+      "screen": "receipts_loaded",
+      "source": "vision"
+    },
+    {
+      "severity": "low",
+      "viewport": "desktop",
+      "issue": "The card is centered but lacks horizontal alignment guidance; it appears slightly offset from the left edge, which feels unbalanced on desktop.",
+      "fix": "Align the card to the left edge with consistent left padding to create a more structured and intentional layout on desktop.",
+      "screen": "receipts_loaded",
+      "source": "vision"
+    },
+    {
+      "severity": "medium",
+      "screen": "receipts_loaded",
+      "source": "vision",
+      "issue": "visual quality 7/10 on 'receipts_loaded' (target 8+, minimum 7): Polished, minimalist UI with clear visual hierarchy and consistent spacing. The card layout and bottom navigation are well-aligned and touch-friendly. Typography is clean and readable. No major usability issues, but could benefit from subtle enhancements to spacing and visual weight to feel more premium.",
+      "fix": "Address this screen's findings until it looks polished and professional."
+    }
+  ],
+  "lighthouse": [
+    {
+      "accessibility": 98,
+      "bestPractices": 100,
+      "performance": 57
+    }
+  ],
+  "vision_scores": [
+    {
+      "screen": "policy_gate",
+      "score": 8.0,
+      "summary": "A polished, modern onboarding screen with clear visual hierarchy and a single primary action. Typography is well-scaled and readable. Spacing is generous and aligned on a consistent grid. Color use is minimal and high-contrast. Form design follows best practices with clear labels and helpful hints. Navigation is consistent with the app\u2019s design language. Empty states are minimal but guide the user. Desktop layout is spacious and well-proportioned. Touch targets are appropriately sized. No browser defaults or layout issues."
+    },
+    {
+      "screen": "dashboard_empty",
+      "score": 7.0,
+      "summary": "Polished, modern UI with clear hierarchy and consistent spacing. The primary action is obvious, typography is readable, and alignment is clean. Minor issues with button spacing and icon alignment on desktop, but overall it meets commercial app standards."
+    },
+    {
+      "screen": "receipt_entry",
+      "score": 8.0,
+      "summary": "Polished, modern interface with clear visual hierarchy and touch-friendly controls. Typography is readable and consistent, spacing is generous, and the layout is well-organized for both phone and desktop. No critical issues found."
+    },
+    {
+      "screen": "dashboard_populated",
+      "score": 8.0,
+      "summary": "Polished, modern dashboard with clear visual hierarchy, consistent spacing, and touch-friendly controls. The primary action (viewing recent activity) is obvious, typography is readable, and desktop layout uses space effectively without stretching. Minor spacing and alignment tweaks could elevate it to exceptional."
+    },
+    {
+      "screen": "receipts_loaded",
+      "score": 7.0,
+      "summary": "Polished, minimalist UI with clear visual hierarchy and consistent spacing. The card layout and bottom navigation are well-aligned and touch-friendly. Typography is clean and readable. No major usability issues, but could benefit from subtle enhancements to spacing and visual weight to feel more premium."
+    }
+  ]
+}

@@ -1,0 +1,77 @@
+{
+  "verdict": "revise",
+  "issues": [
+    "Many acceptance tests fail due to mismatched behavior in ledger implementation and export verification:\n- The verification line format in src/lib/exportCsv.ts uses \"# verification: ...\" before the comma\u2011separated values, but the tests (M9) expect a plain \"<entries>,<headHash>,<code>\" line. The generated code also concatenates headHash to the verification code (expected 76\u2011hex chars) while tests expect the code to be only the first 12 hex chars of the content hash (12 chars). This discrepancy causes multiple failures (m7, m8, m9, m11).\n- Ledger entry hash computation in src/lib/ledger.ts uses a simple JSON.stringify with sorted top\u2011level keys, but tests (M8, M40, etc.) expect a deep canonical JSON where nested objects are also sorted. The current implementation produces different hashes, causing hash\u2011chain verification failures.",
+    "src/lib/ledger.ts stores the ledger directly with store.set('ledger', ledger) which writes plaintext JSON into the encrypted Store. The tests (M11) check that the raw store dump does not contain plaintext fields like \"recordId\" or \"receipt.created\". Since the Store implementation encrypts values, this check passes only if the Store encrypts correctly; however the ledger should be stored using the existing encrypted storage API (store.set encrypts internally), but the current code bypasses any encryption helper and may store unencrypted data depending on Store implementation. This violates requirement R13 (ledger entries must be stored encrypted) and may cause test failures.",
+    "src/lib/receiptStore.ts does not create a ledger entry for receipt creation (receipt.created). Requirement R5 states that a ledger entry must be appended when a receipt is created. The current addReceipt function only stores the receipt and relies on external calls that never happen, so created receipts are not recorded in the ledger.\n- Similarly, src/lib/mileageStore.ts (not shown) likely misses ledger entry creation for mileage creation, violating R8.\n- Deletion of all data should clear the ledger (R14), but there is no code resetting the ledger when clearAll or wipe is called.\n- The export verification implementation (src/lib/exportVerification.ts) does not exist or does not match the expected API; tests call verifyExportCode and expect fields like known, entries, headHash, but the repository only has a placeholder or missing implementation, causing failures.\n- The CSV export verification line format does not match the test expectations (should be three comma\u2011separated values without any prefix or label), and the code for computing the verification code (first 12 hex chars of SHA\u2011256 of the content) is incorrectly concatenated with headHash, producing a 76\u2011char string instead of the expected 12\u2011char code.\n- The verification routine for CSV (verifyExportCode) likely does not recompute the code correctly or locate the matching ledger entry, leading to failures in M9 and M11.\n- The ledger import (initLedgerIfNeeded) creates imported entries but does not set prevHash correctly for the first entry (must use 64 zeroes) and does not link correctly to the existing ledger if any entries already exist.\n- The verifyLedger function incorrectly reports \"out\u2011of\u2011order\" for prevHash mismatches, whereas tests expect reason strings like \"prevhash\".\n- Several UI flow related tests fail because the Save receipt button remains disabled (fields are cleared) after editing; this likely stems from missing required field validation logic after adding OCR data or resetting state, causing the UI flow test to time out.\n- The export.created ledger entry implementation (appendEntryForExport) sets data.entries to seq (the entry's seq) instead of the total number of ledger entries at export time, violating R28.\n- The code does not handle legacy backups without a ledger according to R39; importMissingAsImported is never called during restoreBackup.\nAll these issues need to be fixed to satisfy the requirements and make the acceptance tests pass."
+  ],
+  "missing_requirements": [
+    "R5",
+    "R6",
+    "R7",
+    "R8",
+    "R9",
+    "R10",
+    "R11",
+    "R13",
+    "R14",
+    "R15",
+    "R16",
+    "R17",
+    "R18",
+    "R19",
+    "R20",
+    "R21",
+    "R22",
+    "R23",
+    "R24",
+    "R25",
+    "R26",
+    "R27",
+    "R28",
+    "R29",
+    "R30",
+    "R31",
+    "R32",
+    "R33",
+    "R34",
+    "R35",
+    "R36",
+    "R37",
+    "R38",
+    "R40",
+    "R41",
+    "R42",
+    "R43",
+    "R44",
+    "R45",
+    "R46",
+    "R47",
+    "R48",
+    "R49",
+    "R50",
+    "R51",
+    "R52",
+    "R53",
+    "R54",
+    "R55"
+  ],
+  "wrong_tests": [
+    {
+      "test": "M9",
+      "reason": "The acceptance test expects the CSV verification line to be three comma\u2011separated values (<entryCount>,<headHash>,<verificationCode>) where verificationCode is exactly the first 12 hex characters of SHA\u2011256(content) concatenated with the headHash, resulting in a 76\u2011character string. The implementation in src/lib/exportCsv.ts prefixes the line with \"# verification:\" and produces a 12\u2011character code only, not concatenated with headHash. This mismatches the test specification.",
+      "fix": "Update generateCsv to output a plain verification line without the \"# verification:\" prefix, ensure it contains three comma\u2011separated values, compute verificationCode as first 12 hex chars of SHA\u2011256(content) plus the headHash, and adjust appendEntryForExport accordingly."
+    },
+    {
+      "test": "M8",
+      "reason": "The hash computation in src/lib/ledger.ts uses a shallow JSON serialization with sorted top\u2011level keys only. The tests expect a deep canonical JSON where all nested objects are serialized with sorted keys at every level, leading to mismatched expected hash values.",
+      "fix": "Implement a proper canonical JSON serializer that recursively sorts object keys at all nesting levels, and use it for computeHash."
+    },
+    {
+      "test": "M7",
+      "reason": "verifyLedger returns reason \"out\u2011of\u2011order\" for prevHash mismatches, but the test expects the reason string to contain \"prevhash\". Additionally, the verification line format used in generateCsv does not match the test\u2019s expectations, causing verification failures.",
+      "fix": "Update verifyLedger to return reason strings that contain the expected substrings (e.g., \"prevhash\" for prevHash mismatches) and align the CSV export verification line format with test expectations."
+    }
+  ],
+  "feedback": "The ledger implementation and export verification are incorrect and incomplete. Many required requirements are missing or partially implemented, causing numerous test failures. Please fix the ledger entry creation for receipt/mileage CRUD operations, ensure proper canonical JSON hashing, store ledger entries encrypted, implement full import on first launch, correct CSV and PDF export verification line format and code calculation, implement export verification logic, handle ledger clearing on Delete All Data, and update UI flow and Settings verification status. Also ensure verifyLedger reports accurate reasons. After addressing these issues, rerun the acceptance tests."
+}

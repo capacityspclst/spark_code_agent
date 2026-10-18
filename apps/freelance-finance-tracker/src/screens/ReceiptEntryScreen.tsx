@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { View } from 'react-native';
-import { useNavigation, NavigationProp } from '@react-navigation/native';
+import { useNavigation, useRoute, NavigationProp } from '@react-navigation/native';
 import { PrimaryButton, Screen, FormField, ChoiceField } from '../components/ui';
 import { Snackbar, Text } from 'react-native-paper';
 import ReceiptImagePicker from '../components/ui/ReceiptImagePicker';
 import { v4 as uuidv4 } from 'uuid';
 import { getStore } from '../lib/storage';
-import { addReceipt } from '../lib/receiptStore';
+import { addReceipt, editReceipt, getAllReceipts } from '../lib/receiptStore';
+import { appendEntryForReceipt } from '../lib/ledger';
 import { validateReceiptAmount } from '../lib/validation';
 import { Receipt, ReceiptType } from '../lib/models';
 import { setPendingSnack } from '../lib/uiState';
@@ -19,6 +20,9 @@ import { theme, layout } from '../theme';
 
 export default function ReceiptEntryScreen() {
   const navigation = useNavigation<NavigationProp<any>>();
+  const route = useRoute<any>();
+  const { recordId: editRecordId } = route.params || {};
+
   const [amount, setAmount] = useState('');
   const [date, setDate] = useState('');
   const [category, setCategory] = useState('');
@@ -31,6 +35,23 @@ export default function ReceiptEntryScreen() {
   const [categories, setCategories] = useState<Array<{ id: string; name: string }>>([]);
   const [preFilled, setPreFilled] = useState<Partial<ParsedReceipt>>({});
   const [marked, setMarked] = useState<{ amount: boolean; date: boolean; category: boolean }>({ amount: false, date: false, category: false });
+  // Load receipt for editing if editRecordId is present
+  useEffect(() => {
+    if (editRecordId) {
+      (async () => {
+        const all = await getAllReceipts(getStore());
+        const receipt = all.find((r) => r.id === editRecordId);
+        if (receipt) {
+          setAmount(String(receipt.amount));
+          setDate(receipt.date);
+          setCategory(receipt.category);
+          setType(receipt.type as ReceiptType);
+          setNotes(receipt.notes ?? '');
+          if (receipt.photoUri) setPhotoUri(receipt.photoUri);
+        }
+      })();
+    }
+  }, [editRecordId]);
 
   // Load categories for dropdown (hidden filtered)
   useEffect(() => {
@@ -58,7 +79,7 @@ export default function ReceiptEntryScreen() {
     }
     setError('');
     setSaving(true);
-    const id = uuidv4();
+    const id = editRecordId || uuidv4();
     const receipt: Receipt = {
       id,
       amount: Number(amount),
@@ -70,9 +91,17 @@ export default function ReceiptEntryScreen() {
     };
     try {
       if (photoUri) receipt.photoUri = await persistPhoto(photoUri, id);
-      await addReceipt(getStore(), receipt);
+      if (editRecordId) {
+        await editReceipt(getStore(), receipt);
+      } else {
+        await addReceipt(getStore(), receipt);
+      }
       setPendingSnack('Receipt saved');
-      navigation.navigate('Main', { screen: 'Dashboard' });
+      if (editRecordId) {
+        navigation.navigate('ReceiptDetail' as any, { recordId: id });
+      } else {
+        navigation.navigate('Main', { screen: 'Dashboard' });
+      }
     } catch (e) {
       setError('Unable to save receipt. Please try again.');
     } finally {

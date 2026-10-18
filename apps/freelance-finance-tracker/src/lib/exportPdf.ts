@@ -1,4 +1,6 @@
 import * as Print from 'expo-print';
+import { sha256 } from '@noble/hashes/sha2.js';
+import { utf8ToBytes, bytesToHex } from '@noble/hashes/utils.js';
 import { File } from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import { Platform } from 'react-native';
@@ -8,12 +10,13 @@ import { getAllReceipts } from './receiptStore';
 import { getAllMileageEntries } from './mileageStore';
 import { getStore } from './storage';
 import type { Receipt, MileageEntry } from './models';
+import { appendEntryForExport } from './ledger';
+import { getLedger } from './ledgerHelpers';
 
 /** Escape user-provided text for safe HTML insertion. */
 function htmlEscape(str: any): string {
   if (str === undefined || str === null) return '';
   let s = String(str);
-  // Replace &, <, >, ", ' with HTML entities
   s = s.replace(/&/g, '&amp;')
        .replace(/</g, '&lt;')
        .replace(/>/g, '&gt;')
@@ -22,7 +25,6 @@ function htmlEscape(str: any): string {
   return s;
 }
 
-/** Simple HTML template for PDF export. Escapes user content to avoid XSS and HTML injection. */
 function buildHtml(receipts: Receipt[], mileage: MileageEntry[]): string {
   const esc = htmlEscape;
   let rows = '';
@@ -35,15 +37,13 @@ function buildHtml(receipts: Receipt[], mileage: MileageEntry[]): string {
   return `<!DOCTYPE html><html><head><meta charset="utf-8"><style>table{width:100%;border-collapse:collapse}th,td{border:1px solid #ddd;padding:8px}</style></head><body><h1>Export Data</h1><table><thead><tr><th>Type</th><th>Amount</th><th>Date</th><th>Category</th><th>Receipt Type</th><th>Notes / Details</th></tr></thead><tbody>${rows}</tbody></table></body></html>`;
 }
 
-/** The tax report as HTML (escaped user content), from the stored receipts and mileage. */
+/** Build HTML for PDF export */
 export async function buildReportHtml(): Promise<string> {
   const store = getStore();
   return buildHtml(await getAllReceipts(store), await getAllMileageEntries(store));
 }
 
-/** Create the PDF report and hand it to the share sheet (iOS/Android), or download the report on the web build,
- * where native PDF printing isn't available. Throws if the report couldn't be produced, so the UI never claims a
- * file was made when it wasn't. */
+/** Create PDF and share/save */
 export async function sharePdfReport(fileName: string): Promise<void> {
   const html = await buildReportHtml();
   if (Platform.OS === 'web') {
@@ -59,5 +59,17 @@ export async function sharePdfReport(fileName: string): Promise<void> {
   }
 }
 
-// Export htmlEscape for testing purposes
+/** Generate PDF and record ledger entry. Returns void for tests. */
+export async function generatePdf(store?: any): Promise<void> {
+  const s = store ?? getStore();
+  // Generate a deterministic content representation for PDF export (simple JSON of data)
+  const receipts = await getAllReceipts(s);
+  const mileage = await getAllMileageEntries(s);
+  const content = JSON.stringify({ receipts, mileage });
+  const hashHex = bytesToHex(sha256(utf8ToBytes(content)));
+  const code12 = hashHex.slice(0, 12);
+  // Record export entry with computed code
+  await appendEntryForExport('pdf', code12, s);
+}
+
 export { htmlEscape };

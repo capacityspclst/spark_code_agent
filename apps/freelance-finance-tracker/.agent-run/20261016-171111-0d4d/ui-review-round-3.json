@@ -1,0 +1,181 @@
+{
+  "verdict": "fail",
+  "summary": "The UI implements most of the screens and states described in DESIGN.md and passes automated accessibility (axe) and Lighthouse (a11y\u00a098) checks, but the primary user flow is broken: the **Edit** action on a receipt cannot be found or activated, preventing users from editing a receipt. Several secondary expectations are also missing or only partially met \u2013 notably the error view on the policy gate, offline\u2011banner inclusion, strict use of design tokens, and consistent focus\u2011visible styling. These issues affect the polish and completeness of the product and must be fixed before release.",
+  "findings": [
+    {
+      "severity": "high",
+      "file": "src/screens/ReceiptDetailScreen.tsx",
+      "issue": "The \"Edit\" button defined in the spec (visible text label, enabled in view mode) is missing or not interactable \u2013 the UI flow test times out trying to click it. This breaks the primary flow of editing a receipt.",
+      "fix": "Add a clearly labelled PrimaryButton with the text \"Edit\" (or a TextButton) inside ReceiptDetailScreen, ensure it is rendered above the receipt card, not covered by any overlay, and that it is enabled when the screen loads. Provide an `accessibilityLabel=\"Edit\"` and make sure the button is focusable (tab\u2011order, visible focus outline). Update navigation to push the edit form when pressed.",
+      "source": "designer"
+    },
+    {
+      "severity": "high",
+      "file": "src/screens/PolicyScreen.tsx",
+      "issue": "When the policy acceptance fails (e.g. storage error) the UI does not render the full\u2011screen error view with a **Retry** button as required by the design. The flow currently only shows a generic alert or nothing, leaving the user stuck.",
+      "fix": "Implement a dedicated error state component that displays the copy \"Unable to store your acceptance. Please try again.\" and a PrimaryButton labelled \"Retry\" that re\u2011executes the accept logic. Ensure this view covers the entire screen and disables underlying navigation.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/components/ui/OfflineBanner.tsx",
+      "issue": "The design calls for an offline banner on any screen, but no such component is imported or rendered in the top\u2011level `Screen` wrapper, so users never see the \"You are offline...\" message.",
+      "fix": "Create an OfflineBanner component (or reuse existing one) that displays the copy with full\u2011width background, and inject it into the `Screen` component (or App container) so it appears on every screen when `NetInfo.isInternetReachable` is false.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/components/ui/PrimaryButton.tsx",
+      "issue": "Button styling uses hard\u2011coded hex colors (e.g. `backgroundColor: '#0061A4'`) and dimensions (e.g. `height: 48`), bypassing the design tokens defined in `src/theme.ts` and `public/theme.css`.",
+      "fix": "Replace all literal colour and size values with references to the theme (e.g. `backgroundColor: theme.colors.primary`, `height: theme.roundness * 2` or `spacing * 6`). Import the theme via the PaperProvider context and use `useTheme` where needed.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/components/ui/BottomTabBar.tsx",
+      "issue": "The bottom navigation bar is not anchored to the bottom on the web build \u2013 it scrolls with the page content, breaking the spec that the tab bar is always visible.",
+      "fix": "Apply a fixed position style (`position: fixed; bottom: 0; left: 0; right: 0; height: 56dp;`) in the component or via the theme\u2019s `bottomNavigation` style. Ensure the `Screen` container adds bottom padding equal to the tab bar height so content isn\u2019t hidden.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/components/ui/PrimaryButton.tsx",
+      "issue": "Focus\u2011visible styling is missing on web \u2013 when a button receives keyboard focus there is no 2\u202fdp outline defined in the spec.",
+      "fix": "Add a `:focus-visible` CSS rule (or React\u2011Native style) that draws a `2dp` outline using `theme.colors.outline`. Ensure the rule is applied to all interactive components (PrimaryButton, TextButton, MiniFAB, HistoryItem, etc.).",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/components/ui/FormField.tsx",
+      "issue": "Some `FormField` instances rely on placeholder text only and lack an explicit `label` prop, violating the accessibility requirement that every TextInput has a visible label.",
+      "fix": "Ensure every FormField passes a non\u2011empty `label` prop that mirrors the intended field name (Amount, Date, Category, Type, Notes). If a placeholder is needed, keep it but keep the label visible.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/screens/ReceiptHistoryScreen.tsx",
+      "issue": "The empty\u2011state view shows only a title and description; the required primary button labelled **Back** is either missing or has the wrong text, deviating from the spec.",
+      "fix": "Render an `EmptyState` component with `actionLabel=\"Back\"` and attach a navigation action that returns to the previous screen. Verify the copy matches the design exactly.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "src/components/ui/EmptyState.tsx",
+      "issue": "The illustration used in `EmptyState` does not have an `accessibilityLabel` (or `alt`) describing it, which can cause screen readers to announce \u201cimage\u201d.",
+      "fix": "Add `accessibilityLabel=\"Empty state illustration\"` (or appropriate alt text) to the Image component inside EmptyState.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "src/components/ui/SummaryCard.tsx",
+      "issue": "Vertical spacing between the card title and value is `10dp` in the current stylesheet, while the spec defines a rhythm of 8dp (spacing\u2011unit).",
+      "fix": "Adjust the margin/padding to use multiples of the base unit (`spacing * 1` = 8dp) \u2013 e.g., `marginBottom: theme.spacing` \u2013 to keep the vertical rhythm consistent.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "viewport": "both",
+      "issue": "The 'Add receipt' button is visually distinct but not the only primary action; 'Receipt' and 'Mileage' buttons are also primary actions for adding entries, which could confuse users about the intended primary flow.",
+      "fix": "Consider making 'Add receipt' the only primary action, or clearly indicate that tapping 'Receipt' or 'Mileage' leads to the same 'Add receipt' flow, perhaps with a subtle visual hierarchy (e.g., 'Add receipt' larger or more prominent).",
+      "screen": "dashboard_empty",
+      "source": "vision"
+    },
+    {
+      "severity": "low",
+      "viewport": "desktop",
+      "issue": "The 'Receipt' and 'Mileage' buttons are positioned too close to each other and to the 'Add receipt' button, creating a cramped grouping on desktop.",
+      "fix": "Increase spacing between the 'Receipt' and 'Mileage' buttons, and between them and the 'Add receipt' button, to improve visual breathing room and reduce cognitive load on desktop.",
+      "screen": "dashboard_empty",
+      "source": "vision"
+    },
+    {
+      "severity": "low",
+      "viewport": "both",
+      "issue": "The recent activity card has a slight horizontal misalignment with the card edges, causing a small gap on the right side.",
+      "fix": "Adjust padding or margins to ensure consistent alignment with card boundaries.",
+      "screen": "dashboard_populated",
+      "source": "vision"
+    },
+    {
+      "severity": "low",
+      "viewport": "phone",
+      "issue": "The recent activity section is slightly cramped vertically, with minimal spacing between the activity card and the bottom tab bar.",
+      "fix": "Increase vertical padding between the activity card and the tab bar to improve breathing room.",
+      "screen": "dashboard_populated",
+      "source": "vision"
+    },
+    {
+      "severity": "medium",
+      "viewport": "phone",
+      "issue": "No primary action button (Edit) visible on the ReceiptDetailScreen. The screen shows only a card with no actionable elements.",
+      "fix": "Add a clearly labeled primary action button (e.g., 'Edit') below the receipt card, aligned with the bottom tab bar.",
+      "screen": "receipts_loaded",
+      "source": "vision"
+    },
+    {
+      "severity": "medium",
+      "viewport": "phone",
+      "issue": "Typography lacks a clear type scale. The heading 'Receipts' is large, but there's no visual hierarchy for the card content (amount, date, category).",
+      "fix": "Establish a type scale: use a larger font for the receipt amount, a medium font for the date and category, and a smaller font for the description. Use bold or weight to differentiate.",
+      "screen": "receipts_loaded",
+      "source": "vision"
+    },
+    {
+      "severity": "low",
+      "viewport": "phone",
+      "issue": "The receipt card is centered but lacks visual grouping or padding on the left/right edges, making it feel isolated.",
+      "fix": "Add consistent padding around the card to anchor it within the screen space and improve visual grouping.",
+      "screen": "receipts_loaded",
+      "source": "vision"
+    },
+    {
+      "severity": "low",
+      "viewport": "desktop",
+      "issue": "The desktop version is well-spaced but lacks additional context or interaction cues. The 'Receipts' heading is prominent, but the card appears too small and isolated.",
+      "fix": "Add subtle visual cues like a background gradient or subtle border to the card to make it feel more integrated. Consider adding a secondary action (e.g., 'View History') if applicable.",
+      "screen": "receipts_loaded",
+      "source": "vision"
+    },
+    {
+      "severity": "medium",
+      "screen": "receipts_loaded",
+      "source": "vision",
+      "issue": "visual quality 7/10 on 'receipts_loaded' (target 8+, minimum 7): Polished, clean layout with consistent spacing and clear visual hierarchy. The card design is modern and well-spaced. However, the typography lacks a clear scale and the primary action (Edit) is missing. Desktop version is well-proportioned but lacks additional context or interaction cues.",
+      "fix": "Address this screen's findings until it looks polished and professional."
+    }
+  ],
+  "lighthouse": [
+    {
+      "accessibility": 98,
+      "bestPractices": 100,
+      "performance": 57
+    }
+  ],
+  "vision_scores": [
+    {
+      "screen": "policy_gate",
+      "score": 8.0,
+      "summary": "Polished, modern onboarding screen with clear visual hierarchy and consistent spacing. Typography is readable and well-scaled. The primary action is obvious and disabled until conditions are met. No critical issues found."
+    },
+    {
+      "screen": "dashboard_empty",
+      "score": 8.0,
+      "summary": "Polished, modern UI with clear visual hierarchy and intuitive empty state. Typography is well-scaled and readable. Spacing and alignment are consistent on both phone and desktop. Color use is restrained and effective. Touch targets are appropriately sized. No browser defaults or layout issues."
+    },
+    {
+      "screen": "receipt_entry",
+      "score": 8.0,
+      "summary": "Polished, modern interface with clear visual hierarchy and touch-friendly controls. Typography is clean and readable, spacing is consistent, and the form is well-grouped. The primary action is obvious and prominent. No critical issues found."
+    },
+    {
+      "screen": "dashboard_populated",
+      "score": 8.0,
+      "summary": "Polished, modern dashboard with clear visual hierarchy, consistent spacing, and touch-friendly controls. The primary action is obvious, typography is readable, and desktop layout uses space effectively without stretching the phone layout. Minor spacing inconsistencies and a slightly cramped recent activity section are the only notable issues."
+    },
+    {
+      "screen": "receipts_loaded",
+      "score": 7.0,
+      "summary": "Polished, clean layout with consistent spacing and clear visual hierarchy. The card design is modern and well-spaced. However, the typography lacks a clear scale and the primary action (Edit) is missing. Desktop version is well-proportioned but lacks additional context or interaction cues."
+    }
+  ]
+}
