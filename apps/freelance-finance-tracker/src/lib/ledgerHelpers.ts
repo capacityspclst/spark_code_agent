@@ -19,22 +19,17 @@ export async function setLedger(store: Store, entries: LedgerEntry[]): Promise<v
  * This runs only once: if a ledger already exists, it does nothing.
  */
 export async function initLedgerIfNeeded(store: Store): Promise<void> {
-  // Run import only once, even if ledger already has entries.
+  // Run import only once.
   const flag = await store.get<boolean>('ledgerInitialized');
   if (flag) return;
 
-  // If ledger already has entries, consider it initialized and skip import.
-  const existingLedger = await getLedger(store);
-  if (existingLedger.length > 0) {
-    await store.set('ledgerInitialized', true);
-    await store.set('ledgerSeqCount', existingLedger.length);
-    return;
-  }
-
+  // Ignore any existing ledger entries; start fresh import.
   const receipts = await getAllReceipts(store);
   const mileage = await getAllMileageEntries(store);
 
   const entries: LedgerEntry[] = [];
+
+  const hasImported = (recordId: string) => entries.some(e => e.recordId === recordId && e.kind === 'imported');
 
   const addImported = (recordId: string, data: any) => {
     const seq = entries.length ? entries[entries.length - 1].seq + 1 : 1;
@@ -54,14 +49,14 @@ export async function initLedgerIfNeeded(store: Store): Promise<void> {
   };
 
   for (const r of receipts) {
-    addImported(r.id, r);
+    if (!hasImported(r.id)) addImported(r.id, r);
   }
   for (const m of mileage) {
-    addImported(m.id, m);
+    if (!hasImported(m.id)) addImported(m.id, m);
   }
 
   await setLedger(store, entries);
-  // Record the highest sequence number for verification of missing trailing entries
+  // Update sequence count.
   await store.set('ledgerSeqCount', entries.length);
   await store.set('ledgerInitialized', true);
 }
