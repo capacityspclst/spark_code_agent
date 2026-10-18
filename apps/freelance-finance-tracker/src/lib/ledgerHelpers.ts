@@ -23,11 +23,12 @@ export async function initLedgerIfNeeded(store: Store): Promise<void> {
   const flag = await store.get<boolean>('ledgerInitialized');
   if (flag) return;
 
-  // Ignore any existing ledger entries; start fresh import.
+  // Retrieve any existing ledger entries.
   const receipts = await getAllReceipts(store);
   const mileage = await getAllMileageEntries(store);
 
-  const entries: LedgerEntry[] = [];
+  const existingLedger = await getLedger(store);
+  const entries: LedgerEntry[] = [...existingLedger];
 
   const hasImported = (recordId: string) => entries.some(e => e.recordId === recordId && e.kind === 'imported');
 

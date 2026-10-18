@@ -68,8 +68,9 @@ export async function generateCsv(store?: Store): Promise<string> {
   const exportEntry = ledger[ledger.length - 1];
   const entriesCount = ledger.length;
   const headHash = exportEntry.hash;
-  // Verification line format: "<entriesCount>,<headHash>,<code>"
-  const verificationLine = `${entriesCount},${headHash},${code12}`;
+  // Verification line format: "<entriesCount>,<headHash>,<code>" where code = 12-char prefix + headHash
+  const combinedCode = `${code12}${headHash}`;
+  const verificationLine = `${entriesCount},${headHash},${combinedCode}`;
   lines.push(verificationLine);
   return lines.join('\n');
 }
