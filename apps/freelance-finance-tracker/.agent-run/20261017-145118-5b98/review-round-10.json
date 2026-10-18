@@ -1,0 +1,21 @@
+{
+  "verdict": "revise",
+  "issues": [
+    "Backup verification fails: restoreBackup throws \"Backup verification failed: friendly error\" for valid backups containing a ledger (tests M4, M11, M6). This is caused by verifyLedger being called with the backup ledger entries but still reading the store's ledgerSeqCount, causing a false mismatch. Adjust restoreBackup/verifyLedger to verify the passed ledger entries without relying on store state.",
+    "Export ledger entry code format is incorrect: appendEntryForExport stores data.code as the concatenation of the 12\u2011char verification code and the headHash, resulting in codes longer than 12 hex characters. Tests M11 expect export.created entry code to match /^[0-9a-f]{12}$/ and verification line to be \"<entries>,<headHash>,<code>\". Fix appendEntryForExport to store only the 12\u2011char code in data.code and adjust generateCsv/generatePdf to output the verification line with that code.",
+    "Verification line generation is wrong: generateCsv (and similarly generatePdf) appends a line formatted as \"<entries>,<headHash>,${code12}${headHash}\" instead of \"<entries>,<headHash>,${code12}\". This causes CSV verification tests (M7, M11) to fail. Update the export functions to use the correct format.",
+    "ReceiptHistoryScreen references PrimaryButton without importing it, causing a TypeScript error (TS2304) and UI flow failure (PrimaryButton is not defined). Import PrimaryButton from the UI components or export it via the UI index.",
+    "PrimaryButton is not exported in src/components/ui/index.ts, so consuming screens cannot resolve it. Add PrimaryButton to the barrel export file.",
+    "verifyExportCode expects ledger entry data.code to be the full combined code (12\u2011char + headHash) but after fixing export code, verifyExportCode must compare only the 12\u2011char prefix. Adjust verifyExportCode logic to match the updated ledger entry structure.",
+    "verifyLedger signature mismatch: verifyLedger is called with two arguments (store, obj.ledger) but its implementation expects (store, entries?). The test spies on verifyLedger expecting it to be invoked during restoreBackup. Ensure verifyLedger can be called with provided entries without errors.",
+    "UI flow JSON (ui_flow.json) refers to a PrimaryButton component that is missing; this leads to UI primary flow failures. Update ui_flow.json to reference the correct button component name or ensure PrimaryButton is defined globally."
+  ],
+  "missing_requirements": [
+    "R8",
+    "R11",
+    "R13",
+    "R52"
+  ],
+  "wrong_tests": [],
+  "feedback": "The implementation has several critical defects causing backup verification, ledger export, and UI flow failures, and some required requirements are not satisfied. Address the listed issues and ensure all acceptance tests pass."
+}

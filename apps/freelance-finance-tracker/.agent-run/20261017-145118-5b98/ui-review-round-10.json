@@ -1,0 +1,172 @@
+{
+  "verdict": "fail",
+  "summary": "The app follows the visual language and most of the interaction patterns defined in DESIGN.md \u2013 it uses the MD3 theme, the component library is built on React\u2011Native\u2011Paper, and there are no axe violations or major accessibility regressions (Lighthouse\u202faccessibility\u202f98, best\u2011practices\u202f100). However the primary navigation flow is broken: the bottom tab bar is not rendered or is not discoverable by the test harness, so users cannot move from the policy gate to the Dashboard. Several secondary UX details are missing or deviate from the spec (offline banner, consistent use of design tokens, focus\u2011visible outlines and accessibility labels on FABs, and a few error\u2011state UI pieces). These issues are high\u2011impact for the primary flow and medium\u2011impact for polish, accessibility, and design\u2011system fidelity.",
+  "findings": [
+    {
+      "severity": "high",
+      "file": "src/navigation/index.tsx",
+      "issue": "Bottom tab navigation is missing or hidden after the policy gate \u2013 the test step `click tab \"Dashboard\"` cannot locate any matching element. This prevents users from reaching the Dashboard, breaking the primary flow.",
+      "fix": "Render the `BottomTabBar` (or `BottomNavigation`) on all signed\u2011in screens, ensure it is not conditionally removed after the policy gate, add an accessible label (`accessibilityLabel=\"Dashboard tab\"`), role=`navigation`, and verify that the tab icons have a minimum 44\u00d744\u202fdp touch area. Update the navigation stack so the tab bar is part of the root navigator, not a child of a screen that unmounts it.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/components/ui/PrimaryButton.tsx",
+      "issue": "Button colours are hard\u2011coded (`backgroundColor: '#0061A4'`, `color: '#FFFFFF'`) instead of pulling from `theme.colors.primary` and `theme.colors.onPrimary`. This bypasses the design\u2011token system and can cause contrast drift if the theme changes.",
+      "fix": "Replace all literal colour values with references to the MD3 theme (e.g., `style={{ backgroundColor: theme.colors.primary }}`) and remove any custom overrides that conflict with the token definitions.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/components/ui/FABAdd.tsx",
+      "issue": "FABAdd lacks an `accessibilityLabel` and a visible focus\u2011outline for keyboard navigation. Screen readers cannot announce the purpose of the FAB, and keyboard users cannot see focus.",
+      "fix": "Add `accessibilityLabel=\"Add receipt\"` (or the appropriate action) and implement a focus\u2011visible style (2\u202fdp outline using `theme.colors.outline`) that appears when the FAB receives focus. Ensure the component respects the 44\u00d744\u202fdp touch target.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/components/ui/ScreenContainer.tsx",
+      "issue": "Layout uses raw spacing numbers (e.g., `padding: 16` and `margin: 12`) instead of the design\u2011token `theme.spacing` multiplier, violating the spacing system defined in DESIGN.md.",
+      "fix": "Replace numeric spacing values with the token helper (e.g., `padding: theme.spacing * 2`, `marginBottom: theme.spacing * 1.5`). Centralise spacing through the token to keep the vertical rhythm consistent.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/components/ui/OfflineBanner.tsx",
+      "issue": "The offline banner specified in the spec is not present in the codebase, and none of the screens import a banner component. Users never see the \"You are offline\" notice.",
+      "fix": "Create an `OfflineBanner` component that uses `theme.colors.surfaceVariant` background and `theme.colors.onSurface` text, render it at the top of the `Screen` wrapper conditionally based on connectivity, and ensure it spans the full width.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/screens/PolicyScreen.tsx",
+      "issue": "Error state (failed to store acceptance) shows a full\u2011screen message but does not include a visible **Retry** button as required. The UI only displays the error text.",
+      "fix": "Add a `PrimaryButton` labelled \"Retry\" that calls the acceptance\u2011store logic again. Ensure the button is enabled, uses the token colours, and is focusable.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/screens/VerifyExportScreen.tsx",
+      "issue": "Loading state for file reading is not implemented \u2013 the spec calls for an `ActivityIndicator` with label \"Reading file\u2026\" but the screen only shows the file picker or a blank state while processing.",
+      "fix": "Add a conditional `ActivityIndicator` with `size=\"large\"` and a `<Text variant=\"bodyLarge\">Reading file\u2026</Text>` overlay when the file is being read. Use the theme\u2019s `outline` colour for the spinner.",
+      "source": "designer"
+    },
+    {
+      "severity": "medium",
+      "file": "src/components/ui/HistoryItem.tsx",
+      "issue": "List items lack a visible focus ring when navigated via keyboard; they only have a ripple on touch. This fails the focus\u2011visible requirement for accessible list navigation.",
+      "fix": "Add a style that applies a 2\u202fdp border using `theme.colors.outline` when `focusVisible` is true (React\u2011Native\u2011Paper provides `onFocus`/`onBlur`). Ensure the touch target remains \u226544\u00d744\u202fdp.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "src/components/ui/EmptyState.tsx",
+      "issue": "The illustration used in `EmptyState` does not have an `accessibilityLabel` (alt text) \u2013 the spec requires \"Empty state illustration\" for screen readers.",
+      "fix": "Add `accessibilityLabel=\"Empty state illustration\"` to the `<Image>` component inside `EmptyState`.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "file": "src/components/ui/VerificationStatus.tsx",
+      "issue": "The verified and compromised badges use colour only (green check / red warning) without accompanying icons for state announcement, which reduces perceivability for colour\u2011blind users.",
+      "fix": "Add a check\u2011mark icon for the verified state and a warning icon for the compromised state (both with appropriate `accessibilityLabel`). Ensure the icons are announced via `announceForAccessibility`.",
+      "source": "designer"
+    },
+    {
+      "severity": "low",
+      "viewport": "both",
+      "issue": "The checkbox and 'Accept' button are slightly misaligned vertically within their container, creating a small visual inconsistency.",
+      "fix": "Adjust the vertical alignment of the checkbox and button within their container to ensure they sit flush with the top and bottom edges.",
+      "screen": "policy_gate",
+      "source": "vision"
+    },
+    {
+      "severity": "low",
+      "viewport": "both",
+      "issue": "The 'Tick the box to continue.' hint text is slightly smaller than the main body text and positioned below the button, which can make it less prominent.",
+      "fix": "Increase the size of the hint text slightly or position it above the button for better visual hierarchy.",
+      "screen": "policy_gate",
+      "source": "vision"
+    },
+    {
+      "severity": "low",
+      "viewport": "both",
+      "issue": "Form fields lack placeholder text or hints, which could help users understand expected input.",
+      "fix": "Add placeholder text (e.g., 'Enter amount' for Amount field) or inline hints to guide users.",
+      "screen": "receipt_entry",
+      "source": "vision"
+    },
+    {
+      "severity": "low",
+      "viewport": "both",
+      "issue": "The 'Scan receipt' button is grayed out without any visual indicator of why (e.g., camera not available, permission denied).",
+      "fix": "Add a small tooltip or icon to explain why it\u2019s disabled, e.g., 'Camera not available' or 'Enable camera permissions'.",
+      "screen": "receipt_entry",
+      "source": "vision"
+    },
+    {
+      "severity": "low",
+      "viewport": "phone",
+      "issue": "The 'Add photo' button is large and prominent, but the 'Scan receipt' button is smaller and less visually distinct, potentially reducing clarity on primary vs. secondary actions.",
+      "fix": "Consider making the 'Scan receipt' button visually equivalent in size and weight to 'Add photo', or add a subtle visual cue (e.g., icon) to indicate it's a secondary action.",
+      "screen": "receipt_entry",
+      "source": "vision"
+    },
+    {
+      "severity": "low",
+      "viewport": "desktop",
+      "issue": "The 'Add receipt' header is centered, but the back arrow is left-aligned \u2014 inconsistent alignment in the header row.",
+      "fix": "Align the header text and back arrow to the left for consistency with common desktop patterns.",
+      "screen": "receipt_entry",
+      "source": "vision"
+    },
+    {
+      "severity": "medium",
+      "screen": "receipt_entry",
+      "source": "vision",
+      "issue": "visual quality 7/10 on 'receipt_entry' (target 8+, minimum 7): Polished, modern UI with clear hierarchy and consistent spacing. Primary action is obvious. Typography is readable and scaled. Form fields are well-aligned and labeled. Desktop layout is spacious and not stretched. No critical flaws, but lacks subtle polish (e.g., micro-interactions, subtle feedback) that would elevate it to 8 or 9.",
+      "fix": "Address this screen's findings until it looks polished and professional."
+    },
+    {
+      "severity": "medium",
+      "screen": "receipts_loaded",
+      "source": "vision",
+      "issue": "visual quality 7/10 on 'receipts_loaded' (target 8+, minimum 7): Polished, clean interface with strong visual hierarchy and consistent spacing. The primary action (navigation) is clear. Typography is readable and well-scaled. Empty state is minimal but functional. No critical issues found. Could be more engaging with subtle motion or micro-interactions, but as-is, it meets the standard of a commercial product.",
+      "fix": "Address this screen's findings until it looks polished and professional."
+    }
+  ],
+  "lighthouse": [
+    {
+      "accessibility": 98,
+      "bestPractices": 100,
+      "performance": 57
+    }
+  ],
+  "vision_scores": [
+    {
+      "screen": "policy_gate",
+      "score": 8.0,
+      "summary": "A polished, professional onboarding screen with clear visual hierarchy, consistent spacing, and touch-friendly controls. The design communicates trust and security effectively for a financial tool. Minor improvements could enhance visual polish and alignment."
+    },
+    {
+      "screen": "dashboard_empty",
+      "score": 8.0,
+      "summary": "Polished, modern interface with clear visual hierarchy and intuitive layout. The primary action is obvious and prominent. Typography is readable with a clear scale. Spacing and alignment are consistent. Color use is intentional and accessible. Empty states guide users effectively. Desktop layout is spacious and well-proportioned. Touch targets are appropriately sized. No browser defaults or layout flaws."
+    },
+    {
+      "screen": "receipt_entry",
+      "score": 7.0,
+      "summary": "Polished, modern UI with clear hierarchy and consistent spacing. Primary action is obvious. Typography is readable and scaled. Form fields are well-aligned and labeled. Desktop layout is spacious and not stretched. No critical flaws, but lacks subtle polish (e.g., micro-interactions, subtle feedback) that would elevate it to 8 or 9."
+    },
+    {
+      "screen": "dashboard_populated",
+      "score": 8.0,
+      "summary": "Polished, modern dashboard with clear visual hierarchy and consistent spacing. Primary actions are accessible via bottom tab bar. Typography is readable with a clear scale. Desktop version maintains layout integrity without stretching. Touch targets are appropriately sized. No critical issues found."
+    },
+    {
+      "screen": "receipts_loaded",
+      "score": 7.0,
+      "summary": "Polished, clean interface with strong visual hierarchy and consistent spacing. The primary action (navigation) is clear. Typography is readable and well-scaled. Empty state is minimal but functional. No critical issues found. Could be more engaging with subtle motion or micro-interactions, but as-is, it meets the standard of a commercial product."
+    }
+  ]
+}
