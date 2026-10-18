@@ -7,6 +7,7 @@ import ReceiptImagePicker from '../components/ui/ReceiptImagePicker';
 import { v4 as uuidv4 } from 'uuid';
 import { getStore } from '../lib/storage';
 import { addReceipt, editReceipt, getAllReceipts } from '../lib/receiptStore';
+import { appendEntryForReceipt } from '../lib/ledger';
 import { validateReceiptAmount } from '../lib/validation';
 import { Receipt, ReceiptType } from '../lib/models';
 import { setPendingSnack } from '../lib/uiState';

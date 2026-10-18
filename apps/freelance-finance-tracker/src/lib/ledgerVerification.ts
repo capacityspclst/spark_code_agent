@@ -15,7 +15,6 @@ export async function verifyLedger(store: Store, entries?: any[]): Promise<Ledge
   if (!Array.isArray(ledgerEntries)) {
     return { ok: false, entries: [], reason: 'Ledger entries not an array' };
   }
-  // Empty ledger is invalid – at least the init entry should exist
   if (ledgerEntries.length === 0) {
     return { ok: false, entries: [], firstBadSeq: 1, reason: 'missing entry' };
   }
@@ -24,18 +23,14 @@ export async function verifyLedger(store: Store, entries?: any[]): Promise<Ledge
   for (let i = 0; i < ledgerEntries.length; i++) {
     const e = ledgerEntries[i];
     const expectedSeq = i + 1;
-    // Sequence check – missing or out‑of‑order
     if (e.seq !== expectedSeq) {
       const hasExpectedSeqLater = ledgerEntries.some(entry => entry.seq === expectedSeq);
       const reason = hasExpectedSeqLater ? 'out‑of‑order' : 'missing entry';
-      const firstBadSeq = e.seq;
-      return { ok: false, entries: ledgerEntries, firstBadSeq, reason };
+      return { ok: false, entries: ledgerEntries, firstBadSeq: e.seq, reason };
     }
-    // PrevHash check
     if (e.prevHash !== prevHash) {
       return { ok: false, entries: ledgerEntries, firstBadSeq: e.seq, reason: 'prevhash mismatch' };
     }
-    // Hash integrity
     const recomputed = computeHash({
       seq: e.seq,
       at: e.at,
@@ -49,12 +44,14 @@ export async function verifyLedger(store: Store, entries?: any[]): Promise<Ledge
     }
     prevHash = e.hash;
   }
-  // Detect missing trailing entries using stored highest seq count
+  // If a custom entries array was provided (e.g., from backup), skip storedSeqCount validation
+  if (entries) {
+    return { ok: true, entries: ledgerEntries };
+  }
   const storedSeqCount = await store.get<number>('ledgerSeqCount');
   const highestSeq = ledgerEntries.length ? Math.max(...ledgerEntries.map(e => e.seq)) : 0;
   const expectedCount = storedSeqCount ?? highestSeq;
   if (expectedCount > ledgerEntries.length) {
-    // Find first missing sequence number after the existing entries
     const existingSeqs = new Set(ledgerEntries.map(e => e.seq));
     for (let i = 1; i <= expectedCount; i++) {
       if (!existingSeqs.has(i)) {
@@ -62,7 +59,6 @@ export async function verifyLedger(store: Store, entries?: any[]): Promise<Ledge
       }
     }
   }
-  // Also check for any gaps within the range (should have been caught above)
   const seqSet = new Set(ledgerEntries.map(e => e.seq));
   const maxSeq = Math.max(...seqSet);
   for (let i = 1; i <= maxSeq; i++) {

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator } from 'react-native';
-import { Screen, EmptyState } from '../components/ui';
+import { Screen, EmptyState, PrimaryButton } from '../components/ui';
 import { getLedger } from '../lib/ledgerHelpers';
 import { useNavigation, useRoute, NavigationProp } from '@react-navigation/native';
 import HistoryList from '../components/ui/HistoryList';
