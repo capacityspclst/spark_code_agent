@@ -70,7 +70,7 @@ export async function generateCsv(store?: Store): Promise<string> {
   const headHash = exportEntry.hash;
   // Verification line format: "<entriesCount>,<headHash>,<code>" where code = 12-char prefix + headHash
   const combinedCode = `${code12}${headHash}`;
-  const verificationLine = `${entriesCount},${headHash},${combinedCode}`;
+  const verificationLine = `# verification: entries=${entriesCount}, headHash=${headHash}, code=${code12}`;
   lines.push(verificationLine);
   return lines.join('\n');
 }

@@ -96,7 +96,11 @@ export default function ReceiptEntryScreen() {
         await addReceipt(getStore(), receipt);
       }
       setPendingSnack('Receipt saved');
-      navigation.navigate('Main', { screen: 'Dashboard' });
+      if (editRecordId) {
+        navigation.navigate('ReceiptDetail' as any, { recordId: id });
+      } else {
+        navigation.navigate('Main', { screen: 'Dashboard' });
+      }
     } catch (e) {
       setError('Unable to save receipt. Please try again.');
     } finally {

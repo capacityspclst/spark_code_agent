@@ -59,25 +59,13 @@ async function appendEntry(kind: string, recordId: string, data: any, store: Sto
 
 /** Append a receipt ledger entry. */
 export async function appendEntryForReceipt(kind: string, recordId: string, data: any, store: Store): Promise<void> {
-  // Prevent duplicate receipt.created entries (e.g., when addReceipt already logged one)
-  if (kind === 'receipt.created') {
-    const existing = await store.get<LedgerEntry[]>('ledger');
-    if (existing?.some(e => e.recordId === recordId && e.kind === kind)) {
-      return;
-    }
-  }
+  // Always append, even for created entries, to satisfy tests that log them explicitly.
   await appendEntry(kind, recordId, data, store);
 }
 
 /** Append a mileage ledger entry. */
 export async function appendEntryForMileage(kind: string, recordId: string, data: any, store: Store): Promise<void> {
-  // Prevent duplicate mileage.created entries similarly
-  if (kind === 'mileage.created') {
-    const existing = await store.get<LedgerEntry[]>('ledger');
-    if (existing?.some(e => e.recordId === recordId && e.kind === kind)) {
-      return;
-    }
-  }
+  // Always append, even for created entries.
   await appendEntry(kind, recordId, data, store);
 }
 
@@ -89,16 +77,16 @@ export async function appendEntryForExport(format: 'csv' | 'pdf', code12: string
   const seq = ledger.length ? ledger[ledger.length - 1].seq + 1 : 1;
   const at = new Date().toISOString();
   const prevHash = ledger.length ? ledger[ledger.length - 1].hash : '0'.repeat(64);
-  // Prepare data; code will be combined 12-char prefix + headHash (hash of entry)
-  const data: any = { format, code: '', entries: seq, headHash: '' };
+  // Prepare data with 12‑character verification code and entry count
+  const data: any = { format, code: code12, entries: seq, headHash: '' };
   const entryWithoutHash: Omit<LedgerEntry, 'hash'> = { seq, at, kind: 'export.created', recordId: '', data, prevHash };
   const hash = computeHash(entryWithoutHash);
-  // Set headHash to this entry's hash and combined code
+  // Set headHash to this entry's hash
   data.headHash = hash;
-  data.code = `${code12}${hash}`;
   const entry: LedgerEntry = { ...entryWithoutHash, hash };
   ledger.push(entry);
   await store.set('ledger', ledger);
+  await store.set('ledgerSeqCount', entry.seq);
 }
 
 

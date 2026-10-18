@@ -20,8 +20,11 @@ export async function verifyExportCode(
     return { known: false, message: 'Invalid verification code format' };
   }
   // Find ledger entry with matching full verification code (12-char prefix + headHash)
+  // Extract the raw 12‑character code if the input includes a label (e.g., "code=abcd1234ef56")
+  const codeMatch = codeNorm.match(/([0-9a-f]{12})/);
+  const cleanCode = codeMatch ? codeMatch[1] : codeNorm;
   const entry = ledger.find(
-    (e: LedgerEntry) => e.kind === 'export.created' && e.data?.code?.toLowerCase() === codeNorm,
+    (e: LedgerEntry) => e.kind === 'export.created' && e.data?.code?.toLowerCase() === cleanCode,
   );
   if (!entry) {
     return { known: false, message: 'Verification code not from this app' };
