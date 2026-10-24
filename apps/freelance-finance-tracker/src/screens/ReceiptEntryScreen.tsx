@@ -148,7 +148,7 @@ export default function ReceiptEntryScreen() {
             placeholder="YYYY-MM-DD"
             hint={marked.date ? 'Check these details' : undefined}
             marked={marked.date}
-            right={<IconButton icon="calendar" size={24} onPress={() => setShowDatePicker(true)} accessibilityLabel="Select receipt date" />}
+            right={<TextInput.Icon icon="calendar" onPress={() => setShowDatePicker(true)} accessibilityLabel="Select receipt date" />}
           />
           {marked.date && (
             <PrimaryButton label="Looks right" variant="text" onPress={() => clearMark('date')} />
