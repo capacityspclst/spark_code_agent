@@ -108,4 +108,6 @@ export default function DashboardScreen() {
           />
         </View>
       )}
-    </Screen>}
+    </Screen>
+  );
+}
