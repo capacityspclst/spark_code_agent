@@ -1,69 +1,68 @@
-# DESIGN.md
-
 ## Users and goal
-- **Primary persona** – freelancers, gig workers, and independent contractors who need a quick, private way to track income, expenses, and mileage **offline**.  
-- **Goal** – Capture a receipt in ≤ 30 seconds by scanning a photo, edit any auto‑filled fields, pick a date from a calendar, select or create a category, and save.  
-- **Success feels like** – “The receipt was scanned, the fields are correct, I tapped **Save**, and a snackbar says *Receipt saved*.”
+- **Primary persona** – freelancers, gig‑workers, and independent contractors who need a quick, private way to record receipts, mileage, and categories on their phone (offline first).  
+- **Goal** – Open the app, add a receipt or mileage entry in ≤ 30 seconds, rename categories without losing data, and see a clear confirmation.  
+- **Success feels like** – “I tapped **Add receipt**, the OCR ran, I corrected a field, hit **Save receipt**, and a Snackbar says *Receipt saved*; the new entry instantly appears on the Dashboard.”
 
 ## Primary flow
-1. **Launch → Policy gate** (unchanged).  
-2. **Dashboard** – bottom tab bar always visible.  
-3. **Add receipt** – tap FAB → mini‑FAB **Receipt**.  
-4. **Receipt entry** –  
-   a. Tap **Scan receipt** → camera/gallery → OCR loading spinner.  
-   b. If OCR finds data → fields pre‑filled, each shows helper *Check these details*.  
-   c. If OCR finds nothing → alert *No details could be extracted – please enter manually*.  
-   d. User edits any fields (date via calendar, category via dropdown, other fields).  
-   e. If needed, tap **Add category…** → dialog to type a new name (1‑40 chars, case‑insensitive unique).  
-   f. Tap **Save receipt** → loading → snackbar *Receipt saved*.  
-5. **Settings → Categories** – rename, hide, or add custom categories (protected against deletion when in use).  
-6. **Export / Backup / Restore** – unchanged and always reachable from bottom tabs or Settings.  
-
-All screens expose a direct path forward; the bottom tab bar is present on every signed‑in screen.
+1. **Launch → PolicyGate** (once).  
+2. **Dashboard** – bottom‑tab bar always visible (Dashboard / Receipts / Mileage / Settings).  
+3. **Add entry** – tap the large FAB → mini‑FAB **Receipt** or **Mileage** (always reachable).  
+4. **Entry screen** (Receipt or Mileage)  
+   - Fill fields (date, amount, miles, category, notes).  
+   - Optional: **Scan receipt** (phone only; hidden on web).  
+   - Validation runs on blur and on submit.  
+   - Tap **Save receipt** / **Save mileage** → loading → Snackbar (*Receipt saved* / *Mileage saved*).  
+5. **Return** – Snackbar fades; user remains on Dashboard where the new row is visible.  
+6. **Settings → Categories** – rename a category inline; the rename updates all receipts instantly (no extra steps).  
+7. **Other settings** – switch App Lock, export, backup, delete all data – reachable from Settings at any time.
 
 ## Screens and states
 
-| Screen | State | UI element(s) | Message / copy |
-|--------|-------|----------------|----------------|
-| **PolicyGateScreen** | Loading | Full‑screen `ActivityIndicator` | “Checking policy version…” |
-| | Default | Policy text, checkbox, **Accept** button (disabled until checked) | Policy text |
-| | Error | Full‑screen error view + **Retry** | “Unable to store your acceptance. Please try again.” |
-| **DashboardScreen** | Loading | Centered `ActivityIndicator` | — |
-| | Empty | `EmptyState` | Title *Nothing here yet*; Description *Add a receipt or mileage entry to start tracking your finances.*; Primary button **Add receipt** |
-| | Populated | 4 `SummaryCard`s + recent‑activity list | — |
-| **ReceiptEntryScreen** | Default (form) | Photo picker, **Scan receipt** button, outlined `FormField`s (Amount, Date, Category, Type, Notes), **Save receipt** button (disabled until valid) | — |
-| | OCR loading | Overlay `ActivityIndicator` + spinner label “Analyzing receipt…” | — |
-| | OCR success | Fields pre‑filled; each shows `HelperText` *Check these details* (until edited) | — |
+| Screen | State | UI elements | Message / copy |
+|--------|-------|-------------|----------------|
+| **PolicyGate** | Loading | Full‑screen `ActivityIndicator` | “Checking policy version…” |
+| | Default | Policy text, **Accept** checkbox, **Accept** button (disabled until checked) | – |
+| | Error | Full‑screen error view + **Retry** button | “Unable to store your acceptance. Please try again.” |
+| **Dashboard** | Loading | Centered `ActivityIndicator` | – |
+| | Empty | `EmptyState` component | Title *Nothing here yet*; Description *Add a receipt or mileage entry to start tracking your finances.*; Primary button **Add receipt** |
+| | Populated | 4 `SummaryCard`s (Total receipts, Total mileage, Tax, Net) + recent‑activity `ScrollView` | – |
+| **ReceiptEntry** | Default (form) | Photo picker, conditional **Scan receipt** button, `FormField`s (Amount, Date, Category, Type, Notes), **Save receipt** button (enabled when form valid) | – |
+| | OCR loading | Overlay `ActivityIndicator` + label “Analyzing receipt…” | – |
+| | OCR success | Fields pre‑filled; each shows `HelperText` *Check these details* | – |
 | | OCR no data | Alert dialog | “No details could be extracted – please enter manually.” |
-| | Date picker open | `DatePickerModal` (react‑native‑paper‑dates) | — |
-| | Category dropdown open | `Menu` anchored to TextInput | — |
-| | Add‑category dialog open | `Dialog` with TextInput | Title *Add new category*; placeholder *Category name* |
-| | Validation error (field) | `HelperText type="error"` under field | Amount, Date, Category, Type messages (see Content) |
-| | Saving | **Save receipt** shows spinner, label hidden | — |
+| | Validation error | `HelperText type="error"` under the offending field | Specific messages (see Content) |
+| | Saving | **Save receipt** shows spinner, label hidden | – |
 | | Save error | `Snackbar` | “Unable to save receipt. Please try again.” |
-| **MileageEntryScreen** | Same as ReceiptEntryScreen but without photo & category; date picker allows future dates. |
-| **SettingsScreen** | Default | List rows: App lock, Mileage rate, Tax rate, Export, Backup & Restore, **Categories**, Policy, Delete all data | — |
-| **CategoriesScreen** (sub‑screen of Settings) | Default | List of categories with rename inline, hide toggle, **Add category…** button | — |
-| | Rename mode | Inline `TextInput` replaces label | — |
-| | Add dialog open | `Dialog` as above | — |
-| | Validation error | `HelperText type="error"` under input | “Category must be 1–40 characters.”; “Category already exists.” |
-| | Delete error (in‑use) | `Snackbar` | “Category is used by receipts – hide instead.” |
-| **Any screen** | Offline (where network would be used) | Full‑screen banner | “You are offline. Some actions require an internet connection.” |
+| **MileageEntry** | Same as ReceiptEntry, but without photo & category; “Miles” field accepts decimals | – |
+| **Settings** | Default | List rows: **App lock** (switch), **Mileage rate**, **Tax rate**, **Categories**, **Export**, **Backup & restore**, **Delete all data**, **View Terms & Privacy Policy** | – |
+| **Categories** (sub‑screen) | Default | List of categories with inline rename `TextInput`, hide toggle, **Add category…** button | – |
+| | Rename mode | Inline `TextInput` replaces label | – |
+| | Add dialog | `Dialog` with `TextInput` | Title *Add new category*; label *Category name* |
+| | Validation error | `HelperText type="error"` | “Category must be 1‑40 characters.”; “Category already exists.” |
+| | Delete‑in‑use error | `Snackbar` | “Category is used by receipts – hide instead.” |
+| **Any screen** | Offline indicator (when network required) | Full‑screen banner | “You are offline. Some actions require an internet connection.” |
+
+### Edge & loading states
+- **Dashboard recent‑activity list**: scrollable under FABs; bottom padding = 96 dp (FAB height 56 dp + 40 dp margin).  
+- **Date picker**: disallows future dates for receipts, allows any date for mileage.  
+- **Mileage “Miles” field**: accepts strings like “12.5”, rejects “12.55”, “0”, negatives, or non‑numeric text.  
+- **Scan receipt button**: rendered only when `expo-image-picker` / `expo-text-recognizer` reports `isSupported === true`. On web the button is omitted.  
+- **Delete all data row**: styled with `error` color, placed last, preceded by a `Divider`.  
 
 ## Layout
-- **Mobile‑first**: viewport **390 dp** wide; no horizontal scroll.  
-- **Global container** – `Screen` component = `SafeAreaView` + `ScrollView` with **horizontal padding 16 dp** (`spacing*2`).  
-- **Content width** – max **420 dp**; centered on desktop (1280 dp).  
-- **Vertical rhythm** – 8 dp grid (4, 8, 12, 16, 24, 32 dp).  
-- **Bottom Tab Bar** – fixed 56 dp height, icons + labels centered; anchored bottom on all platforms.  
-- **FAB** – 56 × 56 dp, inset 16 dp from right & bottom; expands to two 40 × 40 dp mini‑FABs.  
-- **Forms** – each `FormField` full‑width; vertical gap 12 dp.  
-- **Receipt entry** – Scan button placed below photo picker, above other inputs. Date field shows calendar icon; Category field shows dropdown arrow.  
-- **Settings → Categories** – list items stack vertically; inline rename appears in place; Add‑category button at bottom.  
-- **Desktop breakpoint** – 1280 dp; layout unchanged, still phone‑first appearance.
+- **Mobile‑first** – viewport 390 dp wide; no horizontal scroll.  
+- **Global container** – `Screen` component = `SafeAreaView` + `ScrollView` with horizontal padding 16 dp (`spacing*2`).  
+- **Content width** – max 420 dp; centered on desktop (1280 dp).  
+- **Vertical rhythm** – 8 dp grid (spacings of 4, 8, 12, 16, 24, 32 dp).  
+- **Bottom tab bar** – fixed height 56 dp, icons + labels centered, anchored bottom on all platforms.  
+- **Primary FAB** – 56 × 56 dp, inset 16 dp from right & bottom; expands to two mini‑FABs (40 × 40 dp) for **Receipt** and **Mileage**. Mini‑FABs sit above the recent‑activity list, do not cover content, and have a 12 dp gap between them.  
+- **Forms** – each `FormField` full‑width, vertical gap 12 dp. Date field includes right‑aligned calendar icon; Category field includes dropdown arrow.  
+- **ReceiptEntry** – title rendered only by `ScreenHeader`; no duplicate header text in body.  
+- **Settings** – rows are `List.Item` with trailing chevron; `SettingSwitch` for App Lock; `Divider` before **Delete all data** row.  
+- **Desktop breakpoint (≥ 1280 dp)** – layout unchanged; UI remains phone‑first but centered with max‑width column, ensuring ample side whitespace.
 
 ## Design tokens
-> **Implementation** – exported as a Material 3 theme object for React‑Native‑Paper (`src/theme.ts`) and mirrored as CSS custom properties (`public/theme.css`).
+> **Implementation** – exported as a Material 3 theme object for React‑Native‑Paper (`src/theme.ts`) and mirrored as CSS custom properties (`public/theme.css`). No dark theme is required.
 
 ```ts
 // src/theme.ts
@@ -78,7 +77,7 @@ export const theme = {
     primaryContainer: '#CFE5FF',
     onPrimaryContainer: '#001D35',
 
-    // Secondary (teal) – used for switches, mini‑FABs, active menu items
+    // Secondary (teal) – used for mini‑FABs, switches, active menu items
     secondary: '#015958',
     onSecondary: '#FFFFFF',
     secondaryContainer: '#C8F4EF',
@@ -142,77 +141,61 @@ export const theme = {
   --radius: 8px;
   --spacing-unit: 8px;
 }
-```
-
-### Contrast pairs
-| Foreground | Background | Use | Size |
-|------------|------------|-----|------|
-| #FFFFFF | #0061A4 | Primary button label (contained) | normal |
-| #0061A4 | #FFFFFF | Text button / outlined button label | normal |
-| #212121 | #FFFFFF | Body text on screens & cards | normal |
-| #49454F | #FFFFFF | Secondary text (captions, dates) | normal |
-| #0061A4 | #F5F5F5 | Bottom‑tab selected icon & label | normal |
-| #49454F | #FFFFFF | Unselected tab icon & label | normal |
-| #B00020 | #FFFFFF | HelperText error / Snackbar error text | normal |
-| #FFFFFF | #B00020 | Snackbar label on error background | normal |
-| #212121 | #E0E0E0 | Disabled button label | normal |
-| #FFFFFF | #015958 | Switch thumb (on) | UI |
-| #015958 | #FFFFFF | Switch track (on) | UI |
-| #212121 | #E0E0E0 | Switch thumb (off) | UI |
-| #FFFFFF | #0061A4 | Primary FAB icon | large (icon) |
-| #FFFFFF | #015958 | Mini‑FAB icon | large (icon) |
-| #6F6F6F | #FFFFFF | TextInput placeholder | normal |
-| #212121 | #CFE5FF | Card title on primary‑container surface | normal |
-| #212121 | #F2F2F2 | Card title on surface‑variant | normal |
-| #212121 | #FFFFFF | Dialog title | large (headline) |
-| #FFFFFF | #015958 | Mini‑FAB background (secondary) | large (icon) |
-
-All pairs meet **WCAG AA** (≥ 4.5:1 normal text, ≥ 3:1 UI).
 
 ## Components
-All UI wrappers live in `src/components/ui/` and use React‑Native‑Paper primitives.
+All UI wrappers live in `src/components/ui/` and map to React‑Native‑Paper primitives.
 
 | Component | Paper base | Props / defaults | Touch target | States |
 |-----------|------------|------------------|--------------|--------|
-| **Screen** | `SafeAreaView` + `ScrollView` | `children`, `style` | — | default |
-| **FormField** | `TextInput` (`mode="outlined"`) | `label`, `value`, `onChangeText`, `keyboardType`, `error` | — | default, error |
+| **Screen** | `SafeAreaView` + `ScrollView` | `children`, `style` | – | default |
+| **ScreenHeader** | `Appbar.Header` | `title` (string), optional `subtitle` | – | default |
+| **FormField** | `TextInput` (`mode="outlined"`) | `label`, `value`, `onChangeText`, `keyboardType`, `error`, `right` (icon) | – | default, error |
 | **PrimaryButton** | `Button` (`mode="contained"`) | `onPress`, `children`, `disabled`, `loading` | ≥ 44 × 44 dp (48 dp height) | default, hover, focus‑visible (2 dp outline), active, disabled, loading |
 | **TextButton** | `Button` (`mode="text"`) | same as PrimaryButton | ≥ 44 × 44 dp | default, hover, focus‑visible, disabled, loading |
-| **ScanButton** | `Button` (`mode="contained"` with `icon="camera"`) | `onPress`, `disabled` (web) | ≥ 44 × 44 dp | default, hover, focus‑visible, disabled |
-| **DatePickerField** | `DatePickerModal` (react‑native‑paper‑dates) + `TextInput` trigger | `value`, `onConfirm`, `label="Date"`; disallow future dates for receipts | ≥ 44 × 44 dp (input) | closed, open, error |
-| **CategorySelect** | `Menu` anchored to a `TextInput` (mode="outlined") | `value`, `onSelect`, `categories` array, `label="Category"` | ≥ 44 × 44 dp | closed, open, error |
-| **AddCategoryDialog** | `Dialog` + `TextInput` | `visible`, `onDismiss`, `onAdd`, `error` | — | default, error, loading |
-| **ChoiceField** | `SegmentedButtons` | `value`, `onValueChange`, `buttons` | ≥ 44 × 44 dp per segment | default, selected, hover, focus, disabled |
-| **CheckboxField** | `Checkbox.Android` / `Checkbox.IOS` | `status`, `onPress`, `label` | ≥ 44 × 44 dp | default, checked, hover, disabled |
+| **ScanButton** | `Button` (`mode="contained"` + `icon="camera"`) | `onPress`, `disabled` (web) | ≥ 44 × 44 dp | default, hover, focus‑visible, disabled |
+| **DatePickerField** | `DatePickerModal` + `TextInput` trigger | `value`, `onConfirm`, `label="Date"`, `disabledFuture` (receipts) | ≥ 44 × 44 dp (input) | closed, open, error |
+| **CategorySelect** | `Menu` anchored to `TextInput` | `value`, `onSelect`, `categories[]`, `label="Category"` | ≥ 44 × 44 dp | closed, open, error |
+| **AddCategoryDialog** | `Dialog` + `TextInput` | `visible`, `onDismiss`, `onAdd`, `error` | – | default, error, loading |
+| **ChoiceField** | `SegmentedButtons` | `value`, `onValueChange`, `buttons[]` | ≥ 44 × 44 dp per segment | default, selected, hover, focus, disabled |
+| **CheckboxField** | `Checkbox.Android` / `Checkbox.IOS` | `status`, `onPress`, `label` | ≥ 44 × 44 dp | default, checked, hover, disabled |
 | **SettingSwitch** | `Switch` | `value`, `onValueChange`, `label` | ≥ 44 × 44 dp (touch area) | off, on, disabled |
-| **SummaryCard** | `Card` | `title`, `value`, `icon` | — | default, hover (elev 2), focus |
-| **ReceiptCard** | `Card` | receipt props + `onPress` | — | default, pressed (elev 2), focus |
-| **EmptyState** | custom view | `icon`, `title`, `description`, `actionLabel`, `onActionPress` | — | default |
-| **BottomTabBar** | `BottomNavigation` | `state`, `onIndexChange`, `routes` | — | selected, unselected |
+| **SummaryCard** | `Card` | `title`, `value`, optional `icon` | – | default, hover (elev 2), focus |
+| **ReceiptCard** | `Card` | receipt props + `onPress` | – | default, pressed (elev 2), focus |
+| **EmptyState** | custom view | `icon`, `title`, `description`, `actionLabel`, `onActionPress` | – | default |
+| **BottomTabBar** | `BottomNavigation` | `state`, `onIndexChange`, `routes` | – | selected, unselected |
 | **FABAdd** | `FAB` (`size="large"`) | `icon="plus"`, `onPress` | 56 × 56 dp | default, hover, focus, active, disabled |
-| **MiniFAB** | `FAB` (`size="small"` `mode="secondary"`) | `icon`, `label`, `onPress` | 40 × 40 dp | default, hover, active |
-| **Dialog** | `Portal` + `Dialog` | `visible`, `onDismiss`, `title`, `children`, `actions` | — | default, focus‑visible |
-| **Snackbar** | `Snackbar` | `visible`, `onDismiss`, `duration`, `children` | — | default |
-| **HelperText** | `HelperText` | `type="error"` | — | default |
-| **ActivityIndicator** | `ActivityIndicator` | `size="large"` / `"small"` | — | default |
+| **MiniFAB** | `FAB` (`size="small"` `mode="secondary"`) | `icon`, `label`, `onPress` | 40 × 40 dp | default, hover, active |
+| **BottomActionBar** | custom component | `onAddReceipt`, `onAddMileage`, optional `snackbarMessage` | – | default |
+| **Snackbar** | `Snackbar` | `visible`, `onDismiss`, `duration`, `children` | – | default |
+| **HelperText** | `HelperText` | `type="error"` | – | default |
+| **ActivityIndicator** | `ActivityIndicator` | `size="large"` / `"small"` | – | default |
 
-All interactive elements meet the **44 × 44 dp** minimum touch area. Hover/focus states appear on web; native platforms use ripple effects.
+All touch targets respect the **44 × 44 dp** minimum. Hover/focus styles appear on web; native platforms use ripple/elevation feedback.
 
 ## Accessibility
-- **Landmarks** – `Appbar.Header` (`role="banner"`), `<ScrollView>` (`role="main"`), bottom navigation (`role="navigation"`).  
-- **Headings** – One `<Text variant="headlineMedium">` per screen (h1). Sub‑sections use `titleMedium` (h2) and `bodyLarge` (p). No skipped levels.  
-- **Labels** – Every `TextInput` has a visible `label`. Icon‑only buttons (FABs, Scan) have `accessibilityLabel` (“Scan receipt”, “Add receipt”).  
-- **Focus management** – On validation failure, first invalid field receives programmatic focus; dialogs trap focus.  
-- **Visible focus** – 2 dp outline using `theme.colors.outline`.  
-- **Keyboard navigation** – All tappable components reachable via `Tab`/`Shift+Tab`; `Enter` activates focused button.  
-- **Reduced motion** – `useReducedMotion` disables non‑essential animations when `prefers-reduced-motion` is true.  
+- **Landmarks** – `Appbar.Header` (`role="banner"`), main content `<ScrollView>` (`role="main"`), `BottomNavigation` (`role="navigation"`).  
+- **Heading hierarchy** – one `<Text variant="headlineMedium">` per screen (treated as `<h1>`). Sub‑sections use `titleMedium` (`<h2>`) and `bodyLarge` (`<p>`). No skipped levels.  
+- **Labels** – every `TextInput` has a visible `label`. Icon‑only buttons (FABs, Scan) have `accessibilityLabel` (“Add receipt”, “Add mileage”, “Scan receipt”).  
+- **Focus management** – on validation failure, the first invalid field receives programmatic focus; dialogs trap focus.  
+- **Visible focus** – 2 dp outline using `theme.colors.outline` on focus‑visible state.  
+- **Keyboard navigation** – all tappable components reachable via `Tab`/`Shift+Tab`; `Enter` activates focused button.  
+- **Reduced motion** – UI respects `prefers-reduced-motion`; non‑essential animations (FAB expansion, Snackbar slide) are disabled when reduced‑motion is true.  
 - **Live announcements** – OCR start/end, save success, and error messages are announced via `announceForAccessibility`.  
-- **Alt / accessibilityLabel** – Receipt thumbnail: “Receipt photo”; empty‑state illustration: “Empty state illustration”.  
-- **No color‑only cues** – Errors also show an alert icon; disabled controls have `accessibilityState={{ disabled: true }}`.  
+- **Alt / accessibilityLabel** – receipt thumbnail: “Receipt photo”; empty‑state illustration: “Empty state illustration”.  
+- **No color‑only cues** – errors also show an alert icon; disabled controls set `accessibilityState={{ disabled: true }}`.
 
 ## Content and microcopy
+### Global
+- **Snackbar success** – “Receipt saved”, “Mileage saved”, “Category added”, “Category renamed”, “Category hidden”.  
+- **Snackbar error** – “Unable to save receipt. Please try again.”, “Unable to save mileage. Please try again.”, “Category is used by receipts – hide instead.”  
+
+### Dashboard
+- **FAB tooltip (web)** – “Scanning is available in the phone app”.  
+- **Empty‑state action** – button label **Add receipt**.  
+
 ### ReceiptEntryScreen
-- **Scan button** – **Scan receipt** (tooltip on web: “Scanning is available in the phone app”).  
+- **Screen title** – “Add receipt” (rendered only by `ScreenHeader`).  
+- **Scan button** – **Scan receipt** (shown only when scanner supported).  
 - **OCR loading** – “Analyzing receipt…”.  
 - **Helper for pre‑filled fields** – *Check these details*.  
 - **OCR no‑data alert** – “No details could be extracted – please enter manually.”  
@@ -220,11 +203,14 @@ All interactive elements meet the **44 × 44 dp** minimum touch area. Hove
 - **Date helper** – “Select a date (future dates not allowed).”  
 - **Category helper** – “Select a category.”  
 - **Dropdown placeholder** – “Select category”.  
-- **Add‑category dialog** – Title *Add new category*; TextInput label *Category name*; Validation: “Category must be 1–40 characters.”, “Category already exists.”  
+- **Add‑category dialog** – Title *Add new category*; TextInput label *Category name*; validation messages: “Category must be 1‑40 characters.”, “Category already exists.”  
 - **Save button** – **Save receipt**.  
 
 ### MileageEntryScreen
-- **Date helper** – “Select a date.” (future dates allowed).  
+- **Screen title** – “Add mileage”.  
+- **Field label** – Miles.  
+- **Miles helper** – “Enter miles (max 1 decimal place, > 0).”  
+- **Validation messages** – “Miles must be > 0”, “Miles must be ≤ 10,000”, “Miles can have at most 1 decimal place”.  
 - **Save button** – **Save mileage**.  
 
 ### Settings → Categories
@@ -232,13 +218,10 @@ All interactive elements meet the **44 × 44 dp** minimum touch area. Hove
 - **Add button** – **Add category…** (opens dialog).  
 - **Rename inline placeholder** – “Rename category”.  
 - **Hide toggle label** – “Hide category”.  
-- **Snackbar on hide error** – “Category is used by receipts – hide instead.”  
 
-### Global
-- **Snackbar success** – “Receipt saved”, “Mileage saved”, “Category added”, “Category renamed”, “Category hidden”.  
-- **Snackbar error** – Use existing messages (save error, export error, backup error).  
+### Settings (general)
+- **App lock row** – switch labeled **App lock** (single row).  
+- **Other rows** – list items with chevron: **Mileage rate**, **Tax rate**, **Export**, **Backup & restore**, **View Terms and Privacy Policy**.  
+- **Delete all data row** – label **Delete all data** in `error` color, placed last, separated by a `Divider`.  
 
-All copy follows title case for button labels, sentence case for body text, and avoids jargon. Autocomplete & keyboard types are set appropriately (email, numeric, password). Validation runs on blur and submit, moving focus to the first invalid field. The UI meets the quality bar: clear hierarchy, generous 8 dp whitespace, restrained palette with a single accent, proper type scale, cards grouping related items, icons where useful, and a polished look on both phone and desktop widths.  
-
----  
-**End of DESIGN.md**
+All copy uses title case for button labels and sentence case for body text, avoiding jargon. Autocomplete & keyboard types are set appropriately (email, numeric, password). Validation runs on blur and on submit, moving focus to the first invalid field.

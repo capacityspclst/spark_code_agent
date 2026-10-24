@@ -55,7 +55,7 @@ function Tabs() {
         headerShown: false,
         tabBarActiveTintColor: theme.colors.primary,
         tabBarInactiveTintColor: theme.colors.secondary,
-        tabBarStyle: { backgroundColor: theme.colors.surface, height: 64, paddingTop: 6, paddingBottom: 8 },
+        tabBarStyle: { backgroundColor: theme.colors.surface, height: 56, paddingTop: 0, paddingBottom: 0 },
         tabBarLabelStyle: { fontSize: 12, fontWeight: '500' },
       }}
     >
