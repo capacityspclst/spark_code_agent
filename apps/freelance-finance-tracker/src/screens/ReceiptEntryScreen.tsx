@@ -123,10 +123,11 @@ export default function ReceiptEntryScreen() {
 
   return (
     <Screen>
+      <ScreenHeader title="Add receipt" />
       <View style={{ padding: layout.pagePadding, maxWidth: layout.maxContentWidth, alignSelf: 'center', gap: space(1) }}>
         <ReceiptImagePicker photoUri={photoUri} onChange={setPhotoUri} />
         {isSupported && <PrimaryButton label="Scan receipt" onPress={startScan} disabled={!photoUri} />}
-        <View style={{ gap: space(2) }}>
+        <View style={{ gap: space(1) }}>
           {/* Amount */}
           <FormField
             label="Amount"

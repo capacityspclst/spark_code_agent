@@ -90,86 +90,69 @@ export async function addCustomCategory(store: Store, name: string): Promise<str
 
 /** Rename a category (default or custom). */
 export async function renameCategory(store: Store, oldName: string, newName: string): Promise<string | null> {
-  // Remember the store for calls to isCategoryInUse that provide only the name.
-  lastUsedStore = store;
   // Validate the new name.
   if (!isValidName(newName)) return 'Category must be 1‑40 characters and not contain < or >.';
 
-  // Load current categories data.
-  let data = await loadData(store);
-  // Ensure any categories present in receipts are reflected in the categories list.
+  // Ensure any categories present in receipts are reflected.
   await syncCategoriesWithReceipts(store);
-  // Reload after sync to get any new custom categories.
-  data = await loadData(store);
+  const data = await loadData(store);
 
-  // Determine the canonical old name (case‑insensitive) and whether it's a default or custom category.
   const oldNameLower = oldName.toLowerCase();
-  // Find matching default name (original key) if any.
   const defaultMatch = DEFAULT_CATEGORIES.find((def) => def.toLowerCase() === oldNameLower);
-  // Find matching custom name if any.
   const customMatchIdx = data.custom.findIndex((c) => c.toLowerCase() === oldNameLower);
 
-  if (!defaultMatch && customMatchIdx === -1) {
-    return 'Category not found.';
-  }
+  if (!defaultMatch && customMatchIdx === -1) return 'Category not found.';
 
-  // Compute the set of effective current category names (including renamed defaults).
+  // Build set of effective names.
   const effectiveNames = new Set<string>();
-  // Add defaults with applied rename mapping.
   for (const def of DEFAULT_CATEGORIES) {
     const effective = data.rename[def] ?? def;
     effectiveNames.add(effective.toLowerCase());
   }
-  // Add custom categories.
-  for (const cust of data.custom) {
-    effectiveNames.add(cust.toLowerCase());
-  }
+  for (const cust of data.custom) effectiveNames.add(cust.toLowerCase());
 
-  // If the new name already exists (other than the one being renamed), abort.
   const newNameLower = newName.toLowerCase();
   if (effectiveNames.has(newNameLower) && !(
-    // Allow renaming to the same name with different case.
     (defaultMatch && (data.rename[defaultMatch]?.toLowerCase() === newNameLower)) ||
     (customMatchIdx !== -1 && data.custom[customMatchIdx].toLowerCase() === newNameLower)
   )) {
     return 'Category already exists.';
   }
 
-  // Perform the rename in the stored data.
+  // Prepare updated category data without mutating original until success.
+  const newData: typeof data = {
+    custom: [...data.custom],
+    hidden: [...data.hidden],
+    rename: { ...data.rename },
+  };
   if (defaultMatch) {
-    // Record a rename from the original default name.
-    data.rename[defaultMatch] = newName;
+    newData.rename[defaultMatch] = newName;
   } else {
-    // Rename a custom category.
     const oldCustom = data.custom[customMatchIdx];
-    data.custom[customMatchIdx] = newName;
-    // Preserve any existing rename mapping for the old name.
-    if (data.rename[oldCustom]) {
-      data.rename[newName] = data.rename[oldCustom];
-      delete data.rename[oldCustom];
+    newData.custom[customMatchIdx] = newName;
+    if (newData.rename[oldCustom]) {
+      newData.rename[newName] = newData.rename[oldCustom];
+      delete newData.rename[oldCustom];
     }
   }
 
-  // Update receipts that reference the old category (case‑insensitive) atomically.
+  // Update receipts atomically.
   const receipts = await getAllReceipts(store);
   const toUpdate = receipts.filter((r) => r.category && typeof r.category === 'string' && r.category.toLowerCase() === oldNameLower);
-  // Keep originals for potential rollback.
   const originals = toUpdate.map((r) => ({ ...r }));
   try {
     for (const r of toUpdate) {
       const updated = { ...r, category: newName } as any;
       await store.put('receipts', updated);
     }
+    // All receipt updates succeeded; now save category changes.
+    await saveData(store, newData);
+    return null;
   } catch (e) {
-    // Roll back any changes that succeeded before the error.
-    for (const orig of originals) {
-      await store.put('receipts', orig as any);
-    }
+    // Roll back receipt changes.
+    for (const orig of originals) await store.put('receipts', orig as any);
     return 'Failed to rename receipts';
   }
-
-  await saveData(store, data);
-  return null;
 }
 
 /** Hide a category (default or custom). */
@@ -196,23 +179,19 @@ export async function deleteCategory(store: Store, name: string): Promise<string
 
 /** Check if any receipt uses the given category name. */
 export async function isCategoryInUse(storeOrName: Store | string, name?: string): Promise<boolean> {
-  let store: Store;
-  let catName: string;
   if (typeof storeOrName === 'string') {
-    // Called with only the category name; use the last store used in renameCategory if available.
-    if (lastUsedStore) {
-      store = lastUsedStore;
-    } else {
-      const { getStore } = await import('./storage');
-      store = getStore();
-    }
-    catName = storeOrName;
+    // Called with only name; get default store.
+    const { getStore } = await import('./storage');
+    const store = getStore();
+    const catName = storeOrName;
+    const receipts = await getAllReceipts(store);
+    return receipts.some((r) => r.category?.toLowerCase() === catName.toLowerCase());
   } else {
-    store = storeOrName;
-    catName = name!;
+    const store = storeOrName;
+    const catName = name!;
+    const receipts = await getAllReceipts(store);
+    return receipts.some((r) => r.category?.toLowerCase() === catName.toLowerCase());
   }
-  const receipts = await getAllReceipts(store);
-  return receipts.some((r) => r.category?.toLowerCase() === catName.toLowerCase());
 }
 
 /** Ensure categories list includes any categories appearing in receipts (e.g., from older backups). */
