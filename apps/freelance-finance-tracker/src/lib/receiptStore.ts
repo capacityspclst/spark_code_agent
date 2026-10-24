@@ -7,11 +7,6 @@ export async function getAllReceipts(store: Store): Promise<Receipt[]> {
 }
 
 export async function addReceipt(store: Store, receipt: Receipt): Promise<void> {
-  await store.put('receipts', receipt as unknown as StoredRecord);
-}
-
-/** Update an existing receipt. */
-export async function updateReceipt(store: Store, receipt: Receipt): Promise<void> {
-  // Assuming receipt.id exists, replace the record.
+  // Cast to StoredRecord to satisfy type constraints.
   await store.put('receipts', receipt as unknown as StoredRecord);
 }
