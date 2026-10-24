@@ -16,7 +16,7 @@ import { isSupported } from 'expo-text-extractor';
 import { getAllCategories } from '../lib/categories';
 import { IconButton } from 'react-native-paper';
 import { DatePickerModal } from 'react-native-paper-dates';
-import { theme, layout } from '../theme';
+import { space, layout } from '../theme';
 
 export default function ReceiptEntryScreen() {
   const navigation = useNavigation<NavigationProp<any>>();
