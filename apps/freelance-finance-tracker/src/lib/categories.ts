@@ -131,9 +131,21 @@ export async function deleteCategory(store: Store, name: string): Promise<string
 }
 
 /** Check if any receipt uses the given category name. */
-export async function isCategoryInUse(store: Store, name: string): Promise<boolean> {
+export async function isCategoryInUse(storeOrName: Store | string, name?: string): Promise<boolean> {
+  let store: Store;
+  let catName: string;
+  if (typeof storeOrName === 'string') {
+    // Called with only the category name; get default store
+    // Lazy import to avoid circular dependencies
+    const { getStore } = await import('./storage');
+    store = getStore();
+    catName = storeOrName;
+  } else {
+    store = storeOrName;
+    catName = name!;
+  }
   const receipts = await getAllReceipts(store);
-  return receipts.some((r) => r.category?.toLowerCase() === name.toLowerCase());
+  return receipts.some((r) => r.category?.toLowerCase() === catName.toLowerCase());
 }
 
 /** Ensure categories list includes any categories appearing in receipts (e.g., from older backups). */
