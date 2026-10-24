@@ -12,6 +12,7 @@ import { Receipt, ReceiptType } from '../lib/models';
 import { setPendingSnack } from '../lib/uiState';
 import { persistPhoto } from '../lib/photos';
 import { recognizeReceiptText, parseReceipt, ParsedReceipt } from '../lib/ocr';
+import { isSupported } from 'expo-text-extractor';
 import { getAllCategories } from '../lib/categories';
 import { IconButton } from 'react-native-paper';
 import { DatePickerModal } from 'react-native-paper-dates';
@@ -122,7 +123,7 @@ export default function ReceiptEntryScreen() {
     <Screen title="Add receipt">
       <View style={{ padding: layout.pagePadding, maxWidth: layout.maxContentWidth, alignSelf: 'center', gap: 16 }}>
         <ReceiptImagePicker photoUri={photoUri} onChange={setPhotoUri} />
-        <PrimaryButton label="Scan receipt" onPress={startScan} disabled={!photoUri} />
+        {isSupported && <PrimaryButton label="Scan receipt" onPress={startScan} disabled={!photoUri} />}
         <Text variant="titleMedium" style={{ marginTop: 12, marginBottom: 4 }}>
           Receipt details
         </Text>
