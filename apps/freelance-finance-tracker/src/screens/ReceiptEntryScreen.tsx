@@ -124,7 +124,7 @@ export default function ReceiptEntryScreen() {
       <View style={{ padding: layout.pagePadding, maxWidth: layout.maxContentWidth, alignSelf: 'center', gap: 16 }}>
         <ReceiptImagePicker photoUri={photoUri} onChange={setPhotoUri} />
         {isSupported && <PrimaryButton label="Scan receipt" onPress={startScan} disabled={!photoUri} />}
-        <Text variant="titleMedium" style={{ marginTop: 12, marginBottom: 4 }}>
+        <Text variant="titleMedium" style={{ marginVertical: space(2) }}>
           Receipt details
         </Text>
         {/* Amount */}
@@ -186,7 +186,7 @@ export default function ReceiptEntryScreen() {
             <PrimaryButton label="Looks right" variant="text" onPress={() => clearMark('category')} />
           )}
         </View>
-        <Text variant="titleMedium" style={{ marginTop: 12, marginBottom: 4 }}>
+        <Text variant="titleMedium" style={{ marginVertical: space(2) }}>
           Additional information
         </Text>
         <ChoiceField<ReceiptType>

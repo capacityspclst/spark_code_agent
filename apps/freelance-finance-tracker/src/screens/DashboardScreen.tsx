@@ -81,6 +81,19 @@ export default function DashboardScreen() {
             <SummaryCard label="Mileage deduction" value={`$${mileageDeduction.toFixed(2)}`} />
             <SummaryCard label="Estimated tax" value={`$${tax.toFixed(2)}`} />
           </View>
+          <BottomActionBar>
+            {snack ? (
+              <Snackbar
+                visible={true}
+                onDismiss={() => setSnack('')}
+                duration={3000}
+              >
+                {snack}
+              </Snackbar>
+            ) : null}
+            <PrimaryButton label="Receipt" variant="primary" onPress={() => navigation.getParent?.()?.navigate('ReceiptEntry')} style={{ marginBottom: space(1) }} />
+            <PrimaryButton label="Mileage" variant="primary" onPress={() => navigation.getParent?.()?.navigate('MileageEntry')} />
+          </BottomActionBar>
           <Text variant="titleMedium" style={{ marginTop: 8, marginBottom: 4 }}>Recent activity</Text>
           <FlatList
             data={recent}
@@ -95,21 +108,4 @@ export default function DashboardScreen() {
           />
         </View>
       )}
-      {empty ? null : (
-        <BottomActionBar>
-          {snack ? (
-            <Snackbar
-              visible={true}
-              onDismiss={() => setSnack('')}
-              duration={3000}
-            >
-              {snack}
-            </Snackbar>
-          ) : null}
-          <PrimaryButton label="Receipt" variant="primary" onPress={() => navigation.getParent?.()?.navigate('ReceiptEntry')} style={{ marginBottom: space(1) }} />
-          <PrimaryButton label="Mileage" variant="primary" onPress={() => navigation.getParent?.()?.navigate('MileageEntry')} />
-        </BottomActionBar>
-      )}
-    </Screen>
-  );
-}
+    </Screen>}
