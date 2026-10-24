@@ -121,42 +121,38 @@ export default function ReceiptEntryScreen() {
 
   return (
     <Screen>
-      <View style={{ padding: layout.pagePadding, maxWidth: layout.maxContentWidth, alignSelf: 'center', gap: 16 }}>
+      <View style={{ padding: layout.pagePadding, maxWidth: layout.maxContentWidth, alignSelf: 'center', gap: space(1) }}>
         <ReceiptImagePicker photoUri={photoUri} onChange={setPhotoUri} />
         {isSupported && <PrimaryButton label="Scan receipt" onPress={startScan} disabled={!photoUri} />}
         <Text variant="titleMedium" style={{ marginVertical: space(1) }}>
           Receipt details
         </Text>
         {/* Amount */}
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-          <FormField
-            label="Amount"
-            value={amount}
-            onChangeText={(v) => { setAmount(v); clearMark('amount'); }}
-            keyboardType="numeric"
-            error={amountError ?? undefined}
-            hint={marked.amount ? 'Check these details' : undefined}
-            marked={marked.amount}
-          />
-          {marked.amount && (
-            <PrimaryButton label="Looks right" variant="text" onPress={() => clearMark('amount')} />
-          )}
-        </View>
+        <FormField
+          label="Amount"
+          value={amount}
+          onChangeText={(v) => { setAmount(v); clearMark('amount'); }}
+          keyboardType="numeric"
+          error={amountError ?? undefined}
+          hint={marked.amount ? 'Check these details' : undefined}
+          marked={marked.amount}
+        />
+        {marked.amount && (
+          <PrimaryButton label="Looks right" variant="text" onPress={() => clearMark('amount')} style={{ marginTop: space(0.5) }} />
+        )}
         {/* Date */}
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-          <FormField
-            label="Date"
-            value={date}
-            onChangeText={(v) => { setDate(v); clearMark('date'); }}
-            placeholder="YYYY-MM-DD"
-            hint={marked.date ? 'Check these details' : undefined}
-            marked={marked.date}
-            right={<IconButton icon="calendar" size={24} onPress={() => setShowDatePicker(true)} accessibilityLabel="Select receipt date" />}
-          />
-          {marked.date && (
-            <PrimaryButton label="Looks right" variant="text" onPress={() => clearMark('date')} />
-          )}
-        </View>
+        <FormField
+          label="Date"
+          value={date}
+          onChangeText={(v) => { setDate(v); clearMark('date'); }}
+          placeholder="YYYY-MM-DD"
+          hint={marked.date ? 'Check these details' : undefined}
+          marked={marked.date}
+          right={<IconButton icon="calendar" size={24} onPress={() => setShowDatePicker(true)} accessibilityLabel="Select receipt date" />}
+        />
+        {marked.date && (
+          <PrimaryButton label="Looks right" variant="text" onPress={() => clearMark('date')} style={{ marginTop: space(0.5) }} />
+        )}
         <DatePickerModal
           locale="en"
           mode="single"
@@ -173,19 +169,17 @@ export default function ReceiptEntryScreen() {
           validRange={{ endDate: new Date() }}
         />
         {/* Category */}
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-          <FormField
-            label="Category"
-            value={category}
-            onChangeText={(v) => { setCategory(v); clearMark('category'); }}
-            placeholder="Select category"
-            hint={marked.category ? 'Check these details' : undefined}
-            marked={marked.category}
-          />
-          {marked.category && (
-            <PrimaryButton label="Looks right" variant="text" onPress={() => clearMark('category')} />
-          )}
-        </View>
+        <FormField
+          label="Category"
+          value={category}
+          onChangeText={(v) => { setCategory(v); clearMark('category'); }}
+          placeholder="Select category"
+          hint={marked.category ? 'Check these details' : undefined}
+          marked={marked.category}
+        />
+        {marked.category && (
+          <PrimaryButton label="Looks right" variant="text" onPress={() => clearMark('category')} style={{ marginTop: space(0.5) }} />
+        )}
         <Text variant="titleMedium" style={{ marginVertical: space(2) }}>
           Additional information
         </Text>

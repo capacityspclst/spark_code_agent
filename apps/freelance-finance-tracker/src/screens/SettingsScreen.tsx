@@ -38,9 +38,9 @@ export default function SettingsScreen({ onViewPolicy }: { onViewPolicy?: () => 
       <List.Item title="Categories" onPress={goScreen('Categories')} left={(props) => <List.Icon {...props} icon="tag" />} right={(props) => <List.Icon {...props} icon="chevron-right" />} accessibilityRole="button" accessibilityLabel="Categories" />
       <List.Item title="Export" onPress={goScreen('Export')} left={(props) => <List.Icon {...props} icon="export" />} right={(props) => <List.Icon {...props} icon="chevron-right" />} accessibilityRole="button" accessibilityLabel="Export" />
       <List.Item title="Backup & restore" onPress={goScreen('Backup')} left={(props) => <List.Icon {...props} icon="backup-restore" />} right={(props) => <List.Icon {...props} icon="chevron-right" />} accessibilityRole="button" accessibilityLabel="Backup & restore" accessibilityState={{ selected: false }} />
+      <List.Item title="View Terms and Privacy Policy" onPress={onViewPolicy ?? (() => {})} left={(props) => <List.Icon {...props} icon="file-document-outline" />} right={(props) => <List.Icon {...props} icon="chevron-right" />} />
       <Divider />
       <List.Item title="Delete all data" titleStyle={{ color: theme.colors.error }} onPress={goScreen('DeleteAllData')} left={(props) => <List.Icon {...props} icon="delete" color={theme.colors.error} />} />
-      <List.Item title="View Terms and Privacy Policy" onPress={onViewPolicy ?? (() => {})} left={(props) => <List.Icon {...props} icon="file-document-outline" />} right={(props) => <List.Icon {...props} icon="chevron-right" />} />
     </Screen>
   );
 }
