@@ -1,0 +1,247 @@
+{
+  "summary": "Implement category rename updates on receipts, allow decimal mileage, and adjust UI to meet new design specs while keeping all existing functionality. Add/modify tests to cover the new behavior and update failing tests accordingly.",
+  "files": [
+    "src/lib/categories.ts",
+    "src/lib/validation.ts",
+    "src/lib/mileage.ts",
+    "src/screens/MileageEntryScreen.tsx",
+    "src/screens/ReceiptEntryScreen.tsx",
+    "src/screens/DashboardScreen.tsx",
+    "src/screens/SettingsScreen.tsx",
+    "src/components/ui/BottomActionBar.tsx",
+    "src/components/ui/ScreenHeader.tsx",
+    "src/components/ui/PrimaryButton.tsx",
+    "src/components/ui/SimpleAddButtons.tsx",
+    "__tests__/validation.test.ts",
+    "__tests__/categories.test.ts",
+    "__tests__/acceptance/m7.test.ts",
+    "__tests__/acceptance/m8.test.ts"
+  ],
+  "steps": [
+    "1. Update src/lib/categories.ts:",
+    "   - Extend renameCategory(store, oldName, newName) to:",
+    "     * Validate newName (non\u2011empty, unique, not a default duplicate).",
+    "     * Find the category (case\u2011insensitive). If not found or validation fails, abort without side effects.",
+    "     * Update the categories list (remove old entry, insert new entry preserving default/custom flag).",
+    "     * Fetch all receipts via receiptStore.getAllReceipts, and for each receipt whose category matches oldName case\u2011insensitively, create an updated receipt with category set to newName and store it back using receiptStore.updateReceipt (or delete + add if update helper does not exist).",
+    "     * Ensure the operation is atomic \u2013 if any receipt update fails, roll back changes (use a transaction\u2011like approach with temporary copies).",
+    "   - After successful rename, isCategoryInUse(newName) must return true (category in use flag is derived from receipt presence).",
+    "   - Keep getAllCategories, syncCategoriesWithReceipts, and other helpers unchanged; they will naturally reflect the new state.",
+    "",
+    "2. Update src/lib/validation.ts:",
+    "   - Revise validateMileageMiles(value) to accept:",
+    "     * Numbers > 0 and <= 10\u202f000, with at most one decimal place.",
+    "     * Strings that represent such numbers (e.g., \"12.5\").",
+    "   - Implementation:",
+    "     * Convert string values to number (Number(value)).",
+    "     * If conversion fails or is NaN \u2192 return error \"Miles must be a number\".",
+    "     * Apply range check (value > 0 && value <= 10000).",
+    "     * Use a regex /^\\d+(\\.\\d)?$/ to enforce at most one decimal place.",
+    "   - Return appropriate error messages:",
+    "     * \"Miles must be > 0\" when <= 0,",
+    "     * \"Miles must be \u2264 10,000\" when > 10000,",
+    "     * \"Miles can have at most 1 decimal place\" for invalid format.",
+    "",
+    "3. Update src/lib/mileage.ts:",
+    "   - Ensure calculateMileageDeduction(miles: number, rate: number) works with decimal miles (no change needed if it already multiplies).",
+    "",
+    "4. Update src/screens/MileageEntryScreen.tsx:",
+    "   - Change the Miles TextInput to accept string values and pass them to validateMileageMiles.",
+    "   - On submit, parse the string to a number (parseFloat) after validation and store the numeric value.",
+    "   - Adjust UI to show validation error messages from the revised validator.",
+    "",
+    "5. Update UI layout for daily\u2011phone usage:",
+    "   - DashboardScreen:",
+    "     * Move Receipt and Mileage FAB add buttons into BottomActionBar component so they sit above the Recent activity list and do not cover it.",
+    "     * Ensure the \"Receipt saved\" Snackbar appears above the list, not covering it.",
+    "     * Wrap the Recent activity ScrollView with paddingBottom equal to the FAB height so rows can scroll past the buttons.",
+    "     * Verify bottom tab navigator shows all four labels fully on a 390\u00d7844 screen (no clipping). Use react\u2011native\u2011paper\u2011tabs layout adjustments if needed.",
+    "   - ReceiptEntryScreen:",
+    "     * Ensure the screen title \"Add Receipt\" is rendered only by the ScreenHeader component (remove any duplicate <Text> in the body).",
+    "     * Place the date picker icon inside the Date FormField (use the TextInput\u2019s right prop).",
+    "     * Remove any extra <View> spacers larger than the standard spacing (use the shared spacing constant from src/theme.ts).",
+    "     * Conditionally render the \"Scan receipt\" button: show it only when expo\u2011text\u2011extractor.isSupported returns true.",
+    "   - SettingsScreen:",
+    "     * Replace the separate \"App lock\" button with a single switch row (SettingSwitch component) labeled \"App lock\".",
+    "     * Convert the other entries (Tax settings, Categories, Export, Backup & restore, Delete all data, View Terms and Privacy Policy) to SimpleListItem rows with a chevron icon (no outlined buttons).",
+    "     * Style the \"Delete all data\" row with the error color from the theme and ensure it is the last item, separated by a Divider.",
+    "",
+    "6. Adjust supporting UI components:",
+    "   - BottomActionBar.tsx: add two FABs (receipt + mileage) and expose a prop to show Snackbar above content.",
+    "   - ScreenHeader.tsx: ensure it only renders the title prop, no internal duplicate titles.",
+    "   - PrimaryButton.tsx & SimpleAddButtons.tsx: ensure they use the global spacing scale, no oversized margins.",
+    "",
+    "7. Update existing tests that now conflict with the new behavior:",
+    "   - __tests__/validation.test.ts:",
+    "     * Add a test case for a valid decimal mileage \"12.5\" (should be null error).",
+    "     * Add a test case for an invalid two\u2011decimal mileage \"12.55\" (should return the new error message).",
+    "     * Adjust any existing test that expected decimal miles to be invalid, changing the expectation to null.",
+    "",
+    "8. Add new acceptance tests:",
+    "   - __tests__/acceptance/m7.test.ts (Category rename & receipt update):",
+    "     * Create a store, add two receipts in category \"Meals\" and \"Supplies\".",
+    "     * Rename \"Meals\" to \"Food & Dining\" using renameCategory.",
+    "     * Verify getAllCategories no longer contains \"Meals\" and contains \"Food & Dining\".",
+    "     * Verify isCategoryInUse(\"Food & Dining\") returns true.",
+    "     * Verify syncCategoriesWithReceipts does not re\u2011introduce \"Meals\".",
+    "     * Verify both receipts now have category \"Food & Dining\" for the one that was renamed, and the other receipt unchanged.",
+    "     * Test a failing rename (duplicate name) does not modify any receipt.",
+    "",
+    "   - __tests__/acceptance/m8.test.ts (Decimal mileage acceptance):",
+    "     * Create a store, attempt to add a mileage entry with miles string \"12.5\" and ensure addMileageEntry succeeds.",
+    "     * Verify calculateMileageDeduction uses the decimal value (e.g., 12.5 miles * 0.585 = 7.3125).",
+    "     * Attempt to add mileage with invalid \"12.55\" and confirm the validation error is thrown.",
+    "",
+    "9. Run the full test suite locally to ensure no existing tests break and the new tests pass.",
+    "10. Update any related TypeScript types (e.g., MileageEntry.miles now can be number parsed from string) and export types accordingly.",
+    "11. Commit changes, bump version if needed, and run npm ci, lint, TypeScript compile, and Jest to ensure CI passes."
+  ],
+  "has_ui": true,
+  "tests": "jest",
+  "test_kind": "jest",
+  "acceptance_files": {
+    "__tests__/acceptance/m1.test.ts": "import { createStore, createMemoryRawStore, createMemoryKeyProvider } from '../../src/lib/storage/memory';\nimport { isPolicyAccepted, acceptPolicy, POLICY_VERSION } from '../../src/lib/policy';\nimport { addReceipt, getAllReceipts } from '../../src/lib/receiptStore';\nimport { computeTotals } from '../../src/lib/finance';\n\ndescribe('M1: policy gate', () => {\n  it('should be not accepted initially and become accepted after acceptance', async () => {\n    const store = createStore(createMemoryRawStore(), createMemoryKeyProvider());\n\n    expect(await isPolicyAccepted(store)).toBe(false);\n    await acceptPolicy(store);\n    expect(await isPolicyAccepted(store)).toBe(true);\n  });\n});\n\ndescribe('M1: receipt entry and totals', () => {\n  it('adds receipts and computes income / expense totals', async () => {\n    const store = createStore(createMemoryRawStore(), createMemoryKeyProvider());\n\n    const receipt1 = {\n      id: 'r1',\n      amount: 100,\n      date: '2023-01-01',\n      category: 'Supplies',\n      type: 'expense',\n      notes: '',\n    };\n    const receipt2 = {\n      id: 'r2',\n      amount: 250,\n      date: '2023-01-15',\n      category: 'Consulting',\n      type: 'income',\n      notes: '',\n    };\n\n    await addReceipt(store, receipt1);\n    await addReceipt(store, receipt2);\n\n    const receipts = await getAllReceipts(store);\n    expect(receipts).toHaveLength(2);\n\n    const totals = computeTotals(receipts);\n    expect(totals.income).toBe(250);\n    expect(totals.expenses).toBe(100);\n  });\n});\n",
+    "__tests__/acceptance/m2.test.ts": "import { createStore, createMemoryRawStore, createMemoryKeyProvider } from '../../src/lib/storage/memory';\nimport { addMileageEntry, getAllMileageEntries } from '../../src/lib/mileageStore';\nimport { calculateMileageDeduction } from '../../src/lib/mileage';\nimport { addReceipt, getAllReceipts } from '../../src/lib/receiptStore';\n\ndescribe('M2: mileage logging and deduction', () => {\n  it('stores a mileage entry and calculates the deduction correctly', async () => {\n    const store = createStore(createMemoryRawStore(), createMemoryKeyProvider());\n\n    const entry = {\n      id: 'm1',\n      date: '2023-02-01',\n      miles: 120,\n      purpose: 'Client meeting',\n    };\n    await addMileageEntry(store, entry);\n    const entries = await getAllMileageEntries(store);\n    expect(entries).toHaveLength(1);\n    expect(entries[0].id).toBe('m1');\n\n    const rate = 0.585; // default IRS rate\n    const deduction = calculateMileageDeduction(entry.miles, rate);\n    expect(deduction).toBeCloseTo(70.2, 2);\n  });\n});\n\ndescribe('M2: receipt with attached photo', () => {\n  it('stores a receipt that includes a photoUri field', async () => {\n    const store = createStore(createMemoryRawStore(), createMemoryKeyProvider());\n    const receipt = {\n      id: 'r3',\n      amount: 45,\n      date: '2023-03-01',\n      category: 'Travel',\n      type: 'expense',\n      notes: '',\n      photoUri: 'file:///tmp/photo.jpg',\n    };\n    await addReceipt(store, receipt);\n    const receipts = await getAllReceipts(store);\n    expect(receipts).toHaveLength(1);\n    expect(receipts[0].photoUri).toBe('file:///tmp/photo.jpg');\n  });\n});\n",
+    "__tests__/acceptance/m3.test.ts": "import { createStore, createMemoryRawStore, createMemoryKeyProvider } from '../../src/lib/storage/memory';\nimport { setMileageRate, getMileageRate, setTaxRate, getTaxRate } from '../../src/lib/settings';\nimport { generateCsv } from '../../src/lib/exportCsv';\nimport { addReceipt } from '../../src/lib/receiptStore';\nimport { addMileageEntry } from '../../src/lib/mileageStore';\n\ndescribe('M3: settings persistence', () => {\n  it('stores and retrieves mileageRate and taxRate correctly', async () => {\n    const store = createStore(createMemoryRawStore(), createMemoryKeyProvider());\n    await setMileageRate(store, 0.6);\n    const mileageRate = await getMileageRate(store);\n    expect(mileageRate).toBeCloseTo(0.6);\n\n    await setTaxRate(store, 0.15);\n    const taxRate = await getTaxRate(store);\n    expect(taxRate).toBeCloseTo(0.15);\n  });\n});\n\ndescribe('M3: CSV export generation', () => {\n  it('produces a CSV string that contains receipts and mileage entries', async () => {\n    const store = createStore(createMemoryRawStore(), createMemoryKeyProvider());\n\n    await addReceipt(store, {\n      id: 'r1',\n      amount: 100,\n      date: '2023-01-01',\n      category: 'Supplies',\n      type: 'expense',\n      notes: '',\n    });\n    await addMileageEntry(store, {\n      id: 'm1',\n      date: '2023-01-02',\n      miles: 50,\n      purpose: 'Travel',\n    });\n\n    const csv = await generateCsv(store);\n    // Basic sanity checks\n    expect(csv).toContain('id,amount,date,category,type,notes');\n    expect(csv).toContain('r1,100,2023-01-01,Supplies,expense,');\n    expect(csv).toContain('m1,50,2023-01-02,Travel');\n  });\n});\n",
+    "__tests__/acceptance/m4.test.ts": "import { createStore, createMemoryRawStore, createMemoryKeyProvider } from '../../src/lib/storage/memory';\nimport { createBackup, restoreBackup } from '../../src/lib/backup';\nimport { addReceipt, getAllReceipts } from '../../src/lib/receiptStore';\n\ndescribe('M4: encrypted backup and restore', () => {\n  it('creates a backup and restores it with the correct passphrase', async () => {\n    const store = createStore(createMemoryRawStore(), createMemoryKeyProvider());\n\n    await addReceipt(store, {\n      id: 'r1',\n      amount: 100,\n      date: '2023-01-01',\n      category: 'Supplies',\n      type: 'expense',\n      notes: '',\n    });\n\n    const passphrase = 'Testpass123!';\n    const backupBlob = await createBackup(store, passphrase);\n    expect(typeof backupBlob).toBe('string');\n    expect(backupBlob.length).toBeGreaterThan(0);\n\n    // clear the store to simulate a fresh install\n    await store.clearAll();\n\n    await restoreBackup(store, backupBlob, passphrase);\n    const receipts = await getAllReceipts(store);\n    expect(receipts).toHaveLength(1);\n    expect(receipts[0].id).toBe('r1');\n  });\n\n  it('fails to restore when an incorrect passphrase is supplied', async () => {\n    const store = createStore(createMemoryRawStore(), createMemoryKeyProvider());\n\n    await addReceipt(store, {\n      id: 'r1',\n      amount: 100,\n      date: '2023-01-01',\n      category: 'Supplies',\n      type: 'expense',\n      notes: '',\n    });\n\n    const backupBlob = await createBackup(store, 'CorrectPass123!');\n    await store.clearAll();\n\n    await expect(restoreBackup(store, backupBlob, 'WrongPass')).rejects.toThrow();\n  });\n});\n",
+    "__tests__/acceptance/m5.test.ts": "import { validateBackupPassphrase } from '../../src/lib/validation';\nimport { \n  validateReceiptAmount, \n  validateMileageMiles, \n  validateMileageRate, \n  validateTaxRate \n} from '../../src/lib/validation';\nimport { validateBackupStructure } from '../../src/lib/backup';\nimport { createStore, createMemoryRawStore, createMemoryKeyProvider } from '../../src/lib/storage/memory';\nimport { acceptPolicy, isPolicyAccepted } from '../../src/lib/policy';\nimport { clearAllData } from '../../src/lib/dataReset';\n\ndescribe('M5: backup passphrase validation', () => {\n  it('rejects passphrases shorter than 12 characters', () => {\n    expect(validateBackupPassphrase('short')).toBe('Passphrase must be at least 12 characters');\n    expect(validateBackupPassphrase('eleven11!!!')).toBe('Passphrase must be at least 12 characters');\n    expect(validateBackupPassphrase('exactly12!!!')).toBeNull();\n  });\n});\n\ndescribe('M5: numeric field validation', () => {\n  it('validates receipt amount correctly', () => {\n    expect(validateReceiptAmount(0)).toBe('Amount must be > 0');\n    expect(validateReceiptAmount(-5)).toBe('Amount must be > 0');\n    expect(validateReceiptAmount(1000001)).toBe('Amount must be \u2264 1,000,000');\n    expect(validateReceiptAmount(12.345)).toBe('Amount can have at most 2 decimal places');\n    expect(validateReceiptAmount(99.99)).toBeNull();\n  });\n  it('validates mileage miles correctly', () => {\n    expect(validateMileageMiles(0)).toBe('Miles must be > 0');\n    expect(validateMileageMiles(-10)).toBe('Miles must be > 0');\n    expect(validateMileageMiles(10001)).toBe('Miles must be \u2264 10,000');\n    expect(validateMileageMiles(250)).toBeNull();\n  });\n  it('validates mileage rate correctly', () => {\n    expect(validateMileageRate(-0.1)).toBe('Mileage rate must be between 0 and 5');\n    expect(validateMileageRate(5.1)).toBe('Mileage rate must be between 0 and 5');\n    expect(validateMileageRate(3)).toBeNull();\n  });\n  it('validates tax rate correctly', () => {\n    expect(validateTaxRate(-1)).toBe('Tax rate must be between 0 and 100');\n    expect(validateTaxRate(101)).toBe('Tax rate must be between 0 and 100');\n    expect(validateTaxRate(22)).toBeNull();\n  });\n});\n\ndescribe('M5: backup format validation', () => {\n  const validBackup = {\n    version: 1,\n    receipts: [{ id: 'r1', amount: 100, date: '2023-01-01', category: 'Supplies', type: 'expense', notes: '' }],\n    mileage: [{ id: 'm1', date: '2023-01-02', miles: 50, purpose: 'Travel' }],\n  };\n  const invalidBackup = {\n    version: 1,\n    receipts: [{ id: 'r1', amount: 'bad', date: 123, category: null, type: 'expense', notes: '' }],\n    mileage: 'not-an-array',\n  };\n  it('accepts a well\u2011formed backup', () => {\n    expect(validateBackupStructure(validBackup)).toBeNull();\n  });\n  it('rejects a malformed backup', () => {\n    expect(validateBackupStructure(invalidBackup)).not.toBeNull();\n  });\n});\n\ndescribe('M5: data reset preserves policy acceptance', () => {\n  it('clears data but keeps policy acceptance flag', async () => {\n    const store = createStore(createMemoryRawStore(), createMemoryKeyProvider());\n    await acceptPolicy(store);\n    // simulate some data\n    const dummy = { id: 'x', amount: 10, date: '2023-01-01', category: 'Test', type: 'expense', notes: '' };\n    // (Assume receiptStore is used to store data)\n    const { addReceipt } = await import('../../src/lib/receiptStore');\n    await addReceipt(store, dummy);\n\n    // perform full reset\n    await clearAllData(store);\n\n    // policy should still be accepted\n    expect(await isPolicyAccepted(store)).toBe(true);\n    // receipts should be gone\n    const { getAllReceipts } = await import('../../src/lib/receiptStore');\n    const receipts = await getAllReceipts(store);\n    expect(receipts).toHaveLength(0);\n  });\n});\n",
+    "__tests__/acceptance/m6.test.ts": "import { createStore, createMemoryRawStore, createMemoryKeyProvider } from '../../src/lib/storage/memory';\nimport { recognizeReceiptText, parseReceipt } from '../../src/lib/ocr';\nimport { addReceipt, getAllReceipts } from '../../src/lib/receiptStore';\nimport { getAllCategories, addCustomCategory, renameCategory, hideCategory, deleteCategory, syncCategoriesWithReceipts } from '../../src/lib/categories';\nimport { extractTextFromImage, isSupported } from 'expo-text-extractor';\n\njest.mock('expo-text-extractor', () => ({\n  isSupported: true,\n  extractTextFromImage: jest.fn(),\n}));\n\ndescribe('M6: OCR integration', () => {\n  it('recognizes receipt text and parses fields correctly', async () => {\n    // Mock the extractor to return the sample receipt lines\n    (extractTextFromImage as jest.Mock).mockResolvedValue(['SuperMart', '04/15/2023', 'TOTAL $23.45']);\n\n    const uri = 'file:///tmp/receipt.jpg';\n    const raw = await recognizeReceiptText(uri);\n    expect(raw).toContain('SuperMart');\n\n    const parsed = parseReceipt(raw);\n    expect(parsed.merchant).toBe('SuperMart');\n    expect(parsed.date).toBe('2023-04-15');\n    expect(parsed.total).toBeCloseTo(23.45);\n    expect(parsed.tax).toBeUndefined();\n  });\n});\n\ndescribe('M6: categories backup and management', () => {\n  it('adds custom category, renames, hides, deletion protection, and persists through backup', async () => {\n    const store = createStore(createMemoryRawStore(), createMemoryKeyProvider());\n\n    // add a receipt with a custom category\n    const receipt = {\n      id: 'r100',\n      amount: 50,\n      date: '2023-03-01',\n      category: 'Travel Concierge',\n      type: 'expense',\n      notes: '',\n    };\n    await addReceipt(store, receipt);\n\n    // sync categories \u2013 should add the custom category automatically\n    await syncCategoriesWithReceipts(store);\n\n    const allCats1 = await getAllCategories(store);\n    const customCat = allCats1.find(c => c.name === 'Travel Concierge');\n    expect(customCat).toBeDefined();\n    expect(customCat?.custom).toBe(true);\n\n    // rename a default category\n    await renameCategory(store, 'Meals', 'Food & Dining');\n\n    // hide the custom category (should succeed)\n    await hideCategory(store, 'Travel Concierge');\n\n    const allCatsAfterHide = await getAllCategories(store);\n    const hiddenCat = allCatsAfterHide.find(c => c.name === 'Travel Concierge');\n    expect(hiddenCat).toBeDefined();\n    // If the category has a hidden flag, ensure it's true\n    if (hiddenCat && 'hidden' in hiddenCat) {\n      // @ts-ignore\n      expect(hiddenCat.hidden).toBe(true);\n    }\n\n    // attempt to delete the in\u2011use category (should be refused)\n    const deleteResult = await deleteCategory(store, 'Travel Concierge');\n    expect(deleteResult).toMatch(/in use/i);\n\n    // create a backup that includes categories\n    const passphrase = 'Testpass123!';\n    const { createBackup, restoreBackup } = await import('../../src/lib/backup');\n    const backupBlob = await createBackup(store, passphrase);\n    expect(typeof backupBlob).toBe('string');\n\n    // clear the store and restore\n    await store.clearAll();\n    await restoreBackup(store, backupBlob, passphrase);\n\n    // after restore, categories should persist\n    const allCats2 = await getAllCategories(store);\n    const renamed = allCats2.find(c => c.name === 'Food & Dining');\n    expect(renamed).toBeDefined();\n\n    const customAfter = allCats2.find(c => c.name === 'Travel Concierge');\n    expect(customAfter).toBeDefined();\n    // Verify hidden state persists if applicable\n    if (customAfter && 'hidden' in customAfter) {\n      // @ts-ignore\n      expect(customAfter.hidden).toBe(true);\n    }\n  });\n});\n",
+    "__tests__/acceptance/m7.test.ts": "import { createStore, createMemoryRawStore, createMemoryKeyProvider } from '../../src/lib/storage/memory';\nimport { addReceipt, getAllReceipts } from '../../src/lib/receiptStore';\nimport {\n  renameCategory,\n  getAllCategories,\n  isCategoryInUse,\n  syncCategoriesWithReceipts,\n} from '../../src/lib/categories';\n\ndescribe('M7: category rename updates receipts and categories', () => {\n  it('renames a category and updates all receipts using it', async () => {\n    const store = createStore(createMemoryRawStore(), createMemoryKeyProvider());\n\n    // Add receipts using the category to be renamed and another category\n    const receiptA = {\n      id: 'rA',\n      amount: 100,\n      date: '2023-01-01',\n      category: 'Meals',\n      type: 'expense',\n      notes: '',\n    };\n    const receiptB = {\n      id: 'rB',\n      amount: 200,\n      date: '2023-01-02',\n      category: 'Supplies',\n      type: 'expense',\n      notes: '',\n    };\n    await addReceipt(store, receiptA);\n    await addReceipt(store, receiptB);\n\n    // Perform the rename\n    await renameCategory(store, 'Meals', 'Food & Dining');\n\n    // Category list should reflect the rename\n    const categories = await getAllCategories(store);\n    expect(categories.find(c => c.name === 'Meals')).toBeUndefined();\n    expect(categories.find(c => c.name === 'Food & Dining')).toBeDefined();\n\n    // The new name should be reported as in use\n    expect(await isCategoryInUse('Food & Dining')).toBe(true);\n\n    // Receipts should have been updated\n    const receipts = await getAllReceipts(store);\n    const updatedA = receipts.find(r => r.id === 'rA');\n    expect(updatedA?.category).toBe('Food & Dining');\n\n    const unchangedB = receipts.find(r => r.id === 'rB');\n    expect(unchangedB?.category).toBe('Supplies');\n\n    // Running syncCategoriesWithReceipts must not bring back the old name\n    await syncCategoriesWithReceipts(store);\n    const categoriesAfterSync = await getAllCategories(store);\n    expect(categoriesAfterSync.find(c => c.name === 'Meals')).toBeUndefined();\n  });\n\n  it('does not rename when the target name already exists and leaves data untouched', async () => {\n    const store = createStore(createMemoryRawStore(), createMemoryKeyProvider());\n\n    // Add a receipt in a default category\n    const receipt = {\n      id: 'rC',\n      amount: 150,\n      date: '2023-01-03',\n      category: 'Supplies',\n      type: 'expense',\n      notes: '',\n    };\n    await addReceipt(store, receipt);\n\n    // First rename a different category to create a target name\n    await renameCategory(store, 'Meals', 'Food & Dining');\n\n    // Attempt to rename 'Supplies' to the already\u2011taken name\n    let renameError: any = null;\n    try {\n      await renameCategory(store, 'Supplies', 'Food & Dining');\n    } catch (e) {\n      renameError = e;\n    }\n\n    // No error is also acceptable \u2013 the function should simply do nothing.\n    // Verify that the categories list still contains both original names\n    const categories = await getAllCategories(store);\n    expect(categories.find(c => c.name === 'Supplies')).toBeDefined();\n    expect(categories.find(c => c.name === 'Food & Dining')).toBeDefined();\n\n    // Verify that the receipt's category was not changed\n    const receipts = await getAllReceipts(store);\n    const unchanged = receipts.find(r => r.id === 'rC');\n    expect(unchanged?.category).toBe('Supplies');\n  });\n});\n",
+    "__tests__/acceptance/m8.test.ts": "import { createStore, createMemoryRawStore, createMemoryKeyProvider } from '../../src/lib/storage/memory';\nimport { addMileageEntry, getAllMileageEntries } from '../../src/lib/mileageStore';\nimport { calculateMileageDeduction } from '../../src/lib/mileage';\nimport { validateMileageMiles } from '../../src/lib/validation';\n\ndescribe('M8: mileage accepts decimal miles', () => {\n  it('accepts a valid decimal mileage and stores it', async () => {\n    const store = createStore(createMemoryRawStore(), createMemoryKeyProvider());\n\n    const miles = 12.5;\n    expect(validateMileageMiles(miles)).toBeNull();\n\n    const entry = {\n      id: 'mDec',\n      date: '2023-04-01',\n      miles,\n      purpose: 'Client visit',\n    };\n    await addMileageEntry(store, entry);\n\n    const entries = await getAllMileageEntries(store);\n    expect(entries).toHaveLength(1);\n    expect(entries[0].miles).toBeCloseTo(12.5, 5);\n\n    const deduction = calculateMileageDeduction(entries[0].miles, 0.585);\n    expect(deduction).toBeCloseTo(7.3125, 4);\n  });\n\n  it('rejects a mileage with more than one decimal place', () => {\n    expect(validateMileageMiles(12.55)).toBe('Miles can have at most 1 decimal place');\n    expect(validateMileageMiles('12.55')).toBe('Miles can have at most 1 decimal place');\n  });\n});\n",
+    "__tests__/acceptance/m9-defaultCategoryRenameFields.test.ts": "import { createStore, createMemoryRawStore, createMemoryKeyProvider } from '../../src/lib/storage/memory';\nimport { addReceipt, getAllReceipts } from '../../src/lib/receiptStore';\nimport {\n  renameCategory,\n  getAllCategories,\n  isCategoryInUse,\n  syncCategoriesWithReceipts,\n} from '../../src/lib/categories';\n\ndescribe('M9: default category rename preserves receipt fields', () => {\n  it('renames a default category case\u2011insensitively and leaves other receipt fields unchanged', async () => {\n    const store = createStore(createMemoryRawStore(), createMemoryKeyProvider());\n\n    const receipt = {\n      id: 'rX',\n      amount: 123.45,\n      date: '2023-05-01',\n      category: 'Meals',\n      type: 'expense',\n      notes: 'team lunch',\n    };\n    await addReceipt(store, receipt);\n\n    // Rename using a different case for the old name\n    await renameCategory(store, 'meals', 'Food & Dining');\n\n    // Category list reflects the rename\n    const categories = await getAllCategories(store);\n    expect(categories.find(c => c.name === 'Meals')).toBeUndefined();\n    expect(categories.find(c => c.name === 'Food & Dining')).toBeDefined();\n\n    // New name should be reported as in use\n    expect(await isCategoryInUse('Food & Dining')).toBe(true);\n\n    // Receipt should have updated category but unchanged other fields\n    const receipts = await getAllReceipts(store);\n    const updated = receipts.find(r => r.id === receipt.id);\n    expect(updated?.category).toBe('Food & Dining');\n    expect(updated?.amount).toBe(receipt.amount);\n    expect(updated?.date).toBe(receipt.date);\n    expect(updated?.type).toBe(receipt.type);\n    expect(updated?.notes).toBe(receipt.notes);\n\n    // Sync should not re\u2011introduce the old category name\n    await syncCategoriesWithReceipts(store);\n    const categoriesAfterSync = await getAllCategories(store);\n    expect(categoriesAfterSync.find(c => c.name === 'Meals')).toBeUndefined();\n  });\n});\n",
+    "__tests__/acceptance/m10-customCategoryRename.test.ts": "import { createStore, createMemoryRawStore, createMemoryKeyProvider } from '../../src/lib/storage/memory';\nimport { addReceipt, getAllReceipts } from '../../src/lib/receiptStore';\nimport {\n  renameCategory,\n  getAllCategories,\n  isCategoryInUse,\n  syncCategoriesWithReceipts,\n} from '../../src/lib/categories';\n\ndescribe('M10: custom category rename updates receipts and preserves fields', () => {\n  it('renames a custom category case\u2011insensitively, updates matching receipts, and leaves other fields untouched', async () => {\n    const store = createStore(createMemoryRawStore(), createMemoryKeyProvider());\n\n    const receiptCustom = {\n      id: 'rcA',\n      amount: 75,\n      date: '2023-04-01',\n      category: 'Travel Concierge',\n      type: 'expense',\n      notes: 'hotel booking',\n    };\n    const receiptOther = {\n      id: 'roA',\n      amount: 30,\n      date: '2023-04-02',\n      category: 'Meals',\n      type: 'expense',\n      notes: '',\n    };\n    await addReceipt(store, receiptCustom);\n    await addReceipt(store, receiptOther);\n\n    // Ensure the custom category is recognized\n    await syncCategoriesWithReceipts(store);\n    const catsBefore = await getAllCategories(store);\n    const customCatBefore = catsBefore.find(c => c.name === 'Travel Concierge');\n    expect(customCatBefore).toBeDefined();\n\n    // Rename the custom category using a different case for the old name\n    await renameCategory(store, 'travel concierge', 'Travel Pro');\n\n    // Category list should reflect the change\n    const categories = await getAllCategories(store);\n    expect(categories.find(c => c.name === 'Travel Concierge')).toBeUndefined();\n    const newCat = categories.find(c => c.name === 'Travel Pro');\n    expect(newCat).toBeDefined();\n\n    // New name should be reported as in use\n    expect(await isCategoryInUse('Travel Pro')).toBe(true);\n\n    // Receipts should be updated correctly\n    const receipts = await getAllReceipts(store);\n    const updatedCustom = receipts.find(r => r.id === receiptCustom.id);\n    expect(updatedCustom?.category).toBe('Travel Pro');\n    // Verify other fields unchanged\n    expect(updatedCustom?.amount).toBe(receiptCustom.amount);\n    expect(updatedCustom?.date).toBe(receiptCustom.date);\n    expect(updatedCustom?.type).toBe(receiptCustom.type);\n    expect(updatedCustom?.notes).toBe(receiptCustom.notes);\n\n    // Receipt with other category unchanged\n    const other = receipts.find(r => r.id === receiptOther.id);\n    expect(other?.category).toBe('Meals');\n\n    // Sync should not bring back the old custom category name\n    await syncCategoriesWithReceipts(store);\n    const catsAfterSync = await getAllCategories(store);\n    expect(catsAfterSync.find(c => c.name === 'Travel Concierge')).toBeUndefined();\n  });\n});\n",
+    "__tests__/acceptance/m11-mileageDecimalValidation.test.ts": "import { validateMileageMiles } from '../../src/lib/validation';\n\ndescribe('M11: mileage validation accepts decimal strings and rejects too many decimals', () => {\n  it('accepts a valid decimal mileage supplied as a string', () => {\n    expect(validateMileageMiles('12.5')).toBeNull();\n  });\n\n  it('rejects a mileage string with more than one decimal place', () => {\n    expect(validateMileageMiles('12.55')).toBe('Miles can have at most 1 decimal place');\n  });\n});\n",
+    "test_acceptance.py": "#!/usr/bin/env python3\n\"\"\"Runs the app's acceptance tests: the Jest files in __tests__/acceptance/. Generated by the pipeline; the tests\nthemselves are locked files written by the planner. ACCEPTANCE_MILESTONE=N runs only the tests of milestones 1..N.\"\"\"\nimport json\nimport os\nimport subprocess\nimport sys\n\nhere = os.path.dirname(os.path.abspath(__file__))\nos.chdir(here)\nif not os.path.isdir(\"node_modules\"):\n    lock = os.path.exists(\"package-lock.json\")\n    subprocess.run([\"npm\", \"ci\" if lock else \"install\", \"--include=dev\", \"--no-audit\", \"--no-fund\"], check=False, timeout=1500)\ncmd = [\"npx\", \"jest\", \"--ci\", \"__tests__/acceptance\"]\nm = os.environ.get(\"ACCEPTANCE_MILESTONE\", \"\")\nif m.isdigit():\n    cmd += [\"-t\", \"^(\" + \"|\".join(\"M%d\" % i for i in range(1, int(m) + 1)) + \"): \"]\n# The app's own test script may add node flags (e.g. --experimental-vm-modules): use the same ones.\ntry:\n    script = json.load(open(\"package.json\")).get(\"scripts\", {}).get(\"test\", \"\")\nexcept (OSError, ValueError):\n    script = \"\"\nenv = dict(os.environ)\nif \"--experimental-vm-modules\" in script:\n    env[\"NODE_OPTIONS\"] = (env.get(\"NODE_OPTIONS\", \"\") + \" --experimental-vm-modules\").strip()\nprint(\"Running: \" + \" \".join(cmd), flush=True)\nsys.exit(subprocess.run(cmd, env=env, timeout=1500).returncode)\n"
+  },
+  "acceptance_test": "#!/usr/bin/env python3\n\"\"\"Runs the app's acceptance tests: the Jest files in __tests__/acceptance/. Generated by the pipeline; the tests\nthemselves are locked files written by the planner. ACCEPTANCE_MILESTONE=N runs only the tests of milestones 1..N.\"\"\"\nimport json\nimport os\nimport subprocess\nimport sys\n\nhere = os.path.dirname(os.path.abspath(__file__))\nos.chdir(here)\nif not os.path.isdir(\"node_modules\"):\n    lock = os.path.exists(\"package-lock.json\")\n    subprocess.run([\"npm\", \"ci\" if lock else \"install\", \"--include=dev\", \"--no-audit\", \"--no-fund\"], check=False, timeout=1500)\ncmd = [\"npx\", \"jest\", \"--ci\", \"__tests__/acceptance\"]\nm = os.environ.get(\"ACCEPTANCE_MILESTONE\", \"\")\nif m.isdigit():\n    cmd += [\"-t\", \"^(\" + \"|\".join(\"M%d\" % i for i in range(1, int(m) + 1)) + \"): \"]\n# The app's own test script may add node flags (e.g. --experimental-vm-modules): use the same ones.\ntry:\n    script = json.load(open(\"package.json\")).get(\"scripts\", {}).get(\"test\", \"\")\nexcept (OSError, ValueError):\n    script = \"\"\nenv = dict(os.environ)\nif \"--experimental-vm-modules\" in script:\n    env[\"NODE_OPTIONS\"] = (env.get(\"NODE_OPTIONS\", \"\") + \" --experimental-vm-modules\").strip()\nprint(\"Running: \" + \" \".join(cmd), flush=True)\nsys.exit(subprocess.run(cmd, env=env, timeout=1500).returncode)\n",
+  "requirements": [
+    {
+      "id": "R1",
+      "section": "1",
+      "kind": "logic",
+      "text": "renameCategory must update every saved receipt whose category (case\u2011insensitive) matches the old default category name to the new name, leaving all other receipt fields unchanged."
+    },
+    {
+      "id": "R2",
+      "section": "1",
+      "kind": "logic",
+      "text": "renameCategory must update every saved receipt whose category (case\u2011insensitive) matches the old custom category name to the new name, leaving all other receipt fields unchanged."
+    },
+    {
+      "id": "R3",
+      "section": "1",
+      "kind": "logic",
+      "text": "After a successful rename, getAllCategories must no longer list the old category name."
+    },
+    {
+      "id": "R4",
+      "section": "1",
+      "kind": "logic",
+      "text": "After a successful rename, syncCategoriesWithReceipts must not re\u2011introduce the old category name."
+    },
+    {
+      "id": "R5",
+      "section": "1",
+      "kind": "logic",
+      "text": "After a successful rename, isCategoryInUse(newName) must return true when any receipt previously used the old name."
+    },
+    {
+      "id": "R6",
+      "section": "1",
+      "kind": "logic",
+      "text": "If renameCategory fails (invalid name, name already exists, or category not found), no receipt's category field may be changed."
+    },
+    {
+      "id": "R7",
+      "section": "2",
+      "kind": "logic",
+      "text": "validateMileageMiles must accept any numeric value > 0 with at most one decimal place (e.g., 12.5) and reject 0, negative numbers, numbers with more than one decimal place (e.g., 12.55), and non\u2011numeric text."
+    },
+    {
+      "id": "R8",
+      "section": "2",
+      "kind": "ui",
+      "text": "The Miles input field on the Add mileage screen must allow entry of a string like \"12.5\"."
+    },
+    {
+      "id": "R9",
+      "section": "2",
+      "kind": "logic",
+      "text": "The mileage deduction shown on the Add mileage screen and the value saved to storage must use the exact decimal value entered (e.g., 12.5)."
+    },
+    {
+      "id": "R10",
+      "section": "3",
+      "kind": "ui",
+      "text": "On the Dashboard, the Receipt and Mileage add buttons and the \"Receipt saved\" confirmation must never overlay the Recent activity list."
+    },
+    {
+      "id": "R11",
+      "section": "3",
+      "kind": "ui",
+      "text": "Each row in the Recent activity list must display its amount."
+    },
+    {
+      "id": "R12",
+      "section": "3",
+      "kind": "ui",
+      "text": "The Recent activity list must be scrollable past the add buttons, allowing the buttons to remain out of view while scrolling."
+    },
+    {
+      "id": "R13",
+      "section": "3",
+      "kind": "ui",
+      "text": "On a 390x844 phone screen, the bottom tab labels (Dashboard, Receipts, Mileage, Settings) must be fully visible."
+    },
+    {
+      "id": "R14",
+      "section": "4",
+      "kind": "ui",
+      "text": "The Add receipt screen title must appear only once, in the header."
+    },
+    {
+      "id": "R15",
+      "section": "4",
+      "kind": "ui",
+      "text": "The date picker icon must be placed inside the Date field."
+    },
+    {
+      "id": "R16",
+      "section": "4",
+      "kind": "ui",
+      "text": "There must be no empty gaps larger than the standard spacing between input fields on the Add receipt screen."
+    },
+    {
+      "id": "R17",
+      "section": "4",
+      "kind": "ui",
+      "text": "The \"Scan receipt\" button must be hidden when scanning functionality is unavailable."
+    },
+    {
+      "id": "R18",
+      "section": "5",
+      "kind": "ui",
+      "text": "In Settings, the App lock option must appear once as a switch row, without a separate App lock button."
+    },
+    {
+      "id": "R19",
+      "section": "5",
+      "kind": "ui",
+      "text": "All other Settings entries (Tax settings, Categories, Export, Backup & restore, View Terms and Privacy Policy) must be list rows with a chevron and must not be outlined buttons."
+    },
+    {
+      "id": "R20",
+      "section": "5",
+      "kind": "ui",
+      "text": "The Delete all data entry must be displayed in the error color, positioned last, and separated from the other Settings entries."
+    },
+    {
+      "id": "R21",
+      "section": "general",
+      "kind": "constraint",
+      "text": "Keep every existing feature, test, and screen working."
+    }
+  ],
+  "uncovered_requirements": [],
+  "weak_tests": []
+}
