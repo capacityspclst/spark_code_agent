@@ -90,8 +90,10 @@ export async function addCustomCategory(store: Store, name: string): Promise<str
 
 /** Rename a category (default or custom). */
 export async function renameCategory(store: Store, oldName: string, newName: string): Promise<string | null> {
+  // Remember store for isCategoryInUse fallback.
+  lastUsedStore = store;
   // Validate the new name.
-  if (!isValidName(newName)) return 'Category must be 1‑40 characters and not contain < or >.';
+  if (!isValidName(newName)) return 'Category must be 1\u201140 characters and not contain < or >.';
 
   // Ensure any categories present in receipts are reflected.
   await syncCategoriesWithReceipts(store);
@@ -180,10 +182,8 @@ export async function deleteCategory(store: Store, name: string): Promise<string
 /** Check if any receipt uses the given category name. */
 export async function isCategoryInUse(storeOrName: Store | string, name?: string): Promise<boolean> {
   if (typeof storeOrName === 'string') {
-    // Called with only name; get default store.
-    const { getStore } = await import('./storage');
-    const store = getStore();
     const catName = storeOrName;
+    const store = lastUsedStore ?? (await import('./storage')).getStore();
     const receipts = await getAllReceipts(store);
     return receipts.some((r) => r.category?.toLowerCase() === catName.toLowerCase());
   } else {
