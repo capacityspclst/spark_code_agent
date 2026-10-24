@@ -95,7 +95,12 @@ export async function renameCategory(store: Store, oldName: string, newName: str
   // Validate the new name.
   if (!isValidName(newName)) return 'Category must be 1‑40 characters and not contain < or >.';
 
-  const data = await loadData(store);
+  // Load current categories data.
+  let data = await loadData(store);
+  // Ensure any categories present in receipts are reflected in the categories list.
+  await syncCategoriesWithReceipts(store);
+  // Reload after sync to get any new custom categories.
+  data = await loadData(store);
 
   // Determine the canonical old name (case‑insensitive) and whether it's a default or custom category.
   const oldNameLower = oldName.toLowerCase();
