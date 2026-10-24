@@ -150,15 +150,22 @@ export async function renameCategory(store: Store, oldName: string, newName: str
     }
   }
 
-  // Update receipts that reference the old category (case‑insensitive).
-  // We perform this after saving category data; if receipt updates fail we let the error surface.
+  // Update receipts that reference the old category (case‑insensitive) atomically.
   const receipts = await getAllReceipts(store);
-  for (const r of receipts) {
-    if (r.category && typeof r.category === 'string' && r.category.toLowerCase() === oldNameLower) {
-      // Update the receipt's category and persist it.
-      const updated = { ...r, category: newName };
-      await store.put('receipts', updated as any);
+  const toUpdate = receipts.filter((r) => r.category && typeof r.category === 'string' && r.category.toLowerCase() === oldNameLower);
+  // Keep originals for potential rollback.
+  const originals = toUpdate.map((r) => ({ ...r }));
+  try {
+    for (const r of toUpdate) {
+      const updated = { ...r, category: newName } as any;
+      await store.put('receipts', updated);
     }
+  } catch (e) {
+    // Roll back any changes that succeeded before the error.
+    for (const orig of originals) {
+      await store.put('receipts', orig as any);
+    }
+    return 'Failed to rename receipts';
   }
 
   await saveData(store, data);

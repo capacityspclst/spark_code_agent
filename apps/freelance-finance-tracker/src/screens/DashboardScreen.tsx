@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, Snackbar, Text } from 'react-native-paper';
 import { FlatList, View } from 'react-native';
 import { useNavigation, useRoute, NavigationProp, RouteProp } from '@react-navigation/native';
-import { EmptyState, Screen, SummaryCard } from '../components/ui';
+import { EmptyState, Screen, SummaryCard, PrimaryButton } from '../components/ui';
 import { getStore } from '../lib/storage';
 import { Receipt, MileageEntry } from '../lib/models';
 import { getAllReceipts } from '../lib/receiptStore';
@@ -69,7 +69,7 @@ export default function DashboardScreen() {
           onAction={() => navigation.navigate('ReceiptEntry')}
         />
       ) : (
-        <View style={{ gap: 16 }}>
+        <View style={{ gap: 16, paddingBottom: space(20) }}>
           <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap' }}>
             <SummaryCard label="Income" value={`$${totals.income.toFixed(2)}`} />
             <SummaryCard label="Expenses" value={`$${totals.expenses.toFixed(2)}`} />
@@ -85,16 +85,19 @@ export default function DashboardScreen() {
         </View>
       )}
       {snack ? (
-        <Snackbar
-          visible={true}
-          onDismiss={() => setSnack('')}
-          duration={3000}
-          style={{ bottom: space(20) }}
-        >
-          {snack}
-        </Snackbar>
-      ) : null}
-      <FABAdd />
+        <BottomActionBar>
+        {snack ? (
+          <Snackbar
+            visible={true}
+            onDismiss={() => setSnack('')}
+            duration={3000}
+          >
+            {snack}
+          </Snackbar>
+        ) : null}
+        <PrimaryButton label="Receipt" variant="primary" onPress={() => navigation.getParent?.()?.navigate('ReceiptEntry')} style={{ marginBottom: space(1) }} />
+        <PrimaryButton label="Mileage" variant="primary" onPress={() => navigation.getParent?.()?.navigate('MileageEntry')} />
+      </BottomActionBar>
     </Screen>
   );
 }

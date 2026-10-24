@@ -24,13 +24,13 @@ export function validateReceiptAmount(value: string | number): string | null {
   return null;
 }
 
-/** Validate mileage miles: >0, <=10,000, integer only */
+/** Validate mileage miles: >0, <=10,000, at most one decimal place */
 export function validateMileageMiles(value: string | number): string | null {
   if (value === '' || value === undefined || value === null) return 'Miles must be > 0';
   const num = toNumber(value);
   if (isNaN(num) || num <= 0) return 'Miles must be > 0';
   if (num > 10_000) return 'Miles must be \u2264 10,000';
-  // Allow at most one decimal place
+  // Ensure at most one decimal place
   const str = typeof value === 'string' ? value.trim() : num.toString();
   if (!/^\d+(\.\d)?$/.test(str)) return 'Miles can have at most 1 decimal place';
   return null;
