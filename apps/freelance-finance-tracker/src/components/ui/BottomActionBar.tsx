@@ -10,9 +10,11 @@ import { theme, space } from '../../theme';
  * so the FABs do not cover content.
  */
 export default function BottomActionBar({
+  snackMessage,
   onAddReceipt,
   onAddMileage,
 }: {
+  snackMessage?: string;
   onAddReceipt: () => void;
   onAddMileage: () => void;
 }) {
@@ -23,6 +25,11 @@ export default function BottomActionBar({
       elevation={2}
     >
       <View style={styles.inner}>
+        {snackMessage ? (
+          <Snackbar visible={true} onDismiss={() => {}} duration={3000}>
+            {snackMessage}
+          </Snackbar>
+        ) : null}
         <FAB
           size="small"
           style={styles.fab}

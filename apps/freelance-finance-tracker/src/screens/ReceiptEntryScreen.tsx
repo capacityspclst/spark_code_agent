@@ -3,7 +3,7 @@ import { View } from 'react-native';
 import { useNavigation, NavigationProp } from '@react-navigation/native';
 import { PrimaryButton, Screen, FormField, ChoiceField } from '../components/ui';
 import ScreenHeader from '../components/ui/ScreenHeader';
-import { Snackbar, Text } from 'react-native-paper';
+import { Snackbar, Text, TextInput } from 'react-native-paper';
 import ReceiptImagePicker from '../components/ui/ReceiptImagePicker';
 import { v4 as uuidv4 } from 'uuid';
 import { getStore } from '../lib/storage';
