@@ -34,6 +34,7 @@ export default function FormField({ label, error, hint, marked, placeholder, sec
         error={showError}
         placeholder={placeholder}
         secureTextEntry={secureTextEntry}
+        right={right}
         onBlur={() => setTouched(true)}
         style={styles.input}
         {...input}

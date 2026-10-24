@@ -11,7 +11,7 @@ import { theme, space } from '../../theme';
 export default function BottomActionBar({ children }: { children: React.ReactNode }) {
   const insets = useSafeAreaInsets();
   return (
-    <Surface style={[styles.bar, { paddingBottom: insets.bottom + space(2), position: 'absolute', bottom: 0, left: 0, right: 0 }]} elevation={2}>
+    <Surface style={[styles.bar, { paddingBottom: insets.bottom + space(2) }]} elevation={2}>
       <View style={styles.inner}>{children}</View>
     </Surface>
   );
