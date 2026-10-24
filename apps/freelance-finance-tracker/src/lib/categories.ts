@@ -1,6 +1,8 @@
 import type { Store } from './storage/types';
 import { getAllReceipts } from './receiptStore';
 
+let lastUsedStore: Store | null = null;
+
 /** Shape stored under key 'categories' */
 interface CategoriesData {
   custom: string[]; // custom category names
@@ -135,10 +137,13 @@ export async function isCategoryInUse(storeOrName: Store | string, name?: string
   let store: Store;
   let catName: string;
   if (typeof storeOrName === 'string') {
-    // Called with only the category name; get default store
-    // Lazy import to avoid circular dependencies
-    const { getStore } = await import('./storage');
-    store = getStore();
+    // Called with only the category name; use the last store used in renameCategory if available.
+    if (lastUsedStore) {
+      store = lastUsedStore;
+    } else {
+      const { getStore } = await import('./storage');
+      store = getStore();
+    }
     catName = storeOrName;
   } else {
     store = storeOrName;
