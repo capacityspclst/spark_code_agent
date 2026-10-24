@@ -11,8 +11,9 @@ import { computeTotals } from '../lib/finance';
 import { totalMileageDeduction } from '../lib/mileage';
 import { getTaxRate } from '../lib/settings';
 import ReceiptCard from '../components/ui/ReceiptCard';
+import MileageCard from '../components/ui/MileageCard';
 import { consumeSnack } from '../lib/uiState';
-import FABAdd from '../components/ui/FABAdd';
+import BottomActionBar from '../components/ui/BottomActionBar';
 import { space } from '../theme';
 
 type DashboardRouteParams = {};
@@ -57,6 +58,10 @@ export default function DashboardScreen() {
   const totals = computeTotals(receipts);
 
   const empty = receipts.length === 0 && mileageEntries.length === 0;
+  const combined = [] as any[];
+  for (const r of receipts) combined.push({ type: 'receipt', data: r });
+  for (const m of mileageEntries) combined.push({ type: 'mileage', data: m });
+  const recent = combined.slice(0, 5);
 
   return (
     <Screen title="Dashboard" wide>
@@ -78,26 +83,33 @@ export default function DashboardScreen() {
           </View>
           <Text variant="titleMedium" style={{ marginTop: 8, marginBottom: 4 }}>Recent activity</Text>
           <FlatList
-            data={receipts.slice(0, 5)}
-            keyExtractor={(item) => item.id}
-            renderItem={({ item }) => <ReceiptCard receipt={item} />}
+            data={recent}
+            keyExtractor={(item) => item.data.id + item.type}
+            renderItem={({ item }) =>
+              item.type === 'receipt' ? (
+                <ReceiptCard receipt={item.data as any} />
+              ) : (
+                <MileageCard entry={item.data as any} />
+              )
+            }
           />
         </View>
       )}
-      {snack ? (
+      {empty ? null : (
         <BottomActionBar>
-        {snack ? (
-          <Snackbar
-            visible={true}
-            onDismiss={() => setSnack('')}
-            duration={3000}
-          >
-            {snack}
-          </Snackbar>
-        ) : null}
-        <PrimaryButton label="Receipt" variant="primary" onPress={() => navigation.getParent?.()?.navigate('ReceiptEntry')} style={{ marginBottom: space(1) }} />
-        <PrimaryButton label="Mileage" variant="primary" onPress={() => navigation.getParent?.()?.navigate('MileageEntry')} />
-      </BottomActionBar>
+          {snack ? (
+            <Snackbar
+              visible={true}
+              onDismiss={() => setSnack('')}
+              duration={3000}
+            >
+              {snack}
+            </Snackbar>
+          ) : null}
+          <PrimaryButton label="Receipt" variant="primary" onPress={() => navigation.getParent?.()?.navigate('ReceiptEntry')} style={{ marginBottom: space(1) }} />
+          <PrimaryButton label="Mileage" variant="primary" onPress={() => navigation.getParent?.()?.navigate('MileageEntry')} />
+        </BottomActionBar>
+      )}
     </Screen>
   );
 }

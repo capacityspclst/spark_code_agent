@@ -12,6 +12,7 @@ import { Receipt, ReceiptType } from '../lib/models';
 import { setPendingSnack } from '../lib/uiState';
 import { persistPhoto } from '../lib/photos';
 import { recognizeReceiptText, parseReceipt, ParsedReceipt } from '../lib/ocr';
+import { isSupported } from 'expo-text-extractor';
 import { getAllCategories } from '../lib/categories';
 import { IconButton } from 'react-native-paper';
 import { DatePickerModal } from 'react-native-paper-dates';
@@ -150,8 +151,8 @@ export default function ReceiptEntryScreen() {
             placeholder="YYYY-MM-DD"
             hint={marked.date ? 'Check these details' : undefined}
             marked={marked.date}
+            right={<IconButton icon="calendar" size={24} onPress={() => setShowDatePicker(true)} accessibilityLabel="Select receipt date" />}
           />
-          <IconButton icon="calendar" size={24} onPress={() => setShowDatePicker(true)} accessibilityLabel="Select receipt date" />
           {marked.date && (
             <PrimaryButton label="Looks right" variant="text" onPress={() => clearMark('date')} />
           )}
