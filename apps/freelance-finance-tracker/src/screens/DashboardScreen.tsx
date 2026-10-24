@@ -81,7 +81,6 @@ export default function DashboardScreen() {
             data={receipts.slice(0, 5)}
             keyExtractor={(item) => item.id}
             renderItem={({ item }) => <ReceiptCard receipt={item} />}
-            contentContainerStyle={{ paddingBottom: space(20) }}
           />
         </View>
       )}
