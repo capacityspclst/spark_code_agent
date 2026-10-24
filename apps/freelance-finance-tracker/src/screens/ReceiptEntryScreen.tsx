@@ -13,6 +13,7 @@ import { setPendingSnack } from '../lib/uiState';
 import { persistPhoto } from '../lib/photos';
 import { recognizeReceiptText, parseReceipt, ParsedReceipt } from '../lib/ocr';
 import { isSupported } from 'expo-text-extractor';
+import { Platform } from 'react-native';
 import { getAllCategories } from '../lib/categories';
 import { IconButton } from 'react-native-paper';
 import { DatePickerModal } from 'react-native-paper-dates';
@@ -123,63 +124,65 @@ export default function ReceiptEntryScreen() {
     <Screen>
       <View style={{ padding: layout.pagePadding, maxWidth: layout.maxContentWidth, alignSelf: 'center', gap: space(1) }}>
         <ReceiptImagePicker photoUri={photoUri} onChange={setPhotoUri} />
-        {isSupported && <PrimaryButton label="Scan receipt" onPress={startScan} disabled={!photoUri} />}
+        {isSupported && Platform.OS !== 'web' && <PrimaryButton label="Scan receipt" onPress={startScan} disabled={!photoUri} />}
         <Text variant="titleMedium" style={{ marginVertical: space(1) }}>
           Receipt details
         </Text>
-        {/* Amount */}
-        <FormField
-          label="Amount"
-          value={amount}
-          onChangeText={(v) => { setAmount(v); clearMark('amount'); }}
-          keyboardType="numeric"
-          error={amountError ?? undefined}
-          hint={marked.amount ? 'Check these details' : undefined}
-          marked={marked.amount}
-        />
-        {marked.amount && (
-          <PrimaryButton label="Looks right" variant="text" onPress={() => clearMark('amount')} style={{ marginTop: space(0.5) }} />
-        )}
-        {/* Date */}
-        <FormField
-          label="Date"
-          value={date}
-          onChangeText={(v) => { setDate(v); clearMark('date'); }}
-          placeholder="YYYY-MM-DD"
-          hint={marked.date ? 'Check these details' : undefined}
-          marked={marked.date}
-          right={<IconButton icon="calendar" size={24} onPress={() => setShowDatePicker(true)} accessibilityLabel="Select receipt date" />}
-        />
-        {marked.date && (
-          <PrimaryButton label="Looks right" variant="text" onPress={() => clearMark('date')} style={{ marginTop: space(0.5) }} />
-        )}
-        <DatePickerModal
-          locale="en"
-          mode="single"
-          visible={showDatePicker}
-          onDismiss={() => setShowDatePicker(false)}
-          date={date ? new Date(date) : new Date()}
-          onConfirm={(params: any) => {
-            const d = params.date;
-            const iso = d.toISOString().split('T')[0];
-            setDate(iso);
-            setShowDatePicker(false);
-            clearMark('date');
-          }}
-          validRange={{ endDate: new Date() }}
-        />
-        {/* Category */}
-        <FormField
-          label="Category"
-          value={category}
-          onChangeText={(v) => { setCategory(v); clearMark('category'); }}
-          placeholder="Select category"
-          hint={marked.category ? 'Check these details' : undefined}
-          marked={marked.category}
-        />
-        {marked.category && (
-          <PrimaryButton label="Looks right" variant="text" onPress={() => clearMark('category')} style={{ marginTop: space(0.5) }} />
-        )}
+        <View style={{ gap: space(2) }}>
+          {/* Amount */}
+          <FormField
+            label="Amount"
+            value={amount}
+            onChangeText={(v) => { setAmount(v); clearMark('amount'); }}
+            keyboardType="numeric"
+            error={amountError ?? undefined}
+            hint={marked.amount ? 'Check these details' : undefined}
+            marked={marked.amount}
+          />
+          {marked.amount && (
+            <PrimaryButton label="Looks right" variant="text" onPress={() => clearMark('amount')} />
+          )}
+          {/* Date */}
+          <FormField
+            label="Date"
+            value={date}
+            onChangeText={(v) => { setDate(v); clearMark('date'); }}
+            placeholder="YYYY-MM-DD"
+            hint={marked.date ? 'Check these details' : undefined}
+            marked={marked.date}
+            right={<IconButton icon="calendar" size={24} onPress={() => setShowDatePicker(true)} accessibilityLabel="Select receipt date" />}
+          />
+          {marked.date && (
+            <PrimaryButton label="Looks right" variant="text" onPress={() => clearMark('date')} />
+          )}
+          <DatePickerModal
+            locale="en"
+            mode="single"
+            visible={showDatePicker}
+            onDismiss={() => setShowDatePicker(false)}
+            date={date ? new Date(date) : new Date()}
+            onConfirm={(params: any) => {
+              const d = params.date;
+              const iso = d.toISOString().split('T')[0];
+              setDate(iso);
+              setShowDatePicker(false);
+              clearMark('date');
+            }}
+            validRange={{ endDate: new Date() }}
+          />
+          {/* Category */}
+          <FormField
+            label="Category"
+            value={category}
+            onChangeText={(v) => { setCategory(v); clearMark('category'); }}
+            placeholder="Select category"
+            hint={marked.category ? 'Check these details' : undefined}
+            marked={marked.category}
+          />
+          {marked.category && (
+            <PrimaryButton label="Looks right" variant="text" onPress={() => clearMark('category')} />
+          )}
+        </View>
         <Text variant="titleMedium" style={{ marginVertical: space(2) }}>
           Additional information
         </Text>
