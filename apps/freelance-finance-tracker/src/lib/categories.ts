@@ -219,16 +219,23 @@ export async function isCategoryInUse(storeOrName: Store | string, name?: string
 export async function syncCategoriesWithReceipts(store: Store): Promise<void> {
   const receipts = await getAllReceipts(store);
   const data = await loadData(store);
-  const existing = new Set([
-    ...DEFAULT_CATEGORIES.map((c) => c.toLowerCase()),
-    ...data.custom.map((c) => c.toLowerCase()),
-  ]);
+  // Build set of existing effective category names, including renamed defaults.
+  const existing = new Set<string>();
+  // Add default categories with rename applied.
+  for (const def of DEFAULT_CATEGORIES) {
+    const name = data.rename[def] ?? def;
+    existing.add(name.toLowerCase());
+  }
+  // Add custom categories.
+  for (const cust of data.custom) {
+    existing.add(cust.toLowerCase());
+  }
   for (const r of receipts) {
-    if (r.category && !existing.has(r.category.toLowerCase())) {
-      // Validate name before adding.
-      if (isValidName(r.category)) {
+    if (r.category) {
+      const catLower = r.category.toLowerCase();
+      if (!existing.has(catLower) && isValidName(r.category)) {
         data.custom.push(r.category);
-        existing.add(r.category.toLowerCase());
+        existing.add(catLower);
       }
     }
   }
