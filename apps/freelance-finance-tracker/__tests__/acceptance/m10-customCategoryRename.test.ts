@@ -37,7 +37,8 @@ describe('M10: custom category rename updates receipts and preserves fields', ()
     expect(customCatBefore).toBeDefined();
 
     // Rename the custom category using a different case for the old name
-    await renameCategory(store, 'travel concierge', 'Travel Pro');
+    const renameResult = await renameCategory(store, 'travel concierge', 'Travel Pro');
+    expect(renameResult).toBeNull();
 
     // Category list should reflect the change
     const categories = await getAllCategories(store);
