@@ -13,7 +13,7 @@ import { Receipt, ReceiptType } from '../lib/models';
 import { setPendingSnack } from '../lib/uiState';
 import { persistPhoto } from '../lib/photos';
 import { recognizeReceiptText, parseReceipt, ParsedReceipt } from '../lib/ocr';
-import * as TextExtractor from 'expo-text-extractor';
+import { isSupported } from 'expo-text-extractor';
 import { Platform } from 'react-native';
 import { getAllCategories } from '../lib/categories';
 import { IconButton } from 'react-native-paper';
@@ -192,7 +192,6 @@ export default function ReceiptEntryScreen() {
         <FormField label="Notes" value={notes} onChangeText={setNotes} multiline placeholder="Enter notes about this receipt" />
         {error ? <Snackbar visible={true} onDismiss={() => setError('')} duration={3000}>{error}</Snackbar> : null}
         <PrimaryButton label="Save receipt" onPress={onSave} loading={saving} disabled={!canSave} style={{ marginTop: 16 }} />
-      </View>
     </Screen>
   );
 }
