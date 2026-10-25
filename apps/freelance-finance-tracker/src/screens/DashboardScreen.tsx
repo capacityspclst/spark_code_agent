@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, Snackbar, Text } from 'react-native-paper';
 import { FlatList, View } from 'react-native';
 import { useNavigation, useRoute, NavigationProp, RouteProp } from '@react-navigation/native';
-import { EmptyState, Screen, SummaryCard } from '../components/ui';
+import { EmptyState, Screen, SummaryCard, PrimaryButton } from '../components/ui';
 import { getStore } from '../lib/storage';
 import { Receipt, MileageEntry } from '../lib/models';
 import { getAllReceipts } from '../lib/receiptStore';
@@ -11,8 +11,9 @@ import { computeTotals } from '../lib/finance';
 import { totalMileageDeduction } from '../lib/mileage';
 import { getTaxRate } from '../lib/settings';
 import ReceiptCard from '../components/ui/ReceiptCard';
+import MileageCard from '../components/ui/MileageCard';
 import { consumeSnack } from '../lib/uiState';
-import FABAdd from '../components/ui/FABAdd';
+import BottomActionBar from '../components/ui/BottomActionBar';
 import { space } from '../theme';
 
 type DashboardRouteParams = {};
@@ -57,6 +58,10 @@ export default function DashboardScreen() {
   const totals = computeTotals(receipts);
 
   const empty = receipts.length === 0 && mileageEntries.length === 0;
+  const combined = [] as any[];
+  for (const r of receipts) combined.push({ type: 'receipt', data: r });
+  for (const m of mileageEntries) combined.push({ type: 'mileage', data: m });
+  const recent = combined.slice(0, 5);
 
   return (
     <Screen title="Dashboard" wide>
@@ -69,32 +74,32 @@ export default function DashboardScreen() {
           onAction={() => navigation.navigate('ReceiptEntry')}
         />
       ) : (
-        <View style={{ gap: 16 }}>
+        <View style={{ gap: 16, paddingBottom: space(20) }}>
           <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap' }}>
             <SummaryCard label="Income" value={`$${totals.income.toFixed(2)}`} />
             <SummaryCard label="Expenses" value={`$${totals.expenses.toFixed(2)}`} />
             <SummaryCard label="Mileage deduction" value={`$${mileageDeduction.toFixed(2)}`} />
             <SummaryCard label="Estimated tax" value={`$${tax.toFixed(2)}`} />
           </View>
+          <BottomActionBar
+            snackMessage={snack}
+            onAddReceipt={() => navigation.getParent?.()?.navigate('ReceiptEntry')}
+            onAddMileage={() => navigation.getParent?.()?.navigate('MileageEntry')}
+          />
           <Text variant="titleMedium" style={{ marginTop: 8, marginBottom: 4 }}>Recent activity</Text>
           <FlatList
-            data={receipts.slice(0, 5)}
-            keyExtractor={(item) => item.id}
-            renderItem={({ item }) => <ReceiptCard receipt={item} />}
+            data={recent}
+            keyExtractor={(item) => item.data.id + item.type}
+            renderItem={({ item }) =>
+              item.type === 'receipt' ? (
+                <ReceiptCard receipt={item.data as any} />
+              ) : (
+                <MileageCard entry={item.data as any} />
+              )
+            }
           />
         </View>
       )}
-      {snack ? (
-        <Snackbar
-          visible={true}
-          onDismiss={() => setSnack('')}
-          duration={3000}
-          style={{ bottom: space(20) }}
-        >
-          {snack}
-        </Snackbar>
-      ) : null}
-      <FABAdd />
     </Screen>
   );
 }

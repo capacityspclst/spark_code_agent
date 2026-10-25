@@ -24,6 +24,6 @@ export default {
     '<rootDir>/__mocks__/@noble/',
   ],
   // Ignore the mistakenly prefixed test folder with a leading space.
-  testPathIgnorePatterns: ['<rootDir>/ __tests__/'],
+  testPathIgnorePatterns: [],
   // Note: test script in package.json already adds --experimental-vm-modules
 };
