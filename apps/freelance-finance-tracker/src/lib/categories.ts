@@ -12,7 +12,7 @@ interface CategoriesData {
 
 const STORAGE_KEY = 'categories';
 
-/** Default built‑in categories */
+/** Default built-in categories */
 export const DEFAULT_CATEGORIES = [
   'Advertising & marketing',
   'Vehicle & fuel',

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View } from 'react-native';
 import { useNavigation, NavigationProp } from '@react-navigation/native';
 import { PrimaryButton, Screen, FormField, ChoiceField } from '../components/ui';
-import ScreenHeader from '../components/ui/ScreenHeader';
+// import ScreenHeader from '../components/ui/ScreenHeader';
 import { Snackbar, Text, TextInput } from 'react-native-paper';
 import ReceiptImagePicker from '../components/ui/ReceiptImagePicker';
 import { v4 as uuidv4 } from 'uuid';
@@ -13,7 +13,7 @@ import { Receipt, ReceiptType } from '../lib/models';
 import { setPendingSnack } from '../lib/uiState';
 import { persistPhoto } from '../lib/photos';
 import { recognizeReceiptText, parseReceipt, ParsedReceipt } from '../lib/ocr';
-import { isSupported } from 'expo-text-extractor';
+import * as TextExtractor from 'expo-text-extractor';
 import { Platform } from 'react-native';
 import { getAllCategories } from '../lib/categories';
 import { IconButton } from 'react-native-paper';
@@ -123,8 +123,6 @@ export default function ReceiptEntryScreen() {
 
   return (
     <Screen>
-      <ScreenHeader title="Add receipt" />
-      <View style={{ padding: layout.pagePadding, maxWidth: layout.maxContentWidth, alignSelf: 'center', gap: space(1) }}>
         <ReceiptImagePicker photoUri={photoUri} onChange={setPhotoUri} />
         {isSupported && <PrimaryButton label="Scan receipt" onPress={startScan} disabled={!photoUri} />}
         <View style={{ gap: space(1) }}>
