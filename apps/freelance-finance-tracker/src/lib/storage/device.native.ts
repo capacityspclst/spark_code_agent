@@ -5,66 +5,9 @@ import { fromBase64, KEY_BYTES, randomBytes, toBase64 } from '../crypto';
 import type { KeyProvider, RawStore } from './types';
 
 let SQLite: any;
-// Use a mock in Jest tests to avoid native module errors.
-const isTest = process.env.NODE_ENV === 'test' || typeof process.env.JEST_WORKER_ID !== 'undefined';
-if (isTest) {
-  SQLite = {
-    async openDatabaseAsync(_name: string) {
-      const kv = new Map<string, string>();
-      const records = new Map<string, Map<string, string>>(); // collection -> (id -> v)
-      return {
-        async execAsync(_sql: string) {},
-        async runAsync(_sql: string, ..._params: any[]) {
-          const sql = _sql.trim().toUpperCase();
-          if (sql.startsWith('INSERT OR REPLACE INTO KV')) {
-            const [k, v] = _params;
-            kv.set(k, v);
-          } else if (sql.startsWith('INSERT OR REPLACE INTO RECORDS')) {
-            const [collection, id, v] = _params;
-            let col = records.get(collection);
-            if (!col) {
-              col = new Map();
-              records.set(collection, col);
-            }
-            col.set(id, v);
-          } else if (sql.startsWith('DELETE FROM KV')) {
-            const [k] = _params;
-            kv.delete(k);
-          } else if (sql.startsWith('DELETE FROM RECORDS WHERE COLLECTION = ? AND ID = ?')) {
-            const [collection, id] = _params;
-            const col = records.get(collection);
-            col?.delete(id);
-          } else if (sql.startsWith('DELETE FROM KV; DELETE FROM RECORDS;')) {
-            kv.clear();
-            records.clear();
-          }
-        },
-        async getFirstAsync(_sql: string, ...params: any[]) {
-          const sql = _sql.trim().toUpperCase();
-          if (sql.startsWith('SELECT V FROM KV WHERE K = ?')) {
-            const [k] = params;
-            const v = kv.get(k);
-            return v ? ({ v } as any) : null;
-          }
-          return null;
-        },
-        async getAllAsync(_sql: string, ...params: any[]) {
-          const sql = _sql.trim().toUpperCase();
-          if (sql.startsWith('SELECT V FROM RECORDS WHERE COLLECTION = ?')) {
-            const [collection] = params;
-            const col = records.get(collection);
-            if (!col) return [];
-            return Array.from(col.values()).map((v) => ({ v } as any));
-          }
-          return [];
-        },
-      };
-    },
-  };
-} else {
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  SQLite = require('expo-sqlite');
-}
+// Use the real expo-sqlite module; Jest will automatically use the manual mock in __mocks__/expo-sqlite.ts.
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+SQLite = require('expo-sqlite');
 
 const KEY_NAME = 'app.data-key.v1';
 
