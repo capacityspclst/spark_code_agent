@@ -104,7 +104,35 @@ export async function renameCategory(store: Store, oldName: string, newName: str
       delete data.rename[oldName];
     }
   }
+  // Save updated category data first.
   await saveData(store, data);
+
+  // Update any receipts that used the old category name (case‑insensitive).
+  try {
+    const receipts = await getAllReceipts(store);
+    const lowerOld = oldName.toLowerCase();
+    for (const r of receipts) {
+      if (r.category && r.category.toLowerCase() === lowerOld) {
+        const updated = { ...r, category: newName };
+        // Store.update via put (overwrites existing record)
+        await store.put('receipts', updated as any);
+      }
+    }
+  } catch (e) {
+    // If receipt update fails, attempt to rollback category rename.
+    // Reload original data and restore.
+    const original = await loadData(store);
+    // Revert rename changes.
+    if (DEFAULT_CATEGORIES.includes(oldName)) {
+      delete original.rename[oldName];
+    } else {
+      const idx = original.custom.findIndex((c) => c === newName);
+      if (idx !== -1) original.custom[idx] = oldName;
+    }
+    await saveData(store, original);
+    throw e;
+  }
+
   return null;
 }
 
@@ -140,16 +168,21 @@ export async function isCategoryInUse(store: Store, name: string): Promise<boole
 export async function syncCategoriesWithReceipts(store: Store): Promise<void> {
   const receipts = await getAllReceipts(store);
   const data = await loadData(store);
-  const existing = new Set([
+  // Existing known category names: defaults, custom, and any renamed defaults (their new names).
+  const existing = new Set<string>([
     ...DEFAULT_CATEGORIES.map((c) => c.toLowerCase()),
     ...data.custom.map((c) => c.toLowerCase()),
+    ...Object.values(data.rename).map((v) => v.toLowerCase()),
   ]);
   for (const r of receipts) {
-    if (r.category && !existing.has(r.category.toLowerCase())) {
-      // Validate name before adding.
-      if (isValidName(r.category)) {
-        data.custom.push(r.category);
-        existing.add(r.category.toLowerCase());
+    if (r.category) {
+      const catLower = r.category.toLowerCase();
+      if (!existing.has(catLower)) {
+        // Validate name before adding.
+        if (isValidName(r.category)) {
+          data.custom.push(r.category);
+          existing.add(catLower);
+        }
       }
     }
   }
