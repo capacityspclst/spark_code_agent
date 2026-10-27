@@ -1,0 +1,18 @@
+{
+  "problems": [
+    {
+      "test": "src/__tests__/acceptance/m7-category-rename.test.ts \u2013 \"M7: renameCategory updates receipts case\u2011insensitively\"",
+      "file": "__tests__/acceptance/m7-category-rename.test.ts",
+      "kind": "broken",
+      "evidence": "Task: \"renaming a category (renameCategory \u2026) must also update every saved receipt whose category is the old name (compared case\u2011insensitively) to the new name, so that afterwards no receipt uses the old name, getAllCategories no longer lists the old name, syncCategoriesWithReceipts does not bring it back, and isCategoryInUse(newName) is true when receipts used the old name.\" Test expects after rename that the receipt category changes from 'MEALS' to 'Food & Dining', that syncCategoriesWithReceipts does not re\u2011add the old name, and that isCategoryInUse('Food & Dining') returns true. Current implementation of renameCategory does not touch receipts at all, so the receipt remains 'MEALS', isCategoryInUse stays false, and the test would fail.",
+      "fix": "Modify src/lib/categories.ts: after a successful rename, fetch all receipts via getAllReceipts, filter those where receipt.category equals oldName case\u2011insensitively, and update each receipt's category to newName (using the existing receipt\u2011store helper). Ensure this only runs on successful validation so failures leave receipts untouched."
+    },
+    {
+      "test": "src/__tests__/acceptance/m7-mileage-decimal.test.ts \u2013 \"M7: mileage accepts decimal miles\"",
+      "file": "__tests__/acceptance/m7-mileage-decimal.test.ts",
+      "kind": "broken",
+      "evidence": "Task: \"mileage accepts decimal miles. validateMileageMiles accepts any number greater than 0 with up to 1 decimal place (12.5 is valid; 0, negative numbers, 12.55 and text are not)\". Test calls validateMileageMiles(12.5) and validateMileageMiles('12.5') expecting null, and expects stored mileage entry to retain the decimal value. Current src/lib/validation.ts implements validateMileageMiles with an integer\u2011only check (`!Number.isInteger(num)` returns an error), so 12.5 is rejected. Hence the test will fail.",
+      "fix": "Update src/lib/validation.ts: after converting to a number, verify it is >0, \u226410\u202f000, and has at most one decimal place (e.g., `Math.abs(num * 10 - Math.round(num * 10)) < 1e-9`). Return appropriate error strings: 'Miles must be > 0', 'Miles must be \u2264 10,000', and 'Miles must have at most 1 decimal place' for violations. Allow numeric strings as inputs."
+    }
+  ]
+}
