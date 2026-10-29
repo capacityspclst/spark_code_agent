@@ -88,17 +88,35 @@ export async function addCustomCategory(store: Store, name: string): Promise<str
 
 /** Rename a category (default or custom). */
 export async function renameCategory(store: Store, oldName: string, newName: string): Promise<string | null> {
+  // Validate new name first; on failure do nothing.
   if (!isValidName(newName)) return 'Category must be 1‑40 characters and not contain < or >.';
   const data = await loadData(store);
   const allNames = [...DEFAULT_CATEGORIES, ...data.custom];
   const conflict = allNames.some((n) => n.toLowerCase() === newName.toLowerCase());
   if (conflict) return 'Category already exists.';
-  if (DEFAULT_CATEGORIES.includes(oldName)) {
+
+  // Ensure the category exists.
+  const isDefault = DEFAULT_CATEGORIES.includes(oldName);
+  if (!isDefault && !data.custom.includes(oldName)) return 'Category not found.';
+
+  // Update any receipts that reference the old category name (case‑insensitive).
+  const receipts = await getAllReceipts(store);
+  for (const r of receipts) {
+    if (r.category && r.category.toLowerCase() === oldName.toLowerCase()) {
+      // Clone receipt with updated category.
+      const updated = { ...r, category: newName } as any;
+      // Store.update – the Store interface only has put for a collection.
+      await (store as any).put('receipts', updated);
+    }
+  }
+
+  // Rename in the categories store.
+  if (isDefault) {
     data.rename[oldName] = newName;
   } else {
     const idx = data.custom.findIndex((c) => c === oldName);
-    if (idx === -1) return 'Category not found.';
     data.custom[idx] = newName;
+    // Preserve any existing rename mapping.
     if (data.rename[oldName]) {
       data.rename[newName] = data.rename[oldName];
       delete data.rename[oldName];
