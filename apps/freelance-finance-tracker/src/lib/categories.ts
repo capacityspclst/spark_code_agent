@@ -93,7 +93,7 @@ export async function renameCategory(store: Store, oldName: string, newName: str
   const data = await loadData(store);
   const allNames = [...DEFAULT_CATEGORIES, ...data.custom];
   const conflict = allNames.some((n) => n.toLowerCase() === newName.toLowerCase());
-  if (conflict) return 'Category already exists.';
+  if (conflict) return 'Category must not already exist.';
 
   // Ensure the category exists.
   const isDefault = DEFAULT_CATEGORIES.includes(oldName);

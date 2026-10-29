@@ -29,8 +29,11 @@ export function validateMileageMiles(value: string | number): string | null {
   if (value === '' || value === undefined || value === null) return 'Miles must be > 0';
   const num = toNumber(value);
   if (isNaN(num) || num <= 0) return 'Miles must be > 0';
-  if (!Number.isInteger(num)) return 'Miles must be > 0'; // simplified message
   if (num > 10_000) return 'Miles must be \u2264 10,000';
+  // Check decimal places (allow up to one).
+  const str = typeof value === 'string' ? value : num.toString();
+  const parts = str.split('.');
+  if (parts[1] && parts[1].length > 1) return 'Miles must have at most 1 decimal place';
   return null;
 }
 
