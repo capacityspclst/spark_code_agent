@@ -29,7 +29,7 @@ describe('MileageEntryScreen – deduction displays correct value for decimal mi
     // or accessibility label contains the word "Miles".  This works even if the
     // testing library version does not expose getByPlaceholderText.
     const inputs = UNSAFE_getAllByType(TextInput);
-    const milesInput = inputs.find((node) => {
+    const milesInput = inputs.find((node: any) => {
       const placeholder = node.props?.placeholder;
       const a11yLabel = node.props?.accessibilityLabel ?? node.props?.accessibilityLabel;
       return (
