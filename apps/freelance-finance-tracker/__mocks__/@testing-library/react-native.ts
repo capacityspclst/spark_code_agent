@@ -2,7 +2,7 @@
 import * as React from 'react';
 import { create } from 'react-test-renderer';
 
-function render(component: React.ReactElement, _options?: any) {
+function render(component: React.ReactElement, _options?: any): any {
   const testRenderer = create(component);
   const root = testRenderer.root;
 

@@ -92,8 +92,12 @@ export async function renameCategory(store: Store, oldName: string, newName: str
   if (!isValidName(newName)) return 'Category must be 1‑40 characters and not contain < or >.';
   const data = await loadData(store);
   const allNames = [...DEFAULT_CATEGORIES, ...data.custom];
-  const conflict = allNames.some((n) => n.toLowerCase() === newName.toLowerCase());
-  if (conflict) return 'Category must not already exist.';
+  // Disallow renaming to the same name (case‑insensitive)
+  if (oldName.toLowerCase() === newName.toLowerCase()) {
+    return 'Category must be different.';
+  }
+  const conflict = allNames.some((n) => n.toLowerCase() === newName.toLowerCase() && n.toLowerCase() !== oldName.toLowerCase());
+  if (conflict) return 'Category already exists.';
 
   // Ensure the category exists.
   const isDefault = DEFAULT_CATEGORIES.includes(oldName);
