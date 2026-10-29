@@ -10,9 +10,9 @@ interface Props { label: string; description?: string; value: boolean; onChange:
 export default function SettingSwitch({ label, description, value, onChange }: Props) {
   return (
     <Pressable
-      role="switch"
+      accessibilityRole="switch"
       aria-checked={value}
-      aria-label={label}
+      accessibilityLabel={label}
       onPress={() => onChange(!value)}
       style={({ pressed }) => [styles.row, pressed && styles.pressed]}
     >
