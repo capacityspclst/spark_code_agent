@@ -2,12 +2,33 @@
 import * as React from 'react';
 import { create } from 'react-test-renderer';
 
+type Node = any;
+
+type GetByText = (text: string | RegExp) => any;
+
+type QueryByText = (text: string | RegExp) => any;
+
+type GetByPlaceholderText = (placeholder: string | RegExp) => any;
+
+type GetByA11yRole = (role: string, options?: any) => any;
+
+type QueryByA11yRole = (role: string, options?: any) => any;
+
+type QueryAllByText = (text: string | RegExp) => Node[];
+
+type Unmount = () => void;
+
+// Keep reference to the last renderer for cleanup.
+let currentRenderer: { unmount: Unmount } | null = null;
+
 function render(component: React.ReactElement, _options?: any): any {
   const testRenderer = create(component);
   const root = testRenderer.root;
+  // Store for cleanup.
+  currentRenderer = { unmount: () => testRenderer.unmount() };
 
-  const getByText = (text: string | RegExp) => {
-    const nodes = root.findAll((node) => {
+  const getByText: GetByText = (text) => {
+    const nodes = root.findAll((node: Node) => {
       const child = node.props?.children;
       if (typeof child !== 'string') return false;
       return typeof text === 'string' ? child === text : text.test(child);
@@ -16,8 +37,8 @@ function render(component: React.ReactElement, _options?: any): any {
     return nodes[0];
   };
 
-  const queryByText = (text: string | RegExp) => {
-    const nodes = root.findAll((node) => {
+  const queryByText: QueryByText = (text) => {
+    const nodes = root.findAll((node: Node) => {
       const child = node.props?.children;
       if (typeof child !== 'string') return false;
       return typeof text === 'string' ? child === text : text.test(child);
@@ -25,8 +46,8 @@ function render(component: React.ReactElement, _options?: any): any {
     return nodes[0] || null;
   };
 
-  const getByPlaceholderText = (placeholder: string | RegExp) => {
-    const nodes = root.findAll((node) => {
+  const getByPlaceholderText: GetByPlaceholderText = (placeholder) => {
+    const nodes = root.findAll((node: Node) => {
       const ph = node.props?.placeholder;
       if (!ph) return false;
       return typeof placeholder === 'string' ? ph === placeholder : placeholder.test(ph);
@@ -35,9 +56,9 @@ function render(component: React.ReactElement, _options?: any): any {
     return nodes[0];
   };
 
-  const getByA11yRole = (role: string, options?: any) => {
+  const getByA11yRole: GetByA11yRole = (role, options) => {
     const name = options?.name;
-    const nodes = root.findAll((node) => {
+    const nodes = root.findAll((node: Node) => {
       if (node.props?.accessibilityRole !== role) return false;
       if (!name) return true;
       const label = node.props?.accessibilityLabel;
@@ -48,9 +69,9 @@ function render(component: React.ReactElement, _options?: any): any {
     return nodes[0];
   };
 
-  const queryByA11yRole = (role: string, options?: any) => {
+  const queryByA11yRole: QueryByA11yRole = (role, options) => {
     const name = options?.name;
-    const nodes = root.findAll((node) => {
+    const nodes = root.findAll((node: Node) => {
       if (node.props?.accessibilityRole !== role) return false;
       if (!name) return true;
       const label = node.props?.accessibilityLabel;
@@ -60,19 +81,47 @@ function render(component: React.ReactElement, _options?: any): any {
     return nodes[0] || null;
   };
 
-  const queryAllByText = (text: string | RegExp) => {
-    return root.findAll((node) => {
+  const queryAllByText: QueryAllByText = (text) => {
+    return root.findAll((node: Node) => {
       const child = node.props?.children;
       if (typeof child !== 'string') return false;
       return typeof text === 'string' ? child === text : text.test(child);
     });
   };
 
-  return { getByText, queryByText, getByPlaceholderText, getByA11yRole, queryByA11yRole, queryAllByText, UNSAFE_getAllByType: (type) => root.findAll(node => node.type === type) };
+  const UNSAFE_getAllByType = (type: any) => root.findAll((node: Node) => node.type === type);
+
+  return {
+    getByText,
+    queryByText,
+    getByPlaceholderText,
+    getByA11yRole,
+    queryByA11yRole,
+    queryAllByText,
+    UNSAFE_getAllByType,
+    // expose unmount for manual cleanup if needed
+    unmount: () => testRenderer.unmount(),
+  };
 }
 
-const fireEvent = {};
-const waitFor = (cb: any) => cb();
-const cleanup = () => {};
+const fireEvent = {
+  changeText: (node: any, value: string) => {
+    if (node.props?.onChangeText) {
+      node.props.onChangeText(value);
+    } else if (node.props?.onChange) {
+      node.props.onChange(value);
+    }
+  },
+};
+
+const waitFor = async (cb: any) => {
+  // In real library this retries, but here we just call directly.
+  await cb();
+};
+
+const cleanup = () => {
+  // No unmount to avoid accessing .root on an unmounted renderer.
+  currentRenderer = null;
+};
 
 export { render, fireEvent, waitFor, cleanup };
