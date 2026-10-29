@@ -16,6 +16,7 @@ import { getAllCategories } from '../lib/categories';
 import { IconButton } from 'react-native-paper';
 import { DatePickerModal } from 'react-native-paper-dates';
 import { theme, layout } from '../theme';
+import * as TextExtractor from 'expo-text-extractor';
 
 export default function ReceiptEntryScreen() {
   const navigation = useNavigation<NavigationProp<any>>();
@@ -122,7 +123,9 @@ export default function ReceiptEntryScreen() {
     <Screen title="Add receipt">
       <View style={{ padding: layout.pagePadding, maxWidth: layout.maxContentWidth, alignSelf: 'center', gap: 16 }}>
         <ReceiptImagePicker photoUri={photoUri} onChange={setPhotoUri} />
-        <PrimaryButton label="Scan receipt" onPress={startScan} disabled={!photoUri} />
+        {TextExtractor.isSupported && (
+          <PrimaryButton label="Scan receipt" onPress={startScan} disabled={!photoUri} />
+        )}
         <Text variant="titleMedium" style={{ marginTop: 12, marginBottom: 4 }}>
           Receipt details
         </Text>

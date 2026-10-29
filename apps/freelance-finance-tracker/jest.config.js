@@ -10,9 +10,13 @@ export default {
   ],
   setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
   moduleNameMapper: {
+    '^@testing-library/react-native$': '<rootDir>/__mocks__/@testing-library/react-native.ts',
     '^expo-sqlite$': '<rootDir>/__mocks__/expo-sqlite.ts',
     '^@noble/ciphers/aes\\.js$': '<rootDir>/__mocks__/noble-ciphers-aes.cjs',
     '^@noble/hashes/scrypt\\.js$': '<rootDir>/__mocks__/noble-hashes-scrypt.cjs',
+    '^@react-navigation/native$': '<rootDir>/__mocks__/@react-navigation/native.ts',
+    '^expo-text-extractor$': '<rootDir>/__mocks__/expo-text-extractor.ts',
+    '^@testing-library/react-native$': '<rootDir>/__mocks__/@testing-library/react-native.ts',
   },
   // Ignore duplicate manual mock files that are not used.
   modulePathIgnorePatterns: [
