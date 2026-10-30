@@ -22,7 +22,7 @@ export const theme = {
     primaryContainer: '#CFE5FF',
     onPrimaryContainer: '#001D35',
     // Secondary (darker teal)
-    secondary: '#015958',
+    secondary: '#003240',
     onSecondary: '#FFFFFF',
     secondaryContainer: '#C8F4EF',
     onSecondaryContainer: '#00201A',
