@@ -67,6 +67,7 @@ export default function CategoriesScreen() {
   return (
     <Screen title="Categories">
       <ScrollView contentContainerStyle={{ gap: 12 }}>
+        <PrimaryButton label="Back" variant="secondary" onPress={() => navigation.goBack()} />
         {categories.map((c) => (
           <View key={c.id} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 8, backgroundColor: theme.colors.surface, borderRadius: theme.roundness }}>
             {editId === c.id ? (
