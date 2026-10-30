@@ -17,6 +17,7 @@ export const DEFAULT_CATEGORIES = [
   'Meals',
   'Travel & lodging',
   'Office supplies',
+  'Supplies',
   'Software & subscriptions',
   'Phone & internet',
   'Equipment & tools',
