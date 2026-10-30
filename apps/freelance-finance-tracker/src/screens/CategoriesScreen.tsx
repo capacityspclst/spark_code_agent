@@ -57,7 +57,7 @@ export default function CategoriesScreen() {
         {categories.map((c) => (
           <View key={c.id} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 8, backgroundColor: theme.colors.surface, borderRadius: theme.roundness }}>
             {editId === c.id ? (
-              <FormField label={c.name} value={newName} onChangeText={setNewName} placeholder="New name" />
+              <FormField label="Rename category" value={newName} onChangeText={setNewName} placeholder="New name" />
             ) : (
               <Text variant="bodyMedium">{c.name}</Text>
             )}

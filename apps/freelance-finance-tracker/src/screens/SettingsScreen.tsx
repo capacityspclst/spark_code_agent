@@ -53,31 +53,27 @@ export default function SettingsScreen({ onViewPolicy }: { onViewPolicy?: () => 
       {/* Setting rows */}
       <List.Item
         title="Mileage rate"
-        right={props => <List.Icon {...props} icon="chevron-right" color={theme.colors.onSurface} />}
+        right={props => <List.Icon {...props} icon="chevron-right" />}
         onPress={goMileageRate}
         accessibilityLabel="Mileage rate"
-        accessibilityRole="button"
       />
       <List.Item
-        title="Tax rate"
+        title="Tax settings"
         right={props => <List.Icon {...props} icon="chevron-right" />}
         onPress={goTaxSettings}
-        accessibilityLabel="Tax rate"
-        accessibilityRole="button"
+        accessibilityLabel="Tax settings"
       />
       <List.Item
         title="Categories"
-        right={props => <List.Icon {...props} icon="chevron-right" color={theme.colors.onSurface} />}
+        right={props => <List.Icon {...props} icon="chevron-right" />}
         onPress={goCategories}
         accessibilityLabel="Categories"
-        accessibilityRole="button"
       />
       <List.Item
         title="Export"
-        right={props => <List.Icon {...props} icon="chevron-right" color={theme.colors.onSurface} />}
+        right={props => <List.Icon {...props} icon="chevron-right" />}
         onPress={goExport}
         accessibilityLabel="Export"
-        accessibilityRole="button"
       />
       <List.Item
         title="Backup & restore"
