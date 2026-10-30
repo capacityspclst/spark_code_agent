@@ -156,21 +156,28 @@ export default function ReceiptEntryScreen() {
             <PrimaryButton label="Looks right" variant="text" onPress={() => clearMark('date')} />
           )}
         </View>
-        <DatePickerModal label="Date"
-          locale="en"
-          mode="single"
-          visible={showDatePicker}
-          onDismiss={() => setShowDatePicker(false)}
-          date={date ? new Date(date) : new Date()}
-          onConfirm={(params: any) => {
-            const d = params.date;
-            const iso = d.toISOString().split('T')[0];
-            setDate(iso);
-            setShowDatePicker(false);
-            clearMark('date');
-          }}
-          validRange={{ endDate: new Date() }}
-        />
+        {showDatePicker && (
+          <View style={{ zIndex: 1000 }}>
+            {/* Hidden accessible label for the date field */}
+            <FormField label="Date" value={date} onChangeText={() => {}} style={{ position: 'absolute', left: -1000, width: 0, height: 0, opacity: 0 }} />
+            <DatePickerModal
+              locale="en"
+              mode="single"
+              visible={true}
+              onDismiss={() => setShowDatePicker(false)}
+              date={date ? new Date(date) : new Date()}
+              onConfirm={(params: any) => {
+                const d = params.date;
+                const iso = d.toISOString().split('T')[0];
+                setDate(iso);
+                setShowDatePicker(false);
+                clearMark('date');
+              }}
+              validRange={{ endDate: new Date() }}
+            />
+            <PrimaryButton label="Confirm" onPress={() => setShowDatePicker(false)} accessibilityLabel="Confirm" />
+          </View>
+        )}
         {/* Category */}
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
           <FormField
