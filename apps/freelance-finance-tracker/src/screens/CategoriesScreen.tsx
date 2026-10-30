@@ -30,7 +30,10 @@ export default function CategoriesScreen() {
   }, []);
 
   const rename = async (cat: typeof categories[0], newName: string) => {
-    if (!newName || newName === cat.name) return;
+    if (!newName || newName.toLowerCase() === cat.name.toLowerCase()) {
+      setSnack('Category rename failed');
+      return;
+    }
     const err = await renameCategory(getStore(), cat.id, newName);
     if (err) {
       // Show generic failure message expected by UI flow
