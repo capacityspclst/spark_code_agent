@@ -3,7 +3,7 @@ import { View, ScrollView, Pressable } from 'react-native';
 import { Screen, FormField, PrimaryButton, SettingSwitch } from '../components/ui';
 import { Snackbar, Dialog, Portal, Text } from 'react-native-paper';
 import { getStore } from '../lib/storage';
-import { getAllCategories, addCustomCategory, renameCategory, hideCategory, deleteCategory } from '../lib/categories';
+import { getAllCategories, addCustomCategory, renameCategory, hideCategory, deleteCategory, syncCategoriesWithReceipts } from '../lib/categories';
 import { useNavigation, NavigationProp } from '@react-navigation/native';
 import { theme } from '../theme';
 
@@ -17,7 +17,11 @@ export default function CategoriesScreen() {
   const [snack, setSnack] = useState<string>('');
 
   const load = async () => {
-    const list = await getAllCategories(getStore(), { includeHidden: true });
+    const store = getStore();
+    // Pick up any categories that only exist because a receipt used them
+    // (e.g. typed freeform on the Add receipt screen) so they can be renamed too.
+    await syncCategoriesWithReceipts(store);
+    const list = await getAllCategories(store, { includeHidden: true });
     setCategories(list);
   };
 
