@@ -17,6 +17,7 @@ export const DEFAULT_CATEGORIES = [
   'Meals',
   'Travel & lodging',
   'Office supplies',
+  'Supplies',
   'Software & subscriptions',
   'Phone & internet',
   'Equipment & tools',
@@ -88,20 +89,46 @@ export async function addCustomCategory(store: Store, name: string): Promise<str
 
 /** Rename a category (default or custom). */
 export async function renameCategory(store: Store, oldName: string, newName: string): Promise<string | null> {
-  if (!isValidName(newName)) return 'Category must be 1‑40 characters and not contain < or >.';
+  if (!isValidName(newName)) return 'Category must be 1–40 characters and not contain < or >.';
   const data = await loadData(store);
   const allNames = [...DEFAULT_CATEGORIES, ...data.custom];
-  const conflict = allNames.some((n) => n.toLowerCase() === newName.toLowerCase());
+  const conflict = allNames.some((n) => {
+    const lower = n.toLowerCase();
+    const newL = newName.toLowerCase();
+    return lower === newL || lower.includes(newL) || newL.includes(lower);
+  });
   if (conflict) return 'Category already exists.';
-  if (DEFAULT_CATEGORIES.includes(oldName)) {
-    data.rename[oldName] = newName;
+  // Determine if oldName refers to a default category (case‑insensitive),
+  // either the original default name or its currently renamed value.
+  let defaultKey: string | undefined;
+  for (const def of DEFAULT_CATEGORIES) {
+    const currentName = data.rename[def] ?? def;
+    if (currentName.toLowerCase() === oldName.toLowerCase()) {
+      defaultKey = def; // the original key for this default category
+      break;
+    }
+  }
+  if (defaultKey) {
+    // Update the rename mapping for this default.
+    data.rename[defaultKey] = newName;
   } else {
-    const idx = data.custom.findIndex((c) => c === oldName);
+    // Find custom category case‑insensitively.
+    const idx = data.custom.findIndex((c) => c.toLowerCase() === oldName.toLowerCase());
     if (idx === -1) return 'Category not found.';
+    // Preserve original case for stored custom name.
     data.custom[idx] = newName;
     if (data.rename[oldName]) {
       data.rename[newName] = data.rename[oldName];
       delete data.rename[oldName];
+    }
+  }
+  // Update receipts that reference the old category (case‑insensitive).
+  const receipts = await getAllReceipts(store);
+  const loweredOld = oldName.toLowerCase();
+  for (const r of receipts) {
+    if (r.category && r.category.toLowerCase() === loweredOld) {
+      r.category = newName;
+      await store.put('receipts', r as unknown as StoredRecord);
     }
   }
   await saveData(store, data);
