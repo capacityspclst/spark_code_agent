@@ -91,19 +91,30 @@ export async function addCustomCategory(store: Store, name: string): Promise<str
 export async function renameCategory(store: Store, oldName: string, newName: string): Promise<string | null> {
   if (!isValidName(newName)) return 'Category must be 1\u201140 characters and not contain < or >.';
   const data = await loadData(store);
-  const allNames = [...DEFAULT_CATEGORIES, ...data.custom];
-  const conflict = allNames.some((n) => {
+  // Build a list of all current category display names, including any renamed defaults.
+  const existingNames = [] as string[];
+  // defaults with current rename mapping
+  for (const def of DEFAULT_CATEGORIES) {
+    const displayed = data.rename[def] ?? def;
+    existingNames.push(displayed);
+  }
+  // custom categories
+  existingNames.push(...data.custom);
+  const conflict = existingNames.some((n) => {
     const lower = n.toLowerCase();
     const newL = newName.toLowerCase();
     return lower === newL || lower.includes(newL) || newL.includes(lower);
   });
   if (conflict) return 'Category already exists.';
   // Determine if oldName refers to a default category (case‑insensitive),
-  // either the original default name or its currently renamed value.
+  // matching either the original default name or its currently renamed display name.
   let defaultKey: string | undefined;
   for (const def of DEFAULT_CATEGORIES) {
     const currentName = data.rename[def] ?? def;
-    if (currentName.toLowerCase() === oldName.toLowerCase()) {
+    if (
+      currentName.toLowerCase() === oldName.toLowerCase() ||
+      def.toLowerCase() === oldName.toLowerCase()
+    ) {
       defaultKey = def; // the original key for this default category
       break;
     }

@@ -40,12 +40,19 @@ export default function CategoriesScreen() {
     const err = await renameCategory(getStore(), cat.id, newName);
     if (err) {
       setSnack('Category rename failed');
-      // revert to original display name
+      // revert to original display name on failure
       setNewNames(prev => ({ ...prev, [cat.id]: cat.name }));
     } else {
       setSnack('Category renamed');
-      // reload to get updated names
-      await load();
+      // Update categories and newNames locally to preserve scroll position
+      const updated = await getAllCategories(getStore(), { includeHidden: true });
+      setCategories(updated);
+      const updatedNames: Record<string, string> = {};
+      updated.forEach(c => {
+        updatedNames[c.id] = c.name;
+      });
+      setNewNames(updatedNames);
+
     }
   };
 
