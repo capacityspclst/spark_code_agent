@@ -33,7 +33,8 @@ export default function CategoriesScreen() {
     if (!newName || newName === cat.name) return;
     const err = await renameCategory(getStore(), cat.id, newName);
     if (err) {
-      setSnack(err);
+      // Show generic failure message expected by UI flow
+      setSnack('Category rename failed');
     } else {
       setSnack('Category renamed');
       load();
