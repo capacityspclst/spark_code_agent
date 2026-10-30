@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View } from 'react-native';
+import { View, Platform } from 'react-native';
 import { useNavigation, NavigationProp } from '@react-navigation/native';
 import { PrimaryButton, Screen, FormField, ChoiceField } from '../components/ui';
 import { Snackbar, Text } from 'react-native-paper';
@@ -14,7 +14,7 @@ import { persistPhoto } from '../lib/photos';
 import { recognizeReceiptText, parseReceipt, ParsedReceipt } from '../lib/ocr';
 import { getAllCategories } from '../lib/categories';
 import { IconButton } from 'react-native-paper';
-import { DatePickerModal } from 'react-native-paper-dates';
+import { Dialog, Portal } from 'react-native-paper';
 import { theme, layout } from '../theme';
 
 export default function ReceiptEntryScreen() {
@@ -157,26 +157,22 @@ export default function ReceiptEntryScreen() {
           )}
         </View>
         {showDatePicker && (
-          <View style={{ zIndex: 1000 }}>
-            {/* Hidden accessible label for the date field */}
-            <FormField label="Date" value={date} onChangeText={() => {}} style={{ position: 'absolute', left: -1000, width: 0, height: 0, opacity: 0 }} />
-            <DatePickerModal
-              locale="en"
-              mode="single"
-              visible={true}
-              onDismiss={() => setShowDatePicker(false)}
-              date={date ? new Date(date) : new Date()}
-              onConfirm={(params: any) => {
-                const d = params.date;
-                const iso = d.toISOString().split('T')[0];
-                setDate(iso);
-                setShowDatePicker(false);
-                clearMark('date');
-              }}
-              validRange={{ endDate: new Date() }}
-            />
-            <PrimaryButton label="Confirm" onPress={() => setShowDatePicker(false)} accessibilityLabel="Confirm" />
-          </View>
+          <Dialog visible={true} onDismiss={() => setShowDatePicker(false)}>
+            <Dialog.Title>Select date</Dialog.Title>
+            <Dialog.Content>
+              <FormField
+                label="Date"
+                value={date}
+                onChangeText={(v) => {
+                  setDate(v);
+                }}
+                placeholder="YYYY-MM-DD"
+              />
+            </Dialog.Content>
+            <Dialog.Actions>
+              <PrimaryButton label="Confirm" onPress={() => { setShowDatePicker(false); clearMark('date'); }} accessibilityLabel="Confirm" />
+            </Dialog.Actions>
+          </Dialog>
         )}
         {/* Category */}
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
