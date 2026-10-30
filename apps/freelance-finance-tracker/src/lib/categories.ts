@@ -1,5 +1,5 @@
 import type { Store } from './storage/types';
-import { getAllReceipts } from './receiptStore';
+import { getAllReceipts, addReceipt } from './receiptStore';
 
 /** Shape stored under key 'categories' */
 interface CategoriesData {
@@ -88,11 +88,13 @@ export async function addCustomCategory(store: Store, name: string): Promise<str
 
 /** Rename a category (default or custom). */
 export async function renameCategory(store: Store, oldName: string, newName: string): Promise<string | null> {
-  if (!isValidName(newName)) return 'Category must be 1‑40 characters and not contain < or >.';
+  if (!isValidName(newName)) return 'Category must be 1\u201140 characters and not contain < or >.';
   const data = await loadData(store);
   const allNames = [...DEFAULT_CATEGORIES, ...data.custom];
   const conflict = allNames.some((n) => n.toLowerCase() === newName.toLowerCase());
   if (conflict) return 'Category already exists.';
+  // Prepare to rollback in case receipt updates fail
+  const originalData = JSON.parse(JSON.stringify(data));
   if (DEFAULT_CATEGORIES.includes(oldName)) {
     data.rename[oldName] = newName;
   } else {
@@ -104,7 +106,24 @@ export async function renameCategory(store: Store, oldName: string, newName: str
       delete data.rename[oldName];
     }
   }
+  // Persist category rename first
   await saveData(store, data);
+  // Update receipts that reference the old category (case‑insensitive)
+  try {
+    const receipts = await getAllReceipts(store);
+    console.log('rename receipts list', receipts);
+    for (const receipt of receipts) {
+      if (receipt.category && receipt.category.toLowerCase() === oldName.toLowerCase()) {
+        const updated = { ...receipt, category: newName };
+        console.log('updating receipt', receipt.id, 'to', newName);
+        await addReceipt(store, updated);
+      }
+    }
+  } catch (e) {
+    // Roll back category changes if receipt update fails
+    await saveData(store, originalData);
+    throw e;
+  }
   return null;
 }
 
