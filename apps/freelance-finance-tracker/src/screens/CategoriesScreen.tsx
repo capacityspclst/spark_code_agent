@@ -29,37 +29,42 @@ export default function CategoriesScreen() {
     load();
   }, []);
 
-  const rename = async (cat: typeof categories[0], newName: string) => {
+  const handleRename = async (cat: typeof categories[0], newName: string) => {
+    // If empty or unchanged (case‑insensitive), treat as failure per UI flow
     if (!newName || newName.toLowerCase() === cat.name.toLowerCase()) {
       setSnack('Category rename failed');
+      // reset input to original name
+      setNewNames(prev => ({ ...prev, [cat.id]: cat.name }));
       return;
     }
     const err = await renameCategory(getStore(), cat.id, newName);
     if (err) {
-      // Show generic failure message expected by UI flow
       setSnack('Category rename failed');
+      // revert to original display name
+      setNewNames(prev => ({ ...prev, [cat.id]: cat.name }));
     } else {
       setSnack('Category renamed');
-      load();
+      // reload to get updated names
+      await load();
     }
   };
 
   const toggleHide = async (cat: typeof categories[0]) => {
     await hideCategory(getStore(), cat.id);
-    load();
+    await load();
   };
 
   const handleDelete = async (cat: typeof categories[0]) => {
     const err = await deleteCategory(getStore(), cat.id);
     if (err) setSnack(err);
-    else load();
+    else await load();
   };
 
   const handleAdd = async () => {
     const err = await addCustomCategory(getStore(), addName.trim());
     if (err) setSnack(err);
     else {
-      load();
+      await load();
       setAddVisible(false);
       setAddName('');
     }
@@ -75,11 +80,9 @@ export default function CategoriesScreen() {
               value={newNames[c.id] ?? c.name}
               onChangeText={(v) => {
                 setNewNames(prev => ({ ...prev, [c.id]: v }));
-                if (v && v !== c.name) {
-                  rename(c, v);
-                }
+                handleRename(c, v);
               }}
-              />
+            />
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
               <SettingSwitch label="Hide" value={c.hidden} onChange={() => toggleHide(c)} />
               {c.custom && (
