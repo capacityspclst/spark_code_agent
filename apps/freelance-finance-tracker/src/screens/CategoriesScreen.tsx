@@ -10,8 +10,7 @@ import { theme } from '../theme';
 export default function CategoriesScreen() {
   const navigation = useNavigation<NavigationProp<any>>();
   const [categories, setCategories] = useState<Array<{ id: string; name: string; hidden: boolean; custom: boolean }>>([]);
-  const [editId, setEditId] = useState<string | null>(null);
-  const [newName, setNewName] = useState('');
+  const [newNames, setNewNames] = useState<Record<string, string>>({});
   const [addVisible, setAddVisible] = useState(false);
   const [addName, setAddName] = useState('');
   const [snack, setSnack] = useState<string>('');
@@ -19,21 +18,26 @@ export default function CategoriesScreen() {
   const load = async () => {
     const list = await getAllCategories(getStore(), { includeHidden: true });
     setCategories(list);
+    const init: Record<string, string> = {};
+    list.forEach(c => {
+      init[c.id] = c.name;
+    });
+    setNewNames(init);
   };
 
   useEffect(() => {
     load();
   }, []);
 
-  const startRename = (cat: typeof categories[0]) => {
-    setEditId(cat.id);
-    setNewName(cat.name);
-  };
-
-  const submitRename = async (cat: typeof categories[0]) => {
+  const rename = async (cat: typeof categories[0], newName: string) => {
+    if (!newName || newName === cat.name) return;
     const err = await renameCategory(getStore(), cat.id, newName);
-    if (err) setSnack(err); else load();
-    setEditId(null);
+    if (err) {
+      setSnack(err);
+    } else {
+      setSnack('Category renamed');
+      load();
+    }
   };
 
   const toggleHide = async (cat: typeof categories[0]) => {
@@ -43,12 +47,18 @@ export default function CategoriesScreen() {
 
   const handleDelete = async (cat: typeof categories[0]) => {
     const err = await deleteCategory(getStore(), cat.id);
-    if (err) setSnack(err); else load();
+    if (err) setSnack(err);
+    else load();
   };
 
   const handleAdd = async () => {
     const err = await addCustomCategory(getStore(), addName.trim());
-    if (err) setSnack(err); else { load(); setAddVisible(false); setAddName(''); }
+    if (err) setSnack(err);
+    else {
+      load();
+      setAddVisible(false);
+      setAddName('');
+    }
   };
 
   return (
@@ -56,17 +66,13 @@ export default function CategoriesScreen() {
       <ScrollView contentContainerStyle={{ gap: 12 }}>
         {categories.map((c) => (
           <View key={c.id} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 8, backgroundColor: theme.colors.surface, borderRadius: theme.roundness }}>
-            {editId === c.id ? (
-              <FormField label="Rename category" value={newName} onChangeText={setNewName} placeholder="New name" />
-            ) : (
-              <Text variant="bodyMedium">{c.name}</Text>
-            )}
+            <FormField
+              label={c.name}
+              value={newNames[c.id] ?? c.name}
+              onChangeText={(v) => setNewNames(prev => ({ ...prev, [c.id]: v }))}
+              onBlur={() => rename(c, newNames[c.id])}
+            />
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-              {editId === c.id ? (
-                <PrimaryButton label="Save" variant="text" onPress={() => submitRename(c)} />
-              ) : (
-                <PrimaryButton label="Rename" variant="text" onPress={() => startRename(c)} />
-              )}
               <SettingSwitch label="Hide" value={c.hidden} onChange={() => toggleHide(c)} />
               {c.custom && (
                 <PrimaryButton label="Delete" variant="text" onPress={() => handleDelete(c)} />
