@@ -1,4 +1,4 @@
-import type { Store } from './storage/types';
+import type { Store, StoredRecord } from './storage/types';
 import { getAllReceipts } from './receiptStore';
 
 /** Shape stored under key 'categories' */
@@ -77,7 +77,7 @@ export async function getAllCategories(
 
 /** Add a new custom category. Returns null on success or error string. */
 export async function addCustomCategory(store: Store, name: string): Promise<string | null> {
-  if (!isValidName(name)) return 'Category must be 1‑40 characters and not contain < or >.';
+  if (!isValidName(name)) return 'Category must be 1\u201140 characters and not contain < or >.';
   const data = await loadData(store);
   const allNames = [...DEFAULT_CATEGORIES, ...data.custom];
   const exists = allNames.some((n) => n.toLowerCase() === name.toLowerCase());
@@ -89,7 +89,7 @@ export async function addCustomCategory(store: Store, name: string): Promise<str
 
 /** Rename a category (default or custom). */
 export async function renameCategory(store: Store, oldName: string, newName: string): Promise<string | null> {
-  if (!isValidName(newName)) return 'Category must be 1–40 characters and not contain < or >.';
+  if (!isValidName(newName)) return 'Category must be 1\u201140 characters and not contain < or >.';
   const data = await loadData(store);
   const allNames = [...DEFAULT_CATEGORIES, ...data.custom];
   const conflict = allNames.some((n) => {

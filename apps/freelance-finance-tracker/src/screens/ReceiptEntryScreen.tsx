@@ -156,7 +156,7 @@ export default function ReceiptEntryScreen() {
             <PrimaryButton label="Looks right" variant="text" onPress={() => clearMark('date')} />
           )}
         </View>
-        <DatePickerModal
+        <DatePickerModal label="Date"
           locale="en"
           mode="single"
           visible={showDatePicker}
