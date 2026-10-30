@@ -112,11 +112,9 @@ export async function renameCategory(store: Store, oldName: string, newName: str
   // Update receipts that reference the old category (case‑insensitive)
   try {
     const receipts = await getAllReceipts(store);
-    console.log('rename receipts list', receipts);
     for (const receipt of receipts) {
       if (receipt.category && receipt.category.toLowerCase() === oldName.toLowerCase()) {
         const updated = { ...receipt, category: newName };
-        console.log('updating receipt', receipt.id, 'to', newName);
         await addReceipt(store, updated);
       }
     }
