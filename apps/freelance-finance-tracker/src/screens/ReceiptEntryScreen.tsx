@@ -158,7 +158,7 @@ export default function ReceiptEntryScreen() {
         </View>
         {showDatePicker && (
           <Dialog visible={true} onDismiss={() => setShowDatePicker(false)}>
-            <Dialog.Title>Select date</Dialog.Title>
+            <Dialog.Title style={{ color: theme.colors.onSurface }}>Select date</Dialog.Title>
             <Dialog.Content>
               <FormField
                 label="Date"

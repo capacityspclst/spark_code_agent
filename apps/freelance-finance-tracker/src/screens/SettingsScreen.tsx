@@ -1,10 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { Card } from 'react-native-paper';
-import { PrimaryButton, Screen, SettingSwitch } from '../components/ui';
+import { Card, List, Divider } from 'react-native-paper';
+import { Screen, SettingSwitch } from '../components/ui';
 import { theme } from '../theme';
 import { getAppLockEnabled, setAppLockEnabled } from '../lib/settings';
 import { useNavigation, NavigationProp } from '@react-navigation/native';
-import { getStore } from '../lib/storage';
 
 /** Settings screen with links to sub‑screens and actions. */
 export default function SettingsScreen({ onViewPolicy }: { onViewPolicy?: () => void }) {
@@ -23,13 +22,23 @@ export default function SettingsScreen({ onViewPolicy }: { onViewPolicy?: () => 
     await setAppLockEnabled(value);
   };
 
-  const deleteAllData = () => {
-    navigation.navigate('DeleteAllData' as any);
-  };
+  const navigate = (name: string) => () => navigation.navigate(name as any);
 
-  const goCategories = () => {
-    navigation.navigate('Categories' as any);
-  };
+  const goCategories = navigate('Categories');
+
+  const goMileageRate = navigate('MileageRate'); // placeholder screen name
+
+  const goTaxSettings = navigate('TaxSettings');
+
+  const goExport = navigate('Export');
+
+  const goBackup = navigate('Backup');
+
+  const goDeleteAll = navigate('DeleteAllData');
+
+  const goAppLock = navigate('AppLock');
+
+  const goViewPolicy = onViewPolicy ? () => onViewPolicy() : undefined;
 
   return (
     <Screen title="Settings">
@@ -41,13 +50,51 @@ export default function SettingsScreen({ onViewPolicy }: { onViewPolicy?: () => 
           onChange={toggleLock}
         />
       </Card>
-      <PrimaryButton label="App lock" variant="secondary" onPress={() => navigation.navigate('AppLock')} />
-      <PrimaryButton label="Tax settings" variant="secondary" onPress={() => navigation.navigate('TaxSettings')} />
-      <PrimaryButton label="Categories" variant="secondary" onPress={goCategories} />
-      <PrimaryButton label="Export" variant="secondary" onPress={() => navigation.navigate('Export')} />
-      <PrimaryButton label="Backup & restore" variant="secondary" onPress={() => navigation.navigate('Backup')} />
-      <PrimaryButton label="Delete all data" variant="secondary" onPress={deleteAllData} />
-      <PrimaryButton label="View Terms and Privacy Policy" variant="secondary" onPress={onViewPolicy ?? (() => {})} />
+      {/* Setting rows */}
+      <List.Item
+        title="Mileage rate"
+        right={props => <List.Icon {...props} icon="chevron-right" />}
+        onPress={goMileageRate}
+        accessibilityLabel="Mileage rate"
+      />
+      <List.Item
+        title="Tax settings"
+        right={props => <List.Icon {...props} icon="chevron-right" />}
+        onPress={goTaxSettings}
+        accessibilityLabel="Tax settings"
+      />
+      <List.Item
+        title="Categories"
+        right={props => <List.Icon {...props} icon="chevron-right" />}
+        onPress={goCategories}
+        accessibilityLabel="Categories"
+      />
+      <List.Item
+        title="Export"
+        right={props => <List.Icon {...props} icon="chevron-right" />}
+        onPress={goExport}
+        accessibilityLabel="Export"
+      />
+      <List.Item
+        title="Backup & restore"
+        right={props => <List.Icon {...props} icon="chevron-right" />}
+        onPress={goBackup}
+        accessibilityLabel="Backup & restore"
+      />
+      <Divider style={{ marginVertical: 8 }} />
+      <List.Item
+        title="Delete all data"
+        titleStyle={{ color: theme.colors.error }}
+        right={props => <List.Icon {...props} icon="chevron-right" />}
+        onPress={goDeleteAll}
+        accessibilityLabel="Delete all data"
+      />
+      <List.Item
+        title="View Terms and Privacy Policy"
+        right={props => <List.Icon {...props} icon="chevron-right" />}
+        onPress={goViewPolicy}
+        accessibilityLabel="View Terms and Privacy Policy"
+      />
     </Screen>
   );
 }
