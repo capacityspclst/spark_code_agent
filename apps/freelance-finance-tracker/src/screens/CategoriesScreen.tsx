@@ -67,11 +67,15 @@ export default function CategoriesScreen() {
         {categories.map((c) => (
           <View key={c.id} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 8, backgroundColor: theme.colors.surface, borderRadius: theme.roundness }}>
             <FormField
-              label={c.name}
+              label={c.name.split(' ')[0]}
               value={newNames[c.id] ?? c.name}
-              onChangeText={(v) => setNewNames(prev => ({ ...prev, [c.id]: v }))}
-              onBlur={() => rename(c, newNames[c.id])}
-            />
+              onChangeText={(v) => {
+                setNewNames(prev => ({ ...prev, [c.id]: v }));
+                if (v && v !== c.name) {
+                  rename(c, v);
+                }
+              }}
+              />
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
               <SettingSwitch label="Hide" value={c.hidden} onChange={() => toggleHide(c)} />
               {c.custom && (

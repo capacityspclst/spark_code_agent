@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Card, List, Divider } from 'react-native-paper';
-import { Screen, SettingSwitch } from '../components/ui';
+import { Screen, SettingSwitch, PrimaryButton } from '../components/ui';
 import { theme } from '../theme';
 import { getAppLockEnabled, setAppLockEnabled } from '../lib/settings';
 import { useNavigation, NavigationProp } from '@react-navigation/native';
@@ -53,33 +53,38 @@ export default function SettingsScreen({ onViewPolicy }: { onViewPolicy?: () => 
       {/* Setting rows */}
       <List.Item
         title="Mileage rate"
-        right={props => <List.Icon {...props} icon="chevron-right" />}
+        right={props => <List.Icon {...props} icon="chevron-right" color={theme.colors.onSurface} />}
         onPress={goMileageRate}
         accessibilityLabel="Mileage rate"
+        accessibilityRole="button"
       />
       <List.Item
-        title="Tax settings"
-        right={props => <List.Icon {...props} icon="chevron-right" />}
+        title="Tax rate"
+        right={props => <List.Icon {...props} icon="chevron-right" color={theme.colors.onSurface} />}
         onPress={goTaxSettings}
-        accessibilityLabel="Tax settings"
+        accessibilityLabel="Tax rate"
+        accessibilityRole="button"
       />
       <List.Item
         title="Categories"
-        right={props => <List.Icon {...props} icon="chevron-right" />}
+        right={props => <List.Icon {...props} icon="chevron-right" color={theme.colors.onSurface} />}
         onPress={goCategories}
         accessibilityLabel="Categories"
+        accessibilityRole="button"
       />
       <List.Item
         title="Export"
-        right={props => <List.Icon {...props} icon="chevron-right" />}
+        right={props => <List.Icon {...props} icon="chevron-right" color={theme.colors.onSurface} />}
         onPress={goExport}
         accessibilityLabel="Export"
+        accessibilityRole="button"
       />
       <List.Item
         title="Backup & restore"
-        right={props => <List.Icon {...props} icon="chevron-right" />}
+        right={props => <List.Icon {...props} icon="chevron-right" color={theme.colors.onSurface} />}
         onPress={goBackup}
         accessibilityLabel="Backup & restore"
+        accessibilityRole="button"
       />
       <Divider style={{ marginVertical: 8 }} />
       <List.Item
