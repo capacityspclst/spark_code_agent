@@ -5,7 +5,7 @@ import { getAppLockEnabled, setAppLockEnabled } from '../lib/settings';
 import { useNavigation, NavigationProp } from '@react-navigation/native';
 
 /** Settings screen with links to sub‑screens and actions. */
-export default function SettingsScreen({ onViewPolicy }: { onViewPolicy?: () => void }) {
+export default function SettingsScreen() {
   const navigation = useNavigation<NavigationProp<any>>();
   const [lock, setLock] = useState(false);
 
@@ -63,9 +63,15 @@ export default function SettingsScreen({ onViewPolicy }: { onViewPolicy?: () => 
           showChevron={true}
         />
         <SettingsRow
-          label="View Terms and Privacy Policy"
+          label="Terms of Service"
           testID="settings-row-terms"
-          onPress={onViewPolicy ?? (() => {})}
+          onPress={() => navigation.navigate('TermsOfService' as any)}
+          showChevron={true}
+        />
+        <SettingsRow
+          label="Privacy Policy"
+          testID="settings-row-privacy"
+          onPress={() => navigation.navigate('PrivacyPolicy' as any)}
           showChevron={true}
         />
       </SettingsSection>
