@@ -13,10 +13,14 @@ import { setPendingSnack } from '../lib/uiState';
 import { persistPhoto } from '../lib/photos';
 import { recognizeReceiptText, parseReceipt, ParsedReceipt } from '../lib/ocr';
 import { getAllCategories } from '../lib/categories';
-import { IconButton } from 'react-native-paper';
+import { TextInput } from 'react-native-paper';
+import { isSupported } from 'expo-text-extractor';
 import { DatePickerModal } from 'react-native-paper-dates';
 import { theme, layout } from '../theme';
 
+// The screen title "Add receipt" is rendered once, by the native stack header
+// (see the "ReceiptEntry" Stack.Screen options in src/navigation/index.tsx).
+// No in-screen title Text is rendered here to avoid a duplicate heading.
 export default function ReceiptEntryScreen() {
   const navigation = useNavigation<NavigationProp<any>>();
   const [amount, setAmount] = useState('');
@@ -119,42 +123,50 @@ export default function ReceiptEntryScreen() {
   };
 
   return (
-    <Screen title="Add receipt">
-      <View style={{ padding: layout.pagePadding, maxWidth: layout.maxContentWidth, alignSelf: 'center', gap: 16 }}>
-        <ReceiptImagePicker photoUri={photoUri} onChange={setPhotoUri} />
-        <PrimaryButton label="Scan receipt" onPress={startScan} disabled={!photoUri} />
-        <Text variant="titleMedium" style={{ marginTop: 12, marginBottom: 4 }}>
+    <Screen>
+      <View style={{ padding: layout.pagePadding, maxWidth: layout.maxContentWidth, alignSelf: 'center' }}>
+        <View testID="field-wrapper-photo" style={{ marginBottom: 12 }}>
+          <ReceiptImagePicker photoUri={photoUri} onChange={setPhotoUri} onScan={startScan} />
+        </View>
+
+        <Text variant="titleMedium" style={{ marginBottom: 12 }}>
           Receipt details
         </Text>
         {/* Amount */}
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-          <FormField
-            label="Amount"
-            value={amount}
-            onChangeText={(v) => { setAmount(v); clearMark('amount'); }}
-            keyboardType="numeric"
-            error={amountError ?? undefined}
-            hint={marked.amount ? 'Check these details' : undefined}
-            marked={marked.amount}
-          />
-          {marked.amount && (
-            <PrimaryButton label="Looks right" variant="text" onPress={() => clearMark('amount')} />
-          )}
+        <View testID="field-wrapper-amount" style={{ marginBottom: 12 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            <FormField
+              label="Amount"
+              value={amount}
+              onChangeText={(v) => { setAmount(v); clearMark('amount'); }}
+              keyboardType="numeric"
+              error={amountError ?? undefined}
+              hint={marked.amount ? 'Check these details' : undefined}
+              marked={marked.amount}
+              style={{ marginBottom: 0 }}
+            />
+            {marked.amount && (
+              <PrimaryButton label="Looks right" variant="text" onPress={() => clearMark('amount')} />
+            )}
+          </View>
         </View>
         {/* Date */}
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-          <FormField
-            label="Date"
-            value={date}
-            onChangeText={(v) => { setDate(v); clearMark('date'); }}
-            placeholder="YYYY-MM-DD"
-            hint={marked.date ? 'Check these details' : undefined}
-            marked={marked.date}
-          />
-          <IconButton icon="calendar" size={24} onPress={() => setShowDatePicker(true)} accessibilityLabel="Select receipt date" />
-          {marked.date && (
-            <PrimaryButton label="Looks right" variant="text" onPress={() => clearMark('date')} />
-          )}
+        <View testID="field-wrapper-date" style={{ marginBottom: 12 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            <FormField
+              label="Date"
+              value={date}
+              onChangeText={(v) => { setDate(v); clearMark('date'); }}
+              placeholder="YYYY-MM-DD"
+              hint={marked.date ? 'Check these details' : undefined}
+              marked={marked.date}
+              style={{ marginBottom: 0 }}
+              right={<TextInput.Icon icon="calendar" size={24} onPress={() => setShowDatePicker(true)} testID="date-picker-icon" accessibilityLabel="calendar" />}
+            />
+            {marked.date && (
+              <PrimaryButton label="Looks right" variant="text" onPress={() => clearMark('date')} />
+            )}
+          </View>
         </View>
         <DatePickerModal
           locale="en"
@@ -172,31 +184,38 @@ export default function ReceiptEntryScreen() {
           validRange={{ endDate: new Date() }}
         />
         {/* Category */}
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-          <FormField
-            label="Category"
-            value={category}
-            onChangeText={(v) => { setCategory(v); clearMark('category'); }}
-            placeholder="Select category"
-            hint={marked.category ? 'Check these details' : undefined}
-            marked={marked.category}
-          />
-          {marked.category && (
-            <PrimaryButton label="Looks right" variant="text" onPress={() => clearMark('category')} />
-          )}
+        <View testID="field-wrapper-category" style={{ marginBottom: 12 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            <FormField
+              label="Category"
+              value={category}
+              onChangeText={(v) => { setCategory(v); clearMark('category'); }}
+              placeholder="Select category"
+              hint={marked.category ? 'Check these details' : undefined}
+              marked={marked.category}
+              style={{ marginBottom: 0 }}
+            />
+            {marked.category && (
+              <PrimaryButton label="Looks right" variant="text" onPress={() => clearMark('category')} />
+            )}
+          </View>
         </View>
-        <Text variant="titleMedium" style={{ marginTop: 12, marginBottom: 4 }}>
+        <Text variant="titleMedium" style={{ marginBottom: 12 }}>
           Additional information
         </Text>
-        <ChoiceField<ReceiptType>
-          label="Type"
-          value={type}
-          onChange={setType}
-          options={[{ value: 'expense', label: 'Expense' }, { value: 'income', label: 'Income' }]}
-        />
-        <FormField label="Notes" value={notes} onChangeText={setNotes} multiline placeholder="Enter notes about this receipt" />
+        <View testID="field-wrapper-type" style={{ marginBottom: 12 }}>
+          <ChoiceField<ReceiptType>
+            label="Type"
+            value={type}
+            onChange={setType}
+            options={[{ value: 'expense', label: 'Expense' }, { value: 'income', label: 'Income' }]}
+          />
+        </View>
+        <View testID="field-wrapper-notes" style={{ marginBottom: 12 }}>
+          <FormField label="Notes" value={notes} onChangeText={setNotes} multiline placeholder="Enter notes about this receipt" style={{ marginBottom: 0 }} />
+        </View>
         {error ? <Snackbar visible={true} onDismiss={() => setError('')} duration={3000}>{error}</Snackbar> : null}
-        <PrimaryButton label="Save receipt" onPress={onSave} loading={saving} disabled={!canSave} style={{ marginTop: 16 }} />
+        <PrimaryButton label="Save receipt" onPress={onSave} loading={saving} disabled={!canSave} style={{ marginTop: 12 }} />
       </View>
     </Screen>
   );
