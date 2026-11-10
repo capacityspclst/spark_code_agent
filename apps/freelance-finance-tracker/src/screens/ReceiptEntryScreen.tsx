@@ -13,7 +13,8 @@ import { setPendingSnack } from '../lib/uiState';
 import { persistPhoto } from '../lib/photos';
 import { recognizeReceiptText, parseReceipt, ParsedReceipt } from '../lib/ocr';
 import { getAllCategories } from '../lib/categories';
-import { IconButton } from 'react-native-paper';
+import { TextInput } from 'react-native-paper';
+import { isSupported } from 'expo-text-extractor';
 import { DatePickerModal } from 'react-native-paper-dates';
 import { theme, layout } from '../theme';
 
@@ -121,8 +122,8 @@ export default function ReceiptEntryScreen() {
   return (
     <Screen title="Add receipt">
       <View style={{ padding: layout.pagePadding, maxWidth: layout.maxContentWidth, alignSelf: 'center', gap: 16 }}>
-        <ReceiptImagePicker photoUri={photoUri} onChange={setPhotoUri} />
-        <PrimaryButton label="Scan receipt" onPress={startScan} disabled={!photoUri} />
+        <ReceiptImagePicker photoUri={photoUri} onChange={setPhotoUri} onScan={startScan} />
+        
         <Text variant="titleMedium" style={{ marginTop: 12, marginBottom: 4 }}>
           Receipt details
         </Text>
@@ -150,8 +151,8 @@ export default function ReceiptEntryScreen() {
             placeholder="YYYY-MM-DD"
             hint={marked.date ? 'Check these details' : undefined}
             marked={marked.date}
+            right={<TextInput.Icon icon="calendar" size={24} onPress={() => setShowDatePicker(true)} testID="date-picker-icon" accessibilityLabel="Select receipt date" />}
           />
-          <IconButton icon="calendar" size={24} onPress={() => setShowDatePicker(true)} accessibilityLabel="Select receipt date" />
           {marked.date && (
             <PrimaryButton label="Looks right" variant="text" onPress={() => clearMark('date')} />
           )}
