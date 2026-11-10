@@ -3,7 +3,7 @@ import { View, StyleSheet } from 'react-native';
 import { theme } from '../../theme';
 
 /** Thin horizontal line used to separate sections, per DESIGN.md */
-export default function Separator() {
+export default function Separator(_props?: any) {
   return <View style={styles.separator} accessibilityElementsHidden />;
 }
 
