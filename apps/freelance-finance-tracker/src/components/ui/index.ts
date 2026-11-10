@@ -7,3 +7,6 @@ export { default as ChoiceField } from './ChoiceField';
 export { default as CheckboxField } from './CheckboxField';
 export { default as SettingSwitch } from './SettingSwitch';
 export { default as ExportButton } from './ExportButton';
+export { default as SettingsRow } from './SettingsRow';
+export { default as SettingsSection } from './SettingsSection';
+export { default as Separator } from './Separator';
