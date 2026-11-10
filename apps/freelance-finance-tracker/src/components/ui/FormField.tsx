@@ -20,7 +20,7 @@ type Props = Omit<TextInputProps, 'error'> & {
  * Non‑error hint is shown when provided.
  * `marked` applies a background highlight for pre‑filled fields.
  */
-export default function FormField({ label, error, hint, marked, placeholder, secureTextEntry, style, ...input }: Props) {
+export default function FormField({ label, error, hint, marked, placeholder, secureTextEntry, style, onBlur, ...input }: Props) {
   const [touched, setTouched] = useState(false);
   const showError = !!error && touched;
   const containerStyle = [styles.container, style, marked ? styles.marked : null];
@@ -33,7 +33,10 @@ export default function FormField({ label, error, hint, marked, placeholder, sec
         error={showError}
         placeholder={placeholder}
         secureTextEntry={secureTextEntry}
-        onBlur={() => setTouched(true)}
+        onBlur={(e: any) => {
+          setTouched(true);
+          onBlur?.(e);
+        }}
         style={styles.input}
         {...input}
       />

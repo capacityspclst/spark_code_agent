@@ -6,6 +6,7 @@ import { getStore } from '../lib/storage';
 import { MileageEntry } from '../lib/models';
 import { getAllMileageEntries } from '../lib/mileageStore';
 import MileageCard from '../components/ui/MileageCard';
+import FABAdd from '../components/ui/FABAdd';
 
 export default function MileageScreen() {
   const navigation = useNavigation<NavigationProp<any>>();
@@ -47,6 +48,7 @@ export default function MileageScreen() {
           renderItem={({ item }) => <MileageCard entry={item} />}
         />
       )}
+      <FABAdd />
     </Screen>
   );
 }
