@@ -6,13 +6,13 @@ export const space = (n: number) => n * 8; // 8dp grid
 export const layout = {
   pagePadding: space(3), // 24dp
   maxContentWidth: 420, // updated to match design (max 420dp)
-  maxWideWidth: 720, // shared desktop column width for list screens (U7)
+  maxWideWidth: 960,
   touchTarget: 48,
 };
 
 export const theme = {
   ...MD3LightTheme,
-  roundness: 3,
+  roundness: 8,
   fonts: configureFonts({ config: { fontFamily: 'System' } }),
   colors: {
     ...MD3LightTheme.colors,

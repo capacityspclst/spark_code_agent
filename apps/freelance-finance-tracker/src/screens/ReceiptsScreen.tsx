@@ -1,20 +1,15 @@
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, FlatList, StyleSheet, View } from 'react-native';
-import { FAB } from 'react-native-paper';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { ActivityIndicator, FlatList, View } from 'react-native';
 import { useNavigation, useRoute, NavigationProp } from '@react-navigation/native';
 import { EmptyState, PrimaryButton, Screen } from '../components/ui';
 import { getStore } from '../lib/storage';
 import { Receipt } from '../lib/models';
 import { getAllReceipts } from '../lib/receiptStore';
 import ReceiptCard from '../components/ui/ReceiptCard';
-import { space, theme } from '../theme';
-import { TAB_BAR_HEIGHT } from '../navigation/constants';
 
 export default function ReceiptsScreen() {
   const navigation = useNavigation<NavigationProp<any>>();
   const route = useRoute<any>();
-  const insets = useSafeAreaInsets();
   const [loading, setLoading] = useState(true);
   const [receipts, setReceipts] = useState<Receipt[]>([]);
 
@@ -37,17 +32,7 @@ export default function ReceiptsScreen() {
   const empty = receipts.length === 0;
 
   return (
-    <Screen title="Receipts" wide
-      overlay={
-        <FAB
-          icon="plus"
-          label="Add receipt"
-          onPress={() => navigation.navigate('ReceiptEntry')}
-          style={[styles.fab, { bottom: TAB_BAR_HEIGHT + insets.bottom + space(2) }]}
-          color={theme.colors.onPrimaryContainer}
-        />
-      }
-    >
+    <Screen title="Receipts">
       {empty ? (
         <EmptyState
           icon="receipt-outline"
@@ -61,18 +46,8 @@ export default function ReceiptsScreen() {
           data={receipts}
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => <ReceiptCard receipt={item} />}
-          contentContainerStyle={styles.list}
         />
       )}
     </Screen>
   );
 }
-
-const styles = StyleSheet.create({
-  list: { paddingBottom: space(12) }, // 96dp so the last card clears the FAB
-  fab: {
-    position: 'absolute',
-    right: space(2),
-    backgroundColor: theme.colors.primaryContainer,
-  },
-});
