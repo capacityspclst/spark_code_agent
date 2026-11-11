@@ -11,7 +11,7 @@ export default function PrimaryButton({ label, variant = 'primary', contentStyle
   const mode = variant === 'primary' ? 'contained' : variant === 'secondary' ? 'outlined' : 'text';
   const hint = disabled ? 'Complete all required fields before proceeding.' : undefined;
   // Web styling: outline for focus/disabled states, consistent opacity when disabled
-  const webStyle = Platform.OS === 'web' ? (variant === 'primary' ? { opacity: disabled ? 0.6 : 1 } : { borderWidth: 2, borderColor: theme.colors.outline, opacity: disabled ? 0.6 : 1 }) : {};
+  const webStyle = Platform.OS === 'web' ? { outline: `2px solid ${theme.colors.outline}`, opacity: disabled ? 0.6 : 1 } : {};
   return (
     <Button
       mode={mode}
