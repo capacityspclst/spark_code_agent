@@ -103,11 +103,11 @@ export default function DashboardScreen() {
           </View>
           <Text variant="titleMedium" style={{ marginTop: 8, marginBottom: 4 }}>Recent activity</Text>
           <FlatList
-            data={receipts.slice(0, 5)}
+            data={receipts}
             keyExtractor={(item) => item.id}
             renderItem={({ item }) => <ReceiptCard receipt={item} />}
             contentContainerStyle={recentActivityContainerStyle}
-            scrollEnabled={false}
+            nestedScrollEnabled
           />
         </View>
       )}
