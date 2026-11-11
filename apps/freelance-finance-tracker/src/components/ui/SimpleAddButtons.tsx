@@ -1,14 +1,12 @@
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
-// PrimaryButton will be required lazily inside the component to avoid side effects during module load
+import PrimaryButton from './PrimaryButton';
 import { theme, space } from '../../theme';
-// Navigation imported lazily inside component to avoid side effects during module load
+import { useNavigation, NavigationProp } from '@react-navigation/native';
 
 /** Buttons that match the UI flow expectations: separate primary buttons labeled "Receipt" and "Mileage". */
 export default function SimpleAddButtons() {
-  // Lazy import navigation to avoid side effects during module import
-  const { useNavigation } = require('@react-navigation/native');
-  const navigation = useNavigation<any>();
+  const navigation = useNavigation<NavigationProp<any>>();
 
   const goToReceipt = () => navigation.getParent?.()?.navigate('ReceiptEntry');
   const goToMileage = () => navigation.getParent?.()?.navigate('MileageEntry');
