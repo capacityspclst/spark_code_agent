@@ -1,7 +1,7 @@
 import React from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
-import { Text } from 'react-native-paper';
 import { layout, space, theme } from '../../theme';
+import ScreenHeader from './ScreenHeader';
 
 interface Props {
   title?: string;
@@ -22,13 +22,8 @@ interface Props {
 export default function Screen({ title, subtitle, wide, children, overlay }: Props) {
   return (
     <View style={styles.page}>
+      {title || subtitle ? <ScreenHeader title={title} subtitle={subtitle} /> : null}
       <ScrollView style={styles.scroll} contentContainerStyle={[styles.content, { maxWidth: wide ? layout.maxWideWidth : layout.maxContentWidth }]}>
-        {title || subtitle ? (
-          <View style={styles.header}>
-            {title ? <Text variant="headlineMedium" accessibilityRole="header" style={styles.title}>{title}</Text> : null}
-            {subtitle ? <Text variant="bodyLarge" style={styles.subtitle}>{subtitle}</Text> : null}
-          </View>
-        ) : null}
         {children}
       </ScrollView>
       {overlay}
@@ -41,7 +36,4 @@ const styles = StyleSheet.create({
   scroll: { flex: 1 },
   // Use the design token spacing * 2 (16dp) for horizontal padding
   content: { width: '100%', alignSelf: 'center', paddingHorizontal: space(2), paddingBottom: space(16), gap: space(2) },
-  header: { gap: space(1), marginBottom: space(1) },
-  title: { fontWeight: '700', color: theme.colors.onSurface },
-  subtitle: { color: theme.colors.secondary },
 });

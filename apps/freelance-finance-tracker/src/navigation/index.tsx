@@ -66,8 +66,12 @@ function Tabs() {
         tabBarStyle: {
           backgroundColor: theme.colors.surface,
           height: TAB_BAR_HEIGHT + insets.bottom,
+          paddingBottom: insets.bottom,
+          maxWidth: 640,
+          width: '100%',
+          alignSelf: 'center',
         },
-        tabBarLabelStyle: { fontSize: 11, fontWeight: '500' },
+        tabBarLabelStyle: { fontSize: 12, lineHeight: 16, fontWeight: '500' },
       }}
     >
       <Tab.Screen

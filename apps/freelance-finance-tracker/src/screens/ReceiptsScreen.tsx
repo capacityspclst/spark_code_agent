@@ -1,15 +1,20 @@
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, FlatList, View } from 'react-native';
+import { FAB } from 'react-native-paper';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation, useRoute, NavigationProp } from '@react-navigation/native';
 import { EmptyState, PrimaryButton, Screen } from '../components/ui';
 import { getStore } from '../lib/storage';
 import { Receipt } from '../lib/models';
 import { getAllReceipts } from '../lib/receiptStore';
 import ReceiptCard from '../components/ui/ReceiptCard';
+import { theme, space } from '../theme';
+import { TAB_BAR_HEIGHT } from '../navigation/constants';
 
 export default function ReceiptsScreen() {
   const navigation = useNavigation<NavigationProp<any>>();
   const route = useRoute<any>();
+  const insets = useSafeAreaInsets();
   const [loading, setLoading] = useState(true);
   const [receipts, setReceipts] = useState<Receipt[]>([]);
 
@@ -32,7 +37,18 @@ export default function ReceiptsScreen() {
   const empty = receipts.length === 0;
 
   return (
-    <Screen title="Receipts">
+    <Screen
+      title="Receipts"
+      overlay={
+        <FAB
+          icon="plus"
+          label="Add receipt"
+          onPress={() => navigation.navigate('ReceiptEntry')}
+          style={[styles.fab, { backgroundColor: theme.colors.primaryContainer, bottom: TAB_BAR_HEIGHT + insets.bottom + space(2) }]}
+          color={theme.colors.onPrimaryContainer}
+        />
+      }
+    >
       {empty ? (
         <EmptyState
           icon="receipt-outline"
@@ -46,8 +62,14 @@ export default function ReceiptsScreen() {
           data={receipts}
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => <ReceiptCard receipt={item} />}
+          contentContainerStyle={styles.listContent}
         />
       )}
     </Screen>
   );
 }
+
+const styles = {
+  fab: { position: 'absolute' as const, right: space(2) },
+  listContent: { paddingBottom: space(12) },
+};
