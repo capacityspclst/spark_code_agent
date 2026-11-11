@@ -21,6 +21,8 @@ import BackupSuccessScreen from '../screens/BackupSuccessScreen';
 import RestoreSuccessScreen from '../screens/RestoreSuccessScreen';
 import { theme } from '../theme';
 import CategoriesScreen from '../screens/CategoriesScreen';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { TAB_BAR_HEIGHT } from './constants';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -49,13 +51,21 @@ function SettingsStackScreen() {
 }
 
 function Tabs() {
+  const insets = useSafeAreaInsets();
   return (
     <Tab.Navigator
       screenOptions={{
         headerShown: false,
         tabBarActiveTintColor: theme.colors.primary,
         tabBarInactiveTintColor: theme.colors.secondary,
-        tabBarStyle: { backgroundColor: theme.colors.surface, height: 64, paddingTop: 6, paddingBottom: 8 },
+        // Fixed 56dp tab bar (per DESIGN.md) plus the device's bottom safe-area inset,
+        // with enough top/bottom padding that labels are never clipped.
+        tabBarStyle: {
+          backgroundColor: theme.colors.surface,
+          height: TAB_BAR_HEIGHT + insets.bottom,
+          paddingTop: 6,
+          paddingBottom: Math.max(8, insets.bottom),
+        },
         tabBarLabelStyle: { fontSize: 12, fontWeight: '500' },
       }}
     >

@@ -18,6 +18,9 @@ import { space } from '../theme';
 
 type DashboardRouteParams = {};
 
+// Bottom padding for the recent-activity scroll area: FAB height (56dp) + tab bar
+// height (56dp) + safe-area inset (~16dp) as specified in DESIGN.md, so the last
+// list item is never hidden behind the fixed FABs/tab bar overlay.
 export const recentActivityContainerStyle = { paddingBottom: space(16) };
 
 export default function DashboardScreen() {
@@ -63,8 +66,25 @@ export default function DashboardScreen() {
 
   const empty = receipts.length === 0 && mileageEntries.length === 0;
 
+  // The FABs and the "saved" snackbar are rendered via Screen's `overlay` prop, which
+  // places them as siblings of the ScrollView (not inside its scrollable content). That
+  // way they stay fixed to the bottom of the screen and never scroll over/under the
+  // recent-activity list, and the list can never scroll past them either.
   return (
-    <Screen title="Dashboard" wide>
+    <Screen
+      title="Dashboard"
+      wide
+      overlay={
+        <>
+          {snack ? (
+            <ReceiptSavedSnackbar visible={true} onDismiss={() => setSnack('')}>
+              {snack}
+            </ReceiptSavedSnackbar>
+          ) : null}
+          <SimpleAddButtons />
+        </>
+      }
+    >
       {empty ? (
         <EmptyState
           icon="inbox-outline"
@@ -86,15 +106,11 @@ export default function DashboardScreen() {
             data={receipts.slice(0, 5)}
             keyExtractor={(item) => item.id}
             renderItem={({ item }) => <ReceiptCard receipt={item} />}
+            contentContainerStyle={recentActivityContainerStyle}
+            scrollEnabled={false}
           />
         </View>
       )}
-      {snack ? (
-        <ReceiptSavedSnackbar visible={true} onDismiss={() => setSnack('')}>
-          {snack}
-        </ReceiptSavedSnackbar>
-      ) : null}
-      <SimpleAddButtons />
     </Screen>
   );
 }
