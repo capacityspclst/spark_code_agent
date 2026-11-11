@@ -14,8 +14,8 @@ export default function FABAdd() {
   const navigation = useNavigation<NavigationProp<any>>();
   const insets = useSafeAreaInsets();
 
-  const goToReceipt = () => navigation.getParent?.()?.navigate('ReceiptEntry');
-  const goToMileage = () => navigation.getParent?.()?.navigate('MileageEntry');
+  const goToReceipt = () => navigation.navigate('ReceiptEntry');
+  const goToMileage = () => navigation.navigate('MileageEntry');
 
   return (
     <View style={[styles.container, { bottom: TAB_BAR_HEIGHT + insets.bottom + space(2) }]} pointerEvents="box-none">
