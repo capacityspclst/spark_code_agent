@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, Text } from 'react-native-paper';
 import { FlatList, View } from 'react-native';
-import { useNavigation, useRoute, NavigationProp, RouteProp } from '@react-navigation/native';
+// Navigation imports are required lazily inside the component to avoid side effects during static import
 import { EmptyState, Screen, SummaryCard } from '../components/ui';
 import { getStore } from '../lib/storage';
 import { Receipt, MileageEntry } from '../lib/models';
