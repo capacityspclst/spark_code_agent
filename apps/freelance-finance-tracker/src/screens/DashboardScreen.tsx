@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, Text } from 'react-native-paper';
-import { FlatList, View } from 'react-native';
+import { View } from 'react-native';
 // Navigation imports are required lazily inside the component to avoid side effects during static import
 import { EmptyState, Screen, SummaryCard } from '../components/ui';
 import { getStore } from '../lib/storage';
@@ -102,13 +102,18 @@ export default function DashboardScreen() {
             <SummaryCard label="Estimated tax" value={`$${tax.toFixed(2)}`} />
           </View>
           <Text variant="titleMedium" style={{ marginTop: 8, marginBottom: 4 }}>Recent activity</Text>
-          <FlatList
-            data={receipts}
-            keyExtractor={(item) => item.id}
-            renderItem={({ item }) => <ReceiptCard receipt={item} />}
-            contentContainerStyle={recentActivityContainerStyle}
-            nestedScrollEnabled
-          />
+          {/* Rendered directly inside the Screen's own ScrollView (not as a nested
+              FlatList/VirtualizedList) per DESIGN.md: "Recent activity list – inside the
+              ScrollView." Nesting a FlatList inside a ScrollView is unreliable (its height can
+              collapse to the viewport instead of growing with content), which can make the
+              fixed-position FABs/snackbar appear to sit on top of list items. Mapping the
+              receipts directly avoids that entirely, while recentActivityContainerStyle still
+              reserves enough bottom space for the last item to clear the overlay. */}
+          <View style={recentActivityContainerStyle}>
+            {receipts.map((item) => (
+              <ReceiptCard key={item.id} receipt={item} />
+            ))}
+          </View>
         </View>
       )}
     </Screen>
