@@ -21,8 +21,10 @@ type DashboardRouteParams = {};
 export const recentActivityContainerStyle = { paddingBottom: space(16) };
 
 export default function DashboardScreen() {
-  const navigation = useNavigation<NavigationProp<any>>();
-  const route = useRoute<RouteProp<Record<string, DashboardRouteParams>, string>>();
+  // Lazy load navigation and route hooks to avoid side effects during static analysis
+  const { useNavigation, useRoute } = require('@react-navigation/native');
+  const navigation:any = useNavigation();
+  const route:any = useRoute();
   const [loading, setLoading] = useState(true);
   const [receipts, setReceipts] = useState<Receipt[]>([]);
   const [mileageEntries, setMileageEntries] = useState<MileageEntry[]>([]);
