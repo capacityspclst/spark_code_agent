@@ -3,7 +3,7 @@ import { Snackbar } from 'react-native-paper';
 import { StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { space } from '../../theme';
-import { TAB_BAR_HEIGHT } from '../../navigation/constants';
+import { TAB_BAR_HEIGHT, FAB_STACK_HEIGHT } from '../../navigation/constants';
 
 /**
  * Snackbar shown after saving a receipt or mileage entry.
@@ -21,8 +21,10 @@ export default function ReceiptSavedSnackbar({
   children: React.ReactNode;
 }) {
   const insets = useSafeAreaInsets();
-  // Tab bar + add-buttons row (~48dp tall) + gap above them (8dp per DESIGN.md).
-  const bottom = TAB_BAR_HEIGHT + insets.bottom + space(2) + 48 + space(1);
+  // Tab bar + gap + the full SimpleAddButtons stack (both mini-FABs and the gap between
+  // them) + an 8dp gap above the stack, per DESIGN.md, so the snackbar never overlaps the
+  // Receipt/Mileage buttons.
+  const bottom = TAB_BAR_HEIGHT + insets.bottom + space(2) + FAB_STACK_HEIGHT + space(1);
   return (
     <Snackbar
       visible={visible}
@@ -40,8 +42,8 @@ const styles = StyleSheet.create({
   container: {
     position: 'absolute',
     // Default (no safe-area inset) bottom offset, overridden per-render above using the
-    // live tab-bar height + safe-area inset + FAB row height + spacing.
-    bottom: TAB_BAR_HEIGHT + space(2) + 48 + space(1),
+    // live tab-bar height + safe-area inset + FAB stack height + spacing.
+    bottom: TAB_BAR_HEIGHT + space(2) + FAB_STACK_HEIGHT + space(1),
     // Align to the right edge with the same horizontal inset as FABs
     right: space(2),
     // Prevent it from stretching full width; Paper will size it based on content.
