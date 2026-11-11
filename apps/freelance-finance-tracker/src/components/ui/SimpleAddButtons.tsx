@@ -1,27 +1,32 @@
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
-import { space } from '../../theme';
-// Navigation will be required lazily inside the component to avoid module load errors
+import PrimaryButton from './PrimaryButton';
+import { theme, space } from '../../theme';
+import { useNavigation, NavigationProp } from '@react-navigation/native';
 
-/** Simplified SimpleAddButtons for layout tests – positioned absolutely. */
-import { Pressable, Text } from 'react-native';
-
+/** Buttons that match the UI flow expectations: separate primary buttons labeled "Receipt" and "Mileage". */
 export default function SimpleAddButtons() {
-  // Lazy require navigation to avoid module load errors in static analysis
-  const { useNavigation } = require('@react-navigation/native');
-  const navigation = useNavigation();
+  const navigation = useNavigation<NavigationProp<any>>();
 
   const goToReceipt = () => navigation.getParent?.()?.navigate('ReceiptEntry');
   const goToMileage = () => navigation.getParent?.()?.navigate('MileageEntry');
 
   return (
     <View style={styles.container} pointerEvents="box-none">
-      <Pressable onPress={goToReceipt} accessibilityLabel="Receipt">
-        <Text>Receipt</Text>
-      </Pressable>
-      <Pressable onPress={goToMileage} accessibilityLabel="Mileage">
-        <Text>Mileage</Text>
-      </Pressable>
+      <PrimaryButton
+        label="Receipt"
+        variant="primary"
+        onPress={goToReceipt}
+        style={styles.button}
+        accessibilityLabel="Receipt"
+      />
+      <PrimaryButton
+        label="Mileage"
+        variant="primary"
+        onPress={goToMileage}
+        style={styles.button}
+        accessibilityLabel="Mileage"
+      />
     </View>
   );
 }
@@ -29,7 +34,7 @@ export default function SimpleAddButtons() {
 const styles = StyleSheet.create({
   container: {
     position: 'absolute',
-    // 80dp from bottom to sit above tab bar
+    // Position above the bottom tab bar (64dp height) with extra spacing.
     bottom: 80,
     right: space(2),
     flexDirection: 'column',
@@ -37,5 +42,8 @@ const styles = StyleSheet.create({
     gap: space(1),
     elevation: 4,
     zIndex: 10,
+  },
+  button: {
+    minHeight: 44,
   },
 });
