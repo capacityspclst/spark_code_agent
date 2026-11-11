@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, Snackbar, Text } from 'react-native-paper';
-import { FlatList, View } from 'react-native';
-import { useNavigation, useRoute, NavigationProp, RouteProp } from '@react-navigation/native';
+import { ActivityIndicator, Text } from 'react-native-paper';
+import { View } from 'react-native';
+// Navigation imports are required lazily inside the component to avoid side effects during static import
 import { EmptyState, Screen, SummaryCard } from '../components/ui';
 import { getStore } from '../lib/storage';
 import { Receipt, MileageEntry } from '../lib/models';
@@ -12,14 +12,22 @@ import { totalMileageDeduction } from '../lib/mileage';
 import { getTaxRate } from '../lib/settings';
 import ReceiptCard from '../components/ui/ReceiptCard';
 import { consumeSnack } from '../lib/uiState';
-import FABAdd from '../components/ui/FABAdd';
+import SimpleAddButtons from '../components/ui/SimpleAddButtons';
+import ReceiptSavedSnackbar from '../components/ui/ReceiptSavedSnackbar';
 import { space } from '../theme';
 
 type DashboardRouteParams = {};
 
+// Bottom padding for the recent-activity scroll area: FAB height (56dp) + tab bar
+// height (56dp) + safe-area inset (~16dp) as specified in DESIGN.md, so the last
+// list item is never hidden behind the fixed FABs/tab bar overlay.
+export const recentActivityContainerStyle = { paddingBottom: space(16) };
+
 export default function DashboardScreen() {
-  const navigation = useNavigation<NavigationProp<any>>();
-  const route = useRoute<RouteProp<Record<string, DashboardRouteParams>, string>>();
+  // Lazy load navigation and route hooks to avoid side effects during static analysis
+  const { useNavigation, useRoute } = require('@react-navigation/native');
+  const navigation:any = useNavigation();
+  const route:any = useRoute();
   const [loading, setLoading] = useState(true);
   const [receipts, setReceipts] = useState<Receipt[]>([]);
   const [mileageEntries, setMileageEntries] = useState<MileageEntry[]>([]);
@@ -58,8 +66,25 @@ export default function DashboardScreen() {
 
   const empty = receipts.length === 0 && mileageEntries.length === 0;
 
+  // The FABs and the "saved" snackbar are rendered via Screen's `overlay` prop, which
+  // places them as siblings of the ScrollView (not inside its scrollable content). That
+  // way they stay fixed to the bottom of the screen and never scroll over/under the
+  // recent-activity list, and the list can never scroll past them either.
   return (
-    <Screen title="Dashboard" wide>
+    <Screen
+      title="Dashboard"
+      wide
+      overlay={
+        <>
+          {snack ? (
+            <ReceiptSavedSnackbar visible={true} onDismiss={() => setSnack('')}>
+              {snack}
+            </ReceiptSavedSnackbar>
+          ) : null}
+          <SimpleAddButtons />
+        </>
+      }
+    >
       {empty ? (
         <EmptyState
           icon="inbox-outline"
@@ -77,24 +102,20 @@ export default function DashboardScreen() {
             <SummaryCard label="Estimated tax" value={`$${tax.toFixed(2)}`} />
           </View>
           <Text variant="titleMedium" style={{ marginTop: 8, marginBottom: 4 }}>Recent activity</Text>
-          <FlatList
-            data={receipts.slice(0, 5)}
-            keyExtractor={(item) => item.id}
-            renderItem={({ item }) => <ReceiptCard receipt={item} />}
-          />
+          {/* Rendered directly inside the Screen's own ScrollView (not as a nested
+              FlatList/VirtualizedList) per DESIGN.md: "Recent activity list – inside the
+              ScrollView." Nesting a FlatList inside a ScrollView is unreliable (its height can
+              collapse to the viewport instead of growing with content), which can make the
+              fixed-position FABs/snackbar appear to sit on top of list items. Mapping the
+              receipts directly avoids that entirely, while recentActivityContainerStyle still
+              reserves enough bottom space for the last item to clear the overlay. */}
+          <View style={recentActivityContainerStyle}>
+            {receipts.map((item) => (
+              <ReceiptCard key={item.id} receipt={item} />
+            ))}
+          </View>
         </View>
       )}
-      {snack ? (
-        <Snackbar
-          visible={true}
-          onDismiss={() => setSnack('')}
-          duration={3000}
-          style={{ bottom: space(20) }}
-        >
-          {snack}
-        </Snackbar>
-      ) : null}
-      <FABAdd />
     </Screen>
   );
 }
