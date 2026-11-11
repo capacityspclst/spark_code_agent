@@ -18,8 +18,8 @@ export default function SimpleAddButtons() {
   const PrimaryButton = require('./PrimaryButton').default;
   const insets = useSafeAreaInsets();
 
-  const goToReceipt = () => navigation.navigate('ReceiptEntry');
-  const goToMileage = () => navigation.navigate('MileageEntry');
+  const goToReceipt = () => navigation.getParent?.()?.navigate('ReceiptEntry');
+  const goToMileage = () => navigation.getParent?.()?.navigate('MileageEntry');
 
   return (
     <View
