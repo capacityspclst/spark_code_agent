@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, Snackbar, Text } from 'react-native-paper';
+import { ActivityIndicator, Text } from 'react-native-paper';
 import { FlatList, View } from 'react-native';
 import { useNavigation, useRoute, NavigationProp, RouteProp } from '@react-navigation/native';
 import { EmptyState, Screen, SummaryCard } from '../components/ui';
@@ -12,10 +12,13 @@ import { totalMileageDeduction } from '../lib/mileage';
 import { getTaxRate } from '../lib/settings';
 import ReceiptCard from '../components/ui/ReceiptCard';
 import { consumeSnack } from '../lib/uiState';
-import FABAdd from '../components/ui/FABAdd';
+import SimpleAddButtons from '../components/ui/SimpleAddButtons';
+import ReceiptSavedSnackbar from '../components/ui/ReceiptSavedSnackbar';
 import { space } from '../theme';
 
 type DashboardRouteParams = {};
+
+export const recentActivityContainerStyle = { paddingBottom: space(16) };
 
 export default function DashboardScreen() {
   const navigation = useNavigation<NavigationProp<any>>();
@@ -85,16 +88,11 @@ export default function DashboardScreen() {
         </View>
       )}
       {snack ? (
-        <Snackbar
-          visible={true}
-          onDismiss={() => setSnack('')}
-          duration={3000}
-          style={{ bottom: space(20) }}
-        >
+        <ReceiptSavedSnackbar visible={true} onDismiss={() => setSnack('')}>
           {snack}
-        </Snackbar>
+        </ReceiptSavedSnackbar>
       ) : null}
-      <FABAdd />
+      <SimpleAddButtons />
     </Screen>
   );
 }
