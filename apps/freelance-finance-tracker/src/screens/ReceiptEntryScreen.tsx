@@ -186,7 +186,7 @@ export default function ReceiptEntryScreen() {
           validRange={{ endDate: new Date() }}
           cancelLabel="Cancel"
           confirmLabel="OK"
-          accessibilityLabel="Date picker"
+          label="Date"
         />
         {/* Category */}
         <View testID="field-wrapper-category" style={{ marginBottom: 12 }}>
