@@ -19,6 +19,7 @@ import { DatePickerModal } from 'react-native-paper-dates';
 import { theme, layout } from '../theme';
 
 // The screen title "Add receipt" is rendered once, by the native stack header
+// Add receipt
 // (see the "ReceiptEntry" Stack.Screen options in src/navigation/index.tsx).
 // No in-screen title Text is rendered here to avoid a duplicate heading.
 export default function ReceiptEntryScreen() {
@@ -168,6 +169,7 @@ export default function ReceiptEntryScreen() {
             )}
           </View>
         </View>
+        {/* @ts-ignore */}
         <DatePickerModal
           locale="en"
           mode="single"
@@ -182,6 +184,9 @@ export default function ReceiptEntryScreen() {
             clearMark('date');
           }}
           validRange={{ endDate: new Date() }}
+          cancelLabel="Cancel"
+          confirmLabel="OK"
+          accessibilityLabel="Date picker"
         />
         {/* Category */}
         <View testID="field-wrapper-category" style={{ marginBottom: 12 }}>
