@@ -57,17 +57,18 @@ function Tabs() {
       screenOptions={{
         headerShown: false,
         tabBarActiveTintColor: theme.colors.primary,
-        tabBarInactiveTintColor: theme.colors.secondary,
+        tabBarInactiveTintColor: theme.colors.onSurfaceVariant,
         // Fixed 56dp tab bar (per DESIGN.md) plus the device's bottom safe-area inset.
-        // Deliberately leave vertical padding to the library's own tab-item padding
-        // (and its default safe-area handling) rather than adding extra padding on
-        // top of the fixed height, which would squeeze the icon+label stack and
-        // clip the label text.
+        // The bar itself is centered with a max width so on desktop the four tabs
+        // don't spread edge-to-edge across the viewport.
         tabBarStyle: {
           backgroundColor: theme.colors.surface,
           height: TAB_BAR_HEIGHT + insets.bottom,
+          maxWidth: 640,
+          width: '100%',
+          alignSelf: 'center',
         },
-        tabBarLabelStyle: { fontSize: 11, fontWeight: '500' },
+        tabBarLabelStyle: { fontSize: 12, fontWeight: '500' },
       }}
     >
       <Tab.Screen
