@@ -43,6 +43,7 @@ export default function SettingsRow({
           label={label}
           value={switchValue}
           onChange={onSwitchChange!}
+          showLabel={false}
         />
       )}
       {showChevron && !showSwitch && (

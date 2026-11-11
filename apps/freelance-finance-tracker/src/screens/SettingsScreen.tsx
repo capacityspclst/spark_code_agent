@@ -4,7 +4,7 @@ import { theme } from '../theme';
 import { getAppLockEnabled, setAppLockEnabled } from '../lib/settings';
 import { useNavigation, NavigationProp } from '@react-navigation/native';
 
-/** Settings screen with links to sub‑screens and actions. */
+/** Settings screen with links to sub-screens and actions. */
 export default function SettingsScreen() {
   const navigation = useNavigation<NavigationProp<any>>();
   const [lock, setLock] = useState(false);

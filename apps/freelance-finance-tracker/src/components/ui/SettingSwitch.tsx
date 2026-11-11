@@ -3,11 +3,19 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { Text } from 'react-native-paper';
 import { layout, space, theme } from '../../theme';
 
-interface Props { label: string; description?: string; value: boolean; onChange: (value: boolean) => void }
+interface Props {
+  label: string;
+  description?: string;
+  value: boolean;
+  onChange: (value: boolean) => void;
+  /** Set to false when the visible label is already rendered by a parent (e.g. SettingsRow), so the
+   * label isn't shown twice on screen. The accessibility label is still announced either way. */
+  showLabel?: boolean;
+}
 
 /** A labelled on/off setting: the whole row is one switch (role switch, its state and label), so it's easy to
  * tap and works with assistive tech and the UI flow. Paper's Switch isn't used: on the web it has no name. */
-export default function SettingSwitch({ label, description, value, onChange }: Props) {
+export default function SettingSwitch({ label, description, value, onChange, showLabel = true }: Props) {
   return (
     <Pressable
       role="switch"
@@ -16,10 +24,12 @@ export default function SettingSwitch({ label, description, value, onChange }: P
       onPress={() => onChange(!value)}
       style={({ pressed }) => [styles.row, pressed && styles.pressed]}
     >
-      <View style={styles.text}>
-        <Text variant="bodyLarge">{label}</Text>
-        {description ? <Text variant="bodyMedium" style={styles.description}>{description}</Text> : null}
-      </View>
+      {showLabel && (
+        <View style={styles.text}>
+          <Text variant="bodyLarge">{label}</Text>
+          {description ? <Text variant="bodyMedium" style={styles.description}>{description}</Text> : null}
+        </View>
+      )}
       <View style={[styles.track, value && styles.trackOn]} aria-hidden>
         <View style={[styles.thumb, value && styles.thumbOn]} />
       </View>
