@@ -40,12 +40,10 @@ const styles = StyleSheet.create({
     flexDirection: 'column',
     alignItems: 'flex-end',
     gap: space(1),
-    // Ensure it sits above other UI layers.
     elevation: 4,
     zIndex: 10,
   },
   button: {
     minHeight: 44,
-    // PrimaryButton already applies proper theme colors and contrast.
   },
 });
