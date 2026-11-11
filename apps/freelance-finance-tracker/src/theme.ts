@@ -12,7 +12,7 @@ export const layout = {
 
 export const theme = {
   ...MD3LightTheme,
-  roundness: 3,
+  roundness: 8,
   fonts: configureFonts({ config: { fontFamily: 'System' } }),
   colors: {
     ...MD3LightTheme.colors,
