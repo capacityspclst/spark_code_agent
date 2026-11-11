@@ -46,7 +46,7 @@ export default function SettingsRow({
         />
       )}
       {showChevron && !showSwitch && (
-        <MaterialIcons name="chevron-right" size={24} color={theme.colors.onSurfaceVariant} accessibilityLabel="Navigate" />
+        <MaterialIcons name="chevron-right" size={24} color={theme.colors.onSurfaceVariant} aria-hidden={true} />
       )}
     </Container>
   );
