@@ -8,7 +8,6 @@ export const layout = {
   maxContentWidth: 420, // updated to match design (max 420dp)
   maxWideWidth: 960,
   touchTarget: 48,
-  tabBarHeight: 56,
 };
 
 export const theme = {
