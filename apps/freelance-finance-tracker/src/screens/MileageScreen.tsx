@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, FlatList } from 'react-native';
+import { ActivityIndicator, FlatList, View } from 'react-native';
+import { Text } from 'react-native-paper';
 import { useNavigation, NavigationProp } from '@react-navigation/native';
 import { EmptyState, PrimaryButton, Screen } from '../components/ui';
 import { getStore } from '../lib/storage';
@@ -7,6 +8,7 @@ import { MileageEntry } from '../lib/models';
 import { getAllMileageEntries } from '../lib/mileageStore';
 import MileageCard from '../components/ui/MileageCard';
 import FABAdd from '../components/ui/FABAdd';
+import { theme } from '../theme';
 
 export default function MileageScreen() {
   const navigation = useNavigation<NavigationProp<any>>();
@@ -34,19 +36,25 @@ export default function MileageScreen() {
   return (
     <Screen title="Mileage">
       {empty ? (
-        <EmptyState
-          icon="run-outline"
-          title="No mileage logged"
-          body="Tap the + button to log your first mileage entry."
-          actionLabel="Add mileage"
-          onAction={() => navigation.navigate('MileageEntry')}
-        />
+        <View style={{ flex: 1 }}>
+          <EmptyState
+            icon="run-outline"
+            title="No trips yet"
+            body="Log your first drive to track mileage deductions."
+            actionLabel="Add mileage"
+            onAction={() => navigation.navigate('MileageEntry')}
+          />
+        </View>
       ) : (
-        <FlatList
-          data={entries}
-          keyExtractor={(item) => item.id}
-          renderItem={({ item }) => <MileageCard entry={item} />}
-        />
+        <>
+          <Text variant="titleSmall" style={{ color: theme.colors.onSurfaceVariant, marginBottom: 8 }}>Recent trips</Text>
+          <FlatList
+            data={entries}
+            keyExtractor={(item) => item.id}
+            renderItem={({ item }) => <MileageCard entry={item} />}
+            contentContainerStyle={{ paddingBottom: 96 }}
+          />
+        </>
       )}
       <FABAdd />
     </Screen>

@@ -13,7 +13,7 @@ interface Props {
 export default function ReceiptCard({ receipt, onPress }: Props) {
   const { amount, date, category, type, notes, photoUri } = receipt;
   return (
-    <Card mode="elevated" style={styles.card} onPress={onPress}>
+    <Card mode="outlined" style={styles.card} onPress={onPress}>
       <Card.Content style={styles.content}>
         <View style={styles.row}>
           <Text variant="titleMedium" style={styles.amount}>${amount.toFixed(2)}</Text>
@@ -29,7 +29,7 @@ export default function ReceiptCard({ receipt, onPress }: Props) {
 }
 
 const styles = StyleSheet.create({
-  card: { marginBottom: space(2), backgroundColor: theme.colors.surface },
+  card: { marginBottom: space(2), backgroundColor: theme.colors.surface, borderColor: theme.colors.outlineVariant, elevation: 0 },
   content: { gap: space(1) },
   row: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   amount: { fontWeight: '600' },
