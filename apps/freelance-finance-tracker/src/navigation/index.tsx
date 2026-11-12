@@ -65,7 +65,8 @@ function Tabs() {
         // clip the label text.
         tabBarStyle: {
           backgroundColor: theme.colors.surface,
-          height: TAB_BAR_HEIGHT + insets.bottom,
+          height: TAB_BAR_HEIGHT,
+          paddingBottom: insets.bottom,
         },
         tabBarLabelStyle: { fontSize: 11, fontWeight: '500' },
       }}
