@@ -49,14 +49,21 @@ function SettingsStackScreen() {
 }
 
 function Tabs() {
+  const insets = useSafeAreaInsets();
+  const tabBarHeight = 56;
   return (
     <Tab.Navigator
       screenOptions={{
         headerShown: false,
         tabBarActiveTintColor: theme.colors.primary,
         tabBarInactiveTintColor: theme.colors.secondary,
-        tabBarStyle: { backgroundColor: theme.colors.surface, height: 64, paddingTop: 6, paddingBottom: 8 },
-        tabBarLabelStyle: { fontSize: 12, fontWeight: '500' },
+        tabBarStyle: {
+          backgroundColor: theme.colors.surface,
+          height: tabBarHeight + insets.bottom,
+          paddingTop: 8,
+          paddingBottom: insets.bottom + 8,
+        },
+        tabBarLabelStyle: { fontSize: 12, lineHeight: 16, marginTop: 2 },
       }}
     >
       <Tab.Screen
