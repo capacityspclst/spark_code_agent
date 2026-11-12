@@ -7,26 +7,18 @@ import type { MileageEntry } from '../../lib/models';
 interface Props {
   entry: MileageEntry;
   onPress?: () => void;
-  /** Deduction amount in dollars for this entry (miles * mileage rate), shown alongside the
-   * mileage, so every recent-activity row (receipt or mileage) displays its dollar amount. */
-  amount?: number;
 }
 
 /** Simple card to display a mileage entry. */
-export default function MileageCard({ entry, onPress, amount }: Props) {
+export default function MileageCard({ entry, onPress }: Props) {
   const { date, miles, purpose } = entry;
   return (
     <Card mode="elevated" style={styles.card} onPress={onPress}>
       <Card.Content style={styles.content}>
         <View style={styles.row}>
-          <Text variant="titleMedium" style={styles.miles}>
-            {typeof amount === 'number' ? `$${amount.toFixed(2)}` : `${miles} mi`}
-          </Text>
+          <Text variant="titleMedium" style={styles.miles}>{miles} mi</Text>
           <Text variant="labelLarge" style={styles.purpose}>{purpose}</Text>
         </View>
-        {typeof amount === 'number' ? (
-          <Text variant="bodyMedium" style={styles.detail}>{miles} mi</Text>
-        ) : null}
         <Text variant="bodyMedium" style={styles.detail}>Date: {date}</Text>
       </Card.Content>
     </Card>
