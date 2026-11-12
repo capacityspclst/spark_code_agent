@@ -94,7 +94,7 @@ export default function DashboardScreen() {
           {snack}
         </Snackbar>
       ) : null}
-      <FABAdd />
+    <FABAdd />
     </Screen>
   );
 }

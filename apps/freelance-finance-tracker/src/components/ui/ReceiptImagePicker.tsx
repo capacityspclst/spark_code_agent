@@ -4,14 +4,16 @@ import { Text } from 'react-native-paper';
 import PrimaryButton from './PrimaryButton';
 import { space, theme } from '../../theme';
 import { pickImageAsync } from '../../lib/photoPicker';
+import { isSupported } from 'expo-text-extractor';
 
 interface Props {
   photoUri?: string;
   onChange: (uri?: string) => void;
+  onScan?: () => void;
 }
 
 /** Allows user to pick a photo (camera or library) and returns a stored file URI. */
-export default function ReceiptImagePicker({ photoUri, onChange }: Props) {
+export default function ReceiptImagePicker({ photoUri, onChange, onScan }: Props) {
   const [uri, setUri] = useState<string | undefined>(photoUri);
 
   const pick = async () => {
@@ -37,6 +39,7 @@ export default function ReceiptImagePicker({ photoUri, onChange }: Props) {
       ) : (
         <PrimaryButton label="Add photo" variant="primary" onPress={pick} />
       )}
+      {isSupported && <PrimaryButton label="Scan receipt" onPress={onScan} testID="scan-receipt-button" />}
     </View>
   );
 }

@@ -55,7 +55,7 @@ export default function FormField({ label, error, hint, marked, placeholder, sec
 }
 
 const styles = StyleSheet.create({
-  container: { width: '100%', marginBottom: 8 },
+  container: { width: '100%', marginBottom: 12 },
   marked: { backgroundColor: theme.colors.primaryContainer, borderRadius: theme.roundness },
   input: {},
   helper: { alignSelf: 'flex-start', minHeight: 20, marginTop: 2 },
