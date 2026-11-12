@@ -18,6 +18,7 @@ export default function PrimaryButton({ label, variant = 'primary', contentStyle
       uppercase={false}
       accessibilityLabel={label}
       accessibilityHint={hint}
+      accessibilityRole="button"
       disabled={disabled}
       contentStyle={[{ minHeight: layout.touchTarget }, contentStyle]}
       style={webStyle}
