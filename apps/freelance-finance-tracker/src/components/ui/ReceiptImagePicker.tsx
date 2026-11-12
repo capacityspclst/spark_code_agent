@@ -45,9 +45,7 @@ export default function ReceiptImagePicker({ photoUri, onChange, onScan }: Props
 }
 
 const styles = StyleSheet.create({
-  // No outer margin here: the screen wraps this component in a View that
-  // already applies the standard 12dp spacing, avoiding doubled gaps.
-  container: {},
+  container: { marginBottom: space(2) },
   previewWrap: { alignItems: 'center', gap: space(1) },
   preview: { width: 200, height: 200, borderRadius: theme.roundness, backgroundColor: theme.colors.surfaceVariant },
 });
