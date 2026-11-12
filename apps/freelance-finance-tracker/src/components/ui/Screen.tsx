@@ -22,7 +22,7 @@ interface Props {
 export default function Screen({ title, subtitle, wide, children, overlay }: Props) {
   return (
     <View style={styles.page}>
-      <ScrollView style={styles.scroll} contentContainerStyle={[styles.content, { maxWidth: wide ? layout.maxWideWidth : layout.maxContentWidth }]}>
+      <ScrollView style={styles.scroll} contentContainerStyle={[styles.content, { maxWidth: wide ? layout.maxWideWidth : layout.maxContentWidth }]} accessible={true} focusable={true} >
         {title || subtitle ? (
           <View style={styles.header}>
             {title ? <Text variant="headlineMedium" accessibilityRole="header" style={styles.title}>{title}</Text> : null}
