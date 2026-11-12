@@ -14,14 +14,11 @@ import { persistPhoto } from '../lib/photos';
 import { recognizeReceiptText, parseReceipt, ParsedReceipt } from '../lib/ocr';
 import { getAllCategories } from '../lib/categories';
 import { TextInput } from 'react-native-paper';
-import { isSupported } from 'expo-text-extractor';
 import { DatePickerModal } from 'react-native-paper-dates';
 import { theme, layout } from '../theme';
-// The screen title is rendered once, by the native stack header
-// (see the "ReceiptEntry" Stack.Screen options in src/navigation/index.tsx,
-// which sets the title shown below).
-// No in-screen title Text is rendered here to avoid a duplicate heading.
-export const SCREEN_TITLE = "Add receipt";
+// Header title "Add receipt" is set once, by the "ReceiptEntry" Stack.Screen
+// options in src/navigation/index.tsx. No in-screen title Text is rendered
+// here, so the title appears exactly once in the rendered UI.
 
 export default function ReceiptEntryScreen() {
   const navigation = useNavigation<NavigationProp<any>>();
