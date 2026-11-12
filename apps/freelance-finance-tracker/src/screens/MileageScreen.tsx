@@ -32,7 +32,7 @@ export default function MileageScreen() {
   const empty = entries.length === 0;
 
   return (
-    <Screen title="Mileage">
+    <Screen title="Mileage" overlay={<FABAdd />}>
       {empty ? (
         <EmptyState
           icon="run-outline"
@@ -48,7 +48,6 @@ export default function MileageScreen() {
           renderItem={({ item }) => <MileageCard entry={item} />}
         />
       )}
-      <FABAdd />
     </Screen>
   );
 }
