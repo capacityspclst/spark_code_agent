@@ -15,12 +15,15 @@ interface Props {
    */
   overlay?: React.ReactNode;
   /**
-   * Height (dp) of the fixed bottom `overlay` zone (e.g. FABs + the safe-area inset, and
-   * optionally the snackbar above them). When set, the ScrollView's own box is shrunk by this
-   * amount (via its absolute `bottom` offset), so its visible/scrollable area ends *above* the
-   * overlay. That guarantees list content can never render underneath the overlay - even when
-   * the content is short and isn't actually scrolled - because the overlay occupies a strip of
-   * the screen that the ScrollView simply doesn't draw into.
+   * Extra bottom padding (dp) to reserve on the *scrollable content* (e.g. FAB stack height +
+   * snackbar height + safe-area inset), so that once the user scrolls all the way to the end,
+   * the last list item always clears the fixed `overlay` (per DESIGN.md: "Bottom padding on the
+   * ScrollView = FAB height + tab bar height + safe-area inset ... to guarantee the last list
+   * item is never hidden behind the FABs"). The ScrollView itself still spans the *whole* page
+   * (it is not shrunk/clipped to end above the overlay) so the list can genuinely be scrolled
+   * past/underneath the floating buttons, per the requirement that it must be scrollable past
+   * them rather than stopping short. The `overlay` is rendered on top with a higher `zIndex` so
+   * it is always visible above whatever list content is currently scrolled behind it.
    */
   overlayInset?: number;
 }
@@ -31,21 +34,13 @@ interface Props {
 export default function Screen({ title, subtitle, wide, children, overlay, overlayInset = 0 }: Props) {
   return (
     <View style={styles.page}>
-      {/*
-        The ScrollView is taken out of normal flow (`position: absolute`, pinned to all
-        four edges of `page`) instead of being a plain `flex: 1` child. On React Native
-        Web a `flex: 1` ScrollView nested inside other `flex: 1` containers can grow to
-        fit its content (the classic missing `min-height: 0` flexbox issue) instead of
-        being clipped to the available viewport, which would let the list's own height
-        push the fixed-position `overlay` further down the page - right on top of the
-        last list items - rather than keeping the overlay pinned to the physical bottom
-        of the screen. Absolute positioning sizes the ScrollView purely from `page`'s own
-        box (never from its content), guaranteeing the list is always confined above the
-        `overlayInset` reserved strip and genuinely scrolls within it.
-      */}
       <ScrollView
-        style={[styles.scroll, overlayInset ? { bottom: overlayInset } : null]}
-        contentContainerStyle={[styles.content, { maxWidth: wide ? layout.maxWideWidth : layout.maxContentWidth }]}
+        style={styles.scroll}
+        contentContainerStyle={[
+          styles.content,
+          { maxWidth: wide ? layout.maxWideWidth : layout.maxContentWidth },
+          overlayInset ? { paddingBottom: Math.max(space(16), overlayInset) } : null,
+        ]}
         accessible={true}
         focusable={true}
       >
@@ -57,7 +52,11 @@ export default function Screen({ title, subtitle, wide, children, overlay, overl
         ) : null}
         {children}
       </ScrollView>
-      {overlay}
+      {/* Rendered after (on top of) the ScrollView, so it stays visually above any list
+          content the user has scrolled underneath it. */}
+      <View style={styles.overlay} pointerEvents="box-none">
+        {overlay}
+      </View>
     </View>
   );
 }
@@ -65,6 +64,10 @@ export default function Screen({ title, subtitle, wide, children, overlay, overl
 const styles = StyleSheet.create({
   page: { flex: 1, backgroundColor: theme.colors.background, position: 'relative' },
   scroll: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 },
+  // Sits on top of the ScrollView (later in paint order) so fixed-position overlay content
+  // (FABs, snackbars) is never covered by list items scrolled underneath it. `box-none`
+  // lets touches pass through the empty parts of this layer to the ScrollView below.
+  overlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 20 },
   // Use the design token spacing * 2 (16dp) for horizontal padding
   content: { width: '100%', alignSelf: 'center', paddingHorizontal: space(2), paddingBottom: space(16), gap: space(2) },
   header: { gap: space(1), marginBottom: space(1) },
