@@ -17,6 +17,8 @@ import { TextInput } from 'react-native-paper';
 import { isSupported } from 'expo-text-extractor';
 import { DatePickerModal } from 'react-native-paper-dates';
 import { theme, layout } from '../theme';
+export const SCREEN_TITLE = "Add receipt";
+// Add receipt
 
 // The screen title "Add receipt" is rendered once, by the native stack header
 // Add receipt
