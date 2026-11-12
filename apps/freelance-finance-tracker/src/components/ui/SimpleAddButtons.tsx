@@ -2,7 +2,7 @@ import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { space } from '../../theme';
-import { TAB_BAR_HEIGHT } from '../../navigation/constants';
+import { TAB_BAR_HEIGHT, FAB_BOTTOM_GAP } from '../../navigation/constants';
 
 /** SimpleAddButtons renders two primary action buttons positioned absolutely.
  * PrimaryButton and navigation are required lazily to avoid side‑effects during module load.
@@ -23,7 +23,7 @@ export default function SimpleAddButtons() {
 
   return (
     <View
-      style={[styles.container, { bottom: TAB_BAR_HEIGHT + insets.bottom + space(2) }]}
+      style={[styles.container, { bottom: TAB_BAR_HEIGHT + insets.bottom + FAB_BOTTOM_GAP }]}
       pointerEvents="box-none"
     >
       <PrimaryButton label="Receipt" variant="primary" onPress={goToReceipt} accessibilityLabel="Receipt" />
@@ -37,7 +37,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     // Default (no safe-area inset) bottom offset: tab bar height (56dp) + 16dp gap = 72dp.
     // Overridden per-render above using the live tab-bar height + safe-area inset.
-    bottom: TAB_BAR_HEIGHT + space(2),
+    bottom: TAB_BAR_HEIGHT + FAB_BOTTOM_GAP,
     right: space(2),
     flexDirection: 'column',
     alignItems: 'flex-end',

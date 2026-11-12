@@ -14,15 +14,26 @@ interface Props {
    * (e.g. FABs, snackbars anchored to the bottom of the screen).
    */
   overlay?: React.ReactNode;
+  /**
+   * Height (dp), including any safe-area inset, reserved at the bottom of the screen for
+   * `overlay`. Applied as a `marginBottom` on the ScrollView itself (not just its content),
+   * so the ScrollView's own rendered box never extends into the area the overlay occupies.
+   * Content that would otherwise land there simply requires scrolling to reveal, instead of
+   * rendering underneath the fixed overlay.
+   */
+  overlayHeight?: number;
 }
 
 /** Page frame for every screen: background, page padding, a centered max-width column and an optional h1.
  * Anything passed via `overlay` is rendered as a sibling of the ScrollView (not inside its scrollable
  * content), so it stays fixed to the screen regardless of scroll position. */
-export default function Screen({ title, subtitle, wide, children, overlay }: Props) {
+export default function Screen({ title, subtitle, wide, children, overlay, overlayHeight }: Props) {
   return (
     <View style={styles.page}>
-      <ScrollView style={styles.scroll} contentContainerStyle={[styles.content, { maxWidth: wide ? layout.maxWideWidth : layout.maxContentWidth }]}>
+      <ScrollView
+        style={[styles.scroll, overlayHeight ? { marginBottom: overlayHeight } : null]}
+        contentContainerStyle={[styles.content, { maxWidth: wide ? layout.maxWideWidth : layout.maxContentWidth }]}
+      >
         {title || subtitle ? (
           <View style={styles.header}>
             {title ? <Text variant="headlineMedium" accessibilityRole="header" style={styles.title}>{title}</Text> : null}

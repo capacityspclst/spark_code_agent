@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, Text } from 'react-native-paper';
 import { View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 // Navigation imports are required lazily inside the component to avoid side effects during static import
 import { EmptyState, Screen, SummaryCard } from '../components/ui';
 import { getStore } from '../lib/storage';
@@ -8,30 +9,34 @@ import { Receipt, MileageEntry } from '../lib/models';
 import { getAllReceipts } from '../lib/receiptStore';
 import { getAllMileageEntries } from '../lib/mileageStore';
 import { computeTotals } from '../lib/finance';
-import { totalMileageDeduction } from '../lib/mileage';
-import { getTaxRate } from '../lib/settings';
+import { totalMileageDeduction, calculateMileageDeduction } from '../lib/mileage';
+import { getTaxRate, getMileageRate } from '../lib/settings';
 import ReceiptCard from '../components/ui/ReceiptCard';
+import MileageCard from '../components/ui/MileageCard';
 import { consumeSnack } from '../lib/uiState';
 import SimpleAddButtons from '../components/ui/SimpleAddButtons';
 import ReceiptSavedSnackbar from '../components/ui/ReceiptSavedSnackbar';
-import { space } from '../theme';
+import { DASHBOARD_OVERLAY_RESERVED_HEIGHT } from '../navigation/constants';
 
 type DashboardRouteParams = {};
 
-// Bottom padding for the recent-activity scroll area: FAB height (56dp) + tab bar
-// height (56dp) + safe-area inset (~16dp) as specified in DESIGN.md, so the last
-// list item is never hidden behind the fixed FABs/tab bar overlay.
-export const recentActivityContainerStyle = { paddingBottom: space(16) };
+// Bottom padding for the recent-activity scroll area: the full height reserved for the fixed
+// bottom overlay (tab bar + SimpleAddButtons stack + ReceiptSavedSnackbar + buffer), per
+// DESIGN.md, so the last list item is never hidden behind it. The live safe-area inset is
+// added on top of this at render time (see `overlayHeight` below).
+export const recentActivityContainerStyle = { paddingBottom: DASHBOARD_OVERLAY_RESERVED_HEIGHT };
 
 export default function DashboardScreen() {
   // Lazy load navigation and route hooks to avoid side effects during static analysis
   const { useNavigation, useRoute } = require('@react-navigation/native');
   const navigation:any = useNavigation();
   const route:any = useRoute();
+  const insets = useSafeAreaInsets();
   const [loading, setLoading] = useState(true);
   const [receipts, setReceipts] = useState<Receipt[]>([]);
   const [mileageEntries, setMileageEntries] = useState<MileageEntry[]>([]);
   const [mileageDeduction, setMileageDeduction] = useState<number>(0);
+  const [mileageRate, setMileageRate] = useState<number>(0);
   const [tax, setTax] = useState<number>(0);
   const [snack, setSnack] = useState<string>('');
 
@@ -44,6 +49,8 @@ export default function DashboardScreen() {
     setMileageEntries(miles);
     const deduction = await totalMileageDeduction(miles);
     setMileageDeduction(deduction);
+    const rate = await getMileageRate(store);
+    setMileageRate(rate);
     const taxRate = await getTaxRate(store);
     const totals = computeTotals(recs);
     const taxable = Math.max(0, totals.income - totals.expenses - deduction);
@@ -74,6 +81,7 @@ export default function DashboardScreen() {
     <Screen
       title="Dashboard"
       wide
+      overlayHeight={DASHBOARD_OVERLAY_RESERVED_HEIGHT + insets.bottom}
       overlay={
         <>
           {snack ? (
@@ -111,7 +119,14 @@ export default function DashboardScreen() {
               reserves enough bottom space for the last item to clear the overlay. */}
           <View style={recentActivityContainerStyle}>
             {receipts.map((item) => (
-              <ReceiptCard key={item.id} receipt={item} />
+              <ReceiptCard key={`receipt-${item.id}`} receipt={item} />
+            ))}
+            {mileageEntries.map((item) => (
+              <MileageCard
+                key={`mileage-${item.id}`}
+                entry={item}
+                amount={calculateMileageDeduction(item.miles, mileageRate)}
+              />
             ))}
           </View>
         </View>
