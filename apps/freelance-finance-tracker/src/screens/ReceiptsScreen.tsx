@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, FlatList, View } from 'react-native';
 import { useNavigation, useRoute, NavigationProp } from '@react-navigation/native';
-import { EmptyState, PrimaryButton, Screen } from '../components/ui';
+import { EmptyState, Screen } from '../components/ui';
+import { FAB } from 'react-native-paper';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { getStore } from '../lib/storage';
 import { Receipt } from '../lib/models';
 import { getAllReceipts } from '../lib/receiptStore';
@@ -31,6 +33,7 @@ export default function ReceiptsScreen() {
 
   const empty = receipts.length === 0;
 
+  const insets = useSafeAreaInsets();
   return (
     <Screen title="Receipts">
       {empty ? (
@@ -46,8 +49,15 @@ export default function ReceiptsScreen() {
           data={receipts}
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => <ReceiptCard receipt={item} />}
+          contentContainerStyle={{ paddingBottom: 96 }}
         />
       )}
+      <FAB
+        icon="plus"
+        label="Add receipt"
+        style={{ position: 'absolute', right: 16, bottom: 16 + insets.bottom }}
+        onPress={() => navigation.navigate('ReceiptEntry')}
+      />
     </Screen>
   );
 }

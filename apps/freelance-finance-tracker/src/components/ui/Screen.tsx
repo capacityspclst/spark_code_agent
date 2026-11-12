@@ -1,7 +1,9 @@
 import React from 'react';
+import ScreenHeader from './ScreenHeader';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { Text } from 'react-native-paper';
 import { layout, space, theme } from '../../theme';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 interface Props {
   title?: string;
@@ -32,6 +34,7 @@ interface Props {
  * Anything passed via `overlay` is rendered as a sibling of the ScrollView (not inside its scrollable
  * content), so it stays fixed to the screen regardless of scroll position. */
 export default function Screen({ title, subtitle, wide, children, overlay, overlayInset = 0 }: Props) {
+  const insets = useSafeAreaInsets();
   return (
     <View style={styles.page}>
       <ScrollView
@@ -39,17 +42,14 @@ export default function Screen({ title, subtitle, wide, children, overlay, overl
         contentContainerStyle={[
           styles.content,
           { maxWidth: wide ? layout.maxWideWidth : layout.maxContentWidth },
+          { paddingTop: insets.top + space(2) },
           overlayInset ? { paddingBottom: Math.max(space(16), overlayInset) } : null,
         ]}
         accessible={true}
         focusable={true}
       >
-        {title || subtitle ? (
-          <View style={styles.header}>
-            {title ? <Text variant="headlineMedium" accessibilityRole="header" style={styles.title}>{title}</Text> : null}
-            {subtitle ? <Text variant="bodyLarge" style={styles.subtitle}>{subtitle}</Text> : null}
-          </View>
-        ) : null}
+        {title ? <ScreenHeader title={title} /> : null}
+        {subtitle ? <View style={styles.header}><Text variant="bodyLarge" style={styles.subtitle}>{subtitle}</Text></View> : null}
         {children}
       </ScrollView>
       {/* Rendered after (on top of) the ScrollView, so it stays visually above any list

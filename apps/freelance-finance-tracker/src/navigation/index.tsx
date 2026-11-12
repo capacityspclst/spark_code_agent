@@ -56,19 +56,15 @@ function Tabs() {
     <Tab.Navigator
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: theme.colors.primary,
-        tabBarInactiveTintColor: theme.colors.secondary,
-        // Fixed 56dp tab bar (per DESIGN.md) plus the device's bottom safe-area inset.
-        // Deliberately leave vertical padding to the library's own tab-item padding
-        // (and its default safe-area handling) rather than adding extra padding on
-        // top of the fixed height, which would squeeze the icon+label stack and
-        // clip the label text.
+        tabBarActiveTintColor: theme.colors.onSecondaryContainer,
+        tabBarInactiveTintColor: theme.colors.onSurfaceVariant,
+        tabBarLabelStyle: { fontSize: 12, fontWeight: '500' },
+        // Fixed height 80dp plus safe-area inset.
         tabBarStyle: {
           backgroundColor: theme.colors.surface,
-          height: TAB_BAR_HEIGHT,
+          height: 80,
           paddingBottom: insets.bottom,
         },
-        tabBarLabelStyle: { fontSize: 11, fontWeight: '500' },
       }}
     >
       <Tab.Screen
