@@ -2,7 +2,7 @@ import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { space } from '../../theme';
-import { TAB_BAR_HEIGHT } from '../../navigation/constants';
+import { TAB_BAR_HEIGHT, FAB_ZONE_HEIGHT } from '../../navigation/constants';
 
 /** SimpleAddButtons renders two primary action buttons positioned absolutely.
  * PrimaryButton and navigation are required lazily to avoid side‑effects during module load.
@@ -25,6 +25,7 @@ export default function SimpleAddButtons() {
     <View
       style={[styles.container, { bottom: TAB_BAR_HEIGHT + insets.bottom + space(2) }]}
       pointerEvents="box-none"
+      accessibilityLabel="Add buttons"
     >
       <PrimaryButton label="Receipt" variant="primary" onPress={goToReceipt} accessibilityLabel="Receipt" />
       <PrimaryButton label="Mileage" variant="primary" onPress={goToMileage} accessibilityLabel="Mileage" />

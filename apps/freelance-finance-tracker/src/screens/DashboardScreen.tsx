@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, Text } from 'react-native-paper';
 import { View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 // Navigation imports are required lazily inside the component to avoid side effects during static import
 import { EmptyState, Screen, SummaryCard } from '../components/ui';
 import { getStore } from '../lib/storage';
@@ -8,29 +9,37 @@ import { Receipt, MileageEntry } from '../lib/models';
 import { getAllReceipts } from '../lib/receiptStore';
 import { getAllMileageEntries } from '../lib/mileageStore';
 import { computeTotals } from '../lib/finance';
-import { totalMileageDeduction } from '../lib/mileage';
-import { getTaxRate } from '../lib/settings';
+import { totalMileageDeduction, calculateMileageDeduction } from '../lib/mileage';
+import { getTaxRate, getMileageRate } from '../lib/settings';
 import ReceiptCard from '../components/ui/ReceiptCard';
+import MileageCard from '../components/ui/MileageCard';
 import { consumeSnack } from '../lib/uiState';
 import SimpleAddButtons from '../components/ui/SimpleAddButtons';
 import ReceiptSavedSnackbar from '../components/ui/ReceiptSavedSnackbar';
 import { space } from '../theme';
+import { OVERLAY_RESERVED_HEIGHT } from '../navigation/constants';
 
 type DashboardRouteParams = {};
 
 // Bottom padding for the recent-activity scroll area: FAB height (56dp) + tab bar
 // height (56dp) + safe-area inset (~16dp) as specified in DESIGN.md, so the last
 // list item is never hidden behind the fixed FABs/tab bar overlay.
-export const recentActivityContainerStyle = { paddingBottom: space(16) };
+export const recentActivityContainerStyle = { paddingBottom: Math.max(space(16), OVERLAY_RESERVED_HEIGHT) };
+
+type ActivityItem =
+  | { kind: 'receipt'; id: string; date: string; receipt: Receipt }
+  | { kind: 'mileage'; id: string; date: string; entry: MileageEntry; amount: number };
 
 export default function DashboardScreen() {
   // Lazy load navigation and route hooks to avoid side effects during static analysis
   const { useNavigation, useRoute } = require('@react-navigation/native');
   const navigation:any = useNavigation();
   const route:any = useRoute();
+  const insets = useSafeAreaInsets();
   const [loading, setLoading] = useState(true);
   const [receipts, setReceipts] = useState<Receipt[]>([]);
   const [mileageEntries, setMileageEntries] = useState<MileageEntry[]>([]);
+  const [mileageRate, setMileageRateState] = useState<number>(0);
   const [mileageDeduction, setMileageDeduction] = useState<number>(0);
   const [tax, setTax] = useState<number>(0);
   const [snack, setSnack] = useState<string>('');
@@ -42,6 +51,8 @@ export default function DashboardScreen() {
     const miles = await getAllMileageEntries(store);
     setReceipts(recs);
     setMileageEntries(miles);
+    const rate = await getMileageRate(store);
+    setMileageRateState(rate);
     const deduction = await totalMileageDeduction(miles);
     setMileageDeduction(deduction);
     const taxRate = await getTaxRate(store);
@@ -66,14 +77,32 @@ export default function DashboardScreen() {
 
   const empty = receipts.length === 0 && mileageEntries.length === 0;
 
+  // Recent activity combines both receipts and mileage entries (every activity row must show
+  // its amount: a dollar figure for receipts, and the dollar deduction for mileage entries),
+  // most recent first.
+  const activity: ActivityItem[] = [
+    ...receipts.map((receipt) => ({ kind: 'receipt' as const, id: receipt.id, date: receipt.date, receipt })),
+    ...mileageEntries.map((entry) => ({
+      kind: 'mileage' as const,
+      id: entry.id,
+      date: entry.date,
+      entry,
+      amount: calculateMileageDeduction(entry.miles, mileageRate),
+    })),
+  ].sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
+
   // The FABs and the "saved" snackbar are rendered via Screen's `overlay` prop, which
   // places them as siblings of the ScrollView (not inside its scrollable content). That
   // way they stay fixed to the bottom of the screen and never scroll over/under the
-  // recent-activity list, and the list can never scroll past them either.
+  // recent-activity list. `overlayInset` shrinks the ScrollView's own viewport by the
+  // overlay's full reserved height (FABs + snackbar + tab bar + safe-area inset), so no
+  // list item can ever render underneath the fixed overlay, whether or not the list is
+  // actually scrolled.
   return (
     <Screen
       title="Dashboard"
       wide
+      overlayInset={OVERLAY_RESERVED_HEIGHT + insets.bottom}
       overlay={
         <>
           {snack ? (
@@ -107,12 +136,17 @@ export default function DashboardScreen() {
               ScrollView." Nesting a FlatList inside a ScrollView is unreliable (its height can
               collapse to the viewport instead of growing with content), which can make the
               fixed-position FABs/snackbar appear to sit on top of list items. Mapping the
-              receipts directly avoids that entirely, while recentActivityContainerStyle still
-              reserves enough bottom space for the last item to clear the overlay. */}
+              combined receipts + mileage entries directly avoids that entirely, while
+              recentActivityContainerStyle and the Screen's overlayInset both reserve enough
+              bottom space for the last item to clear the overlay. */}
           <View style={recentActivityContainerStyle}>
-            {receipts.map((item) => (
-              <ReceiptCard key={item.id} receipt={item} />
-            ))}
+            {activity.map((item) =>
+              item.kind === 'receipt' ? (
+                <ReceiptCard key={`receipt-${item.id}`} receipt={item.receipt} />
+              ) : (
+                <MileageCard key={`mileage-${item.id}`} entry={item.entry} amount={item.amount} />
+              )
+            )}
           </View>
         </View>
       )}
