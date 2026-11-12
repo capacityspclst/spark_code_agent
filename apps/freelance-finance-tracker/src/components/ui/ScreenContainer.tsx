@@ -12,10 +12,9 @@ export default function ScreenContainer({ children }: { children: React.ReactNod
 
 const styles = StyleSheet.create({
   container: {
-    width: '100%',
     alignSelf: 'center',
-    maxWidth: 840,
+    width: '100%',
+    maxWidth: 560,
     paddingHorizontal: space(3), // 24dp
-    gap: space(2),
   },
 });
