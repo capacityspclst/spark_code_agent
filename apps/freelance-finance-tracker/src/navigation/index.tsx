@@ -21,7 +21,6 @@ import BackupSuccessScreen from '../screens/BackupSuccessScreen';
 import RestoreSuccessScreen from '../screens/RestoreSuccessScreen';
 import { theme } from '../theme';
 import CategoriesScreen from '../screens/CategoriesScreen';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -50,20 +49,14 @@ function SettingsStackScreen() {
 }
 
 function Tabs() {
-  const insets = useSafeAreaInsets();
   return (
     <Tab.Navigator
       screenOptions={{
         headerShown: false,
         tabBarActiveTintColor: theme.colors.primary,
         tabBarInactiveTintColor: theme.colors.secondary,
-        tabBarStyle: {
-          backgroundColor: theme.colors.surface,
-          height: 56 + insets.bottom,
-          paddingTop: 8,
-          paddingBottom: insets.bottom + 8,
-        },
-        tabBarLabelStyle: { fontSize: 12, lineHeight: 16, marginTop: 2, fontWeight: '500' },
+        tabBarStyle: { backgroundColor: theme.colors.surface, height: 64, paddingTop: 6, paddingBottom: 8 },
+        tabBarLabelStyle: { fontSize: 12, fontWeight: '500' },
       }}
     >
       <Tab.Screen

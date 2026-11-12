@@ -1,7 +1,7 @@
 import React from 'react';
-import { Card, List, Text } from 'react-native-paper';
-import { StyleSheet } from 'react-native';
-import { theme } from '../../theme';
+import { Card, Text } from 'react-native-paper';
+import { View, StyleSheet } from 'react-native';
+import { space, theme } from '../../theme';
 import type { MileageEntry } from '../../lib/models';
 
 interface Props {
@@ -9,30 +9,27 @@ interface Props {
   onPress?: () => void;
 }
 
-const formatDate = (iso: string) => {
-  const d = new Date(`${iso}T00:00:00`);
-  if (isNaN(d.getTime())) return iso;
-  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-};
-
 /** Simple card to display a mileage entry. */
 export default function MileageCard({ entry, onPress }: Props) {
   const { date, miles, purpose } = entry;
   return (
-    <Card mode="outlined" style={styles.card} onPress={onPress}>
-      <List.Item
-        title={purpose}
-        titleNumberOfLines={1}
-        description={`${miles} mi \u00b7 ${formatDate(date)}`}
-        descriptionStyle={styles.description}
-        right={() => <Text variant="titleMedium" style={styles.miles}>{miles} mi</Text>}
-      />
+    <Card mode="elevated" style={styles.card} onPress={onPress}>
+      <Card.Content style={styles.content}>
+        <View style={styles.row}>
+          <Text variant="titleMedium" style={styles.miles}>{miles} mi</Text>
+          <Text variant="labelLarge" style={styles.purpose}>{purpose}</Text>
+        </View>
+        <Text variant="bodyMedium" style={styles.detail}>Date: {date}</Text>
+      </Card.Content>
     </Card>
   );
 }
 
 const styles = StyleSheet.create({
-  card: { marginBottom: 12, backgroundColor: theme.colors.surface, borderColor: theme.colors.outlineVariant, elevation: 0 },
-  description: { color: theme.colors.onSurfaceVariant },
-  miles: { alignSelf: 'center', marginRight: 8 },
+  card: { marginBottom: space(2), backgroundColor: theme.colors.surface },
+  content: { gap: space(1) },
+  row: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  miles: { fontWeight: '600' },
+  purpose: { color: theme.colors.secondary },
+  detail: { color: theme.colors.onSurfaceVariant },
 });
