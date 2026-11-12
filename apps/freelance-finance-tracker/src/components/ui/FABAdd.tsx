@@ -1,41 +1,23 @@
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import PrimaryButton from './PrimaryButton';
+import { theme, space } from '../../theme';
 import { useNavigation, NavigationProp } from '@react-navigation/native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 /**
- * Simple replacement for the FAB speed‑dial.
- * Renders two primary buttons stacked upward, positioned above the bottom tab bar.
- * This avoids nested interactive controls and ensures each button has visible text
- * for screen‑reader users.
+ * Simple FAB replacement that always shows two primary action buttons: "Receipt" and "Mileage".
+ * Positioned above the bottom tab bar, matching the design tokens.
  */
 export default function FABAdd() {
   const navigation = useNavigation<NavigationProp<any>>();
-  const insets = useSafeAreaInsets();
 
   const goToReceipt = () => navigation.getParent?.()?.navigate('ReceiptEntry');
   const goToMileage = () => navigation.getParent?.()?.navigate('MileageEntry');
 
-  // Bottom offset: tab bar height (56) + standard spacing (16) + safe inset bottom.
-  const bottom = 56 + 16 + insets.bottom;
-
   return (
-    <View style={[styles.container, { bottom }]} testID="fab-container">
-      <PrimaryButton
-        label="Mileage"
-        variant="primary"
-        onPress={goToMileage}
-        testID="fab-mileage"
-        style={styles.button}
-      />
-      <PrimaryButton
-        label="Receipt"
-        variant="primary"
-        onPress={goToReceipt}
-        testID="fab-receipt"
-        style={styles.button}
-      />
+    <View style={styles.container} pointerEvents="box-none">
+      <PrimaryButton label="Receipt" variant="primary" onPress={goToReceipt} style={styles.button} />
+      <PrimaryButton label="Mileage" variant="primary" onPress={goToMileage} style={styles.button} />
     </View>
   );
 }
@@ -43,13 +25,17 @@ export default function FABAdd() {
 const styles = StyleSheet.create({
   container: {
     position: 'absolute',
-    right: 16,
+    bottom: space(2),
+    right: space(2),
+    flexDirection: 'column',
     alignItems: 'flex-end',
+    gap: space(1),
+    // Ensure it appears above other UI layers.
+    elevation: 4,
     zIndex: 10,
   },
   button: {
-    marginBottom: 8,
-    minWidth: 100,
+    minWidth: 120,
     minHeight: 44,
   },
 });

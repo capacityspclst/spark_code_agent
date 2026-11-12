@@ -69,7 +69,7 @@ export default function DashboardScreen() {
           onAction={() => navigation.navigate('ReceiptEntry')}
         />
       ) : (
-        <View style={{ gap: 16, paddingBottom: 96 }}>
+        <View style={{ gap: 16 }}>
           <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap' }}>
             <SummaryCard label="Income" value={`$${totals.income.toFixed(2)}`} />
             <SummaryCard label="Expenses" value={`$${totals.expenses.toFixed(2)}`} />
