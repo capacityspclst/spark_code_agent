@@ -81,11 +81,31 @@ export default function DashboardScreen() {
             </View>
             <Text variant="titleMedium" style={{ marginTop: 8, marginBottom: 4 }}>Recent activity</Text>
             <FlatList
-              data={receipts.slice(0, 5)}
+              data={(() => {
+                // Combine receipts and mileage entries into a single list sorted by date descending.
+                const receiptItems = receipts.map(r => ({ type: 'receipt' as const, id: r.id, data: r }));
+                const mileageItems = mileageEntries.map(m => ({ type: 'mileage' as const, id: m.id, data: m }));
+                const combined = [...receiptItems, ...mileageItems];
+                // Simple sort by date string descending.
+                combined.sort((a, b) => {
+                  const dateA = a.type === 'receipt' ? a.data.date : a.data.date;
+                  const dateB = b.type === 'receipt' ? b.data.date : b.data.date;
+                  return dateB.localeCompare(dateA);
+                });
+                return combined;
+              })()}
               keyExtractor={(item) => item.id}
-              renderItem={({ item }) => <ReceiptCard receipt={item} />}
+              renderItem={({ item }) => {
+                if (item.type === 'receipt') {
+                  return <ReceiptCard receipt={item.data} />;
+                } else {
+                  return <MileageCard entry={item.data} />;
+                }
+              }}
               // Add bottom padding so the last rows are not hidden behind the overlay buttons.
               contentContainerStyle={{ paddingBottom: space(16) }}
+              accessibilityRole="list"
+              tabIndex={0}
             />
           </View>
         )}
