@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, Text } from 'react-native-paper';
-import { FlatList, View } from 'react-native';
+import { FlatList, View, StyleSheet } from 'react-native';
 import { useNavigation, useRoute, NavigationProp, RouteProp } from '@react-navigation/native';
 import { EmptyState, Screen, SummaryCard, RecentActivityList, ReceiptSavedSnackbar } from '../components/ui';
 import { getStore } from '../lib/storage';
@@ -59,31 +59,37 @@ export default function DashboardScreen() {
   const empty = receipts.length === 0 && mileageEntries.length === 0;
 
   return (
-    <Screen title="Dashboard" wide>
-      {empty ? (
-        <EmptyState
-          icon="inbox-outline"
-          title="Nothing here yet"
-          body="Add a receipt or mileage entry to start tracking your finances."
-          actionLabel="Add receipt"
-          onAction={() => navigation.navigate('ReceiptEntry')}
-        />
-      ) : (
-        <View style={{ gap: 16 }}>
-          <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap' }}>
-            <SummaryCard label="Income" value={`$${totals.income.toFixed(2)}`} />
-            <SummaryCard label="Expenses" value={`$${totals.expenses.toFixed(2)}`} />
-            <SummaryCard label="Mileage deduction" value={`$${mileageDeduction.toFixed(2)}`} />
-            <SummaryCard label="Estimated tax" value={`$${tax.toFixed(2)}`} />
+    <View style={styles.root}>
+      <Screen title="Dashboard" wide>
+        {empty ? (
+          <EmptyState
+            icon="inbox-outline"
+            title="Nothing here yet"
+            body="Add a receipt or mileage entry to start tracking your finances."
+            actionLabel="Add receipt"
+            onAction={() => navigation.navigate('ReceiptEntry')}
+          />
+        ) : (
+          <View style={{ gap: 16, flex: 1 }}>
+            <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap' }}>
+              <SummaryCard label="Income" value={`$${totals.income.toFixed(2)}`} />
+              <SummaryCard label="Expenses" value={`$${totals.expenses.toFixed(2)}`} />
+              <SummaryCard label="Mileage deduction" value={`$${mileageDeduction.toFixed(2)}`} />
+              <SummaryCard label="Estimated tax" value={`$${tax.toFixed(2)}`} />
+            </View>
+            <Text variant="titleMedium" style={{ marginTop: 8, marginBottom: 4 }}>Recent activity</Text>
+            <RecentActivityList activities={receipts.slice(0, 5)} />
           </View>
-          <Text variant="titleMedium" style={{ marginTop: 8, marginBottom: 4 }}>Recent activity</Text>
-          <RecentActivityList activities={receipts.slice(0, 5)} />
-        </View>
-      )}
+        )}
+      </Screen>
       <ReceiptSavedSnackbar visible={!!snack} onDismiss={() => setSnack('')} >
         {snack}
       </ReceiptSavedSnackbar>
       <FABAdd />
-    </Screen>
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  root: { flex: 1 },
+});

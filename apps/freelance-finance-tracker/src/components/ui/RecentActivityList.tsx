@@ -10,12 +10,19 @@ import { theme } from '../../theme';
 const RecentActivityList = ({ activities }: { activities: any[] }) => {
   const renderItem = ({ item }: { item: any }) => (
     <View style={styles.row} accessibilityLabel="activity-row">
-      <Text style={styles.title}>
-        {item.description ?? item.type ?? 'Activity'}
-      </Text>
-      <Text style={styles.subtitle}>
-        {item.date}
-      </Text>
+      <View style={styles.textGroup}>
+        <Text style={styles.title}>
+          {item.description ?? item.purpose ?? item.type ?? 'Activity'}
+        </Text>
+        <Text style={styles.subtitle}>
+          {item.date}
+        </Text>
+      </View>
+      {typeof item.amount === 'number' ? (
+        <Text style={styles.amount}>{`$${item.amount.toFixed(2)}`}</Text>
+      ) : typeof item.miles === 'number' ? (
+        <Text style={styles.amount}>{`${item.miles} mi`}</Text>
+      ) : null}
     </View>
   );
 
@@ -48,6 +55,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: theme.spacing * 2,
     borderBottomWidth: 1,
     borderColor: '#e0e0e0',
+  },
+  textGroup: {
+    flex: 1,
+  },
+  amount: {
+    color: theme.colors.onSurfaceVariant,
+    fontWeight: '500',
   },
   title: {
     // no amount displayed

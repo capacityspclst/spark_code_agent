@@ -1,12 +1,13 @@
 import React from 'react';
-import { StyleSheet, View, Pressable } from 'react-native';
+import { StyleSheet, View } from 'react-native';
+import { FAB } from 'react-native-paper';
 import PrimaryButton from './PrimaryButton';
 import { theme, space } from '../../theme';
 import { useNavigation, NavigationProp } from '@react-navigation/native';
 
 /**
- * Simple FAB replacement that provides an "Add" button for accessibility
- * and two primary action buttons for Receipt and Mileage.
+ * FAB group: a visible "Add" FAB plus two primary action buttons for
+ * Receipt and Mileage. All three stay on screen above the tab bar.
  */
 export default function FABAdd() {
   const navigation = useNavigation<NavigationProp<any>>();
@@ -15,15 +16,15 @@ export default function FABAdd() {
 
   return (
     <View style={styles.container} pointerEvents="box-none">
-      {/* Invisible button for accessibility flow */}
-      <Pressable
+      <PrimaryButton label="Receipt" variant="primary" onPress={goToReceipt} style={styles.button} />
+      <PrimaryButton label="Mileage" variant="primary" onPress={goToMileage} style={styles.button} />
+      <FAB
+        icon="plus"
         accessibilityLabel="Add"
-        accessibilityRole="button"
+        label="Add"
         onPress={() => {}}
         style={styles.addButton}
       />
-      <PrimaryButton label="Receipt" variant="primary" onPress={goToReceipt} style={styles.button} />
-      <PrimaryButton label="Mileage" variant="primary" onPress={goToMileage} style={styles.button} />
     </View>
   );
 }
@@ -40,13 +41,7 @@ const styles = StyleSheet.create({
     zIndex: 10,
   },
   addButton: {
-    position: 'absolute',
-    width: 56,
-    height: 56,
-    opacity: 0,
-    // place over the area where the FAB would be
-    bottom: 0,
-    right: 0,
+    marginBottom: theme.spacing,
   },
   button: {
     minWidth: 120,
