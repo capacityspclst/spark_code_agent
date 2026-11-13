@@ -1,25 +1,26 @@
 import React from 'react';
-import { View, FlatList, StyleSheet, Text } from 'react-native';
+import { View, FlatList, StyleSheet } from 'react-native';
+import { Text } from 'react-native-paper';
 import { theme } from '../../theme';
 
 /**
  * Simple recent activity list used in the dashboard.
  * It reserves space at the bottom so FAB and tab bar are not covered.
  */
-export default function RecentActivityList({ activities }: { activities: any[] }) {
+const RecentActivityList = ({ activities }: { activities: any[] }) => {
   const renderItem = ({ item }: { item: any }) => (
     <View style={styles.row} accessibilityLabel="activity-row">
-      <Text variant="titleMedium" style={styles.title}>
+      <Text style={styles.title}>
         {item.description ?? item.type ?? 'Activity'}
       </Text>
-      <Text variant="bodyMedium" style={styles.subtitle}>
+      <Text style={styles.subtitle}>
         {item.date}
       </Text>
     </View>
   );
 
   return (
-    <View style={styles.container}>
+    <View style={{ flex: 1, paddingBottom: theme.FAB_CONTAINER_HEIGHT + theme.TAB_BAR_HEIGHT + theme.spacing * 2 }}>
       <FlatList
         data={activities}
         keyExtractor={(item) => item.id}
@@ -28,7 +29,8 @@ export default function RecentActivityList({ activities }: { activities: any[] }
       />
     </View>
   );
-}
+};
+export default RecentActivityList;
 
 const styles = StyleSheet.create({
   container: {
