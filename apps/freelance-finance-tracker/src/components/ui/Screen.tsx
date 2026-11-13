@@ -13,7 +13,7 @@ interface Props {
 /** Page frame for every screen: background, page padding, a centered max-width column and an optional h1. */
 export default function Screen({ title, subtitle, wide, children }: Props) {
   return (
-    <ScrollView style={styles.page} contentContainerStyle={[styles.content, { maxWidth: wide ? layout.maxWideWidth : layout.maxContentWidth }]}>
+    <ScrollView style={styles.page} contentContainerStyle={[styles.content, { maxWidth: wide ? layout.maxWideWidth : layout.maxContentWidth }]} tabIndex={0}>
       {title || subtitle ? (
         <View style={styles.header}>
           {title ? <Text variant="headlineMedium" accessibilityRole="header" style={styles.title}>{title}</Text> : null}
