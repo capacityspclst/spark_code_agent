@@ -58,6 +58,11 @@ export default function DashboardScreen() {
 
   const empty = receipts.length === 0 && mileageEntries.length === 0;
 
+  const recentActivities = [...receipts, ...mileageEntries]
+    .slice()
+    .sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0))
+    .slice(0, 5);
+
   return (
     <View style={styles.root}>
       <Screen title="Dashboard" wide>
@@ -78,7 +83,7 @@ export default function DashboardScreen() {
               <SummaryCard label="Estimated tax" value={`$${tax.toFixed(2)}`} />
             </View>
             <Text variant="titleMedium" style={{ marginTop: 8, marginBottom: 4 }}>Recent activity</Text>
-            <RecentActivityList activities={receipts.slice(0, 5)} />
+            <RecentActivityList activities={recentActivities} />
           </View>
         )}
       </Screen>
