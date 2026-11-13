@@ -77,11 +77,7 @@ export default function DashboardScreen() {
             <SummaryCard label="Estimated tax" value={`$${tax.toFixed(2)}`} />
           </View>
           <Text variant="titleMedium" style={{ marginTop: 8, marginBottom: 4 }}>Recent activity</Text>
-          <FlatList
-            data={receipts.slice(0, 5)}
-            keyExtractor={(item) => item.id}
-            renderItem={({ item }) => <ReceiptCard receipt={item} />}
-          />
+          <RecentActivityList activities={receipts.slice(0, 5)} />
         </View>
       )}
       {snack ? (

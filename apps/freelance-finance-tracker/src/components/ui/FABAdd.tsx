@@ -25,7 +25,7 @@ export default function FABAdd() {
 const styles = StyleSheet.create({
   container: {
     position: 'absolute',
-    bottom: space(2),
+    bottom: theme.TAB_BAR_HEIGHT + theme.spacing,
     right: space(2),
     flexDirection: 'column',
     alignItems: 'flex-end',

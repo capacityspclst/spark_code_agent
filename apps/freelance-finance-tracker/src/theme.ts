@@ -10,7 +10,15 @@ export const layout = {
   touchTarget: 48,
 };
 
+export const FAB_CONTAINER_HEIGHT = 80; // dp
+export const TAB_BAR_HEIGHT = 56; // dp
+export const spacing = 8; // base spacing in dp
+
 export const theme = {
+  FAB_CONTAINER_HEIGHT,
+  TAB_BAR_HEIGHT,
+  spacing,
+
   ...MD3LightTheme,
   roundness: 8,
   fonts: configureFonts({ config: { fontFamily: 'System' } }),
