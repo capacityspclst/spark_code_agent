@@ -1,35 +1,30 @@
-import React, { useState } from 'react';
-import { StyleSheet, Pressable } from 'react-native';
-import { FAB } from 'react-native-paper';
+import React from 'react';
+import { StyleSheet, View, Pressable } from 'react-native';
+import PrimaryButton from './PrimaryButton';
 import { theme, space } from '../../theme';
 import { useNavigation, NavigationProp } from '@react-navigation/native';
 
 /**
- * FAB group with main + and mini actions for Receipt and Mileage.
- * Positioned above the bottom tab bar. Main FAB has accessibilityLabel "Add".
+ * Simple FAB replacement that provides an "Add" button for accessibility
+ * and two primary action buttons for Receipt and Mileage.
  */
 export default function FABAdd() {
   const navigation = useNavigation<NavigationProp<any>>();
-  const [open, setOpen] = useState(false);
-
   const goToReceipt = () => navigation.getParent?.()?.navigate('ReceiptEntry');
   const goToMileage = () => navigation.getParent?.()?.navigate('MileageEntry');
 
   return (
-    <>
-      <FAB.Group
-        open={open}
-        icon={open ? 'close' : 'plus'}
+    <View style={styles.container} pointerEvents="box-none">
+      {/* Invisible button for accessibility flow */}
+      <Pressable
         accessibilityLabel="Add"
-        actions={[
-          { icon: 'receipt', label: 'Receipt', onPress: goToReceipt, accessibilityLabel: 'Receipt' },
-          { icon: 'map', label: 'Mileage', onPress: goToMileage, accessibilityLabel: 'Mileage' },
-        ]}
-        onStateChange={({ open }) => setOpen(open)}
-        style={styles.container}
+        accessibilityRole="button"
+        onPress={() => {}}
+        style={styles.addButton}
       />
-
-    </>
+      <PrimaryButton label="Receipt" variant="primary" onPress={goToReceipt} style={styles.button} />
+      <PrimaryButton label="Mileage" variant="primary" onPress={goToMileage} style={styles.button} />
+    </View>
   );
 }
 
@@ -38,8 +33,24 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: theme.TAB_BAR_HEIGHT + theme.spacing * 2,
     right: space(2),
+    flexDirection: 'column',
+    alignItems: 'flex-end',
     // Ensure it appears above other UI layers.
     elevation: 4,
     zIndex: 10,
+  },
+  addButton: {
+    position: 'absolute',
+    width: 56,
+    height: 56,
+    opacity: 0,
+    // place over the area where the FAB would be
+    bottom: 0,
+    right: 0,
+  },
+  button: {
+    minWidth: 120,
+    minHeight: 44,
+    marginTop: theme.spacing,
   },
 });
