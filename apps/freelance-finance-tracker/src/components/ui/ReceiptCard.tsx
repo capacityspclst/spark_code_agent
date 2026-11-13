@@ -15,7 +15,7 @@ export default function ReceiptCard({ receipt, onPress }: Props) {
   const { amount, date, category, type, notes, photoUri } = receipt;
   return (
     // @ts-ignore
-    <View style={styles.card} onTouchEnd={onPress ? () => onPress() : undefined} accessibilityRole={"listitem" as any}>
+    <View style={styles.card} onTouchEnd={onPress ? () => onPress() : undefined} accessibilityRole="listitem">
       <View style={styles.content}>
         <View style={styles.row}>
           <Text variant="titleMedium" style={styles.amount}>${amount.toFixed(2)}</Text>
