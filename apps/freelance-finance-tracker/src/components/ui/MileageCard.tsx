@@ -16,7 +16,7 @@ export default function MileageCard({ entry, onPress }: Props) {
     <Card mode="elevated" style={styles.card} onPress={onPress}>
       <Card.Content style={styles.content}>
         <View style={styles.row}>
-          <Text variant="titleMedium" style={styles.miles}>{miles}</Text>
+          <Text variant="titleMedium" style={styles.miles}>{miles} mi</Text>
           <Text variant="labelLarge" style={styles.purpose}>{purpose}</Text>
         </View>
         <Text variant="bodyMedium" style={styles.detail}>Date: {date}</Text>
