@@ -1,5 +1,5 @@
 import React from 'react';
-import { Card, Text } from 'react-native-paper';
+import { Text } from 'react-native-paper';
 import { View, StyleSheet } from 'react-native';
 import { space, theme } from '../../theme';
 import type { Receipt } from '../../lib/models';
@@ -13,8 +13,8 @@ interface Props {
 export default function ReceiptCard({ receipt, onPress }: Props) {
   const { amount, date, category, type, notes, photoUri } = receipt;
   return (
-    <Card mode="elevated" style={styles.card} onPress={onPress}>
-      <Card.Content style={styles.content}>
+    <View style={styles.card} onTouchEnd={onPress ? () => onPress() : undefined}>
+      <View style={styles.content}>
         <View style={styles.row}>
           <Text variant="titleMedium" style={styles.amount}>${amount.toFixed(2)}</Text>
           <Text variant="labelLarge" style={styles.type}>{type === 'income' ? 'Income' : 'Expense'}</Text>
@@ -23,13 +23,13 @@ export default function ReceiptCard({ receipt, onPress }: Props) {
         <Text variant="bodyMedium" style={styles.detail}>Category: {category}</Text>
         {notes ? <Text variant="bodySmall" style={styles.notes}>{notes}</Text> : null}
         {photoUri ? <Text variant="bodySmall" style={styles.photo}>[photo attached]</Text> : null}
-      </Card.Content>
-    </Card>
+      </View>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  card: { marginBottom: space(2), backgroundColor: theme.colors.surface },
+  card: { marginBottom: space(2), backgroundColor: theme.colors.surface, padding: space(2) },
   content: { gap: space(1) },
   row: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   amount: { fontWeight: '600' },

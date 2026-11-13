@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, Snackbar, Text } from 'react-native-paper';
+import { ActivityIndicator, Text } from 'react-native-paper';
 import { FlatList, View } from 'react-native';
 import { useNavigation, useRoute, NavigationProp, RouteProp } from '@react-navigation/native';
 import { EmptyState, Screen, SummaryCard } from '../components/ui';
@@ -58,43 +58,42 @@ export default function DashboardScreen() {
 
   const empty = receipts.length === 0 && mileageEntries.length === 0;
 
+  // Wrap content in a relative container so absolute overlays can sit on top without scrolling.
   return (
-    <Screen title="Dashboard" wide>
-      {empty ? (
-        <EmptyState
-          icon="inbox-outline"
-          title="Nothing here yet"
-          body="Add a receipt or mileage entry to start tracking your finances."
-          actionLabel="Add receipt"
-          onAction={() => navigation.navigate('ReceiptEntry')}
-        />
-      ) : (
-        <View style={{ gap: 16 }}>
-          <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap' }}>
-            <SummaryCard label="Income" value={`$${totals.income.toFixed(2)}`} />
-            <SummaryCard label="Expenses" value={`$${totals.expenses.toFixed(2)}`} />
-            <SummaryCard label="Mileage deduction" value={`$${mileageDeduction.toFixed(2)}`} />
-            <SummaryCard label="Estimated tax" value={`$${tax.toFixed(2)}`} />
-          </View>
-          <Text variant="titleMedium" style={{ marginTop: 8, marginBottom: 4 }}>Recent activity</Text>
-          <FlatList
-            data={receipts.slice(0, 5)}
-            keyExtractor={(item) => item.id}
-            renderItem={({ item }) => <ReceiptCard receipt={item} />}
+    <View style={{ flex: 1, position: 'relative' }}>
+      <Screen title="Dashboard" wide>
+        {empty ? (
+          <EmptyState
+            icon="inbox-outline"
+            title="Nothing here yet"
+            body="Add a receipt or mileage entry to start tracking your finances."
+            actionLabel="Add receipt"
+            onAction={() => navigation.navigate('ReceiptEntry')}
           />
-        </View>
-      )}
-      {snack ? (
-        <Snackbar
-          visible={true}
-          onDismiss={() => setSnack('')}
-          duration={3000}
-          style={{ bottom: space(20) }}
-        >
-          {snack}
-        </Snackbar>
-      ) : null}
-      <FABAdd />
-    </Screen>
+        ) : (
+          <View style={{ gap: 16 }}>
+            <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap' }}>
+              <SummaryCard label="Income" value={`$${totals.income.toFixed(2)}`} />
+              <SummaryCard label="Expenses" value={`$${totals.expenses.toFixed(2)}`} />
+              <SummaryCard label="Mileage deduction" value={`$${mileageDeduction.toFixed(2)}`} />
+              <SummaryCard label="Estimated tax" value={`$${tax.toFixed(2)}`} />
+            </View>
+            <Text variant="titleMedium" style={{ marginTop: 8, marginBottom: 4 }}>Recent activity</Text>
+            <FlatList
+              data={receipts.slice(0, 5)}
+              keyExtractor={(item) => item.id}
+              renderItem={({ item }) => <ReceiptCard receipt={item} />}
+              // Add bottom padding so the last rows are not hidden behind the overlay buttons.
+              contentContainerStyle={{ paddingBottom: space(16) }}
+            />
+          </View>
+        )}
+        {snack ? (
+          <ReceiptSavedSnackbar visible={true} onDismiss={() => setSnack('')} message={snack} />
+        ) : null}
+      </Screen>
+      {/* Overlay buttons that stay fixed while scrolling. */}
+      <SimpleAddButtons />
+    </View>
   );
 }
