@@ -9,7 +9,7 @@ import { space } from '../../theme';
  */
 export default function ReceiptSavedSnackbar({
   visible,
-  onDismiss = () => {},
+  onDismiss,
   message,
 }: {
   visible: boolean;
@@ -21,7 +21,7 @@ export default function ReceiptSavedSnackbar({
     <View style={styles.container} pointerEvents="box-none">
       <Snackbar
         visible={true}
-        onDismiss={onDismiss ?? (() => {})}
+        onDismiss={onDismiss}
         duration={3000}
         style={styles.snackbar}
         // Accessibility live region ensures screen readers announce the message.
