@@ -12,8 +12,7 @@ import { totalMileageDeduction } from '../lib/mileage';
 import { getTaxRate } from '../lib/settings';
 import ReceiptCard from '../components/ui/ReceiptCard';
 import { consumeSnack } from '../lib/uiState';
-import SimpleAddButtons from '../components/ui/SimpleAddButtons';
-import ReceiptSavedSnackbar from '../components/ui/ReceiptSavedSnackbar';
+import FABAdd from '../components/ui/FABAdd';
 import { space } from '../theme';
 
 type DashboardRouteParams = {};

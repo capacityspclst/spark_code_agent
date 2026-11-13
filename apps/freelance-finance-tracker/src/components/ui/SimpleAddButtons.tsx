@@ -1,15 +1,17 @@
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import PrimaryButton from './PrimaryButton';
-import { space } from '../../theme';
+import { theme, space } from '../../theme';
 // SimpleAddButtons provides two primary action buttons. It avoids direct imports from
 // '@react-navigation/native' to simplify testing (the acceptance test mocks navigation).
-// No navigation import is performed to avoid ESM issues; a stub is used when no prop is provided.
+// Navigation imports are loaded lazily inside the component to allow Jest to mock them without ESM loading issues.
 
 /** Buttons that match the UI flow expectations: separate primary buttons labeled "Receipt" and "Mileage". */
 export default function SimpleAddButtons({ navigationProp }: { navigationProp?: any } = {}) {
-  // Use injected navigation prop if provided; otherwise use a stub with no‑op methods.
-  const navigation = navigationProp ?? { getParent: () => ({ navigate: () => {} }) };
+  // Lazy import to avoid ESM issues in Jest.
+  const { useNavigation } = require('@react-navigation/native');
+  // Prefer injected prop for testability; fall back to hook when not provided.
+  const navigation = navigationProp ?? useNavigation();
   const goToReceipt = () => navigation.getParent?.()?.navigate('ReceiptEntry');
   const goToMileage = () => navigation.getParent?.()?.navigate('MileageEntry');
 
