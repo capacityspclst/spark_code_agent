@@ -1,5 +1,4 @@
 import React, { useEffect } from 'react';
-import './About.css'; // optional
 
 const About: React.FC = () => {
   useEffect(() => {

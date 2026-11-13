@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import Logo from './Logo';
 import ResponsiveMenu from './ResponsiveMenu';
 
 const Header: React.FC = () => {
   const [menuOpen, setMenuOpen] = useState(false);
+  const navigate = useNavigate();
   const toggleMenu = () => setMenuOpen(!menuOpen);
 
   return (
@@ -14,15 +15,20 @@ const Header: React.FC = () => {
           <Logo />
         </Link>
         {/* Desktop nav links */}
-        <div className="nav-links" style={{ display: 'flex', gap: 'var(--space-4)', alignItems: 'center' }}>
+        <div className="nav-links">
           <Link to="/services">Services</Link>
           <Link to="/training">Training</Link>
           <Link to="/about">About</Link>
           <Link to="/contact">Contact</Link>
-          <Link to="/contact" className="btn">
-            Book a consultation
-          </Link>
         </div>
+        {/* Book consultation button */}
+        <button
+          type="button"
+          className="btn header-cta"
+          onClick={() => navigate('/contact')}
+        >
+          Book a consultation
+        </button>
         {/* Mobile menu button */}
         <button
           type="button"
@@ -31,7 +37,6 @@ const Header: React.FC = () => {
           aria-expanded={menuOpen}
           onClick={toggleMenu}
           className="menu-btn"
-          style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 'var(--space-2)' }}
         >
           Menu
         </button>
