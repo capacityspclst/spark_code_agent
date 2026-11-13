@@ -86,6 +86,7 @@ export default function DashboardScreen() {
               renderItem={({ item }) => <ReceiptCard receipt={item} />}
               // Add bottom padding so the last rows are not hidden behind the overlay buttons.
               contentContainerStyle={{ paddingBottom: space(16) }}
+              accessibilityRole="list"
             />
           </View>
         )}
