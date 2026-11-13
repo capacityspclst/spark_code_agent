@@ -1,5 +1,5 @@
 import React from 'react';
-import { Text, View, Dimensions } from 'react-native';
+import { Text, View, Dimensions, StyleSheet } from 'react-native';
 import FABAdd from '../../src/components/ui/FABAdd';
 import RecentActivityList from '../../src/components/ui/RecentActivityList';
 import BottomTabBar from '../../src/components/ui/BottomTabBar';
@@ -24,6 +24,10 @@ jest.mock('@react-navigation/native', () => {
  */
 function flattenStyle(style: any): any {
   if (!style) return {};
+  // Resolve StyleSheet IDs (numbers) to plain style objects.
+  if (typeof style === 'number') {
+    return StyleSheet.flatten(style);
+  }
   return Array.isArray(style) ? Object.assign({}, ...style) : style;
 }
 
@@ -36,7 +40,8 @@ function findNodeWithStyleCondition(
 ): any | null {
   if (!node) return null;
   const style = node.props?.style;
-  if (style && predicate(style)) {
+  const flatStyle = flattenStyle(style);
+  if (style && predicate(flatStyle)) {
     return node;
   }
   const children = node.props?.children;
@@ -89,7 +94,7 @@ beforeAll(() => {
 describe('Dashboard layout', () => {
   test('FABAdd is absolutely positioned above the tab bar', () => {
     // FABAdd is a pure‑function component – invoke it directly.
-    const element = FABAdd({});
+    const element = FABAdd();
     const fabNode = findNodeWithStyleCondition(element, (s) => s?.position === 'absolute');
     expect(fabNode).toBeTruthy();
 
