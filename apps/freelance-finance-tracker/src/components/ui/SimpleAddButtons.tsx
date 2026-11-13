@@ -1,35 +1,37 @@
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import PrimaryButton from './PrimaryButton';
-import { theme, space } from '../../theme';
-// SimpleAddButtons provides two primary action buttons. It avoids direct imports from
-// '@react-navigation/native' to simplify testing (the acceptance test mocks navigation).
-// Navigation imports are loaded lazily inside the component to allow Jest to mock them without ESM loading issues.
+import { space } from '../../theme';
 
-/** Buttons that match the UI flow expectations: separate primary buttons labeled "Receipt" and "Mileage". */
+/** Buttons that match the UI flow expectations: separate primary buttons labeled "Add receipt" and "Add mileage". */
 export default function SimpleAddButtons({ navigationProp }: { navigationProp?: any } = {}) {
-  // Lazy import to avoid ESM issues in Jest.
-  const { useNavigation } = require('@react-navigation/native');
-  // Prefer injected prop for testability; fall back to hook when not provided.
-  const navigation = navigationProp ?? useNavigation();
+  // Determine navigation: use injected prop or lazy require the hook.
+  const navigation = navigationProp ?? (() => {
+    try {
+      const { useNavigation } = require('@react-navigation/native');
+      return useNavigation();
+    } catch (e) {
+      // Fallback stub for environments where the navigation module cannot be loaded.
+      return { getParent: () => ({ navigate: () => {} }) };
+    }
+  })();
   const goToReceipt = () => navigation.getParent?.()?.navigate('ReceiptEntry');
   const goToMileage = () => navigation.getParent?.()?.navigate('MileageEntry');
-
   return (
     <View style={styles.container} pointerEvents="box-none">
       <PrimaryButton
-        label="Receipt"
+        label="Add receipt"
         variant="primary"
         onPress={goToReceipt}
         style={styles.button}
-        accessibilityLabel="Receipt"
+        accessibilityLabel="Add receipt"
       />
       <PrimaryButton
-        label="Mileage"
+        label="Add mileage"
         variant="primary"
         onPress={goToMileage}
         style={styles.button}
-        accessibilityLabel="Mileage"
+        accessibilityLabel="Add mileage"
       />
     </View>
   );

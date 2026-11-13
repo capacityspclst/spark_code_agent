@@ -9,7 +9,7 @@ import { space } from '../../theme';
  */
 export default function ReceiptSavedSnackbar({
   visible,
-  onDismiss,
+  onDismiss = () => {},
   message,
 }: {
   visible: boolean;
