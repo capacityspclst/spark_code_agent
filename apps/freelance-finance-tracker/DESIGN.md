@@ -2,46 +2,64 @@
 
 ## Users and goal
 - **Primary persona** – freelancers, gig workers, and independent contractors who need a quick, private way to track income, expenses, and mileage **offline**.  
-- **Goal** – Access every core action (add receipt, view dashboard, adjust settings) from any signed‑in screen without getting lost.  
-- **Success feels like** – “I can open Settings, toggle App Lock, change my tax rate, and see the changed value instantly; the UI always tells me what happened and never leaves me stranded.”
+- **Goal** – From any signed‑in screen the user can (1) view a concise summary of recent activity, (2) add a receipt or a mileage entry, and (3) know instantly that the action succeeded.  
+- **Success feels like** – “I opened the app, saw my latest entries, tapped the **+** button, and a short toast told me the receipt was saved. The UI never hides important controls under a scrollable list, and the navigation bar always shows all four tab labels.”
 
 ## Primary flow
 1. **Launch → Policy gate** (unchanged).  
-2. **Dashboard** – bottom tab bar always visible.  
-3. **Settings** – tap the Settings tab → Settings screen.  
-4. **Settings screen** – rows listed vertically.  
-   - Toggle **App Lock** (switch).  
-   - Tap any row with a chevron to navigate to its sub‑screen (Mileage rate, Tax rate, Export, Backup & Restore, Categories, Terms of Service, Privacy Policy).  
-   - Press **Delete all data** (error‑colored row, separated by a thin divider) → confirmation dialog → data erased.  
-5. All other primary flows (Add receipt, Add mileage, etc.) remain unchanged and are always reachable via the bottom tab bar.
+2. **Dashboard** – Bottom tab bar is visible. The screen shows a SummaryCard section (total income, expenses, mileage) and a *Recent Activity* list.  
+3. **Add receipt or mileage** – Tap the floating **+** button → a mini‑FAB group expands with two actions: “Receipt” and “Mileage”. Selecting either opens the corresponding Add screen.  
+4. **Save** – After completing the form and submitting, a **Snackbar** appears **above** the FAB group with the message **“Receipt saved”** (or “Mileage saved”). The FAB remains on‑screen; the list does not scroll over it.  
+5. **Return** – The Dashboard updates, showing the new entry at the top of the Recent Activity list.  
+6. **Other tabs** – Settings, Receipts, Mileage are reachable at any time via the bottom tab bar.  
+
+All screens keep a persistent bottom tab bar with the four labeled icons (Dashboard, Receipts, Mileage, Settings).
 
 ## Screens and states
-
 | Screen | State | UI elements | Message / copy |
 |--------|-------|-------------|----------------|
-| **SettingsScreen** | Default | `SettingsSection` containing multiple `SettingsRow` items: <br>• **App lock** – label + `SettingSwitch` (no chevron) <br>• **Mileage rate**, **Tax rate**, **Export**, **Backup & Restore**, **Categories**, **Terms of Service**, **Privacy Policy** – label + trailing chevron <br>• **Delete all data** – label in error color, trailing chevron optional, preceded by a `Separator` | – |
-| | Loading | Full‑screen `ActivityIndicator` overlay (covers screen while settings are fetched) | “Loading settings…” |
-| | Error (fetch) | Full‑screen error view with **Retry** button | “Unable to load settings. Please try again.” |
-| | Confirmation (delete) | `Dialog` with title **Delete all data**, body “This action cannot be undone. Continue?” and **Cancel / Delete** actions | – |
-| | Empty (no categories) – reachable from **Categories** sub‑screen only – handled in that screen’s spec. |
+| **DashboardScreen** | Default (data loaded) | `Screen` wrapper, `SummaryCard` ×3, `RecentActivityList`, FAB group (`FABAdd`), BottomTabBar, optional `ReceiptSavedSnackbar` | – |
+| | Loading | Full‑screen `ActivityIndicator` overlay | “Loading dashboard…” |
+| | Empty (no activity) | `EmptyState` component with icon 📊, title **“No activity yet”**, description **“Add a receipt or mileage to see recent items.”**, primary button **“Add receipt”** | – |
+| | Snackbar visible | `Snackbar` positioned above FAB, background `theme.colors.surfaceVariant` | “Receipt saved” (or “Mileage saved”) |
+| | Error (fetch) | Full‑screen error view, retry button | “Unable to load dashboard. Please try again.” |
+| **RecentActivityList** | Normal list | `FlatList` of `RecentActivityRow` (title, date, optional icon) – **no amount displayed** | – |
+| | Loading more (infinite scroll) | Bottom `ActivityIndicator` inside list | – |
+| | Empty row placeholder | *Handled by Dashboard empty state* | – |
+| **AddReceiptScreen / AddMileageScreen** | Default | Form fields (`FormField`), validation `HelperText`, submit `PrimaryButton` | – |
+| | Submitting | `PrimaryButton` `loading`, disable fields | – |
+| | Success | Navigate back → Dashboard shows Snackbar | – |
+| **SettingsScreen** | Same as existing spec (unchanged) | – | – |
+| **BottomTabBar** | Normal | Four labeled tabs with icons, height **56 dp**, selected color `theme.colors.primary` | – |
+| | Safe‑area inset (iOS) | Extra bottom padding to keep labels visible | – |
 
-All other screens keep their states from the existing design.
+All copy uses title case for button/row labels and sentence case for body text.
 
 ## Layout
-- **Mobile‑first**: viewport **390 dp** wide; horizontal padding **16 dp** (`spacing*2`). No horizontal scroll.  
-- **Global container**: `Screen` component (`SafeAreaView` + `ScrollView`). Content width max **420 dp**, centered on desktop (1280 dp breakpoint).  
-- **SettingsScreen**: vertical list of rows (`SettingsSection`) stacked with **8 dp** vertical rhythm. Each row height **56 dp** (standard MD3 list item). The **Delete all data** row has a `Separator` (`height: 1 dp`, `backgroundColor: theme.colors.surfaceVariant`) placed **8 dp** above it.  
-- **Bottom Tab Bar**: fixed **56 dp** height, anchored bottom on all platforms.  
-- **Desktop breakpoint (≥1280 dp)**: layout unchanged; the phone‑first UI remains centered with max‑width container.
+- **Mobile‑first**: viewport **390 dp** wide, horizontal padding **16 dp** (`spacing*2`). No horizontal scrolling.
+- **Global container**: `Screen` component (`SafeAreaView` + `ScrollView`). Content max‑width **420 dp**, centered on desktop (≥1280 dp breakpoint).
+- **DashboardScreen**  
+  - `Screen` → `View` with `flex: 1`. Inside: `SummaryCard` stack, then `RecentActivityList`.  
+  - `RecentActivityList` is wrapped in a `View` with `flex: 1` and **paddingBottom** = `FAB_CONTAINER_HEIGHT` + `TAB_BAR_HEIGHT` + `spacing*2` (≈ 144 dp) so the list never scrolls under the FAB group.  
+  - **FABAdd**: absolute positioned container, `bottom: TAB_BAR_HEIGHT + 16 dp` (≈ 72 dp), `right: 16 dp`, `zIndex: 10`. Uses Paper’s `FAB.Group` with two mini‑FAB actions. Height of the FAB container (including expanded mini‑FABs) is defined as **FAB_CONTAINER_HEIGHT = 80 dp**.  
+  - **ReceiptSavedSnackbar**: absolute positioned, `bottom: FAB_CONTAINER_HEIGHT + TAB_BAR_HEIGHT + 8 dp` (≈ 144 dp), `left: 0`, `right: 0`, `zIndex: 9`. Appears above both list and FAB.  
+- **RecentActivityRow**: fixed height **56 dp**, horizontal layout: optional leading icon, `title` (primary text), `subtitle` (date). No amount column. Touch target covers full row.  
+- **BottomTabBar**: fixed height **56 dp**, anchored to bottom, labels fully visible on 390 × 844 screens. Uses `paddingBottom: safeAreaInsets.bottom` on iOS. No extra bottom margin that clips labels.  
+- **Desktop breakpoint (≥1280 dp)**: `Screen` width limited to 420 dp, centered. Bottom tab remains at screen bottom, not stretched.  
+
+All components respect the **8 dp** spacing scale.
 
 ## Design tokens
-> **Implementation** – exported as a Material 3 theme object for React Native Paper (`src/theme.ts`) and mirrored as CSS custom properties (`public/theme.css`).  
+> **Implementation** – Exported as a Material 3 theme object for React‑Native‑Paper (`src/theme.ts`) and mirrored as CSS custom properties (`public/theme.css`). The theme also exports layout constants `FAB_CONTAINER_HEIGHT` and `TAB_BAR_HEIGHT`.
 
 ```ts
 // src/theme.ts
+export const FAB_CONTAINER_HEIGHT = 80; // dp
+export const TAB_BAR_HEIGHT = 56; // dp
+
 export const theme = {
   roundness: 8,
-  spacing: 8, // base unit (8 dp)
+  spacing: 8, // base 8 dp
 
   colors: {
     // Primary (deep blue)
@@ -50,7 +68,7 @@ export const theme = {
     primaryContainer: '#CFE5FF',
     onPrimaryContainer: '#001D35',
 
-    // Secondary (teal) – used for switches, mini‑FABs, active menu items
+    // Secondary (teal) – used for switch thumb and mini‑FABs
     secondary: '#015958',
     onSecondary: '#FFFFFF',
     secondaryContainer: '#C8F4EF',
@@ -85,9 +103,8 @@ export const theme = {
 };
 ```
 
-**Web fallback (`public/theme.css`)**
-
 ```css
+/* public/theme.css */
 :root {
   --color-primary: #0061A4;
   --color-on-primary: #FFFFFF;
@@ -113,13 +130,15 @@ export const theme = {
 
   --radius: 8px;
   --spacing-unit: 8px;
+  --fab-container-height: 80px;
+  --tab-bar-height: 56px;
 }
 ```
 
 ### Contrast pairs
 | Foreground | Background | Use | Size |
 |------------|------------|-----|------|
-| #FFFFFF    | #0061A4    | Primary button label (contained) | normal |
+| #FFFFFF    | #0061A4    | Primary FAB icon, contained button label | large (icon) |
 | #0061A4    | #FFFFFF    | Text button / outlined button label | normal |
 | #212121    | #FFFFFF    | Body text on screens & cards | normal |
 | #49454F    | #FFFFFF    | Secondary text (captions, dates) | normal |
@@ -131,8 +150,6 @@ export const theme = {
 | #FFFFFF    | #015958    | Switch thumb (on) | UI |
 | #015958    | #FFFFFF    | Switch track (on) | UI |
 | #212121    | #E0E0E0    | Switch thumb (off) | UI |
-| #FFFFFF    | #0061A4    | Primary FAB icon | large (icon) |
-| #FFFFFF    | #015958    | Mini‑FAB icon | large (icon) |
 | #6F6F6F    | #FFFFFF    | TextInput placeholder | normal |
 | #212121    | #CFE5FF    | Card title on primary‑container surface | normal |
 | #212121    | #F2F2F2    | Card title on surface‑variant | normal |
@@ -141,6 +158,11 @@ export const theme = {
 | #B00020    | #FFFFFF    | Delete All Data row label | normal |
 | #212121    | #F2F2F2    | Separator line | UI |
 | #212121    | #FFFFFF    | Chevron icon (trailing) | UI |
+| #212121    | #FFFFFF    | Recent activity row title | normal |
+| #49454F    | #FFFFFF    | Recent activity row subtitle (date) | normal |
+| #212121    | #FFFFFF    | EmptyState title | large (headline) |
+| #49454F    | #FFFFFF    | EmptyState description | normal |
+| #FFFFFF    | #0061A4    | EmptyState primary button label | normal |
 
 All pairs meet **WCAG AA** (≥ 4.5:1 for normal text, ≥ 3:1 for UI elements).
 
@@ -150,61 +172,68 @@ All UI wrappers live in `src/components/ui/` and use React‑Native‑Paper prim
 | Component | Paper base | Props / defaults | Touch target | States |
 |-----------|------------|------------------|--------------|--------|
 | **Screen** | `SafeAreaView` + `ScrollView` | `children`, `style` | – | default |
-| **FormField** | `TextInput` (`mode="outlined"`) | `label`, `value`, `onChangeText`, `keyboardType`, `error` | – | default, error |
-| **PrimaryButton** | `Button` (`mode="contained"`) | `onPress`, `children`, `disabled`, `loading` | ≥ 44 × 44 dp (48 dp height) | default, hover, focus‑visible, active, disabled, loading |
-| **TextButton** | `Button` (`mode="text"`) | same as PrimaryButton | ≥ 44 × 44 dp | default, hover, focus‑visible, disabled, loading |
-| **SettingSwitch** | `Switch` | `value`, `onValueChange`, `label` | ≥ 44 × 44 dp (touch area) | off, on, disabled |
-| **SummaryCard** | `Card` | `title`, `value`, `icon` | – | default, hover, focus |
+| **FormField** | `TextInput` (`mode="outlined"`) | `label`, `value`, `onChangeText`, `keyboardType`, `error`, `autoComplete` | – | default, error |
+| **PrimaryButton** | `Button` (`mode="contained"`) | `onPress`, `children`, `disabled`, `loading` | ≥ 44 × 44 dp (`height: 48 dp`) | default, hover, focus-visible, active, disabled, loading |
+| **TextButton** | `Button` (`mode="text"`) | same as PrimaryButton | ≥ 44 × 44 dp | default, hover, focus-visible, disabled, loading |
+| **SettingSwitch** | `Switch` | `value`, `onValueChange`, `accessibilityLabel` | ≥ 44 × 44 dp touch area | off, on, disabled |
+| **SummaryCard** | `Card` | `title`, `value`, `icon` | – | default, hover, focus-visible |
 | **EmptyState** | custom view | `icon`, `title`, `description`, `actionLabel`, `onActionPress` | – | default |
-| **Separator** | `View` | `style` (height 1 dp, backgroundColor theme.colors.surfaceVariant) | – | default |
-| **SettingsRow** | `TouchableOpacity` (styled) containing `Text` (label) + optional trailing element (`SettingSwitch`, chevron `MaterialIcons`), uses **Paper** `surface` background | `label`, `onPress`, `showChevron?`, `showSwitch?`, `switchValue?`, `onSwitchChange?`, `error?` | min 44 × 44 dp (row height 56 dp) | default, pressed (ripple), hover (web), focus‑visible (2 dp outline), disabled, error |
-| **SettingsSection** | `View` | `children`, `showTopPadding?`, `showBottomPadding?`, `separator?` | – | default |
-| **ChoiceField** | `SegmentedButtons` | `value`, `onValueChange`, `buttons` | ≥ 44 × 44 dp per segment | default, selected, hover, focus, disabled |
+| **Separator** | `View` | `style` (height 1 dp, `backgroundColor: theme.colors.surfaceVariant`) | – | default |
+| **SettingsRow** | `TouchableOpacity` styled as list item | `label`, `onPress`, `showChevron?`, `showSwitch?`, `switchValue?`, `onSwitchChange?`, `error?` | min 44 × 44 dp (row height 56 dp) | default, pressed (ripple), hover (web), focus-visible, disabled, error |
+| **SettingsSection** | `View` | `children`, optional top/bottom padding | – | default |
+| **ChoiceField** | `SegmentedButtons` | `value`, `onValueChange`, `buttons` | ≥ 44 × 44 dp per segment | default, selected, hover, focus-visible, disabled |
 | **CheckboxField** | `Checkbox.Android` / `Checkbox.IOS` | `status`, `onPress`, `label` | ≥ 44 × 44 dp | default, checked, hover, disabled |
-| **Dialog**, **Snackbar**, **ActivityIndicator**, **HelperText**, **BottomTabBar**, **FABAdd**, **MiniFAB** – unchanged from existing spec.
+| **FABAdd** | `FAB.Group` | `open`, `icon="plus"`, `actions=[{icon:"receipt", label:"Receipt", onPress}, {icon:"map", label:"Mileage", onPress}]` | ≥ 44 × 44 dp (main FAB) + mini‑FABs | default, open, closed, pressed, focus-visible |
+| **ReceiptSavedSnackbar** | `Snackbar` | `visible`, `onDismiss`, `duration=3000`, `children` | – | visible, hidden |
+| **BottomTabBar** | `BottomNavigation` (Paper) | `navigationState`, `onIndexChange`, `renderScene` | – | default, selected |
+| **ActivityIndicator**, **Dialog**, **HelperText** – unchanged from Paper defaults.
 
-All interactive elements satisfy the **44 × 44 dp** minimum touch area. Hover/focus states appear on web; native platforms use Ripple / elevation feedback.
+All interactive elements meet the **44 × 44 dp** minimum touch area. Hover/focus states are rendered on web, while native platforms use Ripple/elevation feedback.
 
 ## Accessibility
-- **Landmarks** – `Appbar.Header` (`role="banner"`), main content (`<ScrollView role="main">`), bottom navigation (`role="navigation"`).  
-- **Headings** – one `<Text variant="headlineMedium">` per screen (treated as `<h1>`). Sub‑sections use `titleMedium` (`<h2>`). No skipped heading levels.  
-- **Labels** – Every `FormField` has a visible `label`. `SettingsRow` rows are **buttons**: they have `accessibilityRole="button"` and `accessibilityLabel` equal to their visible label (e.g., “Export”). The chevron icon is decorative (`accessibilityIgnoresInvertColors`). `SettingSwitch` has its label read by the screen reader (`accessibilityLabel`).  
-- **Focus management** – On validation error, the first invalid field receives programmatic focus (`focus()`). Dialogs trap focus while open.  
+- **Landmarks** – `Appbar.Header` (`role="banner"`), main content wrapped in `<ScrollView role="main">`, bottom navigation (`role="navigation"`).  
+- **Headings** – One `<Text variant="headlineMedium">` per screen (treated as `<h1>`). Sub‑sections use `titleMedium` (`<h2>`). No skipped levels.  
+- **Labels** – Every `FormField` has a visible `label`. `FABAdd` actions have `accessibilityLabel` (“Add receipt”, “Add mileage”). `SettingsRow` items have `accessibilityRole="button"` and `accessibilityLabel` matching the visible label. Switches expose `accessibilityRole="switch"` and `accessibilityState`.  
+- **Focus management** – On validation error, the first invalid `FormField` receives programmatic focus (`ref.current.focus()`). Dialogs trap focus while open.  
 - **Visible focus** – 2 dp outline using `theme.colors.outline` appears on `focus-visible` (web) and via `accessibilityState={{ focused: true }}` on native.  
-- **Keyboard navigation** – All tappable components reachable with `Tab`/`Shift+Tab`; `Enter` activates focused button.  
-- **Reduced motion** – `useReducedMotion` disables non‑essential animations when the user prefers reduced motion.  
-- **Live announcements** – Success and error `Snackbar` messages are announced via `announceForAccessibility`.  
-- **Alt / accessibilityLabel** – Icons that convey meaning (e.g., chevron) have `accessibilityLabel="Navigate"` if not purely decorative.  
-- **No color‑only cues** – Error rows use both error color and an alert icon (`MaterialIcons` “error”). Disabled controls set `accessibilityState={{ disabled: true }}`.
-
-### Settings‑specific notes
-- `SettingsRow` with `showSwitch` uses `accessibilityRole="switch"` on the internal `Switch`.  
-- The **Delete all data** row has `error` prop true; its label is announced with the error tone and the row is placed after a `Separator`.  
-- The `Separator` is ignored by screen readers (`accessibilityElementsHidden`).  
+- **Keyboard navigation** – All tappable components reachable via `Tab`/`Shift+Tab`; `Enter`/`Space` activates focused button.  
+- **Reduced motion** – `useReducedMotion` disables non‑essential animations (FAB group expansion, snackbar slide).  
+- **Live announcements** – Snackbar messages are announced with `announceForAccessibility`.  
+- **Alt / accessibilityLabel** – Meaningful icons (chevron, error) receive `accessibilityLabel` (“Navigate”, “Error”). Decorative icons set `accessibilityIgnoresInvertColors`.  
+- **No color‑only cues** – Errors combine color with an error icon; disabled controls set `accessibilityState={{ disabled: true }}`.
 
 ## Content and microcopy
-### SettingsScreen rows
-| Row | Label | Trailing element | Action / navigation |
-|-----|-------|------------------|---------------------|
-| App lock | **App lock** | `SettingSwitch` (on/off) | Toggles app‑lock state instantly |
-| Mileage rate | **Mileage rate** | Chevron (`>`), navigates to **MileageRateScreen** | Adjust default mileage reimbursement |
-| Tax rate | **Tax rate** | Chevron, navigates to **TaxRateScreen** | Set custom tax percentage |
-| Export | **Export** | Chevron, navigates to **ExportScreen** | Export receipts as CSV/JSON |
-| Backup & Restore | **Backup & restore** | Chevron, navigates to **BackupScreen** | Create or restore encrypted backup |
-| Categories | **Categories** | Chevron, navigates to **CategoriesScreen** | Manage category list |
-| Terms of Service | **Terms of Service** | Chevron, navigates to **TermsScreen** | View legal terms |
-| Privacy Policy | **Privacy Policy** | Chevron, navigates to **PrivacyScreen** | View privacy policy |
-| Delete all data | **Delete all data** | Chevron (optional), styled with `theme.colors.error` | Opens confirmation dialog; on confirm, erases all stored data |
+### DashboardScreen
+| UI element | Copy |
+|-----------|------|
+| FAB group main icon | (plus sign) – no visible label; `accessibilityLabel="Add"` |
+| FAB action – receipt | **“Receipt”** |
+| FAB action – mileage | **“Mileage”** |
+| Snackbar (receipt) | **“Receipt saved”** |
+| Snackbar (mileage) | **“Mileage saved”** |
+| EmptyState title | **“No activity yet”** |
+| EmptyState description | **“Add a receipt or mileage to see recent items.”** |
+| EmptyState action button | **“Add receipt”** (PrimaryButton) |
+| Recent activity row – title | Dynamic, e.g., “Client lunch” |
+| Recent activity row – subtitle | Date formatted *MMM d, yyyy* (e.g., “Oct 12, 2024”) |
+| Bottom tab labels | **Dashboard**, **Receipts**, **Mileage**, **Settings** |
 
-### Miscellaneous copy
-- **Switch accessibilityLabel** – “App lock”.  
-- **Delete confirmation dialog** – Title: **Delete all data**; Body: “This action cannot be undone. Continue?”; Buttons: **Cancel** (text) and **Delete** (contained, error color).  
-- **Error Snackbar** – “Unable to delete data. Please try again.” (when deletion fails).  
-- **Success Snackbar** – “All data deleted.” (when deletion succeeds).  
-- **Loading indicator** – “Loading settings…” (full‑screen overlay).  
-- **Retry button (error state)** – **Retry**.  
+### Form fields (Add receipt / mileage)
+- **Receipt name / description** – label: **“Description”**, placeholder omitted (label is visible).  
+- **Amount** – label: **“Amount”**, keyboardType=`decimal-pad`, autoComplete=`off`.  
+- **Date** – label: **“Date”**, keyboardType=`numeric`, autoComplete=`off`.  
+- **Mileage distance** – label: **“Distance (mi)”**, keyboardType=`decimal‑pad`.  
+- **Save button** – **“Save”** (PrimaryButton). While submitting, button shows loading spinner and is disabled.  
+- **Error HelperText** – e.g., **“Amount must be greater than 0”** (displayed under field, linked with `aria-describedby`).  
 
-All copy follows title case for button/row labels, sentence case for body text, and avoids jargon. Input fields elsewhere respect autocomplete and proper keyboard types (email, numeric, password) as defined in the broader app spec.
+### SettingsScreen (unchanged)
+- Switch accessibility label: **“App lock”**.  
+- Delete‑all‑data row label: **“Delete all data”** (error color).  
+- Confirmation dialog title: **“Delete all data”**.  
+- Dialog body: **“This action cannot be undone. Continue?”**  
+- Dialog buttons: **“Cancel”** (text) and **“Delete”** (contained, error color).  
+
+All copy follows title case for UI labels, sentence case for instructional text, and avoids jargon. No placeholder‑only fields; every input has an explicit label.
 
 ---  
 **End of DESIGN.md**
