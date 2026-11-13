@@ -13,7 +13,7 @@ interface Props {
 export default function MileageCard({ entry, onPress }: Props) {
   const { date, miles, purpose } = entry;
   return (
-    <Card mode="elevated" style={styles.card} onPress={onPress} accessibilityRole="listitem">
+    <Card mode="elevated" style={styles.card} onPress={onPress}>
       <Card.Content style={styles.content}>
         <View style={styles.row}>
           <Text variant="titleMedium" style={styles.miles}>{miles} mi</Text>
