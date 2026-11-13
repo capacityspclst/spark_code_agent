@@ -4,14 +4,13 @@ import PrimaryButton from './PrimaryButton';
 import { space } from '../../theme';
 
 /** Buttons that match the UI flow expectations: separate primary buttons labeled "Add receipt" and "Add mileage". */
-export default function SimpleAddButtons({ navigationProp }: { navigationProp?: any } = {}) {
-  // Determine navigation: use injected prop or lazy require the hook.
-  const navigation = navigationProp ?? (() => {
+export default function SimpleAddButtons() {
+  // Lazy navigation for compatibility with Jest.
+  const navigation = (() => {
     try {
       const { useNavigation } = require('@react-navigation/native');
       return useNavigation();
-    } catch (e) {
-      // Fallback stub for environments where the navigation module cannot be loaded.
+    } catch {
       return { getParent: () => ({ navigate: () => {} }) };
     }
   })();
