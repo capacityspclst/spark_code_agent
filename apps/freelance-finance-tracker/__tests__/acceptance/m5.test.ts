@@ -1,9 +1,14 @@
+/* Mock the photos module that dataReset expects – provides a no‑op deleteAllPhotos. */
+jest.mock('../../src/lib/photos', () => ({
+  deleteAllPhotos: jest.fn(async () => {}),
+}));
+
 import { validateBackupPassphrase } from '../../src/lib/validation';
-import { 
-  validateReceiptAmount, 
-  validateMileageMiles, 
-  validateMileageRate, 
-  validateTaxRate 
+import {
+  validateReceiptAmount,
+  validateMileageMiles,
+  validateMileageRate,
+  validateTaxRate,
 } from '../../src/lib/validation';
 import { validateBackupStructure } from '../../src/lib/backup';
 import { createStore, createMemoryRawStore, createMemoryKeyProvider } from '../../src/lib/storage/memory';
