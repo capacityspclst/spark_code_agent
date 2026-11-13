@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { View } from 'react-native';
-import { PrimaryButton, Screen, FormField } from '../components/ui';
+import { PrimaryButton, Screen, FormField, SettingsRow } from '../components/ui';
 import { getMileageRate, getTaxRate, setMileageRate, setTaxRate, DEFAULT_MILEAGE_RATE, DEFAULT_TAX_RATE } from '../lib/settings';
 import { Snackbar } from 'react-native-paper';
 import { setPendingSnack } from '../lib/uiState';
+import { useNavigation, NavigationProp } from '@react-navigation/native';
 
 export default function TaxSettingsScreen() {
   const [mileageRate, setMileageRateState] = useState<string>('');
@@ -46,12 +47,15 @@ export default function TaxSettingsScreen() {
     }
   };
 
+  const navigation = useNavigation<NavigationProp<any>>();
+
   return (
     <Screen title="Tax settings">
       <View style={{ gap: 12 }}>
         <FormField label="Mileage rate ($/mile)" value={mileageRate} onChangeText={setMileageRateState} placeholder={DEFAULT_MILEAGE_RATE.toString()} keyboardType="numeric" />
         <FormField label="Tax rate (%)" value={taxRate} onChangeText={setTaxRateState} placeholder={DEFAULT_TAX_RATE.toString()} keyboardType="numeric" />
         {error ? <Snackbar visible={true} onDismiss={() => setError('')} duration={3000}>{error}</Snackbar> : null}
+        <SettingsRow label="Back" testID="tax-settings-back" onPress={() => navigation.goBack()} showChevron={false} />
         <PrimaryButton label="Save" onPress={onSave} loading={saving} disabled={!canSave} />
       </View>
     </Screen>

@@ -10,7 +10,6 @@ import PolicyScreen from '../screens/PolicyScreen';
 import ReceiptEntryScreen from '../screens/ReceiptEntryScreen';
 import MileageScreen from '../screens/MileageScreen';
 import MileageEntryScreen from '../screens/MileageEntryScreen';
-import AppLockScreen from '../screens/AppLockScreen';
 import TaxSettingsScreen from '../screens/TaxSettingsScreen';
 import ExportScreen from '../screens/ExportScreen';
 import BackupScreen from '../screens/BackupScreen';
@@ -21,6 +20,8 @@ import BackupSuccessScreen from '../screens/BackupSuccessScreen';
 import RestoreSuccessScreen from '../screens/RestoreSuccessScreen';
 import { theme } from '../theme';
 import CategoriesScreen from '../screens/CategoriesScreen';
+import TermsOfServiceScreen from '../screens/TermsOfServiceScreen';
+import PrivacyPolicyScreen from '../screens/PrivacyPolicyScreen';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -41,9 +42,10 @@ function SettingsStackScreen() {
       <SettingsStack.Screen name="backup_success" component={BackupSuccessScreen} options={{ title: 'Backup' }} />
       <SettingsStack.Screen name="restore_passphrase_modal" component={RestoreScreen} options={{ title: 'Restore backup' }} />
       <SettingsStack.Screen name="restore_success" component={RestoreSuccessScreen} options={{ title: 'Restore success' }} />
-      <SettingsStack.Screen name="AppLock" component={AppLockScreen} options={{ title: 'App lock' }} />
       <SettingsStack.Screen name="TaxSettings" component={TaxSettingsScreen} options={{ title: 'Tax settings' }} />
       <SettingsStack.Screen name="DeleteAllData" component={DeleteAllDataScreen} options={{ title: 'Delete all data' }} />
+      <SettingsStack.Screen name="TermsOfService" component={TermsOfServiceScreen} options={{ title: 'Terms of Service' }} />
+      <SettingsStack.Screen name="PrivacyPolicy" component={PrivacyPolicyScreen} options={{ title: 'Privacy Policy' }} />
     </SettingsStack.Navigator>
   );
 }
