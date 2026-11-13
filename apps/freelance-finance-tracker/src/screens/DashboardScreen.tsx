@@ -11,6 +11,7 @@ import { computeTotals } from '../lib/finance';
 import { totalMileageDeduction } from '../lib/mileage';
 import { getTaxRate } from '../lib/settings';
 import ReceiptCard from '../components/ui/ReceiptCard';
+import MileageCard from '../components/ui/MileageCard';
 import { consumeSnack } from '../lib/uiState';
 import SimpleAddButtons from '../components/ui/SimpleAddButtons';
 import ReceiptSavedSnackbar from '../components/ui/ReceiptSavedSnackbar';
