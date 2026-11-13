@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, Snackbar, Text } from 'react-native-paper';
+import { ActivityIndicator, Text } from 'react-native-paper';
 import { FlatList, View } from 'react-native';
 import { useNavigation, useRoute, NavigationProp, RouteProp } from '@react-navigation/native';
-import { EmptyState, Screen, SummaryCard } from '../components/ui';
+import { EmptyState, Screen, SummaryCard, RecentActivityList, ReceiptSavedSnackbar } from '../components/ui';
 import { getStore } from '../lib/storage';
 import { Receipt, MileageEntry } from '../lib/models';
 import { getAllReceipts } from '../lib/receiptStore';
@@ -80,16 +80,9 @@ export default function DashboardScreen() {
           <RecentActivityList activities={receipts.slice(0, 5)} />
         </View>
       )}
-      {snack ? (
-        <Snackbar
-          visible={true}
-          onDismiss={() => setSnack('')}
-          duration={3000}
-          style={{ bottom: space(20) }}
-        >
-          {snack}
-        </Snackbar>
-      ) : null}
+      <ReceiptSavedSnackbar visible={!!snack} onDismiss={() => setSnack('')} >
+        {snack}
+      </ReceiptSavedSnackbar>
       <FABAdd />
     </Screen>
   );

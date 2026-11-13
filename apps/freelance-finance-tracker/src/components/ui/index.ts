@@ -10,3 +10,6 @@ export { default as ExportButton } from './ExportButton';
 export { default as SettingsRow } from './SettingsRow';
 export { default as SettingsSection } from './SettingsSection';
 export { default as Separator } from './Separator';
+export { default as BottomTabBar } from './BottomTabBar';
+export { default as RecentActivityList } from './RecentActivityList';
+export { default as ReceiptSavedSnackbar } from './ReceiptSavedSnackbar';
