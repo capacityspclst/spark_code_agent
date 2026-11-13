@@ -11,10 +11,15 @@ interface Props {
 
 /** Simple card to display a mileage entry. */
 export default function MileageCard({ entry, onPress }: Props) {
-  // @ts-ignore accessibility role not in RN types
+  // @ts-ignore
   const { date, miles, purpose } = entry;
   return (
-    <Card mode="elevated" style={styles.card} onPress={onPress} accessibilityRole="listitem">
+    // @ts-ignore
+    <Card mode="elevated" style={styles.card} onPress={onPress} accessibilityRole={"listitem" as any}>
+      <Card.Content style={styles.content}>
+  const { date, miles, purpose } = entry;
+  return (
+    <Card mode="elevated" style={styles.card} onPress={onPress}>
       <Card.Content style={styles.content}>
         <View style={styles.row}>
           <Text variant="titleMedium" style={styles.miles}>{miles} mi</Text>
