@@ -28,6 +28,7 @@ const Services: React.FC = () => {
           title="AI governance and responsible AI policy"
           description="Establish ethics, compliance, and risk controls."
         />
+              <p className="typical-engagement">Typical engagement: 2 to 6 weeks</p>
       </section>
       <section id="training">
         <h2>Training</h2>
