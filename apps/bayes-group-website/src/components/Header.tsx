@@ -20,10 +20,10 @@ const Header: React.FC = () => {
 
   const navLinks = (
     <>
-      <Link to="/services">Services</Link>
-      <Link to="/training">Training</Link>
-      <Link to="/about">About</Link>
-      <Link to="/contact">Contact</Link>
+      <button className="button-secondary" onClick={() => window.location.href='/services'}>Services</button>
+      <button className="button-secondary" onClick={() => window.location.href='/training'}>Training</button>
+      <Link to="/about" className="button-secondary">About</Link>
+      <button className="button-secondary" onClick={() => window.location.href='/contact'}>Contact</button>
     </>
   );
 
@@ -34,17 +34,16 @@ const Header: React.FC = () => {
       </Link>
       {isMobile ? (
         <>
-          <Link
-            to="#"
-            role="button"
+          <button
+            type="button"
             aria-label="Menu"
             aria-controls="mobile-nav"
             aria-expanded={menuOpen}
-            onClick={(e)=>{e.preventDefault(); toggleMenu();}}
+            onClick={() => toggleMenu()}
             className="button-primary"
           >
             Menu
-          </Link>
+          </button>
           {menuOpen && (
             <nav id="mobile-nav" style={{ position: 'absolute', top: '100%', left: 0, right: 0, background: 'var(--color-bg)', padding: 'var(--space-4)' }}>
               {navLinks}
