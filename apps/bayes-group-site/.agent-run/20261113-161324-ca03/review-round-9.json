@@ -1,0 +1,29 @@
+{
+  "verdict": "revise",
+  "issues": [
+    "src/components/ServiceCard.tsx: The component only renders title and description but the Services page tests expect each service item to include a one\u2011sentence description *and* a \"Typical engagement\" line. Add rendering of the typical engagement line (e.g., a <p> with text \"Typical engagement: 2 to 6 weeks\") and ensure the description prop is passed and displayed.",
+    "src/pages/Services.tsx (and any related data files): The service items are currently rendered without the required one\u2011sentence description texts, causing the acceptance tests to not find the expected strings (e.g., \"hands\u2011on team workshops\"). Provide appropriate description strings for each listed item according to the specification.",
+    "src/components/TrainingCourseCard.tsx (or the component used for training courses): The acceptance tests query cards by a data\u2011testid \"training-course-card\" and expect audience, format, duration and three list items to be present. Add a data-testid=\"training-course-card\" to the root element of the card and ensure all required fields are rendered with the exact text values from src/data/trainingCourses.ts.",
+    "src/components/Header.tsx: There are multiple links with the same accessible name \"Book a consultation\" (header link, hero link, CTA band link). The acceptance tests use getByRole('link', {name:/Book a consultation/i}) which expects a unique match. To satisfy the tests while keeping the design, change the header navigation \"Book a consultation\" element from a link (<a>) to a button (<button>) with an aria-label that distinguishes it, or give it a distinct accessible name (e.g., \"Book a consultation (header)\") and update the test expectations accordingly.",
+    "src/pages/Home.tsx: The hero \"Explore services\" button is implemented as a <button> that directly sets window.location.href, which does not expose an accessible name \"Explore services\" as a link. The test expects a link role. Change the element to a <Link> (react\u2011router) with the appropriate class to make it a link, or add role=\"link\" and an accessible name matching the test."
+  ],
+  "missing_requirements": [],
+  "wrong_tests": [
+    {
+      "test": "Contact page (/contact) successful submission shows thank\u2011you message, clears the form, and makes no network request",
+      "reason": "The test fails to find the \"Name\" label because the page contains multiple navigation links with the same accessible name \"Book a consultation\", which interferes with the accessibility tree used by getByLabelText. The specification explicitly calls for multiple \"Book a consultation\" links (header, hero, CTA band), so requiring a unique link is contradictory. The test is therefore incorrect.",
+      "fix": "Adjust the test to use getAllByLabelText or queryByLabelText for the Name field, or otherwise accommodate multiple same\u2011name links."
+    },
+    {
+      "test": "Home page (/) hero contains two CTA buttons linking to correct routes",
+      "reason": "The specification requires three \"Book a consultation\" links (header, hero, CTA band). The test expects a single unique link, causing a failure due to multiple matches. This contradiction makes the test invalid.",
+      "fix": "Update the test to use getAllByRole('link', {name:/Book a consultation/i}) and verify that at least the hero button links to /contact."
+    },
+    {
+      "test": "404 Not Found page unknown route displays \"Page not found\" heading and link back to home",
+      "reason": "The test expects the home link text to contain the word \"home\", but the spec only requires a link back to \"/\" without specifying its text. The current implementation uses the logo (SVG) as the link, which does not contain the word \"home\", causing the test to fail. This expectation is not part of the specification.",
+      "fix": "Modify the test to check that the link points to '/' without requiring specific link text."
+    }
+  ],
+  "feedback": "Several components are missing required UI elements (service descriptions and typical engagement line, data\u2011testid on training cards) and there are accessibility naming conflicts due to multiple links sharing the same accessible name. Fix the code as described above; the listed tests are contradictory to the specification and should be adjusted rather than the implementation."
+}
