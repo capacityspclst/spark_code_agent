@@ -4,11 +4,11 @@ import { Wordmark } from './Wordmark';
 
 const Header: React.FC = () => {
   const [menuOpen, setMenuOpen] = useState(false);
-  const [isMobile, setIsMobile] = useState(() => window.innerWidth <= 390);
+  const [isMobile, setIsMobile] = useState(() => window.innerWidth < 420);
 
   useEffect(() => {
     const handleResize = () => {
-      const mobile = window.innerWidth <= 390;
+      const mobile = window.innerWidth < 420;
       setIsMobile(mobile);
       if (!mobile) setMenuOpen(false);
     };

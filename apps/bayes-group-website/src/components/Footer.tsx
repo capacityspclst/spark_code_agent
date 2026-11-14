@@ -4,7 +4,7 @@ import { Wordmark } from './Wordmark';
 
 const Footer: React.FC = () => (
   <footer>
-    <div aria-hidden="true">
+    <div>
       <Wordmark className="wordmark" />
     </div>
     <div>

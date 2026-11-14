@@ -3,28 +3,16 @@ import React from 'react';
 export const Wordmark: React.FC<{className?:string}> = ({className}) => (
   <svg
     className={className}
-    width="220"
-    height="28"
-    viewBox="0 0 220 28"
+    width="120"
+    height="24"
+    viewBox="0 0 120 24"
     fill="none"
     xmlns="http://www.w3.org/2000/svg"
     role="img"
     aria-label="The Bayes Group"
   >
     {/* Simple bell-curve shape */}
-    <path d="M2 18 C8 4, 24 4, 30 18 S50 28, 56 18" stroke="var(--color-primary)" strokeWidth="2" fill="none" />
-    {/* Wordmark text */}
-    <text
-      x="64"
-      y="20"
-      fontFamily="var(--font-serif)"
-      fontSize="16"
-      fontWeight="600"
-      fill="var(--color-primary)"
-    >
-      <tspan>The </tspan>
-      <tspan>Bayes </tspan>
-      <tspan>Group</tspan>
-    </text>
+    <path d="M2 12 C10 0, 30 0, 38 12 S66 24, 74 12" stroke="var(--color-primary)" strokeWidth="2" fill="none" />
+    {/* No visible text; accessible name via aria-label */}
   </svg>
 );
