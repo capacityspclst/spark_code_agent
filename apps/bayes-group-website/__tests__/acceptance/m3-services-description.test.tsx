@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import App from '../../src/App';
 import userEvent from '@testing-library/user-event';
@@ -7,8 +7,9 @@ import userEvent from '@testing-library/user-event';
 test('Services page items display a name and a one-sentence description', async () => {
   render(<App />);
 
-  // Navigate to Services page
-  const servicesLink = screen.getByRole('link', { name: /services/i });
+  // Navigate to Services page via header navigation link
+  const header = screen.getByRole('banner');
+  const servicesLink = within(header).getByRole('link', { name: /services/i });
   await userEvent.click(servicesLink);
 
   // Wait for page title to update

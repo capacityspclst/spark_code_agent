@@ -7,8 +7,9 @@ import userEvent from '@testing-library/user-event';
 test('Services page displays sections with ids, items, typical engagement line and sets document title', async () => {
   render(<App />);
 
-  // Navigate to Services page
-  const servicesLink = screen.getByRole('link', { name: /services/i });
+  // Navigate to Services page via header navigation link
+  const header = screen.getByRole('banner');
+  const servicesLink = within(header).getByRole('link', { name: /services/i });
   await userEvent.click(servicesLink);
 
   // Title

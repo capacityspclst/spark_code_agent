@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import App from '../../src/App';
 import userEvent from '@testing-library/user-event';
@@ -7,8 +7,9 @@ import userEvent from '@testing-library/user-event';
 test('Contact page form validates required fields, shows errors, and displays success message without network request', async () => {
   render(<App />);
 
-  // Navigate to Contact page
-  const contactLink = screen.getByRole('link', { name: /contact/i });
+  // Navigate to Contact page via header navigation link
+  const header = screen.getByRole('banner');
+  const contactLink = within(header).getByRole('link', { name: /contact/i });
   await userEvent.click(contactLink);
 
   // Title should include brand name

@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import App from '../../src/App';
 import userEvent from '@testing-library/user-event';
@@ -7,8 +7,9 @@ import userEvent from '@testing-library/user-event';
 test('Training page “All” filter shows all course cards', async () => {
   render(<App />);
 
-  // Navigate to Training page
-  const trainingLink = screen.getByRole('link', { name: /training/i });
+  // Navigate to Training page via header navigation link
+  const header = screen.getByRole('banner');
+  const trainingLink = within(header).getByRole('link', { name: /training/i });
   await userEvent.click(trainingLink);
 
   // Wait for title to contain “Training”

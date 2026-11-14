@@ -10,11 +10,11 @@ test('Header contains wordmark, navigation links, and booking button', () => {
   const header = screen.getByRole('banner');
   expect(header).toBeInTheDocument();
 
-  // Wordmark link to home
-  const wordmarkLink = screen.getByRole('link', { name: /the bayes group/i });
+  // Wordmark link to home (within header)
+  const wordmarkLink = within(header).getByRole('link', { name: /the bayes group/i });
   expect(wordmarkLink).toHaveAttribute('href', '/');
 
-  // Navigation links
+  // Navigation links (within header)
   const expectedNav = [
     { name: /services/i, href: '/services' },
     { name: /training/i, href: '/training' },
@@ -22,12 +22,12 @@ test('Header contains wordmark, navigation links, and booking button', () => {
     { name: /contact/i, href: '/contact' },
   ];
   expectedNav.forEach(({ name, href }) => {
-    const link = screen.getByRole('link', { name });
+    const link = within(header).getByRole('link', { name });
     expect(link).toHaveAttribute('href', href);
   });
 
-  // "Book a consultation" button (styled as a button but rendered as a link)
-  const bookBtn = screen.getByRole('button', { name: /book a consultation/i });
+  // "Book a consultation" button (styled as a button but rendered as a link, within header)
+  const bookBtn = within(header).getByRole('button', { name: /book a consultation/i });
   const bookLink = bookBtn.closest('a');
   expect(bookLink).toHaveAttribute('href', '/contact');
 });
