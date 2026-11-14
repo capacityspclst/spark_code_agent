@@ -8,7 +8,7 @@ const Home: React.FC = () => (
       <p>We partner with organizations to turn data into actionable intelligence.</p>
       <div style={{ display: 'flex', gap: 'var(--space-4)', justifyContent: 'center', marginTop: 'var(--space-4)' }}>
         <Link to="/contact" className="button-primary">Book a consultation</Link>
-        <button className="button-secondary" onClick={() => window.location.href='/services'}>Explore services</button>
+        <Link to="/services" className="button-secondary">Explore services</Link>
       </div>
     </section>
 
@@ -55,7 +55,7 @@ const Home: React.FC = () => (
 
     <section className="cta-band" style={{ marginTop: 'var(--space-8)' }}>
       <h2>Ready to put AI to work?</h2>
-      <a href="/contact" className="button-primary">Book a consultation</a>
+      <Link to="/contact" className="button-primary" role="button">Book a consultation</Link>
     </section>
   </div>
 );
