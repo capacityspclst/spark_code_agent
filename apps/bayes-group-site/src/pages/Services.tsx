@@ -37,22 +37,23 @@ const Services: React.FC = () => {
           description="Convey impact and feasibility to leadership in under an hour."
         />
         <ServiceCard
-          title="Hands‑on team workshops"
-          description="Build end‑to‑end pipelines with your engineers in a day."
+          title="Hands-on team workshops"
+          description="Build end-to-end pipelines with your engineers in a day."
         />
         <ServiceCard
-          title="Deep‑learning bootcamps for technical teams"
+          title="Deep-learning bootcamps for technical teams"
           description="Intensive training covering fundamentals to production."
         />
         <ServiceCard
           title="Custom curricula"
           description="Tailored instruction aligned with your tech stack and goals."
         />
+        <p className="typical-engagement">Typical engagement: 2 to 6 weeks</p>
       </section>
       <section id="custom-development">
         <h2>Custom Development</h2>
         <ServiceCard
-          title="LLM and retrieval‑augmented (RAG) applications"
+          title="LLM and retrieval-augmented (RAG) applications"
           description="Deploy advanced language models with contextual retrieval."
         />
         <ServiceCard
@@ -64,13 +65,14 @@ const Services: React.FC = () => {
           description="Build, train, and deploy robust predictive systems."
         />
         <ServiceCard
-          title="Deep‑learning solutions"
+          title="Deep-learning solutions"
           description="Design and implement custom neural network architectures."
         />
         <ServiceCard
           title="Integration with existing systems"
           description="Seamlessly embed AI into your current technology stack."
         />
+        <p className="typical-engagement">Typical engagement: 2 to 6 weeks</p>
       </section>
     </section>
   );
