@@ -11,9 +11,9 @@ const Header: React.FC = () => {
   return (
     <header style={{ background: 'var(--color-background)', padding: 'var(--space-4)' }}>
       <nav aria-label="Main navigation" className="header-nav" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }} role="navigation">
-        <div aria-label="Home" style={{ display: 'inline-block' }}>
+        <Link to="/" aria-label="Home" style={{ display: 'inline-block' }}>
           <Logo />
-        </div>
+        </Link>
         {/* Desktop nav links */}
         <div className="nav-links">
           <Link to="/services">Services</Link>
@@ -22,7 +22,7 @@ const Header: React.FC = () => {
           <Link to="/contact">Contact</Link>
         </div>
         {/* Book consultation button */}
-        <button type="button" className="btn header-cta" onClick={() => navigate('/contact')}>Book a consultation</button>
+        <Link to="/contact" className="btn header-cta">Book a consultation</Link>
         {/* Mobile menu button */}
         <button
           type="button"

@@ -10,11 +10,11 @@ const Footer: React.FC = () => (
       </Link>
       <p>AI enablement, training and custom development.</p>
     </div>
-    <nav aria-label="Footer navigation" style={{ marginBottom: 'var(--space-4)' }} aria-hidden="true">
-      <Link to="/services" aria-hidden="true" tabIndex={-1}>Services</Link>{' | '}
-      <Link to="/training" aria-hidden="true" tabIndex={-1}>Training</Link>{' | '}
-      <Link to="/about" aria-hidden="true" tabIndex={-1}>About</Link>{' | '}
-      <Link to="/contact" aria-hidden="true" tabIndex={-1}>Contact</Link>
+    <nav aria-label="Footer navigation" style={{ marginBottom: 'var(--space-4)' }}>
+      <Link to="/services">Services</Link>{' | '}
+      <Link to="/training">Training</Link>{' | '}
+      <Link to="/about">About</Link>{' | '}
+      <Link to="/contact">Contact</Link>
     </nav>
     <div className="footer-bottom">© 2026 The Bayes Group</div>
   </footer>
