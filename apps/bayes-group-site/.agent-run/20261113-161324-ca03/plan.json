@@ -1,0 +1,376 @@
+{
+  "name": "bayes-group-site",
+  "summary": "A static marketing website for The Bayes Group built with Vite, React, and TypeScript. It includes a responsive header with a collapsible menu, a footer, and the pages Home, Services, Training, About, Contact, plus a 404 page. Styling uses plain CSS with design\u2011token custom properties (deep navy, white, teal accent) and system\u2011font stacks. The site is fully accessible, uses client\u2011side form validation, and `npm run build` outputs a static `dist/index.html`.",
+  "files": [
+    "package.json",
+    "tsconfig.json",
+    "vite.config.ts",
+    "src/main.tsx",
+    "src/App.tsx",
+    "src/index.css",
+    "src/theme.css",
+    "src/components/Logo.tsx",
+    "src/components/Header.tsx",
+    "src/components/Footer.tsx",
+    "src/components/ResponsiveMenu.tsx",
+    "src/pages/Home.tsx",
+    "src/pages/Services.tsx",
+    "src/pages/Training.tsx",
+    "src/pages/About.tsx",
+    "src/pages/Contact.tsx",
+    "src/pages/NotFound.tsx",
+    "src/data/trainingCourses.ts",
+    "src/components/PillarCard.tsx",
+    "src/components/ServiceCard.tsx",
+    "src/components/CTASection.tsx",
+    "src/components/StepCard.tsx",
+    "src/components/ValueCard.tsx",
+    "src/components/TrainingCourseCard.tsx",
+    "src/components/FilterButton.tsx"
+  ],
+  "steps": [
+    "Initialize a new Vite project with the React + TypeScript template (`npm create vite@latest bayes-group-site -- --template react-ts`).",
+    "Install runtime dependencies: `react-router-dom`. Install dev dependencies for testing: `@testing-library/react`, `@testing-library/jest-dom`, `@testing-library/user-event`, `jest`, `ts-jest`, and `jest-environment-jsdom`. Add a Jest configuration that supports TSX files.",
+    "Create a CSS design\u2011token theme (`src/theme.css`) that defines custom properties for colors (\u2013color-primary, \u2013color-background, \u2013color-accent), fonts (\u2013font-heading, \u2013font-body), spacing, and focus outlines. Import this file in `src/index.css` which also sets box\u2011sizing and basic resets.",
+    "Implement `src/components/Logo.tsx` rendering the inline SVG wordmark (bell\u2011curve + \"The Bayes Group\"). Export it for reuse in header and footer.",
+    "Build the responsive header in `src/components/Header.tsx` using semantic `<header>` and `<nav>`. Include the Logo linking to `/`, navigation links (`/services`, `/training`, `/about`, `/contact`), a \"Book a consultation\" button, and a \"Menu\" button that toggles a mobile nav panel via `src/components/ResponsiveMenu.tsx`. Ensure ARIA attributes and keyboard accessibility.",
+    "Create the footer component in `src/components/Footer.tsx` with the Logo, tagline, navigation links, and copyright text. Wrap it in a semantic `<footer>`.",
+    "Set up routing in `src/App.tsx` using `BrowserRouter`, defining routes for `/`, `/services`, `/training`, `/about`, `/contact`, and a catch\u2011all `*` route rendering `src/pages/NotFound.tsx`. Each page component should set its document title with `useEffect` and render exactly one `<h1>`.",
+    "Develop each page component per specification:",
+    "  - `Home.tsx`: hero section, pillar cards (using `PillarCard`), \"How we work\" steps (`StepCard`), \"Why The Bayes Group\" values (`ValueCard`), and a CTA band.",
+    "  - `Services.tsx`: three sections with IDs `enablement`, `training`, `custom-development`, each listing service items using `ServiceCard` and ending with a \"Typical engagement\" line.",
+    "  - `Training.tsx`: import `trainingCourses.ts`, render filter buttons (`FilterButton`) with `aria\u2011pressed`, and display a grid of `TrainingCourseCard` components based on the selected audience filter. Ensure the \"All\" filter is the default selection.",
+    "  - `About.tsx`: mission paragraph, \"Why Bayes\" paragraph, two placeholder founder cards, and the four company values.",
+    "  - `Contact.tsx`: display contact email, a semantic `<form>` with labelled inputs (Name, Email, Company, a `<select>` for request type, and Message). Implement client\u2011side validation that shows the exact error messages specified, prevents submission when invalid, and on successful submit shows a thank\u2011you message and clears the form without any network request.",
+    "  - `NotFound.tsx`: simple page with an `<h1>` \"Page not found\" and a link back to `/`.",
+    "Add global accessibility enhancements: visible focus outlines, proper landmarks (`<header>`, `<nav>`, `<main>`, `<footer>`), label\u2011for associations, and ensure text color contrast meets WCAG AA using the theme colors.",
+    "Write responsive CSS (media queries at 390px and 1440px breakpoints) ensuring no horizontal scroll, using Flexbox/Grid as appropriate. Verify layout on phone and desktop widths.",
+    "Configure the Vite `build` command (`npm run build`) to output a static site with `dist/index.html`. Test the build locally to confirm all assets load correctly and navigation works without a backend.",
+    "Add a `README.md` with build and dev instructions."
+  ],
+  "has_ui": true,
+  "tests": "jest",
+  "test_kind": "jest",
+  "acceptance_files": {
+    "__tests__/acceptance/header-footer.test.tsx": "import React from 'react';\nimport {\n  render,\n  screen,\n  fireEvent,\n  waitFor,\n  within,\n} from '@testing-library/react';\nimport { MemoryRouter } from 'react-router-dom';\nimport '@testing-library/jest-dom';\nimport App from '../../src/App';\n\nfunction renderAt(path: string) {\n  render(\n    <MemoryRouter initialEntries={[path]}>\n      <App />\n    </MemoryRouter>\n  );\n}\n\ndescribe('Header and Footer shared UI', () => {\n  test('Header contains logo, navigation links and Book a consultation button', async () => {\n    renderAt('/');\n\n    // Header element\n    const header = document.querySelector('header');\n    expect(header).toBeInTheDocument();\n\n    // Logo link (should point to home)\n    const logoLink = header?.querySelector('a[href=\"/\"]');\n    expect(logoLink).toBeInTheDocument();\n\n    // Navigation links\n    const navLinks = [\n      { name: /Services/i, href: '/services' },\n      { name: /Training/i, href: '/training' },\n      { name: /About/i, href: '/about' },\n      { name: /Contact/i, href: '/contact' },\n    ];\n\n    navLinks.forEach(({ name, href }) => {\n      const link = screen.getByRole('link', { name });\n      expect(link).toBeInTheDocument();\n      expect(link).toHaveAttribute('href', href);\n    });\n\n    // Book a consultation button (or link) in header\n    const bookBtn = screen.getByRole('link', {\n      name: /Book a consultation/i,\n    });\n    expect(bookBtn).toBeInTheDocument();\n    expect(bookBtn).toHaveAttribute('href', '/contact');\n\n    // Mobile menu button should be present (labelled \u201cMenu\u201d)\n    const menuBtn = screen.getByRole('button', { name: /Menu/i });\n    expect(menuBtn).toBeInTheDocument();\n  });\n\n  test('Footer contains logo, tagline, nav links and copyright', () => {\n    renderAt('/');\n\n    const footer = document.querySelector('footer');\n    expect(footer).toBeInTheDocument();\n\n    // Footer logo link\n    const footerLogo = footer?.querySelector('a[href=\"/\"]');\n    expect(footerLogo).toBeInTheDocument();\n\n    // Tagline\n    expect(footer).toHaveTextContent(\n      'AI enablement, training and custom development.'\n    );\n\n    // Footer navigation links (same set as header)\n    const footerNavLinks = [\n      { name: /Services/i, href: '/services' },\n      { name: /Training/i, href: '/training' },\n      { name: /About/i, href: '/about' },\n      { name: /Contact/i, href: '/contact' },\n    ];\n\n    footerNavLinks.forEach(({ name, href }) => {\n      const link = within(footer as HTMLElement).getByRole('link', { name });\n      expect(link).toBeInTheDocument();\n      expect(link).toHaveAttribute('href', href);\n    });\n\n    // Copyright\n    expect(footer).toHaveTextContent('\u00a9 2026 The Bayes Group');\n  });\n});\n",
+    "__tests__/acceptance/home.test.tsx": "import React from 'react';\nimport { render, screen, within, waitFor } from '@testing-library/react';\nimport { MemoryRouter } from 'react-router-dom';\nimport '@testing-library/jest-dom';\nimport App from '../../src/App';\n\nfunction renderAt(path: string) {\n  render(\n    <MemoryRouter initialEntries={[path]}>\n      <App />\n    </MemoryRouter>\n  );\n}\n\ndescribe('Home page (/)', () => {\n  beforeEach(() => {\n    renderAt('/');\n  });\n\n  test('sets correct document title and contains a single h1', async () => {\n    await waitFor(() => {\n      expect(document.title).toBe('The Bayes Group | Evidence-driven AI');\n    });\n    const h1s = screen.getAllByRole('heading', { level: 1 });\n    expect(h1s).toHaveLength(1);\n    expect(h1s[0]).toHaveTextContent(\n      'Evidence-driven AI, built for your business.'\n    );\n  });\n\n  test('hero contains CTA buttons linking to correct routes', () => {\n    // There may be multiple \"Book a consultation\" links (header, hero, CTA band).\n    const bookLinks = screen.getAllByRole('link', {\n      name: /Book a consultation/i,\n    });\n    // Ensure at least one such link exists.\n    expect(bookLinks.length).toBeGreaterThanOrEqual(1);\n    // Verify that at least one of them points to the contact page (the hero button).\n    const hasContactLink = bookLinks.some(\n      (link) => link.getAttribute('href') === '/contact'\n    );\n    expect(hasContactLink).toBe(true);\n\n    const exploreBtn = screen.getByRole('link', {\n      name: /Explore services/i,\n    });\n    expect(exploreBtn).toBeInTheDocument();\n    expect(exploreBtn).toHaveAttribute('href', '/services');\n  });\n\n  test('renders three pillar cards with correct headings and Learn more links', () => {\n    const expectedPillars = [\n      {\n        heading: /AI Enablement/i,\n        linkHref: '/services#enablement',\n      },\n      {\n        heading: /Training/i,\n        linkHref: '/services#training',\n      },\n      {\n        heading: /Custom Development/i,\n        linkHref: '/services#custom-development',\n      },\n    ];\n\n    expectedPillars.forEach(({ heading, linkHref }) => {\n      const cardHeading = screen.getByRole('heading', {\n        level: 2,\n        name: heading,\n      });\n      expect(cardHeading).toBeInTheDocument();\n\n      const card = cardHeading.closest('section') || cardHeading.parentElement;\n      expect(card).toBeInTheDocument();\n\n      const learnLink = within(card as HTMLElement).getByRole('link', {\n        name: /Learn more/i,\n      });\n      expect(learnLink).toHaveAttribute('href', linkHref);\n    });\n  });\n\n  test('\u201cHow we work\u201d section contains the four numbered steps', () => {\n    const steps = ['Assess', 'Design', 'Build', 'Enable'];\n    steps.forEach((step) => {\n      const stepElement = screen.getByText(step, { selector: 'p, li, div, span' });\n      expect(stepElement).toBeInTheDocument();\n    });\n  });\n\n  test('\u201cWhy The Bayes Group\u201d section contains four expected points', () => {\n    const points = [\n      /credentialed data scientists/i,\n      /hands-on builders/i,\n      /vendor-neutral advice/i,\n      /knowledge transfer so your team owns the result/i,\n    ];\n    points.forEach((regex) => {\n      const el = screen.getByText(regex);\n      expect(el).toBeInTheDocument();\n    });\n  });\n\n  test('CTA band at the bottom contains the proper message and button', () => {\n    const ctaText = screen.getByText(\n      /Ready to put AI to work\\?/i\n    );\n    expect(ctaText).toBeInTheDocument();\n\n    const ctaBtn = screen.getByRole('link', {\n      name: /Book a consultation/i,\n    });\n    expect(ctaBtn).toBeInTheDocument();\n    expect(ctaBtn).toHaveAttribute('href', '/contact');\n  });\n});\n",
+    "__tests__/acceptance/services.test.tsx": "import React from 'react';\nimport { render, screen, within, waitFor } from '@testing-library/react';\nimport { MemoryRouter } from 'react-router-dom';\nimport '@testing-library/jest-dom';\nimport App from '../../src/App';\n\nfunction renderAt(path: string) {\n  render(\n    <MemoryRouter initialEntries={[path]}>\n      <App />\n    </MemoryRouter>\n  );\n}\n\ndescribe('Services page (/services)', () => {\n  beforeEach(() => {\n    renderAt('/services');\n  });\n\n  test('sets correct document title and contains a single h1', async () => {\n    await waitFor(() => {\n      expect(document.title).toBe('Services | The Bayes Group');\n    });\n    const h1s = screen.getAllByRole('heading', { level: 1 });\n    expect(h1s).toHaveLength(1);\n    expect(h1s[0]).toHaveTextContent('Services');\n  });\n\n  test('has three sections with correct IDs', () => {\n    const ids = ['enablement', 'training', 'custom-development'];\n    ids.forEach((id) => {\n      const section = document.getElementById(id);\n      expect(section).toBeInTheDocument();\n    });\n  });\n\n  test('Enablement section lists all four items', () => {\n    const enablementItems = [\n      /AI readiness assessment/i,\n      /use[-\\s]case discovery and prioritization/i,\n      /AI strategy and roadmap/i,\n      /AI governance and responsible[-\\s]AI policy/i,\n    ];\n    const enablementSection = document.getElementById('enablement');\n    expect(enablementSection).toBeInTheDocument();\n\n    enablementItems.forEach((regex) => {\n      const el = within(enablementSection as HTMLElement).getByText(regex);\n      expect(el).toBeInTheDocument();\n    });\n\n    // Typical engagement line\n    expect(\n      within(enablementSection as HTMLElement).getByText(/Typical engagement/i)\n    ).toBeInTheDocument();\n  });\n\n  test('Training section lists all four items and a typical engagement line', () => {\n    const trainingItems = [\n      /executive AI briefings/i,\n      /hands[-\\s]on team workshops/i,\n      /deep[-\\s]learning bootcamps for technical teams/i,\n      /custom curricula/i,\n    ];\n    const trainingSection = document.getElementById('training');\n    expect(trainingSection).toBeInTheDocument();\n\n    trainingItems.forEach((regex) => {\n      const el = within(trainingSection as HTMLElement).getByText(regex);\n      expect(el).toBeInTheDocument();\n    });\n\n    expect(\n      within(trainingSection as HTMLElement).getByText(/Typical engagement/i)\n    ).toBeInTheDocument();\n  });\n\n  test('Custom Development section lists all five items and a typical engagement line', () => {\n    const customItems = [\n      /LLM and retrieval[-\\s]augmented \\(RAG\\) applications/i,\n      /AI agents and workflow automation/i,\n      /predictive models and ML pipelines/i,\n      /deep[-\\s]learning solutions/i,\n      /integration with existing systems/i,\n    ];\n    const customSection = document.getElementById('custom-development');\n    expect(customSection).toBeInTheDocument();\n\n    customItems.forEach((regex) => {\n      const el = within(customSection as HTMLElement).getByText(regex);\n      expect(el).toBeInTheDocument();\n    });\n\n    expect(\n      within(customSection as HTMLElement).getByText(/Typical engagement/i)\n    ).toBeInTheDocument();\n  });\n});\n",
+    "__tests__/acceptance/training.test.tsx": "import React from 'react';\nimport {\n  render,\n  screen,\n  within,\n  fireEvent,\n  waitFor,\n} from '@testing-library/react';\nimport { MemoryRouter } from 'react-router-dom';\nimport '@testing-library/jest-dom';\nimport App from '../../src/App';\nimport { trainingCourses } from '../../src/data/trainingCourses';\n\nfunction renderAt(path: string) {\n  render(\n    <MemoryRouter initialEntries={[path]}>\n      <App />\n    </MemoryRouter>\n  );\n}\n\n/**\n * Helper that returns the list of currently visible course titles.\n */\nfunction visibleCourseTitles(): string[] {\n  // Assuming each course title is rendered as an h3 heading.\n  const headings = screen.queryAllByRole('heading', { level: 3 });\n  return headings.map((h) => h.textContent?.trim() ?? '');\n}\n\ndescribe('Training page (/training)', () => {\n  beforeEach(() => {\n    renderAt('/training');\n  });\n\n  test('sets correct document title and contains a single h1', async () => {\n    await waitFor(() => {\n      expect(document.title).toBe('Training | The Bayes Group');\n    });\n    const h1s = screen.getAllByRole('heading', { level: 1 });\n    expect(h1s).toHaveLength(1);\n    expect(h1s[0]).toHaveTextContent('Training');\n  });\n\n  test('filter buttons exist, All is selected by default, and have correct aria-pressed values', () => {\n    const filters = ['All', 'Executives', 'Managers', 'Technical teams'];\n    filters.forEach((label) => {\n      const btn = screen.getByRole('button', { name: new RegExp(`^${label}$`, 'i') });\n      expect(btn).toBeInTheDocument();\n      if (label === 'All') {\n        expect(btn).toHaveAttribute('aria-pressed', 'true');\n      } else {\n        expect(btn).toHaveAttribute('aria-pressed', 'false');\n      }\n    });\n  });\n\n  test('All filter shows every training course', () => {\n    const titles = visibleCourseTitles();\n    const expected = trainingCourses.map((c) => c.title);\n    expect(titles.sort()).toEqual(expected.sort());\n  });\n\n  test('Audience filter works: only courses for the selected audience are displayed', () => {\n    const audiences = ['Executives', 'Managers', 'Technical teams'] as const;\n\n    audiences.forEach((aud) => {\n      const btn = screen.getByRole('button', { name: new RegExp(`^${aud}$`, 'i') });\n      fireEvent.click(btn);\n\n      // Verify aria-pressed states\n      audiences.concat('All').forEach((lbl) => {\n        const b = screen.getByRole('button', {\n          name: new RegExp(`^${lbl}$`, 'i'),\n        });\n        if (lbl === aud) {\n          expect(b).toHaveAttribute('aria-pressed', 'true');\n        } else {\n          expect(b).toHaveAttribute('aria-pressed', 'false');\n        }\n      });\n\n      // Expected titles for this audience\n      const expectedTitles = trainingCourses\n        .filter((c) => c.audience === aud)\n        .map((c) => c.title);\n\n      const visibleTitles = visibleCourseTitles();\n\n      // The visible titles should match exactly the expected ones\n      expect(visibleTitles.sort()).toEqual(expectedTitles.sort());\n\n      // Ensure that a course from a different audience is not rendered\n      const hiddenTitles = trainingCourses\n        .filter((c) => c.audience !== aud)\n        .map((c) => c.title);\n      hiddenTitles.forEach((t) => {\n        expect(screen.queryByText(t)).not.toBeInTheDocument();\n      });\n    });\n  });\n\n  test('Each displayed course card shows audience, format, duration, and three \u201cYou will learn\u201d items', () => {\n    // Use the default \u201cAll\u201d filter to display all courses\n    const cards = screen.getAllByTestId('training-course-card');\n    expect(cards).toHaveLength(trainingCourses.length);\n\n    cards.forEach((card) => {\n      // Title (h3)\n      const titleEl = within(card).getByRole('heading', { level: 3 });\n      const title = titleEl.textContent?.trim() ?? '';\n\n      const course = trainingCourses.find((c) => c.title === title);\n      expect(course).toBeDefined();\n\n      // Audience\n      expect(\n        within(card).getByText(new RegExp(`^${course!.audience}$`, 'i'))\n      ).toBeInTheDocument();\n\n      // Format\n      expect(\n        within(card).getByText(new RegExp(`^${course!.format}$`, 'i'))\n      ).toBeInTheDocument();\n\n      // Duration\n      expect(\n        within(card).getByText(new RegExp(`^${course!.duration}$`, 'i'))\n      ).toBeInTheDocument();\n\n      // \u201cYou will learn\u201d list\n      const learnItems = within(card).getAllByRole('listitem');\n      expect(learnItems).toHaveLength(3);\n      const learnTexts = learnItems.map((li) => li.textContent?.trim() ?? '');\n      expect(learnTexts.sort()).toEqual(course!.learn.slice().sort());\n    });\n  });\n});\n",
+    "__tests__/acceptance/about.test.tsx": "import React from 'react';\nimport { render, screen, within, waitFor } from '@testing-library/react';\nimport { MemoryRouter } from 'react-router-dom';\nimport '@testing-library/jest-dom';\nimport App from '../../src/App';\n\nfunction renderAt(path: string) {\n  render(\n    <MemoryRouter initialEntries={[path]}>\n      <App />\n    </MemoryRouter>\n  );\n}\n\ndescribe('About page (/about)', () => {\n  beforeEach(() => {\n    renderAt('/about');\n  });\n\n  test('sets correct document title and contains a single h1', async () => {\n    await waitFor(() => {\n      expect(document.title).toBe('About | The Bayes Group');\n    });\n    const h1s = screen.getAllByRole('heading', { level: 1 });\n    expect(h1s).toHaveLength(1);\n    expect(h1s[0]).toHaveTextContent('About');\n  });\n\n  test('mission and \u201cWhy Bayes\u201d paragraphs are present', () => {\n    // The exact wording of the mission paragraph is not prescribed,\n    // but we can check that there is at least one paragraph element\n    // containing the word \u201cmission\u201d.\n    const missionPara = screen.getByText(/mission/i, { selector: 'p' });\n    expect(missionPara).toBeInTheDocument();\n\n    // \u201cWhy Bayes\u201d paragraph should contain \u201cBayesian reasoning\u201d\n    const bayesPara = screen.getByText(/Bayesian reasoning/i, {\n      selector: 'p',\n    });\n    expect(bayesPara).toBeInTheDocument();\n  });\n\n  test('displays two placeholder founder cards with correct placeholder texts', () => {\n    const placeholders = screen.getAllByText('Founder Name');\n    expect(placeholders).toHaveLength(2);\n    const rolePlaceholders = screen.getAllByText(\n      /Co\u2011founder & Principal Data Scientist/i\n    );\n    expect(rolePlaceholders).toHaveLength(2);\n  });\n\n  test('company values list contains the four expected statements', () => {\n    const values = [\n      /Evidence over hype/i,\n      /Build to transfer/i,\n      /Vendor[-\\s]neutral/i,\n      /Responsible by design/i,\n    ];\n    values.forEach((regex) => {\n      const el = screen.getByText(regex);\n      expect(el).toBeInTheDocument();\n    });\n  });\n});\n",
+    "__tests__/acceptance/contact.test.tsx": "import React from 'react';\nimport {\n  render,\n  screen,\n  fireEvent,\n  waitFor,\n  within,\n} from '@testing-library/react';\nimport { MemoryRouter } from 'react-router-dom';\nimport '@testing-library/jest-dom';\nimport App from '../../src/App';\n\nfunction renderAt(path: string) {\n  render(\n    <MemoryRouter initialEntries={[path]}>\n      <App />\n    </MemoryRouter>\n  );\n}\n\n/**\n * Helper to fill the contact form fields.\n */\nfunction fillForm({\n  name = '',\n  email = '',\n  company = '',\n  request = '',\n  message = '',\n}: {\n  name?: string;\n  email?: string;\n  company?: string;\n  request?: string;\n  message?: string;\n}) {\n  const nameInput = screen.getAllByLabelText(/Name/i)[0] as HTMLInputElement;\n  const emailInput = screen.getAllByLabelText(/Email/i)[0] as HTMLInputElement;\n  const companyInput = screen\n    .getAllByLabelText(/Company/i)[0] as HTMLInputElement;\n  const requestSelect = screen\n    .getAllByLabelText(/What can we help with\\?/i)[0] as HTMLSelectElement;\n  const messageInput = screen\n    .getAllByLabelText(/Message/i)[0] as HTMLTextAreaElement;\n\n  fireEvent.change(nameInput, { target: { value: name } });\n  fireEvent.change(emailInput, { target: { value: email } });\n  fireEvent.change(companyInput, { target: { value: company } });\n  fireEvent.change(requestSelect, { target: { value: request } });\n  fireEvent.change(messageInput, { target: { value: message } });\n}\n\ndescribe('Contact page (/contact)', () => {\n  beforeEach(() => {\n    renderAt('/contact');\n  });\n\n  test('sets correct document title and contains a single h1', async () => {\n    await waitFor(() => {\n      expect(document.title).toBe(\n        'Book a consultation | The Bayes Group'\n      );\n    });\n    const h1s = screen.getAllByRole('heading', { level: 1 });\n    expect(h1s).toHaveLength(1);\n    expect(h1s[0]).toHaveTextContent('Book a consultation');\n  });\n\n  test('displays contact email address', () => {\n    expect(screen.getByText('hello@thebayesgroup.com')).toBeInTheDocument();\n  });\n\n  test('all form fields have associated labels', () => {\n    const nameInput = screen.getAllByLabelText(/Name/i)[0];\n    expect(nameInput).toBeInTheDocument();\n\n    const emailInput = screen.getAllByLabelText(/Email/i)[0];\n    expect(emailInput).toBeInTheDocument();\n\n    const companyInput = screen.getAllByLabelText(/Company/i)[0];\n    expect(companyInput).toBeInTheDocument();\n\n    const requestSelect = screen.getAllByLabelText(\n      /What can we help with\\?/i\n    )[0];\n    expect(requestSelect).toBeInTheDocument();\n\n    const messageInput = screen.getAllByLabelText(/Message/i)[0];\n    expect(messageInput).toBeInTheDocument();\n  });\n\n  test('validation errors appear when required fields are missing or email is invalid', async () => {\n    const submitBtn = screen.getByRole('button', {\n      name: /Send message/i,\n    });\n    fireEvent.click(submitBtn);\n\n    await waitFor(() => {\n      expect(screen.getByText('Please enter your name.')).toBeInTheDocument();\n      expect(\n        screen.getByText('Please enter a valid email address.')\n      ).toBeInTheDocument();\n      expect(screen.getByText('Please enter a message.')).toBeInTheDocument();\n    });\n\n    // No thank\u2011you message should be shown\n    expect(\n      screen.queryByText(/Thanks, we'll be in touch within one business day\\./i)\n    ).not.toBeInTheDocument();\n  });\n\n  test('invalid email address shows only the email error', async () => {\n    fillForm({\n      name: 'Jane Doe',\n      email: 'invalid-email',\n      message: 'I need help.',\n    });\n\n    const submitBtn = screen.getByRole('button', {\n      name: /Send message/i,\n    });\n    fireEvent.click(submitBtn);\n\n    await waitFor(() => {\n      expect(\n        screen.getByText('Please enter a valid email address.')\n      ).toBeInTheDocument();\n    });\n\n    // Name and message errors should not appear\n    expect(\n      screen.queryByText('Please enter your name.')\n    ).not.toBeInTheDocument();\n    expect(\n      screen.queryByText('Please enter a message.')\n    ).not.toBeInTheDocument();\n  });\n\n  test('successful submission shows thank\u2011you message, clears the form, and makes no network request', async () => {\n    // Spy on global fetch (should not be called)\n    const fetchSpy = jest.spyOn(window, 'fetch').mockImplementation(() =>\n      Promise.resolve(new Response())\n    );\n\n    fillForm({\n      name: 'John Doe',\n      email: 'test.user@example.com',\n      company: 'Acme Corp',\n      request: 'AI Enablement',\n      message: 'Please tell me more.',\n    });\n\n    const submitBtn = screen.getByRole('button', {\n      name: /Send message/i,\n    });\n    fireEvent.click(submitBtn);\n\n    await waitFor(() => {\n      expect(\n        screen.getByText(\n          /Thanks, we'll be in touch within one business day\\./i\n        )\n      ).toBeInTheDocument();\n    });\n\n    // Form fields should be cleared\n    expect(\n      (screen.getAllByLabelText(/Name/i)[0] as HTMLInputElement).value\n    ).toBe('');\n    expect(\n      (screen.getAllByLabelText(/Email/i)[0] as HTMLInputElement).value\n    ).toBe('');\n    expect(\n      (screen.getAllByLabelText(/Message/i)[0] as HTMLTextAreaElement).value\n    ).toBe('');\n\n    // Ensure fetch was never called\n    expect(fetchSpy).not.toHaveBeenCalled();\n    fetchSpy.mockRestore();\n  });\n});\n",
+    "__tests__/acceptance/notfound.test.tsx": "import React from 'react';\nimport { render, screen, waitFor } from '@testing-library/react';\nimport { MemoryRouter } from 'react-router-dom';\nimport '@testing-library/jest-dom';\nimport App from '../../src/App';\n\nfunction renderAt(path: string) {\n  render(\n    <MemoryRouter initialEntries={[path]}>\n      <App />\n    </MemoryRouter>\n  );\n}\n\ndescribe('404 Not Found page', () => {\n  test('unknown route displays \u201cPage not found\u201d heading and link back to home', async () => {\n    renderAt('/some/unknown/route');\n\n    await waitFor(() => {\n      const h1 = screen.getByRole('heading', {\n        level: 1,\n        name: /Page not found/i,\n      });\n      expect(h1).toBeInTheDocument();\n    });\n\n    // Link back to home page\n    const homeLink = document.querySelector('a[href=\"/\"]');\n    expect(homeLink).toBeInTheDocument();\n    expect(homeLink).toHaveTextContent(/home/i);\n  });\n});\n",
+    "__tests__/acceptance/contact-validation.test.tsx": "import React from 'react';\nimport {\n  render,\n  screen,\n  fireEvent,\n  waitFor,\n} from '@testing-library/react';\nimport { MemoryRouter } from 'react-router-dom';\nimport '@testing-library/jest-dom';\nimport App from '../../src/App';\n\nfunction renderAt(path: string) {\n  render(\n    <MemoryRouter initialEntries={[path]}>\n      <App />\n    </MemoryRouter>\n  );\n}\n\ndescribe('Contact page validation and network behavior', () => {\n  beforeEach(() => {\n    renderAt('/contact');\n  });\n\n  test('email field accepts syntactically valid email address without showing an error', async () => {\n    // Fill out the form with completely valid data, using a complex but valid email\n    const nameInput = screen.getByLabelText(/Name/i) as HTMLInputElement;\n    const emailInput = screen.getByLabelText(/Email/i) as HTMLInputElement;\n    const companyInput = screen.getByLabelText(/Company/i) as HTMLInputElement;\n    const requestSelect = screen.getByLabelText(\n      /What can we help with\\?/i\n    ) as HTMLSelectElement;\n    const messageInput = screen.getByLabelText(/Message/i) as HTMLTextAreaElement;\n\n    fireEvent.change(nameInput, { target: { value: 'Alice Example' } });\n    fireEvent.change(emailInput, {\n      target: { value: 'alice+test@sub.example.co.uk' },\n    });\n    fireEvent.change(companyInput, { target: { value: 'Example Corp' } });\n    fireEvent.change(requestSelect, { target: { value: 'Training' } });\n    fireEvent.change(messageInput, {\n      target: { value: 'Please get in touch.' },\n    });\n\n    // Submit the form\n    const submitBtn = screen.getByRole('button', {\n      name: /Send message/i,\n    });\n    fireEvent.click(submitBtn);\n\n    // Wait for the success message (implies no validation errors)\n    await waitFor(() => {\n      expect(\n        screen.getByText(\n          /Thanks, we'll be in touch within one business day\\./i\n        )\n      ).toBeInTheDocument();\n    });\n\n    // Ensure the email\u2011validation error is not shown\n    expect(\n      screen.queryByText('Please enter a valid email address.')\n    ).not.toBeInTheDocument();\n  });\n\n  test('invalid submit (missing required fields) does not trigger a network request', async () => {\n    // Spy on the global fetch function\n    const fetchSpy = jest.spyOn(window, 'fetch').mockImplementation(() =>\n      Promise.resolve(new Response())\n    );\n\n    // Click submit without entering any data\n    const submitBtn = screen.getByRole('button', {\n      name: /Send message/i,\n    });\n    fireEvent.click(submitBtn);\n\n    // Validation errors should appear\n    await waitFor(() => {\n      expect(screen.getByText('Please enter your name.')).toBeInTheDocument();\n      expect(\n        screen.getByText('Please enter a valid email address.')\n      ).toBeInTheDocument();\n      expect(screen.getByText('Please enter a message.')).toBeInTheDocument();\n    });\n\n    // No network request should have been made\n    expect(fetchSpy).not.toHaveBeenCalled();\n\n    fetchSpy.mockRestore();\n  });\n});\n",
+    "test_acceptance.py": "#!/usr/bin/env python3\n\"\"\"Runs the app's acceptance tests: the Jest files in __tests__/acceptance/. Generated by the pipeline; the tests\nthemselves are locked files written by the planner. ACCEPTANCE_MILESTONE=N runs only the tests of milestones 1..N.\"\"\"\nimport json\nimport os\nimport subprocess\nimport sys\n\nhere = os.path.dirname(os.path.abspath(__file__))\nos.chdir(here)\nif not os.path.isdir(\"node_modules\"):\n    lock = os.path.exists(\"package-lock.json\")\n    subprocess.run([\"npm\", \"ci\" if lock else \"install\", \"--include=dev\", \"--no-audit\", \"--no-fund\"], check=False, timeout=1500)\ncmd = [\"npx\", \"jest\", \"--ci\", \"__tests__/acceptance\"]\nm = os.environ.get(\"ACCEPTANCE_MILESTONE\", \"\")\nif m.isdigit():\n    cmd += [\"-t\", \"^(\" + \"|\".join(\"M%d\" % i for i in range(1, int(m) + 1)) + \"): \"]\n# The app's own test script may add node flags (e.g. --experimental-vm-modules): use the same ones.\ntry:\n    script = json.load(open(\"package.json\")).get(\"scripts\", {}).get(\"test\", \"\")\nexcept (OSError, ValueError):\n    script = \"\"\nenv = dict(os.environ)\nif \"--experimental-vm-modules\" in script:\n    env[\"NODE_OPTIONS\"] = (env.get(\"NODE_OPTIONS\", \"\") + \" --experimental-vm-modules\").strip()\nprint(\"Running: \" + \" \".join(cmd), flush=True)\nsys.exit(subprocess.run(cmd, env=env, timeout=1500).returncode)\n"
+  },
+  "acceptance_test": "#!/usr/bin/env python3\n\"\"\"Runs the app's acceptance tests: the Jest files in __tests__/acceptance/. Generated by the pipeline; the tests\nthemselves are locked files written by the planner. ACCEPTANCE_MILESTONE=N runs only the tests of milestones 1..N.\"\"\"\nimport json\nimport os\nimport subprocess\nimport sys\n\nhere = os.path.dirname(os.path.abspath(__file__))\nos.chdir(here)\nif not os.path.isdir(\"node_modules\"):\n    lock = os.path.exists(\"package-lock.json\")\n    subprocess.run([\"npm\", \"ci\" if lock else \"install\", \"--include=dev\", \"--no-audit\", \"--no-fund\"], check=False, timeout=1500)\ncmd = [\"npx\", \"jest\", \"--ci\", \"__tests__/acceptance\"]\nm = os.environ.get(\"ACCEPTANCE_MILESTONE\", \"\")\nif m.isdigit():\n    cmd += [\"-t\", \"^(\" + \"|\".join(\"M%d\" % i for i in range(1, int(m) + 1)) + \"): \"]\n# The app's own test script may add node flags (e.g. --experimental-vm-modules): use the same ones.\ntry:\n    script = json.load(open(\"package.json\")).get(\"scripts\", {}).get(\"test\", \"\")\nexcept (OSError, ValueError):\n    script = \"\"\nenv = dict(os.environ)\nif \"--experimental-vm-modules\" in script:\n    env[\"NODE_OPTIONS\"] = (env.get(\"NODE_OPTIONS\", \"\") + \" --experimental-vm-modules\").strip()\nprint(\"Running: \" + \" \".join(cmd), flush=True)\nsys.exit(subprocess.run(cmd, env=env, timeout=1500).returncode)\n",
+  "requirements": [
+    {
+      "id": "R1",
+      "section": "general",
+      "kind": "constraint",
+      "text": "Use Vite + React + TypeScript with react-router for the project."
+    },
+    {
+      "id": "R2",
+      "section": "general",
+      "kind": "constraint",
+      "text": "Style the site with plain CSS using a design\u2011token theme implemented as CSS custom properties."
+    },
+    {
+      "id": "R3",
+      "section": "general",
+      "kind": "constraint",
+      "text": "`npm run build` must produce a `dist/index.html` file."
+    },
+    {
+      "id": "R4",
+      "section": "general",
+      "kind": "constraint",
+      "text": "The site must be a static site with no backend, no user accounts, no analytics, no third\u2011party scripts, and no external font or image CDNs."
+    },
+    {
+      "id": "R5",
+      "section": "general",
+      "kind": "ui",
+      "text": "Use the color palette deep navy (#0B1F3A) as primary, white as background, and teal (#1F8A8A) as accent."
+    },
+    {
+      "id": "R6",
+      "section": "general",
+      "kind": "ui",
+      "text": "Apply a serif system\u2011font stack for headings and a clean sans\u2011serif system\u2011font stack for body text."
+    },
+    {
+      "id": "R7",
+      "section": "general",
+      "kind": "ui",
+      "text": "Display an inline\u2011SVG wordmark logo consisting of a small bell\u2011curve graphic followed by the text \"The Bayes Group\"."
+    },
+    {
+      "id": "R8",
+      "section": "general",
+      "kind": "ui",
+      "text": "The layout must be responsive from 390\u202fpx width (phone) to 1440\u202fpx width (desktop) and never scroll horizontally."
+    },
+    {
+      "id": "R9",
+      "section": "general",
+      "kind": "ui",
+      "text": "On phones the header navigation must collapse into a \"Menu\" button that toggles the visibility of the navigation links."
+    },
+    {
+      "id": "R10",
+      "section": "1",
+      "kind": "ui",
+      "text": "Header on every page must contain the wordmark linking to \"/\", navigation links to Services, Training, About, Contact, and a \"Book a consultation\" button linking to \"/contact\"."
+    },
+    {
+      "id": "R11",
+      "section": "1",
+      "kind": "ui",
+      "text": "Footer on every page must contain the wordmark, the line \"AI enablement, training and custom development.\", the same navigation links as the header, and the text \"\u00a9 2026 The Bayes Group\"."
+    },
+    {
+      "id": "R12",
+      "section": "1",
+      "kind": "logic",
+      "text": "Each page must set its document.title correctly (e.g., \"Services | The Bayes Group\" for /services and \"The Bayes Group | Evidence-driven AI\" for the home page)."
+    },
+    {
+      "id": "R13",
+      "section": "1",
+      "kind": "ui",
+      "text": "Each page must contain exactly one <h1> element."
+    },
+    {
+      "id": "R14",
+      "section": "1",
+      "kind": "ui",
+      "text": "Home page hero must display an <h1> with text \"Evidence-driven AI, built for your business.\"."
+    },
+    {
+      "id": "R15",
+      "section": "1",
+      "kind": "ui",
+      "text": "Home page hero must contain a sentence of value proposition and two buttons: \"Book a consultation\" linking to /contact and \"Explore services\" linking to /services."
+    },
+    {
+      "id": "R16",
+      "section": "1",
+      "kind": "ui",
+      "text": "Home page must show three pillar cards titled \"AI Enablement\", \"Training\" and \"Custom Development\" each with two or three sentences and a \"Learn more\" link to the corresponding section on /services (/services#enablement, /services#training, /services#custom-development)."
+    },
+    {
+      "id": "R17",
+      "section": "1",
+      "kind": "ui",
+      "text": "Home page must have a \"How we work\" section with four numbered steps: Assess, Design, Build, Enable, each step showing one sentence."
+    },
+    {
+      "id": "R18",
+      "section": "1",
+      "kind": "ui",
+      "text": "Home page must have a \"Why The Bayes Group\" section with four points: credentialed data scientists, hands\u2011on builders, vendor\u2011neutral advice, knowledge transfer so your team owns the result."
+    },
+    {
+      "id": "R19",
+      "section": "1",
+      "kind": "ui",
+      "text": "Home page must end with a call\u2011to\u2011action band containing the text \"Ready to put AI to work?\" and a \"Book a consultation\" button."
+    },
+    {
+      "id": "R20",
+      "section": "2",
+      "kind": "ui",
+      "text": "Services page must have an <h1> with text \"Services\"."
+    },
+    {
+      "id": "R21",
+      "section": "2",
+      "kind": "ui",
+      "text": "Services page must contain three sections with ids \"enablement\", \"training\", and \"custom-development\" in that order."
+    },
+    {
+      "id": "R22",
+      "section": "2",
+      "kind": "ui",
+      "text": "Enablement section must list: AI readiness assessment; use\u2011case discovery and prioritization; AI strategy and roadmap; AI governance and responsible\u2011AI policy."
+    },
+    {
+      "id": "R23",
+      "section": "2",
+      "kind": "ui",
+      "text": "Training section must list: executive AI briefings; hands\u2011on team workshops; deep\u2011learning bootcamps for technical teams; custom curricula."
+    },
+    {
+      "id": "R24",
+      "section": "2",
+      "kind": "ui",
+      "text": "Custom development section must list: LLM and retrieval\u2011augmented (RAG) applications; AI agents and workflow automation; predictive models and ML pipelines; deep\u2011learning solutions; integration with existing systems."
+    },
+    {
+      "id": "R25",
+      "section": "2",
+      "kind": "ui",
+      "text": "Each listed item on the Services page must show its name and a one\u2011sentence description."
+    },
+    {
+      "id": "R26",
+      "section": "2",
+      "kind": "ui",
+      "text": "Each Services section must end with a line \"Typical engagement: 2 to 6 weeks\" (example wording)."
+    },
+    {
+      "id": "R27",
+      "section": "3",
+      "kind": "ui",
+      "text": "Training page must have an <h1> with text \"Training\"."
+    },
+    {
+      "id": "R28",
+      "section": "3",
+      "kind": "ui",
+      "text": "Training page must display at least six course cards."
+    },
+    {
+      "id": "R29",
+      "section": "3",
+      "kind": "ui",
+      "text": "Each course card must show the course title, audience (exactly one of: Executives, Managers, Technical teams), format (Half\u2011day briefing, 1\u2011day workshop or Multi\u2011week bootcamp), duration, and a \"You will learn\" list of three items."
+    },
+    {
+      "id": "R30",
+      "section": "3",
+      "kind": "constraint",
+      "text": "At least one course must exist for each audience type (Executives, Managers, Technical teams)."
+    },
+    {
+      "id": "R31",
+      "section": "3",
+      "kind": "ui",
+      "text": "Above the catalog on the Training page must be four filter buttons labeled All, Executives, Managers, Technical teams."
+    },
+    {
+      "id": "R32",
+      "section": "3",
+      "kind": "logic",
+      "text": "When the page loads, the \"All\" filter button must be selected and all courses must be visible."
+    },
+    {
+      "id": "R33",
+      "section": "3",
+      "kind": "logic",
+      "text": "Clicking a filter button for an audience must show only the courses whose audience matches that filter."
+    },
+    {
+      "id": "R34",
+      "section": "3",
+      "kind": "ui",
+      "text": "The selected filter button must be visually distinguished and have aria-pressed=\"true\"."
+    },
+    {
+      "id": "R35",
+      "section": "4",
+      "kind": "ui",
+      "text": "About page must have an <h1> with text \"About\"."
+    },
+    {
+      "id": "R36",
+      "section": "4",
+      "kind": "ui",
+      "text": "About page must contain a mission paragraph and a \"Why Bayes\" paragraph describing Bayesian reasoning as the approach."
+    },
+    {
+      "id": "R37",
+      "section": "4",
+      "kind": "ui",
+      "text": "About page must include two founder cards with placeholder content: name \"Founder Name\", role \"Co\u2011founder & Principal Data Scientist\", a credentials list and a short bio, all marked as placeholders."
+    },
+    {
+      "id": "R38",
+      "section": "4",
+      "kind": "ui",
+      "text": "About page must list four values: Evidence over hype; Build to transfer; Vendor\u2011neutral; Responsible by design."
+    },
+    {
+      "id": "R39",
+      "section": "5",
+      "kind": "ui",
+      "text": "Contact page must have an <h1> with text \"Book a consultation\"."
+    },
+    {
+      "id": "R40",
+      "section": "5",
+      "kind": "ui",
+      "text": "Contact page must display the email address hello@thebayesgroup.com."
+    },
+    {
+      "id": "R41",
+      "section": "5",
+      "kind": "ui",
+      "text": "Contact page must contain a form with labelled fields: Name, Email, Company, \"What can we help with?\" (select with options AI Enablement, Training, Custom Development, Not sure yet), and Message."
+    },
+    {
+      "id": "R42",
+      "section": "5",
+      "kind": "logic",
+      "text": "Name, Email and Message fields are required."
+    },
+    {
+      "id": "R43",
+      "section": "5",
+      "kind": "logic",
+      "text": "Email field must validate that the input is a syntactically valid email address."
+    },
+    {
+      "id": "R44",
+      "section": "5",
+      "kind": "ui",
+      "text": "When a required field is empty or Email is invalid on submit, an error message must appear next to the field: \"Please enter your name.\", \"Please enter a valid email address.\", or \"Please enter a message.\" respectively."
+    },
+    {
+      "id": "R45",
+      "section": "5",
+      "kind": "logic",
+      "text": "On an invalid submit, no network request must be sent."
+    },
+    {
+      "id": "R46",
+      "section": "5",
+      "kind": "logic",
+      "text": "On a valid submit, no network request is sent; the UI must display the message \"Thanks, we'll be in touch within one business day.\" and clear all form fields."
+    },
+    {
+      "id": "R47",
+      "section": "6",
+      "kind": "ui",
+      "text": "Any unknown route must render a page with an <h1> \"Page not found\" and a link back to the home page."
+    },
+    {
+      "id": "R48",
+      "section": "Accessibility",
+      "kind": "ui",
+      "text": "All pages must include semantic landmarks: <header>, <nav>, <main>, and <footer>."
+    },
+    {
+      "id": "R49",
+      "section": "Accessibility",
+      "kind": "ui",
+      "text": "Every form field must have an associated <label> element."
+    },
+    {
+      "id": "R50",
+      "section": "Accessibility",
+      "kind": "ui",
+      "text": "Keyboard focus outline must be visible on interactive elements."
+    },
+    {
+      "id": "R51",
+      "section": "Accessibility",
+      "kind": "constraint",
+      "text": "All text must meet WCAG AA contrast requirements against its background."
+    }
+  ],
+  "uncovered_requirements": [],
+  "weak_tests": []
+}
