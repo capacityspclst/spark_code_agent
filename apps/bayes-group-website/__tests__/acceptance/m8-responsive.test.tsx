@@ -10,7 +10,7 @@ function setWindowWidth(width: number) {
   window.dispatchEvent(new Event('resize'));
 }
 
-test('Header navigation collapses into a “Menu” button on small screens and expands on click', () => {
+test('Header navigation collapses into a “Menu” button on small screens and expands on click', async () => {
   // ------- Large screen (desktop) ---------------------------------
   setWindowWidth(1440);
   const { unmount } = render(<App />);
@@ -49,14 +49,14 @@ test('Header navigation collapses into a “Menu” button on small screens and 
   });
 
   // Open the menu
-  userEvent.click(menuBtn);
+  await userEvent.click(menuBtn);
   navLinks.forEach((label) => {
     const link = within(smallHeader).getByRole('link', { name: label });
     expect(link).toBeVisible();
   });
 
   // Close the menu again
-  userEvent.click(menuBtn);
+  await userEvent.click(menuBtn);
   navLinks.forEach((label) => {
     const link = within(smallHeader).queryByRole('link', { name: label });
     if (link) {
