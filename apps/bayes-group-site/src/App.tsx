@@ -10,6 +10,9 @@ import Contact from './pages/Contact';
 import NotFound from './pages/NotFound';
 
 const ScrollToTop: React.FC = () => {
+  if (typeof window !== 'undefined' && !(window as any).scrollTo) {
+    (window as any).scrollTo = () => {};
+  }
   const { pathname } = useLocation();
   useEffect(() => {
     window.scrollTo(0, 0);
