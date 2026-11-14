@@ -16,7 +16,7 @@ const Home: React.FC = () => {
         <p>We turn data into actionable intelligence through custom AI solutions, hands‑on training, and end‑to‑end enablement.</p>
         <div style={{ display: 'flex', gap: 'var(--space-4)', justifyContent: 'center', marginTop: 'var(--space-4)' }}>
           <Link to="/contact" className="btn">Book a consultation</Link>
-          <Link to="/services" className="btn btn--secondary">Explore services</Link>
+          <button className="btn btn--secondary" onClick={() => { window.location.href = '/services'; }}>Explore services</button>
         </div>
       </section>
 
@@ -43,7 +43,7 @@ const Home: React.FC = () => {
       <section className="how-we-work" style={{ marginBottom: 'var(--space-8)' }}>
         <h2>How we work</h2>
         <ul>
-          <li><strong>Assess</strong> – We evaluate data, people, and processes to define AI opportunities.</li>
+          <li>Assess – We evaluate data, people, and processes to define AI opportunities.</li>
           <li><strong>Design</strong> – Co‑create solution architectures aligned with business goals.</li>
           <li><strong>Build</strong> – Develop, test, and iterate fast using proven ML pipelines.</li>
           <li><strong>Enable</strong> – Transfer knowledge and embed governance for sustainable impact.</li>
@@ -55,7 +55,7 @@ const Home: React.FC = () => {
         <h2>Why The Bayes Group</h2>
         <ul>
           <li>Credentialed data scientists</li>
-          <li>Hands‑on builders</li>
+          <li>hands-on builders</li>
           <li>Vendor‑neutral advice</li>
           <li>Knowledge transfer so your team owns the result</li>
         </ul>

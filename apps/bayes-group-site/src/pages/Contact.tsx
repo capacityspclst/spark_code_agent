@@ -16,7 +16,12 @@ type Errors = {
   message?: string;
 };
 
+import { useEffect } from 'react';
+
 const Contact: React.FC = () => {
+  useEffect(() => {
+    document.title = 'Book a consultation | The Bayes Group';
+  }, []);
   const [form, setForm] = useState<FormState>(initialState);
   const [errors, setErrors] = useState<Errors>({});
   const [submitted, setSubmitted] = useState(false);

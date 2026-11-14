@@ -16,7 +16,7 @@ const Services: React.FC = () => {
           description="Identify data gaps, talent needs, and quick‑win opportunities."
         />
         <ServiceCard
-          title="Use‑case discovery and prioritization"
+          title="Use case discovery and prioritization"
           description="Map business problems to feasible AI solutions."
         />
         <ServiceCard
