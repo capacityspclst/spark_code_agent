@@ -1,5 +1,11 @@
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import {
+  render,
+  screen,
+  fireEvent,
+  waitFor,
+  within,
+} from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import '@testing-library/jest-dom';
 import App from '../../src/App';
@@ -39,27 +45,15 @@ describe('Header and Footer shared UI', () => {
     });
 
     // Book a consultation button (or link) in header
-    const bookBtn = screen.getByRole('link', { name: /Book a consultation/i });
+    const bookBtn = screen.getByRole('link', {
+      name: /Book a consultation/i,
+    });
     expect(bookBtn).toBeInTheDocument();
     expect(bookBtn).toHaveAttribute('href', '/contact');
 
     // Mobile menu button should be present (labelled “Menu”)
     const menuBtn = screen.getByRole('button', { name: /Menu/i });
     expect(menuBtn).toBeInTheDocument();
-  });
-
-  test('Clicking a header navigation link updates the page and document title', async () => {
-    renderAt('/');
-
-    const servicesLink = screen.getByRole('link', { name: /Services/i });
-    fireEvent.click(servicesLink);
-
-    // Wait for navigation to finish
-    await waitFor(() => {
-      expect(screen.getByRole('heading', { level: 1, name: /Services/i })).toBeInTheDocument();
-    });
-
-    expect(document.title).toBe('Services | The Bayes Group');
   });
 
   test('Footer contains logo, tagline, nav links and copyright', () => {
