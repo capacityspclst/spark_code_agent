@@ -106,6 +106,7 @@ const Training: React.FC = () => {
             <p><strong>Audience:</strong> {c.audience}</p>
             <p><strong>Format:</strong> {c.format}</p>
             <p><strong>Duration:</strong> {c.duration}</p>
+            <p>You will learn:</p>
             <ul>
               {c.learn.map((item, i) => (
                 <li key={i}>{item}</li>

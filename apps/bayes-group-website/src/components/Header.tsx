@@ -4,11 +4,11 @@ import { Wordmark } from './Wordmark';
 
 const Header: React.FC = () => {
   const [menuOpen, setMenuOpen] = useState(false);
-  const [isMobile, setIsMobile] = useState(() => window.innerWidth < 420);
+  const [isMobile, setIsMobile] = useState(() => window.innerWidth <= 390);
 
   useEffect(() => {
     const handleResize = () => {
-      const mobile = window.innerWidth < 420;
+      const mobile = window.innerWidth <= 390;
       setIsMobile(mobile);
       if (!mobile) setMenuOpen(false);
     };
@@ -29,34 +29,40 @@ const Header: React.FC = () => {
 
   return (
     <header>
-      <Link to="/" aria-label="The Bayes Group">
-        <Wordmark className="wordmark" />
-      </Link>
-      {/* Booking button always visible */}
-    <Link to="/contact" className="button-primary" role="button" style={{ marginLeft: 'var(--space-4)' }}>Book a consultation</Link>
-    {isMobile ? (
-        <>
-          <button
-            type="button"
-            aria-label="Menu"
-            aria-controls="mobile-nav"
-            aria-expanded={menuOpen}
-            onClick={toggleMenu}
-            className="button-primary"
-          >
-            Menu
-          </button>
-          {menuOpen && (
-            <nav id="mobile-nav" style={{ flexDirection: 'column', gap: 'var(--space-3)', paddingTop: 'var(--space-3)' }}>
+      <div className="header-brand">
+        <Link to="/" aria-label="The Bayes Group home">
+          <Wordmark className="wordmark" />
+        </Link>
+      </div>
+      <div className="header-controls">
+        {isMobile ? (
+          <>
+            <button
+              type="button"
+              aria-label="Menu"
+              aria-controls="mobile-nav"
+              aria-expanded={menuOpen}
+              onClick={toggleMenu}
+              className="button-secondary"
+            >
+              Menu
+            </button>
+            <Link to="/contact" className="button-primary" role="button">Book a consultation</Link>
+            {menuOpen && (
+              <nav id="mobile-nav" className="mobile-nav">
+                {navLinks}
+              </nav>
+            )}
+          </>
+        ) : (
+          <>
+            <nav className="desktop-nav">
               {navLinks}
             </nav>
-          )}
-        </>
-      ) : (
-        <nav style={{ display: 'flex', alignItems: 'center' }}>
-          {navLinks}
-        </nav>
-      )}
+            <Link to="/contact" className="button-primary" role="button">Book a consultation</Link>
+          </>
+        )}
+      </div>
     </header>
   );
 };

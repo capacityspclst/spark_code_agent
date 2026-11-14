@@ -1,7 +1,7 @@
 import React from 'react';
 
 const About: React.FC = () => (
-  <div>
+  <div className="container">
     <h1>About</h1>
     <p>Our mission is to empower businesses with evidence-driven AI solutions that create measurable value.</p>
     <p>We apply Bayesian reasoning—updating beliefs as evidence arrives—to every engagement, ensuring decisions are always data-backed.</p>

@@ -44,7 +44,7 @@ const Contact: React.FC = () => {
   };
 
   return (
-    <div>
+    <div className="container">
       <h1>Book a consultation</h1>
       <p>hello@thebayesgroup.com</p>
       {submitted && <p>Thanks, we'll be in touch within one business day.</p>}
