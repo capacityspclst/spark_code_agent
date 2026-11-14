@@ -10,10 +10,10 @@ const Footer: React.FC = () => (
     <div>
       <p>AI enablement, training and custom development.</p>
       <nav>
-        <Link to="/services">Services</Link>
-        <Link to="/training">Training</Link>
-        <Link to="/about">About</Link>
-        <Link to="/contact">Contact</Link>
+        <Link to="/services" aria-hidden="true">Services</Link>
+        <Link to="/training" aria-hidden="true">Training</Link>
+        <Link to="/about" aria-hidden="true">About</Link>
+        <Link to="/contact" aria-hidden="true">Contact</Link>
       </nav>
       <p>© 2026 The Bayes Group</p>
     </div>

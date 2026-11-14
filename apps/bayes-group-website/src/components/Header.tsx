@@ -20,10 +20,10 @@ const Header: React.FC = () => {
 
   const navLinks = (
     <>
-      <Link to="/services">Services</Link>
-      <Link to="/training">Training</Link>
-      <Link to="/about">About</Link>
-      <Link to="/contact">Contact</Link>
+      <button className="button-secondary" onClick={() => window.location.href='/services'}>Services</button>
+      <button className="button-secondary" onClick={() => window.location.href='/training'}>Training</button>
+      <button className="button-secondary" onClick={() => window.location.href='/about'}>About</button>
+      <button className="button-secondary" onClick={() => window.location.href='/contact'}>Contact</button>
     </>
   );
 
@@ -55,9 +55,7 @@ const Header: React.FC = () => {
       ) : (
         <nav style={{ display: 'flex', alignItems: 'center' }}>
           {navLinks}
-          <Link to="/contact" className="button-primary" role="button" style={{ marginLeft: 'var(--space-4)' }}>
-            Book a consultation
-          </Link>
+          <button className="button-primary" onClick={() => window.location.href='/contact'}>Book a consultation</button>
         </nav>
       )}
     </header>

@@ -12,7 +12,7 @@ const Services: React.FC = () => (
           <strong>AI readiness assessment</strong> – A structured review of data, talent, and infrastructure.
         </li>
         <li>
-          <strong>Use‑case discovery and prioritization</strong> – Identify high‑impact AI opportunities.
+          <strong>Use-case discovery and prioritization</strong> – Identify high‑impact AI opportunities.
         </li>
         <li>
           <strong>AI strategy and roadmap</strong> – A phased plan aligned with business goals.
