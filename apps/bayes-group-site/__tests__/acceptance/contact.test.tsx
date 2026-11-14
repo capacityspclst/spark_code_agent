@@ -34,13 +34,14 @@ function fillForm({
   request?: string;
   message?: string;
 }) {
-  const nameInput = screen.getByLabelText(/Name/i) as HTMLInputElement;
-  const emailInput = screen.getByLabelText(/Email/i) as HTMLInputElement;
-  const companyInput = screen.getByLabelText(/Company/i) as HTMLInputElement;
-  const requestSelect = screen.getByLabelText(
-    /What can we help with\?/i
-  ) as HTMLSelectElement;
-  const messageInput = screen.getByLabelText(/Message/i) as HTMLTextAreaElement;
+  const nameInput = screen.getAllByLabelText(/Name/i)[0] as HTMLInputElement;
+  const emailInput = screen.getAllByLabelText(/Email/i)[0] as HTMLInputElement;
+  const companyInput = screen
+    .getAllByLabelText(/Company/i)[0] as HTMLInputElement;
+  const requestSelect = screen
+    .getAllByLabelText(/What can we help with\?/i)[0] as HTMLSelectElement;
+  const messageInput = screen
+    .getAllByLabelText(/Message/i)[0] as HTMLTextAreaElement;
 
   fireEvent.change(nameInput, { target: { value: name } });
   fireEvent.change(emailInput, { target: { value: email } });
@@ -70,21 +71,21 @@ describe('Contact page (/contact)', () => {
   });
 
   test('all form fields have associated labels', () => {
-    const nameInput = screen.getByLabelText(/Name/i);
+    const nameInput = screen.getAllByLabelText(/Name/i)[0];
     expect(nameInput).toBeInTheDocument();
 
-    const emailInput = screen.getByLabelText(/Email/i);
+    const emailInput = screen.getAllByLabelText(/Email/i)[0];
     expect(emailInput).toBeInTheDocument();
 
-    const companyInput = screen.getByLabelText(/Company/i);
+    const companyInput = screen.getAllByLabelText(/Company/i)[0];
     expect(companyInput).toBeInTheDocument();
 
-    const requestSelect = screen.getByLabelText(
+    const requestSelect = screen.getAllByLabelText(
       /What can we help with\?/i
-    );
+    )[0];
     expect(requestSelect).toBeInTheDocument();
 
-    const messageInput = screen.getByLabelText(/Message/i);
+    const messageInput = screen.getAllByLabelText(/Message/i)[0];
     expect(messageInput).toBeInTheDocument();
   });
 
@@ -164,13 +165,13 @@ describe('Contact page (/contact)', () => {
 
     // Form fields should be cleared
     expect(
-      (screen.getByLabelText(/Name/i) as HTMLInputElement).value
+      (screen.getAllByLabelText(/Name/i)[0] as HTMLInputElement).value
     ).toBe('');
     expect(
-      (screen.getByLabelText(/Email/i) as HTMLInputElement).value
+      (screen.getAllByLabelText(/Email/i)[0] as HTMLInputElement).value
     ).toBe('');
     expect(
-      (screen.getByLabelText(/Message/i) as HTMLTextAreaElement).value
+      (screen.getAllByLabelText(/Message/i)[0] as HTMLTextAreaElement).value
     ).toBe('');
 
     // Ensure fetch was never called

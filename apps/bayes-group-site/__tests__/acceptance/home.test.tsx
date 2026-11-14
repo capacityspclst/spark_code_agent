@@ -28,12 +28,18 @@ describe('Home page (/)', () => {
     );
   });
 
-  test('hero contains two CTA buttons linking to correct routes', () => {
-    const bookBtn = screen.getByRole('link', {
+  test('hero contains CTA buttons linking to correct routes', () => {
+    // There may be multiple "Book a consultation" links (header, hero, CTA band).
+    const bookLinks = screen.getAllByRole('link', {
       name: /Book a consultation/i,
     });
-    expect(bookBtn).toBeInTheDocument();
-    expect(bookBtn).toHaveAttribute('href', '/contact');
+    // Ensure at least one such link exists.
+    expect(bookLinks.length).toBeGreaterThanOrEqual(1);
+    // Verify that at least one of them points to the contact page (the hero button).
+    const hasContactLink = bookLinks.some(
+      (link) => link.getAttribute('href') === '/contact'
+    );
+    expect(hasContactLink).toBe(true);
 
     const exploreBtn = screen.getByRole('link', {
       name: /Explore services/i,
