@@ -26,7 +26,6 @@ const Logo: React.FC = () => (
       The Bayes Group
     </text>
   </svg>
-  Home
 );
 
 export default Logo;

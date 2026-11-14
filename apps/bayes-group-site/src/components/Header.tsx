@@ -21,10 +21,14 @@ const Header: React.FC = () => {
           <Link to="/about">About</Link>
           <Link to="/contact">Contact</Link>
         </div>
-        {/* Book consultation link */}
-        <Link to="/contact" className="btn header-cta">
+        {/* Book consultation button */}
+        <button
+          type="button"
+          className="btn header-cta"
+          onClick={() => navigate('/contact')}
+        >
           Book a consultation
-        </Link>
+        </button>
         {/* Mobile menu button */}
         <button
           type="button"
