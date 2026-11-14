@@ -27,7 +27,7 @@ const Home: React.FC = () => (
       </div>
       <div className="card">
         <h3>Custom Development</h3>
-        <p>Build production‑ready AI solutions that integrate with your stack.</p>
+        <p>Develop production‑ready AI solutions that integrate with your stack.</p>
         <p>From LLMs to predictive pipelines, we deliver end‑to‑end.</p>
         <Link to="/services#custom-development" className="button-secondary" role="link">Learn more</Link>
       </div>

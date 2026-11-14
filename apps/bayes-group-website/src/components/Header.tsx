@@ -20,7 +20,7 @@ const Header: React.FC = () => {
 
   const navLinks = (
     <>
-      <Link to="/services" className="button-secondary" aria-label="Services">Services</Link>
+      <Link to="/services" className="button-secondary">Services</Link>
       <Link to="/training" className="button-secondary">Training</Link>
       <Link to="/about" className="button-secondary">About</Link>
       <Link to="/contact" className="button-secondary">Contact</Link>
@@ -39,17 +39,33 @@ const Header: React.FC = () => {
             aria-label="Menu"
             aria-controls="mobile-nav"
             aria-expanded={menuOpen}
-            onClick={() => toggleMenu()}
+            onClick={toggleMenu}
             className="button-primary"
           >
             Menu
           </button>
-          {menuOpen && (
-            <nav id="mobile-nav" style={{ position: 'absolute', top: '100%', left: 0, right: 0, background: 'var(--color-bg)', padding: 'var(--space-4)' }}>
-              {navLinks}
-              <Link to="/contact" className="button-primary" role="button" style={{ display: 'block', marginTop: 'var(--space-4)' }}>Book a consultation</Link>
-            </nav>
-          )}
+          <nav
+            id="mobile-nav"
+            style={{
+              position: 'absolute',
+              top: '100%',
+              left: 0,
+              right: 0,
+              background: 'var(--color-bg)',
+              padding: 'var(--space-4)',
+              display: menuOpen ? 'block' : 'none',
+            }}
+          >
+            {navLinks}
+            <Link
+              to="/contact"
+              className="button-primary"
+              role="button"
+              style={{ display: 'block', marginTop: 'var(--space-4)' }}
+            >
+              Book a consultation
+            </Link>
+          </nav>
         </>
       ) : (
         <nav style={{ display: 'flex', alignItems: 'center' }}>
