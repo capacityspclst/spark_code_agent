@@ -47,7 +47,7 @@ const Services: React.FC = () => (
       <h2>Custom Development</h2>
       <ul>
         <li>
-          <strong>LLM and retrieval-augmented (RAG) applications</strong> – Build conversational agents with contextual grounding.
+          <strong>LLM and retrieval-augmented RAG applications</strong> – Build conversational agents with contextual grounding.
         </li>
         <li>
           <strong>AI agents and workflow automation</strong> – Automate processes with intelligent agents.
