@@ -12,13 +12,13 @@ const Services: React.FC = () => (
           <strong>AI readiness assessment</strong> – A structured review of data, talent, and infrastructure.
         </li>
         <li>
-          <strong>Use‑case discovery and prioritization</strong> – Identify high‑impact AI opportunities.
+          <strong>Use-case discovery and prioritization</strong> – Identify high-impact AI opportunities.
         </li>
         <li>
           <strong>AI strategy and roadmap</strong> – A phased plan aligned with business goals.
         </li>
         <li>
-          <strong>AI governance and responsible‑AI policy</strong> – Frameworks to manage risk and ethics.
+          <strong>AI governance and responsible-AI policy</strong> – Frameworks to manage risk and ethics.
         </li>
       </ul>
       <p>Typical engagement: 2 to 6 weeks</p>
@@ -47,7 +47,7 @@ const Services: React.FC = () => (
       <h2>Custom Development</h2>
       <ul>
         <li>
-          <strong>LLM and retrieval‑augmented (RAG) applications</strong> – Build conversational agents with contextual grounding.
+          <strong>LLM and retrieval-augmented (RAG) applications</strong> – Build conversational agents with contextual grounding.
         </li>
         <li>
           <strong>AI agents and workflow automation</strong> – Automate processes with intelligent agents.

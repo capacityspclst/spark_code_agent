@@ -43,19 +43,11 @@ const Contact: React.FC = () => {
     }
   };
 
-  if (submitted) {
-    return (
-      <div>
-        <h1>Book a consultation</h1>
-        <p>Thanks, we'll be in touch within one business day.</p>
-      </div>
-    );
-  }
-
   return (
     <div>
       <h1>Book a consultation</h1>
       <p>hello@thebayesgroup.com</p>
+      {submitted && <p>Thanks, we'll be in touch within one business day.</p>}
       <form onSubmit={handleSubmit} noValidate>
         <div style={{ marginBottom: 'var(--space-4)' }}>
           <label htmlFor="name">Name</label>

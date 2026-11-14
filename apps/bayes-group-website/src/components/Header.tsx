@@ -20,10 +20,10 @@ const Header: React.FC = () => {
 
   const navLinks = (
     <>
-      <button className="button-secondary" onClick={() => window.location.href='/services'}>Services</button>
-      <button className="button-secondary" onClick={() => window.location.href='/training'}>Training</button>
+      <Link to="/services" className="button-secondary" aria-label="Services">Services</Link>
+      <Link to="/training" className="button-secondary">Training</Link>
       <Link to="/about" className="button-secondary">About</Link>
-      <button className="button-secondary" onClick={() => window.location.href='/contact'}>Contact</button>
+      <Link to="/contact" className="button-secondary">Contact</Link>
     </>
   );
 

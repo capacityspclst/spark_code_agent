@@ -28,7 +28,7 @@ const TitleManager: React.FC = () => {
         title = 'About | The Bayes Group';
         break;
       case '/contact':
-        title = 'Book a consultation | The Bayes Group';
+        title = 'Contact | The Bayes Group';
         break;
       default:
         title = 'Page not found | The Bayes Group';

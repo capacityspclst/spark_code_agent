@@ -8,7 +8,7 @@ const Home: React.FC = () => (
       <p>We partner with organizations to turn data into actionable intelligence.</p>
       <div style={{ display: 'flex', gap: 'var(--space-4)', justifyContent: 'center', marginTop: 'var(--space-4)' }}>
         <Link to="/contact" className="button-primary">Book a consultation</Link>
-        <Link to="/services" className="button-secondary">Explore services</Link>
+        <Link to="/services" className="button-secondary" role="link">Explore services</Link>
       </div>
     </section>
 
@@ -37,8 +37,8 @@ const Home: React.FC = () => (
       <h2>How we work</h2>
       <ol>
         <li><strong>Assess</strong> – We evaluate data maturity and business goals.</li>
-        <li><strong>Design</strong> – We co‑design a roadmap aligned with impact.</li>
-        <li><strong>Build</strong> – We deliver production‑ready AI solutions.</li>
+        <li>Design – We co‑design a roadmap aligned with impact.</li>
+        <li>Build – We deliver production‑ready AI solutions.</li>
         <li><strong>Enable</strong> – We transfer knowledge and embed processes.</li>
       </ol>
     </section>
