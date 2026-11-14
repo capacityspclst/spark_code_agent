@@ -11,8 +11,7 @@ const Home: React.FC = () => {
         <p>We partner with organizations to turn data into actionable intelligence.</p>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--space-4)', justifyContent: 'center', marginTop: 'var(--space-4)' }}>
           <Link to="/contact" className="button-primary">Book a consultation</Link>
-          <button onClick={goToServices} className="button-secondary">Explore services</button>
-          <Link to="/services" className="button-secondary" role="link">Explore services</Link>
+          <Link to="/services" className="button-secondary">Explore services</Link>
         </div>
       </section>
 
