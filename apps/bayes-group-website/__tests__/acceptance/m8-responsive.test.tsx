@@ -26,7 +26,7 @@ test('Header navigation collapses into a “Menu” button on small screens and 
   });
   expect(screen.queryByRole('button', { name: /menu/i })).not.toBeInTheDocument();
 
-  // Cleanup before testing the small‑screen layout
+  // Cleanup before testing the small-screen layout
   unmount();
 
   // ------- Small screen (mobile) -----------------------------------

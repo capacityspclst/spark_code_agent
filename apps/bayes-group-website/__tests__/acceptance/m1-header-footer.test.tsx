@@ -39,7 +39,7 @@ test('Footer contains wordmark, tagline, navigation links and copyright', () => 
   const footer = screen.getByRole('contentinfo');
   expect(footer).toBeInTheDocument();
 
-  // Wordmark (non‑link) – we just look for the text inside the footer
+  // Wordmark (non-link) – we just look for the text inside the footer
   const wordmark = within(footer).getByText(/the bayes group/i);
   expect(wordmark.closest('a')).toBeNull();
 

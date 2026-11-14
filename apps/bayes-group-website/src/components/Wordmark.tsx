@@ -11,7 +11,7 @@ export const Wordmark: React.FC<{className?:string}> = ({className}) => (
     role="img"
     aria-label="The Bayes Group"
   >
-    {/* Simple bell‑curve shape */}
+    {/* Simple bell-curve shape */}
     <path d="M2 12 C10 0, 30 0, 38 12 S66 24, 74 12" stroke="var(--color-primary)" strokeWidth="2" fill="none" />
     {/* No visible text; accessible name via aria-label */}
   </svg>

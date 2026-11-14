@@ -38,7 +38,7 @@ test('Services page items display a name and a one-sentence description', async 
   ];
 
   serviceNames.forEach((name) => {
-    // Locate the element that contains the exact name (case‑insensitive)
+    // Locate the element that contains the exact name (case-insensitive)
     const nameEl = screen.getByText(new RegExp(`^${name}$`, 'i'));
 
     // Find the closest container that should also hold the description.
@@ -50,9 +50,9 @@ test('Services page items display a name and a one-sentence description', async 
     // Remove the name itself from the container text to isolate the description.
     const description = containerText.replace(new RegExp(name, 'i'), '').trim();
 
-    // The description must be present and non‑empty.
+    // The description must be present and non-empty.
     expect(description).not.toBe('');
-    // A one‑sentence description should contain at least one period.
+    // A one-sentence description should contain at least one period.
     expect(description).toMatch(/\./);
   });
 });

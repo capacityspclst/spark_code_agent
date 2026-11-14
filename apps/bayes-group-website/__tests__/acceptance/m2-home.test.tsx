@@ -48,8 +48,8 @@ test('Home page renders hero, pillar cards, sections, CTA and sets document titl
   // “Why The Bayes Group” bullet points (keywords)
   const whyKeywords = [
     'credentialed data scientists',
-    'hands‑on builders',
-    'vendor‑neutral advice',
+    'hands-on builders',
+    'vendor-neutral advice',
     'knowledge transfer',
   ];
   whyKeywords.forEach((kw) => {

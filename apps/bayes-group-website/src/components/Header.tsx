@@ -1,20 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Wordmark } from './Wordmark';
 
 const Header: React.FC = () => {
   const [menuOpen, setMenuOpen] = useState(false);
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 420);
-
-  useEffect(() => {
-    const handleResize = () => {
-      const mobile = window.innerWidth < 420;
-      setIsMobile(mobile);
-      if (!mobile) setMenuOpen(false);
-    };
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
 
   const toggleMenu = () => setMenuOpen(prev => !prev);
 
@@ -32,47 +21,20 @@ const Header: React.FC = () => {
       <Link to="/" aria-label="The Bayes Group">
         <Wordmark className="wordmark" />
       </Link>
-      {isMobile ? (
-        <>
-          <button
-            type="button"
-            aria-label="Menu"
-            aria-controls="mobile-nav"
-            aria-expanded={menuOpen}
-            onClick={toggleMenu}
-            className="button-primary"
-          >
-            Menu
-          </button>
-          <nav
-            id="mobile-nav"
-            style={{
-              position: 'absolute',
-              top: '100%',
-              left: 0,
-              right: 0,
-              background: 'var(--color-bg)',
-              padding: 'var(--space-4)',
-              display: menuOpen ? 'block' : 'none',
-            }}
-          >
-            {navLinks}
-            <Link
-              to="/contact"
-              className="button-primary"
-              role="button"
-              style={{ display: 'block', marginTop: 'var(--space-4)' }}
-            >
-              Book a consultation
-            </Link>
-          </nav>
-        </>
-      ) : (
-        <nav style={{ display: 'flex', alignItems: 'center' }}>
+      <button
+        type="button"
+        aria-label="Menu"
+        aria-controls="mobile-nav"
+        aria-expanded={menuOpen}
+        onClick={toggleMenu}
+        className="button-primary"
+      >
+        Menu
+      </button>
+      {menuOpen && (
+        <nav id="mobile-nav" style={{ flexDirection: 'column', gap: 'var(--space-3)', paddingTop: 'var(--space-3)' }}>
           {navLinks}
-          <Link to="/contact" className="button-primary" role="button" style={{ marginLeft: 'var(--space-4)' }}>
-            Book a consultation
-          </Link>
+          <Link to="/contact" className="button-primary" role="button">Book a consultation</Link>
         </nav>
       )}
     </header>

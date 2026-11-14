@@ -2,7 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 
 const Services: React.FC = () => (
-  <div>
+  <div className="container">
     <h1>Services</h1>
     {/* AI Enablement */}
     <section id="enablement">
@@ -28,13 +28,13 @@ const Services: React.FC = () => (
       <h2>Training</h2>
       <ul>
         <li>
-          <strong>Executive AI briefings</strong> – High‑level overviews for leadership.
+          <strong>Executive AI briefings</strong> – High-level overviews for leadership.
         </li>
         <li>
-          <strong>Hands‑on team workshops</strong> – Practical sessions for multi‑disciplinary teams.
+          <strong>Hands-on team workshops</strong> – Practical sessions for multi-disciplinary teams.
         </li>
         <li>
-          <strong>Deep‑learning bootcamps for technical teams</strong> – Intensive training on modern DL techniques.
+          <strong>Deep-learning bootcamps for technical teams</strong> – Intensive training on modern DL techniques.
         </li>
         <li>
           <strong>Custom curricula</strong> – Tailored learning paths for specific needs.
@@ -53,10 +53,10 @@ const Services: React.FC = () => (
           <strong>AI agents and workflow automation</strong> – Automate processes with intelligent agents.
         </li>
         <li>
-          <strong>Predictive models and ML pipelines</strong> – End‑to‑end pipelines for forecasting.
+          <strong>Predictive models and ML pipelines</strong> – End-to-end pipelines for forecasting.
         </li>
         <li>
-          <strong>Deep‑learning solutions</strong> – Custom neural network implementations.
+          <strong>Deep-learning solutions</strong> – Custom neural network implementations.
         </li>
         <li>
           <strong>Integration with existing systems</strong> – Seamless AI embedding into your stack.

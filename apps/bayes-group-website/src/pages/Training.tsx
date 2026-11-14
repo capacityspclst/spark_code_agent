@@ -13,7 +13,7 @@ const courses: Course[] = [
   {
     title: 'AI for Executives',
     audience: 'Executives',
-    format: 'Half‑day briefing',
+    format: 'Half-day briefing',
     duration: '4 hours',
     learn: [
       'What AI can do for business',
@@ -22,9 +22,9 @@ const courses: Course[] = [
     ],
   },
   {
-    title: 'Data‑Driven Decision‑Making for Managers',
+    title: 'Data-Driven Decision-Making for Managers',
     audience: 'Managers',
-    format: '1‑day workshop',
+    format: '1-day workshop',
     duration: '8 hours',
     learn: [
       'Identifying AI opportunities',
@@ -33,9 +33,9 @@ const courses: Course[] = [
     ],
   },
   {
-    title: 'Deep‑Learning Foundations',
+    title: 'Deep-Learning Foundations',
     audience: 'Technical teams',
-    format: 'Multi‑week bootcamp',
+    format: 'Multi-week bootcamp',
     duration: '4 weeks',
     learn: [
       'Neural network fundamentals',
@@ -46,7 +46,7 @@ const courses: Course[] = [
   {
     title: 'AI Product Management',
     audience: 'Executives',
-    format: 'Half‑day briefing',
+    format: 'Half-day briefing',
     duration: '4 hours',
     learn: [
       'Defining AI product vision',
@@ -57,7 +57,7 @@ const courses: Course[] = [
   {
     title: 'AI Ethics and Governance',
     audience: 'Managers',
-    format: '1‑day workshop',
+    format: '1-day workshop',
     duration: '8 hours',
     learn: [
       'Ethical frameworks for AI',
@@ -68,7 +68,7 @@ const courses: Course[] = [
   {
     title: 'Advanced Model Ops',
     audience: 'Technical teams',
-    format: 'Multi‑week bootcamp',
+    format: 'Multi-week bootcamp',
     duration: '3 weeks',
     learn: [
       'CI/CD for ML models',
@@ -85,7 +85,7 @@ const Training: React.FC = () => {
   const filtered = selected === 'All' ? courses : courses.filter(c => c.audience === selected);
 
   return (
-    <div>
+    <div className="container">
       <h1>Training</h1>
       <div className="filter-group" role="group" aria-label="Audience filter">
         {audiences.map(aud => (

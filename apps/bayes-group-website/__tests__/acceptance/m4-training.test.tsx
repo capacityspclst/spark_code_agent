@@ -4,7 +4,7 @@ import '@testing-library/jest-dom';
 import App from '../../src/App';
 import userEvent from '@testing-library/user-event';
 
-test('Training page displays filter buttons with correct aria‑pressed handling', async () => {
+test('Training page displays filter buttons with correct aria-pressed handling', async () => {
   render(<App />);
 
   // Navigate to Training page via header navigation link
@@ -33,7 +33,7 @@ test('Training page displays filter buttons with correct aria‑pressed handling
   const allBtn = screen.getByRole('button', { name: 'All' });
   expect(allBtn).toHaveAttribute('aria-pressed', 'true');
 
-  // Click each audience filter and verify aria‑pressed toggles
+  // Click each audience filter and verify aria-pressed toggles
   const clickAndCheck = async (selected: string) => {
     const btn = screen.getByRole('button', { name: selected });
     await userEvent.click(btn);

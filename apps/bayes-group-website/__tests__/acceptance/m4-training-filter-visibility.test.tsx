@@ -24,7 +24,7 @@ test('Training page filter buttons display only matching courses', async () => {
     const filterBtn = screen.getByRole('button', { name: audience });
     await userEvent.click(filterBtn);
 
-    // Verify aria‑pressed state
+    // Verify aria-pressed state
     expect(filterBtn).toHaveAttribute('aria-pressed', 'true');
     audiences
       .filter((a) => a !== audience)
