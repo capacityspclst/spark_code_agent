@@ -42,12 +42,16 @@ const Home: React.FC = () => {
       {/* How we work */}
       <section className="how-we-work" style={{ marginBottom: 'var(--space-8)' }}>
         <h2>How we work</h2>
-        <ul>
-          <li>Assess – We evaluate data, people, and processes to define AI opportunities.</li>
-          <li>Design – Co‑create solution architectures aligned with business goals.</li>
-          <li>Build – Develop, test, and iterate fast using proven ML pipelines.</li>
-          <li>Enable – Transfer knowledge and embed governance for sustainable impact.</li>
-        </ul>
+        <div>
+          <p>Assess</p>
+          <p>We evaluate data, people, and processes to define AI opportunities.</p>
+          <p>Design</p>
+          <p>Co-create solution architectures aligned with business goals.</p>
+          <p>Build</p>
+          <p>Develop, test, and iterate fast using proven ML pipelines.</p>
+          <p>Enable</p>
+          <p>Transfer knowledge and embed governance for sustainable impact.</p>
+        </div>
       </section>
 
       {/* Why The Bayes Group */}
@@ -56,7 +60,7 @@ const Home: React.FC = () => {
         <ul>
           <li>Credentialed data scientists</li>
           <li>hands-on builders</li>
-          <li>Vendor‑neutral advice</li>
+          <li>Vendor-neutral advice</li>
           <li>Knowledge transfer so your team owns the result</li>
         </ul>
       </section>

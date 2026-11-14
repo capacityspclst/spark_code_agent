@@ -75,6 +75,8 @@ const Contact: React.FC = () => {
             type="text"
             id="name"
             name="name"
+            aria-label="Name"
+            placeholder="Name"
             value={form.name}
             onChange={handleChange}
             aria-describedby={errors.name ? 'error-name' : undefined}
@@ -91,6 +93,7 @@ const Contact: React.FC = () => {
             type="email"
             id="email"
             name="email"
+            aria-label="Email"
             value={form.email}
             onChange={handleChange}
             aria-describedby={errors.email ? 'error-email' : undefined}
@@ -107,6 +110,7 @@ const Contact: React.FC = () => {
             type="text"
             id="company"
             name="company"
+            aria-label="Company"
             value={form.company}
             onChange={handleChange}
           />
