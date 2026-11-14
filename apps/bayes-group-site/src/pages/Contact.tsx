@@ -70,15 +70,17 @@ const Contact: React.FC = () => {
       <p>hello@thebayesgroup.com</p>
       <form onSubmit={handleSubmit} noValidate>
         <div>
-          <label htmlFor="name">Name</label>
-          <input
-            type="text"
-            id="name"
-            name="name"
-            value={form.name}
-            onChange={handleChange}
-            aria-describedby={errors.name ? 'error-name' : undefined}
-          />
+          <label>
+            Name
+            <input
+              type="text"
+              id="name"
+              name="name"
+              value={form.name}
+              onChange={handleChange}
+              aria-describedby={errors.name ? 'error-name' : undefined}
+            />
+          </label>
           {errors.name && (
             <div id="error-name" role="alert" className="error-text">
               {errors.name}

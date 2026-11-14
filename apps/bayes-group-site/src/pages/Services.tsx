@@ -11,6 +11,7 @@ const Services: React.FC = () => {
       <h1>Services</h1>
       <section id="enablement">
         <h2>AI Enablement</h2>
+        <h2>AI Enablement</h2>
         <ServiceCard
           title="AI readiness assessment"
           description="Identify data gaps, talent needs, and quick‑win opportunities."

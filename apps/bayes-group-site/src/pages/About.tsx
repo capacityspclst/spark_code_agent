@@ -31,7 +31,7 @@ const About: React.FC = () => {
       <ul>
         <li>Evidence over hype</li>
         <li>Build to transfer</li>
-        <li>vendor-neutral</li>
+        <li>Vendor‑neutral</li>
         <li>Responsible by design</li>
       </ul>
     </section>
