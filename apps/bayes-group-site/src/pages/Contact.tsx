@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 const initialState = {
   name: '',
@@ -15,8 +15,6 @@ type Errors = {
   email?: string;
   message?: string;
 };
-
-import { useEffect } from 'react';
 
 const Contact: React.FC = () => {
   useEffect(() => {
@@ -68,7 +66,8 @@ const Contact: React.FC = () => {
   return (
     <section>
       <h1>Book a consultation</h1>
-      <p>Email us at hello@thebayesgroup.com</p>
+      <p>Email us at</p>
+      <p>hello@thebayesgroup.com</p>
       <form onSubmit={handleSubmit} noValidate>
         <div>
           <label htmlFor="name">Name</label>

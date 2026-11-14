@@ -4,7 +4,7 @@ import FilterButton from '../components/FilterButton';
 import TrainingCourseCard from '../components/TrainingCourseCard';
 
 const Training: React.FC = () => {
-  React.useEffect(() => {
+  useEffect(() => {
     document.title = 'Training | The Bayes Group';
   }, []);
   const [filter, setFilter] = useState<string>('All');

@@ -43,8 +43,8 @@ const Home: React.FC = () => {
       <section className="how-we-work" style={{ marginBottom: 'var(--space-8)' }}>
         <h2>How we work</h2>
         <ul>
-          <li>Assess – We evaluate data, people, and processes to define AI opportunities.</li>
-          <li><strong>Design</strong> – Co‑create solution architectures aligned with business goals.</li>
+          <li><span>Assess</span> – We evaluate data, people, and processes to define AI opportunities.</li>
+          <li>Design – Co‑create solution architectures aligned with business goals.</li>
           <li><strong>Build</strong> – Develop, test, and iterate fast using proven ML pipelines.</li>
           <li><strong>Enable</strong> – Transfer knowledge and embed governance for sustainable impact.</li>
         </ul>
