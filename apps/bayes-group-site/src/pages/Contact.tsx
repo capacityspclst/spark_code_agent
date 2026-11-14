@@ -63,7 +63,7 @@ const Contact: React.FC = () => {
   return (
     <section>
       <h1>Book a consultation</h1>
-      <p>Email us at hello@thebayesgroup.com</p>
+      <p>hello@thebayesgroup.com</p>
       <form onSubmit={handleSubmit} noValidate>
         <div>
           <label htmlFor="name">Name</label>

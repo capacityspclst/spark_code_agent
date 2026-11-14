@@ -1,9 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { trainingCourses } from '../data/trainingCourses';
 import FilterButton from '../components/FilterButton';
 import TrainingCourseCard from '../components/TrainingCourseCard';
 
 const Training: React.FC = () => {
+  useEffect(() => {
+    document.title = 'Training | The Bayes Group';
+  }, []);
   const [filter, setFilter] = useState<string>('All');
 
   const filtered = filter === 'All' ? trainingCourses : trainingCourses.filter(c => c.audience === filter);

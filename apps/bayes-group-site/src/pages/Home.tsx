@@ -16,7 +16,7 @@ const Home: React.FC = () => {
         <p>We turn data into actionable intelligence through custom AI solutions, hands‑on training, and end‑to‑end enablement.</p>
         <div style={{ display: 'flex', gap: 'var(--space-4)', justifyContent: 'center', marginTop: 'var(--space-4)' }}>
           <Link to="/contact" className="btn">Book a consultation</Link>
-          <Link to="/services" className="btn btn--secondary">Explore services</Link>
+          <button className="btn btn--secondary" onClick={() => { window.location.href = '/services'; }}>Explore</button>
         </div>
       </section>
 
