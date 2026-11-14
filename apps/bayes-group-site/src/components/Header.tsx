@@ -13,7 +13,6 @@ const Header: React.FC = () => {
       <nav aria-label="Main navigation" className="header-nav" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }} role="navigation">
         <Link to="/" aria-label="Home" className="logo-button" style={{ background: 'none', border: 'none', padding: 0 }}>
           <Logo />
-          <span className="sr-only">Home</span>
         </Link>
         {/* Desktop nav links */}
         <div className="nav-links">
@@ -23,7 +22,7 @@ const Header: React.FC = () => {
           <Link to="/contact">Contact</Link>
         </div>
         {/* Book consultation button */}
-        <Link to="/contact" className="btn header-cta">Book a consultation</Link>
+        <button type="button" className="btn header-cta" onClick={() => navigate('/contact')}>Book a consultation</button>
         {/* Mobile menu button */}
         <button
           type="button"

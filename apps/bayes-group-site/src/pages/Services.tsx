@@ -29,7 +29,7 @@ const Services: React.FC = () => {
           description="Establish ethics, compliance, and risk controls."
         />
               <p className="typical-engagement">Typical engagement: 2 to 6 weeks</p>
-        </section>
+      </section>
       <section id="training">
         <h2>Training</h2>
         <ServiceCard
