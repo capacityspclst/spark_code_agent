@@ -7,6 +7,7 @@ import { NAV_LINKS, CTA } from '../content/site';
 export default function Header() {
   const [menuOpen, setMenuOpen] = React.useState(false);
   const panelId = 'mobile-nav';
+  const toggleRef = React.useRef<HTMLButtonElement>(null);
   const toggleMenu = () => setMenuOpen((prev) => !prev);
   const close = () => setMenuOpen(false);
   const location = useLocation();
@@ -18,7 +19,10 @@ export default function Header() {
   React.useEffect(() => {
     if (!menuOpen) return undefined;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setMenuOpen(false);
+      if (e.key === 'Escape') {
+        setMenuOpen(false);
+        toggleRef.current?.focus();
+      }
     };
     document.addEventListener('keydown', onKey);
     return () => document.removeEventListener('keydown', onKey);
@@ -42,6 +46,7 @@ export default function Header() {
         {/* Mobile menu button */}
         <button
           type='button'
+          ref={toggleRef}
           aria-controls={panelId}
           aria-expanded={menuOpen ? 'true' : 'false'}
           onClick={toggleMenu}
