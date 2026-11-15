@@ -1,9 +1,13 @@
 import * as React from 'react';
 import { Link } from 'react-router-dom';
 
-export function Wordmark() {
+export function Wordmark({ onDark = false }: { onDark?: boolean }) {
   return (
-    <Link to='/' aria-label='The Bayes Group home' className='wordmark'>
+    <Link
+      to='/'
+      aria-label='The Bayes Group home'
+      className={onDark ? 'wordmark wordmark-dark' : 'wordmark'}
+    >
       <svg
         width='28'
         height='20'
@@ -13,16 +17,17 @@ export function Wordmark() {
         role='img'
         aria-label='The Bayes Group'
         focusable='false'
-        style={{ marginRight: '8px' }}
+        className='wordmark-mark'
       >
         <path
-          d='M2 10 C6 2, 22 2, 26 10'
-          stroke='var(--color-accent)'
+          d='M1.5 18.5 C7 18.5, 9 2, 14 2 C19 2, 21 18.5, 26.5 18.5'
+          stroke={onDark ? 'var(--color-accent-light)' : 'var(--color-accent)'}
           strokeWidth='2.5'
+          strokeLinecap='round'
           fill='none'
         />
       </svg>
-      <span style={{ fontFamily: 'var(--font-serif)', fontWeight: 600, fontSize: '20px' }}>
+      <span className='wordmark-text' aria-hidden='true'>
         The Bayes Group
       </span>
     </Link>
