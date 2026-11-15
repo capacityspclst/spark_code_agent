@@ -9,8 +9,9 @@ const Home: React.FC = () => {
         <h1>Evidence-driven AI, built for your business.</h1>
         <p>We partner with organizations to turn data into actionable intelligence.</p>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--space-4)', justifyContent: 'center', marginTop: 'var(--space-4)' }}>
-          <Link to="/contact" className="button-primary">Book a consultation</Link>
-          <Link to="/services" className="button-secondary">Explore services</Link>
+          <Link to="/contact" className="button-primary" role="button">Book a consultation</Link>
+          <Link to="/services" className="button-secondary" role="link">Explore services</Link>
+          <button className="button-secondary" role="button" onClick={() => navigate('/services')}>Explore services</button>
         </div>
       </section>
 
@@ -57,7 +58,7 @@ const Home: React.FC = () => {
 
       <section className="cta-band" style={{ marginTop: 'var(--space-8)' }}>
         <h2>Ready to put AI to work?</h2>
-        <Link to="/contact" className="button-primary">Book a consultation</Link>
+        <Link to="/contact" className="button-primary" role="button">Book a consultation</Link>
       </section>
     </div>
   );
