@@ -2,7 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 
 const NotFound: React.FC = () => (
-  <div className="container" style={{ textAlign: 'center', paddingTop: 'var(--space-8)', paddingBottom: 'var(--space-8)' }}>
+  <div>
     <h1>Page not found</h1>
     <p>Oops! The page you’re looking for doesn’t exist.</p>
     <Link to="/" className="button-primary">Return home</Link>

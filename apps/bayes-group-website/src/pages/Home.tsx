@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 
 const Home: React.FC = () => {
   const navigate = useNavigate();
+  const goToServices = () => navigate('/services');
   return (
     <div className="container">
       <section className="hero">
@@ -10,9 +11,8 @@ const Home: React.FC = () => {
         <p>We partner with organizations to turn data into actionable intelligence.</p>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--space-4)', justifyContent: 'center', marginTop: 'var(--space-4)' }}>
           <Link to="/contact" className="button-primary">Book a consultation</Link>
-
+          <button type="button" onClick={goToServices} className="button-secondary" aria-label="Explore services">Explore services</button>
           <Link to="/services" className="button-secondary" role="link">Explore services</Link>
-          <button className="button-secondary" onClick={() => navigate('/services')}>Explore services</button>
         </div>
       </section>
 
@@ -59,7 +59,7 @@ const Home: React.FC = () => {
 
       <section className="cta-band" style={{ marginTop: 'var(--space-8)' }}>
         <h2>Ready to put AI to work?</h2>
-        <Link to="/contact" className="button-primary">Book a consultation</Link>
+        <Link to="/contact" className="button-primary" role="button">Book a consultation</Link>
       </section>
     </div>
   );
