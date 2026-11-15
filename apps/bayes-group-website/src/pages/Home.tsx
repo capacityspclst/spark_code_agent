@@ -1,15 +1,18 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 const Home: React.FC = () => {
+  const navigate = useNavigate();
   return (
     <div className="container">
       <section className="hero">
         <h1>Evidence-driven AI, built for your business.</h1>
         <p>We partner with organizations to turn data into actionable intelligence.</p>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--space-4)', justifyContent: 'center', marginTop: 'var(--space-4)' }}>
-          <Link to="/contact" className="button-primary" role="button">Book a consultation</Link>
-          <Link to="/services" className="button-secondary" role="button">Explore services</Link>
+          <Link to="/contact" className="button-primary">Book a consultation</Link>
+
+          <Link to="/services" className="button-secondary" role="link">Explore services</Link>
+          <button className="button-secondary" onClick={() => navigate('/services')}>Explore services</button>
         </div>
       </section>
 
