@@ -16,9 +16,17 @@ test('Home page renders hero, pillar cards, sections, CTA and sets document titl
   expect(h1s).toHaveLength(1);
   expect(h1s[0]).toHaveTextContent('Evidence-driven AI, built for your business.');
 
-  // Hero buttons
-  const bookBtn = screen.getByRole('link', { name: /book a consultation/i });
-  expect(bookBtn).toHaveAttribute('href', '/contact');
+  // Hero and CTA “Book a consultation” links
+  // Both links are expected to be inside the <main> region (header/footer are outside <main>).
+  const main = screen.getByRole('main');
+  const bookLinks = within(main).getAllByRole('link', { name: /book a consultation/i });
+  // According to the design there should be exactly two such links: one in the hero and one in the CTA band.
+  expect(bookLinks).toHaveLength(2);
+  const [heroBookBtn, ctaBookBtn] = bookLinks;
+  expect(heroBookBtn).toHaveAttribute('href', '/contact');
+  expect(ctaBookBtn).toHaveAttribute('href', '/contact');
+
+  // The “Explore services” link in the hero
   const exploreBtn = screen.getByRole('link', { name: /explore services/i });
   expect(exploreBtn).toHaveAttribute('href', '/services');
 
@@ -58,6 +66,7 @@ test('Home page renders hero, pillar cards, sections, CTA and sets document titl
 
   // CTA band
   expect(screen.getByText(/ready to put ai to work\?/i)).toBeInTheDocument();
-  const ctaBtn = screen.getByRole('link', { name: /book a consultation/i });
-  expect(ctaBtn).toHaveAttribute('href', '/contact');
+  // The CTA “Book a consultation” link is the second link we captured above (ctaBookBtn)
+  expect(ctaBookBtn).toBeInTheDocument();
+  expect(ctaBookBtn).toHaveAttribute('href', '/contact');
 });
