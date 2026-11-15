@@ -57,7 +57,7 @@ export default function HomePage() {
       {/* CTA band */}
       <section className="cta-band" style={{ backgroundColor: 'var(--color-navy)', color: 'var(--color-white)' }}>
         <h2>{CTA_BAND.heading}</h2>
-        <a href={CTA_BAND.button.to}>{CTA_BAND.button.label}</a>
+        <a href={CTA_BAND.button.to} className="primary-button">{CTA_BAND.button.label}</a>
       </section>
     </div>
   );

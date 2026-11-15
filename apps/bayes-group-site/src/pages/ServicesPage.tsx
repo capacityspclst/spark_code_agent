@@ -10,6 +10,7 @@ export default function ServicesPage() {
   return (
     <div className="services-page">
       <h1>Services</h1>
+      <p className="services-intro">Three ways we help, from first strategy to production systems.</p>
       {SERVICE_SECTIONS.map((section) => (
         <section key={section.id} id={section.id}>
           <h2>{section.title}</h2>
