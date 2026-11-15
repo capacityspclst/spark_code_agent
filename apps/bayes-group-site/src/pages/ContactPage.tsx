@@ -52,6 +52,7 @@ export default function ContactPage() {
     <div className="contact-page">
       <h1>Book a consultation</h1>
       <p>Prefer email? <a href={`mailto:${'hello@thebayesgroup.com'}`}>hello@thebayesgroup.com</a></p>
+      <p>Tell us what you're working on and we'll reply within one business day.</p>
       {submitResult?.ok && (
         <div role="status" className="success-banner" tabIndex={-1} style={{ backgroundColor: 'var(--color-success-bg)', color: 'var(--color-success)' }}>
           {SUCCESS_MESSAGE}

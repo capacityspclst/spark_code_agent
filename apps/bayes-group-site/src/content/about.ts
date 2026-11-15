@@ -1,5 +1,5 @@
 export const MISSION = 'Our mission is to empower organizations with evidence-driven AI solutions that deliver real business value.';
-export const WHY_BAYES = 'We apply Bayesian reasoning, continuously updating our models as new evidence arrives, to guide every engagement.';
+export const WHY_BAYES = 'We apply Bayesian reasoning, belief updating, and continuously updating our models as new evidence arrives, to guide every engagement.';
 export const FOUNDERS = [
   {
     name: 'Founder Name',

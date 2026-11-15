@@ -3,10 +3,18 @@ import { Link } from 'react-router-dom';
 import { Wordmark } from './Wordmark';
 import { NAV_LINKS, CTA } from '../content/site';
 
+import { useLocation } from 'react-router-dom';
+
 export default function Header() {
   const [menuOpen, setMenuOpen] = React.useState(false);
+  const { pathname } = useLocation();
   const panelId = 'mobile-nav';
   const toggleMenu = () => setMenuOpen((prev) => !prev);
+
+  const isActive = (to: string) => {
+    const clean = pathname.replace(/\/$/, '');
+    return clean === to;
+  };
 
   return (
     <header className='site-header'>
@@ -15,7 +23,7 @@ export default function Header() {
         {/* Desktop nav */}
         <nav aria-label='Main' className='nav-desktop'>
           {NAV_LINKS.map((link) => (
-            <Link key={link.to} to={link.to} aria-current='page'>
+            <Link key={link.to} to={link.to} aria-current={isActive(link.to) ? 'page' : undefined}>
               {link.label}
             </Link>
           ))}
@@ -40,7 +48,7 @@ export default function Header() {
           <ul>
             {NAV_LINKS.map((link) => (
               <li key={link.to}>
-                <Link to={link.to}>{link.label}</Link>
+                <Link to={link.to} aria-current={isActive(link.to) ? 'page' : undefined}>{link.label}</Link>
               </li>
             ))}
             <li>
