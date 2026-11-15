@@ -14,8 +14,8 @@ export default function HomePage() {
         <h1>{HERO.title}</h1>
         <p>{HERO.valueProp}</p>
         <div className="hero-buttons">
-          <a href={HERO.primary.to} className="primary-button">{HERO.primary.label}</a>
-          <a href={HERO.secondary.to} className="secondary-button">{HERO.secondary.label}</a>
+          <a href={HERO.primary.to}>{HERO.primary.label}</a>
+          <a href={HERO.secondary.to}>{HERO.secondary.label}</a>
         </div>
       </section>
 
