@@ -5,11 +5,8 @@ import { AppRoutes } from './App';
 import { getPageMeta, NOT_FOUND_PAGE } from './seo';
 
 export function render(url: string): string {
-  const meta = getPageMeta(url);
-  // Use NotFound component for 404 path
-  const pathname = meta.path;
   return renderToString(
-    <StaticRouter location={pathname}>
+    <StaticRouter location={url}>
       <AppRoutes />
     </StaticRouter>,
   );
@@ -34,7 +31,7 @@ export function buildPageHtml(template: string, url: string): string {
   const ogDesc = `<meta property="og:description" content="${escapeAttr(meta.description)}">`;
   const ogType = `<meta property="og:type" content="website">`;
   const ogSite = `<meta property="og:site_name" content="${escapeAttr('The Bayes Group')}">`;
-  const canonical = `<link rel="canonical" href="${escapeAttr('https://thebayesgroup.com' + (meta.path === '/' ? '' : meta.path))}">`;
+  const canonical = `<link rel="canonical" href="${escapeAttr('https://thebayesgroup.com' + meta.path)}">`;
   const icon = `<link rel="icon" type="image/svg+xml" href="/favicon.svg">`;
 
   const headInsert = [titleTag, descTag, ogTitle, ogDesc, ogType, ogSite, canonical, icon].join('\n');

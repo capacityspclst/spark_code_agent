@@ -1,4 +1,38 @@
 # DEPLOYMENT.md
 
 ## Static deployment
-The site is prerendered to static HTML files in the `dist/` folder. Upload the entire `dist/` directory to a static host. No SPA rewrite rule is needed because each page has its own `index.html`. Unknown addresses return `404.html`.
+`npm run build` runs `vite build`, bundles the server renderer and then prerenders one HTML file per page into `dist/`:
+
+- `dist/index.html` (/)
+- `dist/services/index.html`
+- `dist/training/index.html`
+- `dist/about/index.html`
+- `dist/contact/index.html`
+- `dist/404.html`
+
+Upload the `dist/` folder as it is to any static host. There is no backend.
+
+No SPA rewrite rule or fallback is needed, because every page is its own file. Do not add a `_redirects` catch-all or an index.html fallback in the server config.
+
+Unknown addresses get `404.html`. Configure this on hosts that need it, for example nginx:
+
+```nginx
+location / {
+  try_files $uri $uri/ =404;
+}
+error_page 404 /404.html;
+```
+
+To check a deployment, open `/services` (200, its own title) and an unknown address such as `/no-such-page` (status 404 showing "Page not found").
+
+## SEO files
+`dist/` also contains `robots.txt` (allows everything and points to the sitemap), `sitemap.xml` (the five pages at https://thebayesgroup.com) and `favicon.svg` (linked from every page). They are copied from `public/`.
+
+## Security headers
+Set these headers on the host:
+
+- `Content-Security-Policy: default-src 'self'; style-src 'self'; script-src 'self'; img-src 'self' data:; base-uri 'self'; frame-ancestors 'none'`
+- `X-Content-Type-Options: nosniff`
+- `Referrer-Policy: strict-origin-when-cross-origin`
+- `Strict-Transport-Security: max-age=31536000; includeSubDomains` (HTTPS only)
+- Serve everything over HTTPS and cache `assets/` (hashed file names) for a long time.

@@ -83,14 +83,15 @@ export default function ContactPage() {
             </div>
           )}
           <form noValidate onSubmit={handleSubmit}>
+            <p className="form-note muted">Fields marked Required must be filled in.</p>
             <div className="field">
-              <label htmlFor="name">Name <span className="required-tag">Required</span></label>
-              <input className="form-control" id="name" name="name" type="text" autoComplete="name" value={values.name} onChange={handleChange} onBlur={handleBlur} aria-invalid={!!errors.name} aria-describedby={errors.name ? 'name-error' : undefined} />
+              <div className="field-head"><label htmlFor="name">Name</label><span className="required-tag">Required</span></div>
+              <input className="form-control" id="name" required aria-required="true" name="name" type="text" autoComplete="name" value={values.name} onChange={handleChange} onBlur={handleBlur} aria-invalid={!!errors.name} aria-describedby={errors.name ? 'name-error' : undefined} />
               {errors.name && <p id="name-error" className="error-message"><AlertIcon />{errors.name}</p>}
             </div>
             <div className="field">
-              <label htmlFor="email">Email <span className="required-tag">Required</span></label>
-              <input className="form-control" id="email" name="email" type="email" autoComplete="email" value={values.email} onChange={handleChange} onBlur={handleBlur} aria-invalid={!!errors.email} aria-describedby={errors.email ? 'email-error' : undefined} />
+              <div className="field-head"><label htmlFor="email">Email</label><span className="required-tag">Required</span></div>
+              <input className="form-control" id="email" required aria-required="true" name="email" type="email" autoComplete="email" value={values.email} onChange={handleChange} onBlur={handleBlur} aria-invalid={!!errors.email} aria-describedby={errors.email ? 'email-error' : undefined} />
               {errors.email && <p id="email-error" className="error-message"><AlertIcon />{errors.email}</p>}
             </div>
             <div className="field">
@@ -107,8 +108,8 @@ export default function ContactPage() {
               </select>
             </div>
             <div className="field">
-              <label htmlFor="message">Message <span className="required-tag">Required</span></label>
-              <textarea className="form-control" id="message" name="message" value={values.message} onChange={handleChange} onBlur={handleBlur} rows={5} aria-invalid={!!errors.message} aria-describedby={errors.message ? 'message-error' : undefined} />
+              <div className="field-head"><label htmlFor="message">Message</label><span className="required-tag">Required</span></div>
+              <textarea className="form-control" id="message" required aria-required="true" name="message" value={values.message} onChange={handleChange} onBlur={handleBlur} rows={5} aria-invalid={!!errors.message} aria-describedby={errors.message ? 'message-error' : undefined} />
               {errors.message && <p id="message-error" className="error-message"><AlertIcon />{errors.message}</p>}
             </div>
             <button type="submit" className="btn btn-primary">Send message</button>
