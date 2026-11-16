@@ -99,7 +99,7 @@ export default function ContactPage() {
             </div>
             <div className="field">
               <label htmlFor="topic">What can we help with?</label>
-              <select id="topic" name="topic" value={values.topic} onChange={handleChange}>
+              <select className="form-control" id="topic" name="topic" value={values.topic} onChange={handleChange}>
                 <option value="">Choose a topic</option>
                 {HELP_OPTIONS.map((opt) => (
                   <option key={opt} value={opt}>{opt}</option>
@@ -108,7 +108,7 @@ export default function ContactPage() {
             </div>
             <div className="field">
               <label htmlFor="message">Message <span className="required-tag">Required</span></label>
-              <textarea id="message" name="message" value={values.message} onChange={handleChange} onBlur={handleBlur} rows={5} aria-invalid={!!errors.message} aria-describedby={errors.message ? 'message-error' : undefined} />
+              <textarea className="form-control" id="message" name="message" value={values.message} onChange={handleChange} onBlur={handleBlur} rows={5} aria-invalid={!!errors.message} aria-describedby={errors.message ? 'message-error' : undefined} />
               {errors.message && <p id="message-error" className="error-message"><AlertIcon />{errors.message}</p>}
             </div>
             <button type="submit" className="btn btn-primary">Send message</button>
