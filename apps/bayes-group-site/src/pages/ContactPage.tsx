@@ -65,11 +65,9 @@ export default function ContactPage() {
 
   return (
     <div className="contact-page">
-      <div className="container page-head">
-        <h1>Book a consultation</h1>
-      </div>
       <div className="container contact-grid">
         <div className="contact-info">
+          <h1>Book a consultation</h1>
           <p className="lead">Tell us what you're working on and we'll reply within one business day.</p>
           <p>
             Prefer email? <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>
