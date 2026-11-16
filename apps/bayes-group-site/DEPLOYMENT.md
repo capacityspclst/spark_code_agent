@@ -1,15 +1,15 @@
 # DEPLOYMENT.md
 
 ## What this app is
-The Bayes Group marketing site is a **static single‑page web front‑end** built with:
+The Bayes Group marketing site is a **static single-page web front-end** built with:
 
-* Vite + React 18 + TypeScript
-* `react-router-dom` for client‑side routing
-* Plain CSS using design‑token custom properties (`src/styles/theme.css`)
-* No backend, analytics, third‑party scripts, or external CDNs
+* Vite + React 18 + TypeScript
+* `react-router-dom` for client-side routing
+* Plain CSS using design-token custom properties (`src/styles/theme.css`)
+* No backend, analytics, third-party scripts, or external CDNs
 * `npm run build` creates a production bundle in `dist/` containing `index.html`, JS and CSS assets.
 
-The site is intended to be served over HTTPS from a static‑hosting platform (or a container‑based web server) and to be reachable at `https://thebayesgroup.com` (or any custom domain you configure).
+The site is intended to be served over HTTPS from a static-hosting platform (or a container-based web server) and to be reachable at `https://thebayesgroup.com` (or any custom domain you configure).
 
 ---
 
@@ -34,15 +34,15 @@ apps/
    └─ jest.config.cjs
 ```
 
-*All routing is client‑side; the server (or CDN) must be configured to fallback to `index.html` for any unknown path.*  
+*All routing is client-side; the server (or CDN) must be configured to fallback to `index.html` for any unknown path.*  
 
 ---
 
 ## Prerequisites
 | Requirement | Command / File | Explanation |
 |-------------|----------------|-------------|
-| Node ≥ 20 (the CI image uses `node:20-alpine`) | `node -v` | Required to run Vite, Jest and the build scripts. |
-| npm ≥ 9 | `npm -v` | Package manager. |
+| Node ≥ 20 (the CI image uses `node:20-alpine`) | `node -v` | Required to run Vite, Jest and the build scripts. |
+| npm ≥ 9 | `npm -v` | Package manager. |
 | Git (for CI) | `git --version` | Source control. |
 | Docker (optional, for container deployment) | `docker --version` | Used by the `Dockerfile` described later. |
 | (optional) Cloud provider CLI – e.g. `flyctl`, `vercel`, `aws` | `flyctl version` etc. | Needed if you choose that host. |
@@ -59,16 +59,16 @@ The repository already contains:
 The site does **not** require runtime secrets – all data is static.  
 The only configuration that may differ per environment is the **custom domain** and **HTTPS termination** performed by the hosting platform.
 
-If you later add environment‑specific values (e.g. a contact‑form endpoint), store them in the platform’s secret manager and reference them via a build‑time `.env` file (Vite automatically injects variables prefixed with `VITE_`).  
+If you later add environment-specific values (e.g. a contact-form endpoint), store them in the platform’s secret manager and reference them via a build-time `.env` file (Vite automatically injects variables prefixed with `VITE_`).  
 
-**To‑do:** Create a `.env.production` file (ignored by git) for any future secrets, e.g.:
+**To-do:** Create a `.env.production` file (ignored by git) for any future secrets, e.g.:
 
 ```bash
 # .env.production (example)
 VITE_CONTACT_ENDPOINT=https://api.thebayesgroup.com/contact
 ```
 
-Add `VITE_`‑prefixed variables to `vite.config.ts`’s `define` section if you need them at build time.
+Add `VITE_`-prefixed variables to `vite.config.ts`’s `define` section if you need them at build time.
 
 ---
 
@@ -91,12 +91,12 @@ All tests in `__tests__/acceptance/*.test.ts` are **pure TypeScript**; they do n
 ## Deploy
 ### 1️⃣ Production Dockerfile (recommended if you want container control)
 
-Create `Dockerfile` at the project root (to‑do marker if missing):
+Create `Dockerfile` at the project root (to-do marker if missing):
 
 ```dockerfile
 # TODO: Add this Dockerfile to the repo
 # -------------------------------------------------
-# Multi‑stage build using a slim node base, then nginx
+# Multi-stage build using a slim node base, then nginx
 # -------------------------------------------------
 FROM node:20-alpine AS builder
 WORKDIR /app
@@ -105,9 +105,9 @@ RUN npm ci --only=production
 COPY . .
 RUN npm run build   # → dist/
 
-# ------- Runtime image (non‑root) -------
+# ------- Runtime image (non-root) -------
 FROM nginx:alpine
-# Create a non‑root user (nginx runs as 'nginx' by default)
+# Create a non-root user (nginx runs as 'nginx' by default)
 RUN adduser -D -u 101 -g 'www' wwwuser
 COPY --from=builder /app/dist/ /usr/share/nginx/html
 # Optional: custom nginx config for SPA fallback & security headers
@@ -119,7 +119,7 @@ HEALTHCHECK --interval=30s --timeout=3s \
 # -------------------------------------------------
 ```
 
-`nginx.conf` (to‑do if you need SPA fallback & security headers):
+`nginx.conf` (to-do if you need SPA fallback & security headers):
 
 ```nginx
 # TODO: Add nginx.conf for SPA routing & security headers
@@ -153,22 +153,22 @@ docker run -p 8080:80 bayes-site:prod
 # Verify: http://localhost:8080 → site loads, healthcheck: curl -f http://localhost:8080
 ```
 
-### 2️⃣ Static‑hosting alternatives (no Docker needed)
+### 2️⃣ Static-hosting alternatives (no Docker needed)
 
-| Provider | How to deploy | TLS | CDN | Cost (first 10 GB/month) | Trade‑offs |
+| Provider | How to deploy | TLS | CDN | Cost (first 10 GB/month) | Trade-offs |
 |----------|---------------|-----|-----|--------------------------|------------|
-| **Cloudflare Pages** | `git push` → automatic build (uses `npm run build`) | Free managed SSL | Built‑in global edge CDN | Free tier up to 500 build minutes; $5‑20 for custom domain + increased bandwidth | Very low‑maintenance, but only static assets (perfect for this site). |
-| **Netlify** | Connect repo → “Deploy site” (build command `npm run build`) | Free managed SSL | Edge CDN | Free tier 100 GB bandwidth; $19/mo for team features | Form handling requires Netlify Functions (not needed now). |
-| **Vercel** | `vercel` CLI (`vercel --prod`) or Git integration | Free managed SSL | Edge CDN | Free hobby (100 GB bandwidth); $20/mo for Pro | Automatic SPA fallback with `rewrites`; also supports Docker if you ever need it. |
-| **AWS S3 + CloudFront** | `aws s3 sync dist/ s3://my-bucket/` then CloudFront distribution | ACM‑provided SSL | Global CDN | S3 $0.023/GB + CloudFront $0.085/GB; cheap at low traffic | More complex (IAM, bucket policy, invalidation). |
-| **Google Cloud Run (static)** | Containerize with the Dockerfile above and deploy: `gcloud run deploy bayes-site --image=gcr.io/PROJECT/bayes-site:prod --port=80 --allow-unauthenticated` | Managed SSL | Cloud Run’s regional load balancer | $0.10 per vCPU‑hour + request cost; usually <$5/mo for low traffic | Gives you container control but adds warm‑up latency. |
+| **Cloudflare Pages** | `git push` → automatic build (uses `npm run build`) | Free managed SSL | Built-in global edge CDN | Free tier up to 500 build minutes; $5-20 for custom domain + increased bandwidth | Very low-maintenance, but only static assets (perfect for this site). |
+| **Netlify** | Connect repo → “Deploy site” (build command `npm run build`) | Free managed SSL | Edge CDN | Free tier 100 GB bandwidth; $19/mo for team features | Form handling requires Netlify Functions (not needed now). |
+| **Vercel** | `vercel` CLI (`vercel --prod`) or Git integration | Free managed SSL | Edge CDN | Free hobby (100 GB bandwidth); $20/mo for Pro | Automatic SPA fallback with `rewrites`; also supports Docker if you ever need it. |
+| **AWS S3 + CloudFront** | `aws s3 sync dist/ s3://my-bucket/` then CloudFront distribution | ACM-provided SSL | Global CDN | S3 $0.023/GB + CloudFront $0.085/GB; cheap at low traffic | More complex (IAM, bucket policy, invalidation). |
+| **Google Cloud Run (static)** | Containerize with the Dockerfile above and deploy: `gcloud run deploy bayes-site --image=gcr.io/PROJECT/bayes-site:prod --port=80 --allow-unauthenticated` | Managed SSL | Cloud Run’s regional load balancer | $0.10 per vCPU-hour + request cost; usually <$5/mo for low traffic | Gives you container control but adds warm-up latency. |
 
 **Example: Deploy to Cloudflare Pages**
 
 1. Push the repository to GitHub.
 2. In the Cloudflare dashboard, create a new Pages project linked to the repo.
 3. Set **Build command** → `npm run build` and **Build output directory** → `dist`.
-4. Add a **_redirects** file (to‑do) for SPA fallback:
+4. Add a **_redirects** file (to-do) for SPA fallback:
 
 ```text
 /*    /index.html   200
@@ -176,7 +176,7 @@ docker run -p 8080:80 bayes-site:prod
 
 5. Enable **Automatic HTTPS** (default).
 
-### 3️⃣ Post‑deployment sanity checks
+### 3️⃣ Post-deployment sanity checks
 ```bash
 # Verify TLS
 curl -I https://your-domain.com | grep -i "strict-transport-security"
@@ -191,7 +191,7 @@ curl -I https://your-domain.com/does-not-exist | grep "200"
 ---
 
 ## Security checklist
-- [ ] **Upgrade react‑router-dom** – CVE‑2026‑53666 & CVE‑2026‑53669. Edit `package.json`:
+- [ ] **Upgrade react-router-dom** – CVE-2026-53666 & CVE-2026-53669. Edit `package.json`:
 
 ```json
 // package.json → dependencies
@@ -202,17 +202,17 @@ curl -I https://your-domain.com/does-not-exist | grep "200"
 
 Run `npm install` and verify the app still builds (v7 API changes are primarily around `<Routes>` props; our code is compatible).
 
-- [ ] **Add HTTP security headers** (CSP, X‑Frame‑Options, X‑Content‑Type‑Options, Referrer‑Policy, HSTS).  
+- [ ] **Add HTTP security headers** (CSP, X-Frame-Options, X-Content-Type-Options, Referrer-Policy, HSTS).  
   *If you use the Dockerfile above – the `nginx.conf` snippet already adds them.*  
   *If you use Cloudflare Pages / Netlify / Vercel – configure them in the platform’s header settings:*
 
 | Header | Recommended value |
 |--------|-------------------|
-| `Content‑Security‑Policy` | `default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self';` |
-| `X‑Frame‑Options` | `SAMEORIGIN` |
-| `X‑Content‑Type‑Options` | `nosniff` |
-| `Referrer‑Policy` | `no-referrer` |
-| `Strict‑Transport‑Security` | `max-age=31536000; includeSubDomains; preload` |
+| `Content-Security-Policy` | `default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self';` |
+| `X-Frame-Options` | `SAMEORIGIN` |
+| `X-Content-Type-Options` | `nosniff` |
+| `Referrer-Policy` | `no-referrer` |
+| `Strict-Transport-Security` | `max-age=31536000; includeSubDomains; preload` |
 
 - [ ] **Enforce HTTPS only** – ensure the hosting platform redirects HTTP→HTTPS (Cloudflare “Always Use HTTPS”, Netlify “Force HTTPS”, etc.).
 
@@ -229,9 +229,9 @@ Run `npm install` and verify the app still builds (v7 API changes are primarily 
 | **Logs** | Access logs for static serving (Nginx) or CDN logs from the host. | `docker logs <container>`, Cloudflare Logs (Enterprise), Netlify Analytics (free tier), Vercel Logs. |
 | **Performance** | Page load time, Core Web Vitals. | Google Lighthouse CI (`npm run lhci`), Web Vitals plugin, Cloudflare Speed Analytics. |
 | **Error tracking** | 404 fallback must serve `index.html`. | Periodic curl checks (cron) or uptime monitoring (UptimeRobot). |
-| **Backups** | The site is source‑controlled; the built `dist/` can be archived after each CI run. | Store build artifacts in an S3 bucket or GitHub Actions artifacts. |
-| **Scaling** | CDN automatically scales; container‑based deployments rely on the host’s autoscaling (e.g., Cloud Run). | No manual scaling required for static CDN. |
-| **Metrics** | Visitor count, bandwidth – optional via Cloudflare Analytics (no third‑party scripts). | Enable Cloudflare “Analytics” for the domain; no extra code required. |
+| **Backups** | The site is source-controlled; the built `dist/` can be archived after each CI run. | Store build artifacts in an S3 bucket or GitHub Actions artifacts. |
+| **Scaling** | CDN automatically scales; container-based deployments rely on the host’s autoscaling (e.g., Cloud Run). | No manual scaling required for static CDN. |
+| **Metrics** | Visitor count, bandwidth – optional via Cloudflare Analytics (no third-party scripts). | Enable Cloudflare “Analytics” for the domain; no extra code required. |
 
 ---
 
@@ -301,23 +301,23 @@ jobs:
 ## Costs
 | Provider | Approx. Monthly Cost (low traffic) | Notes |
 |----------|-----------------------------------|-------|
-| **Cloudflare Pages** | **Free** (up to 500 build minutes, 1 GB bandwidth) → $5–20 for custom domain & higher bandwidth | Ideal for a small marketing site. |
-| **Netlify** | **Free** (100 GB bandwidth, 300 build minutes) → $19 for “Pro” (unlimited builds, team features) | Simple UI, built‑in form handling if needed later. |
-| **Vercel** | **Free** (100 GB bandwidth, 125 build minutes) → $20 for “Pro” (edge‑network insights) | Automatic SPA routing, easy `vercel` CLI. |
-| **AWS S3 + CloudFront** | ~$0.02 for 1 GB storage + $0.085 per GB data transfer (≈ $5 for 50 GB) | Pay‑as‑you‑go, more control over caching headers. |
-| **Google Cloud Run (static)** | $0.10 per vCPU‑hour + request cost (≈ $3–6 for occasional traffic) | Good if you already run containers elsewhere. |
-| **Fly.io (Docker)** | $0 for the free tier (up to 3 apps, 160 GB outbound) → $5/mo for a dedicated VM | Simpler Docker deployment, includes a global edge network. |
+| **Cloudflare Pages** | **Free** (up to 500 build minutes, 1 GB bandwidth) → $5–20 for custom domain & higher bandwidth | Ideal for a small marketing site. |
+| **Netlify** | **Free** (100 GB bandwidth, 300 build minutes) → $19 for “Pro” (unlimited builds, team features) | Simple UI, built-in form handling if needed later. |
+| **Vercel** | **Free** (100 GB bandwidth, 125 build minutes) → $20 for “Pro” (edge-network insights) | Automatic SPA routing, easy `vercel` CLI. |
+| **AWS S3 + CloudFront** | ~$0.02 for 1 GB storage + $0.085 per GB data transfer (≈ $5 for 50 GB) | Pay-as-you-go, more control over caching headers. |
+| **Google Cloud Run (static)** | $0.10 per vCPU-hour + request cost (≈ $3–6 for occasional traffic) | Good if you already run containers elsewhere. |
+| **Fly.io (Docker)** | $0 for the free tier (up to 3 apps, 160 GB outbound) → $5/mo for a dedicated VM | Simpler Docker deployment, includes a global edge network. |
 
-*All numbers are rough 2026‑11 estimates; actual spend depends on traffic and bandwidth.*
+*All numbers are rough 2026-11 estimates; actual spend depends on traffic and bandwidth.*
 
 ## Before production
-1. **Upgrade react‑router-dom** to `^7.18.0` and adjust any API differences (currently none).  
-2. **Add the production Dockerfile** and `nginx.conf` (or choose a static‑host and configure its redirects).  
+1. **Upgrade react-router-dom** to `^7.18.0` and adjust any API differences (currently none).  
+2. **Add the production Dockerfile** and `nginx.conf` (or choose a static-host and configure its redirects).  
 3. **Configure security headers** on the chosen host (or via Nginx) – CSP, HSTS, etc.  
 4. **Replace placeholder founder content** in `src/content/about.ts` with real bios before marketing launch.  
 5. **Validate SPA fallback** (`_redirects` for Cloudflare/Netlify) so deep links work after a hard refresh.  
 6. **Run a final audit**: `npm audit`, `trivy` on the Docker image, and a manual Lighthouse CI run.  
 7. **Set up custom domain** (e.g., `thebayesgroup.com`) and enable HTTPS.  
-8. **Create monitoring / uptime check** (UptimeRobot or built‑in platform) to catch downtime early.  
+8. **Create monitoring / uptime check** (UptimeRobot or built-in platform) to catch downtime early.  
 
 Once the above items are completed and the checkboxes in the **Security checklist** are all ticked, the site is ready for public production.

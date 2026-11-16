@@ -8,7 +8,13 @@ export default function ServicesPage() {
   const { pathname, hash } = useLocation();
   useDocumentTitle(pathname);
 
+  const firstRenderRef = React.useRef(true);
   React.useEffect(() => {
+    if (firstRenderRef.current) {
+      // skip on initial load
+      firstRenderRef.current = false;
+      return;
+    }
     if (!hash) return;
     const el = document.getElementById(hash.slice(1));
     if (el && typeof el.scrollIntoView === 'function') el.scrollIntoView();

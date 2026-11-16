@@ -85,17 +85,17 @@ export default function ContactPage() {
           <form noValidate onSubmit={handleSubmit}>
             <div className="field">
               <label htmlFor="name">Name <span className="required-tag">Required</span></label>
-              <input id="name" name="name" type="text" autoComplete="name" value={values.name} onChange={handleChange} onBlur={handleBlur} aria-invalid={!!errors.name} aria-describedby={errors.name ? 'name-error' : undefined} />
+              <input className="form-control" id="name" name="name" type="text" autoComplete="name" value={values.name} onChange={handleChange} onBlur={handleBlur} aria-invalid={!!errors.name} aria-describedby={errors.name ? 'name-error' : undefined} />
               {errors.name && <p id="name-error" className="error-message"><AlertIcon />{errors.name}</p>}
             </div>
             <div className="field">
               <label htmlFor="email">Email <span className="required-tag">Required</span></label>
-              <input id="email" name="email" type="email" autoComplete="email" value={values.email} onChange={handleChange} onBlur={handleBlur} aria-invalid={!!errors.email} aria-describedby={errors.email ? 'email-error' : undefined} />
+              <input className="form-control" id="email" name="email" type="email" autoComplete="email" value={values.email} onChange={handleChange} onBlur={handleBlur} aria-invalid={!!errors.email} aria-describedby={errors.email ? 'email-error' : undefined} />
               {errors.email && <p id="email-error" className="error-message"><AlertIcon />{errors.email}</p>}
             </div>
             <div className="field">
               <label htmlFor="company">Company</label>
-              <input id="company" name="company" type="text" autoComplete="organization" value={values.company} onChange={handleChange} />
+              <input className="form-control" id="company" name="company" type="text" autoComplete="organization" value={values.company} onChange={handleChange} />
             </div>
             <div className="field">
               <label htmlFor="topic">What can we help with?</label>
