@@ -1,0 +1,341 @@
+{
+  "verdict": "pass",
+  "summary": "The build is in good shape. The primary flow passes in a real browser on phone and desktop, from Home to Book a consultation to field errors to success. axe reports no violations, Lighthouse accessibility is 100, and nothing overflows at 390px. Every spec'd screen was reached, including services, filtered training, about and not found. Landmarks, the skip link, the focusable <main> and per-route titles match the spec. The remaining issues are polish-level: four class names have no CSS, the footer shows content the spec doesn't call for, and one structural item (route-change focus and scroll) is not visible in Layout. Many page and CSS files were over the review budget, so the token, focus-state and form-field checks rest on the audits rather than a line-by-line read.",
+  "findings": [
+    {
+      "severity": "low",
+      "file": "src/pages/HomePage.tsx",
+      "issue": "The style audit lists 'how-we-work' as an unmatched class on both viewports. The 'How we work' section has a desktop-specific layout: 4 columns with a connecting hairline. That layout almost certainly hangs off a section class, so the hairline (and possibly the 4-up grid) is likely not rendering. The section is probably falling back to a generic grid or a plain stack.",
+      "fix": "Add `.how-we-work` rules to global.css. At \u22651024px use a 4-column grid with a 32px gap. Draw a 1px `--color-border` hairline behind the step circles, for example with an `::before` on the list positioned at the circle's vertical center and hidden below 1024px. Or rename the class to one that is already styled.",
+      "source": "designer",
+      "note": true
+    },
+    {
+      "severity": "low",
+      "file": "src/components/Footer.tsx",
+      "issue": "The footer adds a third paragraph, `<p className='footer-tagline'>{TAGLINE}</p>`, which repeats 'Evidence-driven AI, built for your business.' The spec's footer is the wordmark, the line 'AI enablement, training and custom development.', the nav and the copyright. On Home this tagline duplicates the hero h1 word for word. The `footer-tagline` class also has no CSS (unmatched in the audit), so it renders as an unstyled paragraph in the brand column.",
+      "fix": "Remove the tagline paragraph (and the TAGLINE import) so the footer matches the spec. If the brand team wants it kept, add it to DESIGN.md and style `.footer-tagline` with `--color-muted-on-dark` at `--text-small`.",
+      "source": "designer",
+      "note": true
+    },
+    {
+      "severity": "low",
+      "file": "src/components/Layout.tsx",
+      "issue": "The spec requires that every navigation moves focus to <main> and scrolls to the top, or to the hash target for /services#enablement and similar links. Layout owns <main> but has no location effect. BrowserRouter scrolls to neither the top nor a hash by itself. If this logic is not in Header (not reviewable here), then two things break. Keyboard and screen-reader users stay focused on the clicked link after a route change. Pillar 'Learn more' links can land mid-page instead of on the section.",
+      "fix": "In Layout, add a `useLocation()` effect. On pathname or hash change: if there is a hash, call `document.getElementById(hash.slice(1))?.scrollIntoView()`, which respects the 96px scroll-margin-top. Otherwise call `window.scrollTo(0, 0)`. Then run `mainRef.current?.focus({ preventScroll: true })`. Skip the effect on the first render so initial page load focus isn't hijacked. Make sure `main:focus { outline: none }` (or a focus-visible-only rule) so a ring doesn't wrap the whole page.",
+      "source": "designer",
+      "note": true
+    },
+    {
+      "severity": "low",
+      "file": "src/pages/HomePage.tsx",
+      "issue": "The 'pillar-title' class is unmatched in the style audit. Pillar card h3s depend on the base h3 rule for serif 20\u219222px, navy and spacing. They likely lack the intended spacing between the 40px icon, title and body. 'home-page' is also unmatched, which is harmless but is dead markup.",
+      "fix": "Either style `.pillar-title` (`margin: var(--space-4) 0 var(--space-2)`, serif, `--text-h3`) to match the course and service card titles, or remove both class names so the markup only references classes that exist.",
+      "source": "designer",
+      "note": true
+    },
+    {
+      "severity": "low",
+      "file": "index.html",
+      "issue": "The document has no meta description and no favicon. These visitors arrive from search and referrals and are skeptical of polish. The browser tab shows a generic icon, and search results show auto-extracted text instead of the value proposition.",
+      "fix": "Add `<meta name=\"description\" content=\"We help your team find, build and own AI that delivers measurable results, guided by two credentialed data scientists.\">`. Add an inline SVG favicon of the bell-curve mark in `#1F8A8A` (`<link rel=\"icon\" href=\"/favicon.svg\" type=\"image/svg+xml\">`), served locally.",
+      "source": "designer",
+      "note": true
+    },
+    {
+      "severity": "low",
+      "viewport": "phone",
+      "issue": "The 'Menu' button is positioned at the top right, but the 'Book a consultation' button in the menu panel is not centered vertically or horizontally within the panel, appearing slightly misaligned.",
+      "fix": "Center the 'Book a consultation' button within the menu panel for better visual balance.",
+      "screen": "home",
+      "source": "vision",
+      "note": true
+    },
+    {
+      "severity": "low",
+      "viewport": "desktop",
+      "issue": "The 'Book a consultation' button in the header is slightly larger than the other nav links, which may be intentional, but it should be visually consistent with the button style used elsewhere (e.g., in the hero section).",
+      "fix": "Ensure the header 'Book a consultation' button matches the style and size of the hero button for visual consistency.",
+      "screen": "home",
+      "source": "vision",
+      "note": true
+    },
+    {
+      "severity": "low",
+      "viewport": "both",
+      "issue": "The 'Explore services' button in the hero section on desktop is visually less prominent than 'Book a consultation' \u2014 it lacks the same visual weight (e.g., no border or background color) that would make it feel like a secondary action.",
+      "fix": "Add a subtle visual distinction (e.g., border, background color, or hover effect) to make the 'Explore services' button feel like a clear secondary action.",
+      "screen": "home",
+      "source": "vision",
+      "note": true
+    },
+    {
+      "severity": "low",
+      "viewport": "phone",
+      "issue": "The 'Required' labels are positioned to the right of field labels, which is unconventional and may cause confusion. Standard practice is to place required indicators next to or within the field label.",
+      "fix": "Move 'Required' indicators to be part of the field label text (e.g., 'Name (Required)') or place them inline with the label to the right of the field.",
+      "screen": "contact form empty",
+      "source": "vision",
+      "note": true
+    },
+    {
+      "severity": "low",
+      "viewport": "phone",
+      "issue": "The form fields are not visually aligned with the label text above them; the labels appear slightly misaligned vertically with the input boxes.",
+      "fix": "Adjust vertical alignment so labels sit directly above their respective input fields with consistent spacing.",
+      "screen": "contact form empty",
+      "source": "vision",
+      "note": true
+    },
+    {
+      "severity": "low",
+      "viewport": "desktop",
+      "issue": "The form card is not fully aligned with the left edge of the content area; there's a small gap on the left, which breaks the visual flow.",
+      "fix": "Adjust the form card's left margin to align flush with the content area's left edge for a more cohesive desktop layout.",
+      "screen": "contact form empty",
+      "source": "vision",
+      "note": true
+    },
+    {
+      "severity": "low",
+      "viewport": "phone",
+      "issue": "The form fields are too close to the top of the screen, leaving insufficient padding above the first field and below the header, making it feel cramped.",
+      "fix": "Add padding above the form to create breathing room and align it with the top of the viewport.",
+      "screen": "contact form with errors",
+      "source": "vision",
+      "note": true
+    },
+    {
+      "severity": "low",
+      "viewport": "phone",
+      "issue": "The 'Required' labels are placed inside rounded badges, which are visually inconsistent with the form field styling and may not be accessible to all users.",
+      "fix": "Move 'Required' labels to the right of the field label, or use a consistent visual indicator like an asterisk with a tooltip.",
+      "screen": "contact form with errors",
+      "source": "vision",
+      "note": true
+    },
+    {
+      "severity": "low",
+      "viewport": "phone",
+      "issue": "The form is not aligned to a grid; fields are left-aligned but not consistently spaced, creating an unbalanced layout.",
+      "fix": "Apply a consistent grid system to align fields and spacing for improved visual harmony.",
+      "screen": "contact form with errors",
+      "source": "vision",
+      "note": true
+    },
+    {
+      "severity": "low",
+      "viewport": "desktop",
+      "issue": "The form is positioned too far right, leaving a large empty space on the left. The desktop layout doesn\u2019t use the full width or leverage the available space effectively.",
+      "fix": "Center or left-align the form with appropriate padding to utilize the desktop viewport more efficiently.",
+      "screen": "contact form with errors",
+      "source": "vision",
+      "note": true
+    },
+    {
+      "severity": "low",
+      "viewport": "phone",
+      "issue": "The form field borders are inconsistent: Name has a teal border, Email has a red border, and Company has a grey border. This creates visual noise and doesn't clearly indicate error states for all fields.",
+      "fix": "Standardize border colors: use red for errors, grey for non-errors, and teal for success states or focus.",
+      "screen": "contact form with errors",
+      "source": "vision",
+      "note": true
+    },
+    {
+      "severity": "low",
+      "viewport": "phone",
+      "issue": "The error messages are positioned directly below the fields but not aligned with the field labels, creating visual misalignment.",
+      "fix": "Align error messages with the field labels and ensure consistent vertical spacing.",
+      "screen": "contact form with errors",
+      "source": "vision",
+      "note": true
+    },
+    {
+      "severity": "low",
+      "viewport": "phone",
+      "issue": "The 'What can we help with?' dropdown is positioned too low, creating an awkward gap before the 'Message' field.",
+      "fix": "Adjust vertical spacing to create a more balanced and compact form layout.",
+      "screen": "contact form with errors",
+      "source": "vision",
+      "note": true
+    },
+    {
+      "severity": "low",
+      "screen": "contact form with errors",
+      "source": "vision",
+      "issue": "visual quality 7/10 on 'contact form with errors' (target 8+, minimum 7): The contact form is clean and functional, with clear visual hierarchy and error states. However, it lacks polish in typography, spacing, and form design, and the desktop layout feels underutilized. It\u2019s good but not exceptional.",
+      "fix": "Address this screen's findings until it looks polished and professional.",
+      "note": true
+    },
+    {
+      "severity": "low",
+      "viewport": "phone",
+      "issue": "The 'Required' badges are small and may be hard to read on smaller screens; consider increasing size or using bold weight for better visibility.",
+      "fix": "Increase the font size or weight of the 'Required' badges to ensure they are easily readable on phone screens.",
+      "screen": "contact form filled in",
+      "source": "vision",
+      "note": true
+    },
+    {
+      "severity": "low",
+      "viewport": "phone",
+      "issue": "The form fields are not fully optimized for touch; the input fields could benefit from increased tap targets and padding for better usability.",
+      "fix": "Add padding and increase the height of input fields to ensure they are easier to tap on mobile devices.",
+      "screen": "contact form filled in",
+      "source": "vision",
+      "note": true
+    },
+    {
+      "severity": "low",
+      "viewport": "desktop",
+      "issue": "The form is left-aligned and lacks horizontal padding on the right side, which could feel cramped on wider desktop screens.",
+      "fix": "Add padding to the right of the form to balance the layout and improve visual breathing room on desktop.",
+      "screen": "contact form filled in",
+      "source": "vision",
+      "note": true
+    },
+    {
+      "severity": "low",
+      "viewport": "both",
+      "issue": "The 'What can we help with?' dropdown does not have a clear visual indicator of its state (e.g., no chevron or highlight when selected).",
+      "fix": "Add a subtle visual indicator (like a chevron or border change) to show the dropdown's selected state.",
+      "screen": "contact form filled in",
+      "source": "vision",
+      "note": true
+    },
+    {
+      "severity": "low",
+      "viewport": "phone",
+      "issue": "The 'Required' labels are slightly misaligned with their respective input fields, creating inconsistent vertical spacing.",
+      "fix": "Adjust the vertical alignment of the 'Required' labels to align consistently with the top of their input fields.",
+      "screen": "contact success",
+      "source": "vision",
+      "note": true
+    },
+    {
+      "severity": "low",
+      "viewport": "desktop",
+      "issue": "The 'What can we help with?' dropdown is slightly misaligned with the 'Message' field below it, creating inconsistent vertical spacing.",
+      "fix": "Adjust the vertical spacing between the dropdown and the 'Message' field to match the spacing above.",
+      "screen": "contact success",
+      "source": "vision",
+      "note": true
+    },
+    {
+      "severity": "low",
+      "viewport": "phone",
+      "issue": "The 'Menu' button is positioned at the top right, but the navigation panel doesn't appear to be visible in the screenshot, making it unclear how the navigation is accessed on mobile.",
+      "fix": "Ensure the menu panel is visible when the menu button is pressed, and confirm it slides down with clear visual feedback.",
+      "screen": "about",
+      "source": "vision",
+      "note": true
+    },
+    {
+      "severity": "low",
+      "viewport": "phone",
+      "issue": "The 'About' section heading is not styled with the same weight or size as the 'Why Bayes' heading, breaking visual hierarchy.",
+      "fix": "Apply consistent heading styles across all section titles to reinforce visual hierarchy.",
+      "screen": "about",
+      "source": "vision",
+      "note": true
+    },
+    {
+      "severity": "low",
+      "viewport": "desktop",
+      "issue": "The desktop layout has excessive white space at the bottom, leaving large empty areas below 'Founders' section.",
+      "fix": "Add content or a visual anchor (like a CTA or footer) to fill the unused space and improve visual completeness.",
+      "screen": "about",
+      "source": "vision",
+      "note": true
+    },
+    {
+      "severity": "low",
+      "viewport": "both",
+      "issue": "The 'Founders' section is cut off at the bottom of the screen, suggesting content is truncated or not fully rendered.",
+      "fix": "Ensure the 'Founders' section is fully visible in both viewport sizes, or add a scroll indicator if content exceeds viewport.",
+      "screen": "about",
+      "source": "vision",
+      "note": true
+    },
+    {
+      "severity": "low",
+      "screen": "about",
+      "source": "vision",
+      "issue": "visual quality 7/10 on 'about' (target 8+, minimum 7): The About page is visually clean and well-structured, with consistent typography and spacing. It effectively uses hierarchy and alignment, and the primary action is clearly visible. However, it lacks visual polish in key areas like form design and empty states, and the desktop layout feels underutilized.",
+      "fix": "Address this screen's findings until it looks polished and professional.",
+      "note": true
+    },
+    {
+      "severity": "low",
+      "viewport": "phone",
+      "issue": "The 'Back to home' button is slightly narrower than the 'View services' link, creating a small visual imbalance.",
+      "fix": "Adjust the button width to match the link's width for visual consistency.",
+      "screen": "not found",
+      "source": "vision",
+      "note": true
+    },
+    {
+      "severity": "low",
+      "viewport": "desktop",
+      "issue": "The 'View services' link is positioned slightly lower than the button, creating a minor vertical misalignment.",
+      "fix": "Align the link with the top of the button for a cleaner visual hierarchy.",
+      "screen": "not found",
+      "source": "vision",
+      "note": true
+    }
+  ],
+  "lighthouse": [
+    {
+      "accessibility": 100,
+      "bestPractices": 100,
+      "performance": 98
+    }
+  ],
+  "vision_scores": [
+    {
+      "screen": "home",
+      "score": 8.0,
+      "summary": "Polished, modern design with strong visual hierarchy and clear primary action. Typography is well-scaled and readable. Spacing and alignment are consistent on both phone and desktop. Color use is intentional and contrast is sufficient. Form elements are not visible here, but layout cues suggest good design. No critical issues found."
+    },
+    {
+      "screen": "contact form empty",
+      "score": 8.0,
+      "summary": "Polished, modern contact form with clear visual hierarchy and consistent spacing. The desktop layout uses available space effectively, and touch targets are appropriately sized. Minor improvements could enhance alignment and visual polish."
+    },
+    {
+      "screen": "contact form with errors",
+      "score": 7.0,
+      "summary": "The contact form is clean and functional, with clear visual hierarchy and error states. However, it lacks polish in typography, spacing, and form design, and the desktop layout feels underutilized. It\u2019s good but not exceptional."
+    },
+    {
+      "screen": "contact form filled in",
+      "score": 8.0,
+      "summary": "A polished, professional contact form with clear visual hierarchy, consistent spacing, and responsive layout. The design is clean and modern, suitable for a high-value B2B service. Minor improvements could enhance accessibility and touch-friendliness."
+    },
+    {
+      "screen": "contact success",
+      "score": 8.0,
+      "summary": "Polished, modern contact success screen with clear visual hierarchy, consistent spacing, and touch-friendly form elements. The desktop layout is spacious and well-organized, avoiding cramped or stretched layouts. All critical elements are visible and aligned, with appropriate contrast and typography. Minor spacing tweaks could enhance alignment consistency."
+    },
+    {
+      "screen": "services",
+      "score": 8.0,
+      "summary": "Polished, modern, and highly usable interface with strong visual hierarchy and consistent spacing. The desktop layout is spacious and well-organized, while the phone version is clean and touch-friendly. Typography is readable and scaled appropriately. Primary action is clear and accessible from both views. No critical flaws found."
+    },
+    {
+      "screen": "training filtered",
+      "score": 8.0,
+      "summary": "Polished, modern interface with strong visual hierarchy and clear primary action. Typography is readable with consistent scale. Spacing and alignment are clean on both phone and desktop. Grouping via cards and sections is effective. Color use is intentional with good contrast. Form elements are well-designed with labels above fields. Navigation is consistent and accessible. Empty states are handled with guidance. Desktop layout uses space effectively without stretching. Touch targets are appropriate for phone. No browser defaults or layout issues visible."
+    },
+    {
+      "screen": "about",
+      "score": 7.0,
+      "summary": "The About page is visually clean and well-structured, with consistent typography and spacing. It effectively uses hierarchy and alignment, and the primary action is clearly visible. However, it lacks visual polish in key areas like form design and empty states, and the desktop layout feels underutilized."
+    },
+    {
+      "screen": "not found",
+      "score": 8.0,
+      "summary": "Polished, modern, and professional. The design maintains visual hierarchy, consistent spacing, and clear primary actions across both phone and desktop views. Typography is well-scaled and readable. Empty states are handled gracefully. No critical usability issues."
+    }
+  ]
+}

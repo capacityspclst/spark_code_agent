@@ -1,0 +1,120 @@
+import * as React from 'react';
+import { useLocation } from 'react-router-dom';
+import { useDocumentTitle } from '../lib/useDocumentTitle';
+import {
+  EMPTY_CONTACT_FORM,
+  HELP_OPTIONS,
+  ERROR_MESSAGES,
+  SUCCESS_MESSAGE,
+  validateContact,
+  submitContact,
+  ContactValues,
+} from '../lib/contactForm';
+import { CONTACT_EMAIL } from '../content/site';
+import { AlertIcon, CheckIcon } from '../components/Icons';
+
+type FieldKey = keyof typeof ERROR_MESSAGES;
+type Errors = Partial<Record<FieldKey, string>>;
+
+export default function ContactPage() {
+  const { pathname } = useLocation();
+  useDocumentTitle(pathname);
+
+  const [values, setValues] = React.useState<ContactValues>({ ...EMPTY_CONTACT_FORM });
+  const [errors, setErrors] = React.useState<Errors>({});
+  const [success, setSuccess] = React.useState(false);
+  const bannerRef = React.useRef<HTMLDivElement>(null);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setValues((prev) => ({ ...prev, [name]: value }));
+    setErrors((prev) => {
+      const next = { ...prev };
+      delete next[name as FieldKey];
+      return next;
+    });
+    if (success) setSuccess(false);
+  };
+
+  const handleBlur = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const name = e.target.name as FieldKey;
+    if (!(name in ERROR_MESSAGES)) return;
+    const found = validateContact({ ...values, [name]: e.target.value })[name];
+    if (found) setErrors((prev) => ({ ...prev, [name]: found }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const form = e.currentTarget;
+    const validation = validateContact(values);
+    setErrors(validation);
+    if (Object.keys(validation).length > 0) {
+      setSuccess(false);
+      const first = (['name', 'email', 'message'] as FieldKey[]).find((k) => validation[k]);
+      if (first) (form.elements.namedItem(first) as HTMLElement | null)?.focus();
+      return;
+    }
+    const result = await submitContact(values);
+    if (result.ok) {
+      setSuccess(true);
+      setValues({ ...EMPTY_CONTACT_FORM });
+      setErrors({});
+      setTimeout(() => bannerRef.current?.focus(), 0);
+    }
+  };
+
+  return (
+    <div className="contact-page">
+      <div className="container page-head">
+        <h1>Book a consultation</h1>
+      </div>
+      <div className="container contact-grid">
+        <div className="contact-info">
+          <p className="lead">Tell us what you're working on and we'll reply within one business day.</p>
+          <p>
+            Prefer email? <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>
+          </p>
+        </div>
+        <div className="card contact-form-card">
+          {success && (
+            <div role="status" className="success-banner" tabIndex={-1} ref={bannerRef}>
+              <CheckIcon />
+              <span>{SUCCESS_MESSAGE}</span>
+            </div>
+          )}
+          <form noValidate onSubmit={handleSubmit}>
+            <div className="field">
+              <label htmlFor="name">Name <span className="required-tag">Required</span></label>
+              <input id="name" name="name" type="text" autoComplete="name" value={values.name} onChange={handleChange} onBlur={handleBlur} aria-invalid={!!errors.name} aria-describedby={errors.name ? 'name-error' : undefined} />
+              {errors.name && <p id="name-error" className="error-message"><AlertIcon />{errors.name}</p>}
+            </div>
+            <div className="field">
+              <label htmlFor="email">Email <span className="required-tag">Required</span></label>
+              <input id="email" name="email" type="email" autoComplete="email" value={values.email} onChange={handleChange} onBlur={handleBlur} aria-invalid={!!errors.email} aria-describedby={errors.email ? 'email-error' : undefined} />
+              {errors.email && <p id="email-error" className="error-message"><AlertIcon />{errors.email}</p>}
+            </div>
+            <div className="field">
+              <label htmlFor="company">Company</label>
+              <input id="company" name="company" type="text" autoComplete="organization" value={values.company} onChange={handleChange} />
+            </div>
+            <div className="field">
+              <label htmlFor="topic">What can we help with?</label>
+              <select id="topic" name="topic" value={values.topic} onChange={handleChange}>
+                <option value="">Choose a topic</option>
+                {HELP_OPTIONS.map((opt) => (
+                  <option key={opt} value={opt}>{opt}</option>
+                ))}
+              </select>
+            </div>
+            <div className="field">
+              <label htmlFor="message">Message <span className="required-tag">Required</span></label>
+              <textarea id="message" name="message" value={values.message} onChange={handleChange} onBlur={handleBlur} rows={5} aria-invalid={!!errors.message} aria-describedby={errors.message ? 'message-error' : undefined} />
+              {errors.message && <p id="message-error" className="error-message"><AlertIcon />{errors.message}</p>}
+            </div>
+            <button type="submit" className="btn btn-primary">Send message</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  );
+}
