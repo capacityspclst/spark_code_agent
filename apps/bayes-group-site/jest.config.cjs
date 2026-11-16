@@ -6,7 +6,7 @@ module.exports = {
   moduleNameMapper: {
     '\\.css$': '<rootDir>/test/styleMock.cjs',
   },
-  extensionsToTreatAsEsm: ['.ts', '.tsx'],
+  extensionsToTreatAsEsm: ['.js', '.ts', '.tsx'],
   globals: {
     'ts-jest': {
       useESM: true,

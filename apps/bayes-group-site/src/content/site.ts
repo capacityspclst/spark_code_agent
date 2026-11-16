@@ -1,7 +1,7 @@
 export const SITE_NAME = 'The Bayes Group';
 export const TAGLINE = 'Evidence-driven AI, built for your business.';
 export const FOOTER_LINE = 'AI enablement, training and custom development.';
-export const COPYRIGHT = '© 2026 The Bayes Group';
+export const COPYRIGHT = '\u00a9 2026 The Bayes Group';
 export const CONTACT_EMAIL = 'hello@thebayesgroup.com';
 export const NAV_LINKS = [
   { label: 'Services', to: '/services' },
