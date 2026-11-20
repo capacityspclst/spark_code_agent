@@ -151,6 +151,8 @@ export default function HomePage() {
             <p className="eyebrow">Why us</p>
             <h2>Why The Bayes Group</h2>
           </div>
+          {/* Photo */}
+          <Photo name="about-office" />
           <div className="why-list">
             {WHY_POINTS.map((w) => (
               <div key={w.title} className="why-point">

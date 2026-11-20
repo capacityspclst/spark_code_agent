@@ -4,6 +4,7 @@ import { useDocumentTitle } from '../lib/useDocumentTitle';
 import {
   EMPTY_CONTACT_FORM,
   HELP_OPTIONS,
+  COMPANY_SIZE_OPTIONS,
   ERROR_MESSAGES,
   SUCCESS_MESSAGE,
   validateContact,
@@ -11,6 +12,7 @@ import {
   ContactValues,
 } from '../lib/contactForm';
 import { CONTACT_EMAIL } from '../content/site';
+import Photo from '../components/Photo';
 import { AlertIcon, CheckIcon } from '../components/Icons';
 
 type FieldKey = keyof typeof ERROR_MESSAGES;
@@ -69,12 +71,6 @@ export default function ContactPage() {
         <h1>Book a consultation</h1>
       </div>
       <div className="container contact-grid">
-        <div className="contact-info">
-          <p className="lead">Tell us what you're working on and we'll reply within one business day.</p>
-          <p>
-            Prefer email? <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>
-          </p>
-        </div>
         <div className="card contact-form-card">
           {success && (
             <div role="status" className="success-banner" tabIndex={-1} ref={bannerRef}>
@@ -98,6 +94,16 @@ export default function ContactPage() {
               <label htmlFor="company">Company</label>
               <input className="form-control" id="company" name="company" type="text" autoComplete="organization" value={values.company} onChange={handleChange} />
             </div>
+            {/* Company size optional field */}
+            <div className="field">
+              <label htmlFor="companySize">Company size</label>
+              <select className="form-control" id="companySize" name="companySize" value={values.companySize} onChange={handleChange}>
+                <option value="">Choose a size</option>
+                {COMPANY_SIZE_OPTIONS.map((opt) => (
+                  <option key={opt} value={opt}>{opt}</option>
+                ))}
+              </select>
+            </div>
             <div className="field">
               <label htmlFor="topic">What can we help with?</label>
               <select className="form-control" id="topic" name="topic" value={values.topic} onChange={handleChange}>
@@ -115,7 +121,17 @@ export default function ContactPage() {
             <button type="submit" className="btn btn-primary">Send message</button>
           </form>
         </div>
-      </div>
+        <div className="contact-info">
+          <Photo name="contact-meeting" />
+          <p className="lead">Tell us what you're working on and we'll reply within one business day.</p>
+          <p>Prefer email? <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a></p>
+          <h2>What happens next</h2>
+          <ol>
+            <li>We reply within one business day</li>
+            <li>A 30-minute call about your goals</li>
+            <li>A written recommendation, no obligation</li>
+          </ol>
+        </div>      </div>
     </div>
   );
 }

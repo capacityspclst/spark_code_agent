@@ -29,6 +29,8 @@ export default function AboutPage() {
             {FOUNDERS.map((f, idx) => (
               <div key={idx} className="card founder-card">
                 <span className="placeholder-tag">Placeholder</span>
+                <AvatarSilhouette />
+                <p className="placeholder-note">Photo placeholder</p>
                 <h3>{f.name}</h3>
                 <p className="founder-role">{f.role}</p>
                 <ul>

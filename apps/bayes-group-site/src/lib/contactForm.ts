@@ -2,6 +2,7 @@ export type ContactValues = {
   name: string;
   email: string;
   company: string;
+  companySize: string;
   topic: string;
   message: string;
 };
@@ -10,11 +11,13 @@ export const EMPTY_CONTACT_FORM: ContactValues = {
   name: '',
   email: '',
   company: '',
+  companySize: '',
   topic: '',
   message: '',
 };
 
 export const HELP_OPTIONS = ['AI Enablement','Training','Custom Development','Not sure yet'] as const;
+export const COMPANY_SIZE_OPTIONS = ['1-49 employees','50-249 employees','250-999 employees','1,000+ employees'] as const;
 
 export const ERROR_MESSAGES = {
   name: 'Please enter your name.',
