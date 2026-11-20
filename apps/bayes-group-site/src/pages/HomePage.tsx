@@ -1,8 +1,9 @@
 import * as React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useDocumentTitle } from '../lib/useDocumentTitle';
-import { HERO, PILLARS, STEPS, WHY_POINTS, CTA_BAND } from '../content/home';
+import { HERO, PILLARS, STEPS, WHY_POINTS, CTA_BAND, CREDIBILITY_POINTS, WHO_WE_SERVE, CASE_STUDIES, CASE_STUDY_NOTE, TESTIMONIAL } from '../content/home';
 import { ArrowIcon, CheckIcon, PillarIcon } from '../components/Icons';
+import Photo from '../components/Photo';
 
 function HeroArt() {
   return (
@@ -40,7 +41,43 @@ export default function HomePage() {
               <Link to={HERO.secondary.to} className="btn btn-on-dark-secondary">{HERO.secondary.label}</Link>
             </div>
           </div>
-          <HeroArt />
+          {/* Use Photo component for hero image */}
+          <Photo name="hero-boardroom" priority />
+        </div>
+      </section>
+
+      {/* Credibility strip */}
+      <section className="credibility-strip" aria-label="Credibility">
+        <div className="container">
+          <ul className="cred-list">
+            {CREDIBILITY_POINTS.map((p) => (
+              <li key={p.title} className="cred-item">
+                {/* placeholder for icon */}<span>{p.title}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </section>
+
+      {/* Who we serve */}
+      <section className="who-we-serve" aria-label="Who we serve">
+        <div className="container">
+          <h2>Who we serve</h2>
+          <div className="serve-panels">
+            {/* SMB panel */}
+            <div className="panel smb-panel">
+              <h3>{WHO_WE_SERVE.smb.title}</h3>
+              <p>{WHO_WE_SERVE.smb.text}</p>
+              <Link to={WHO_WE_SERVE.smb.link.to}>{WHO_WE_SERVE.smb.link.label}</Link>
+            </div>
+            {/* Enterprise panel */}
+            <div className="panel enterprise-panel">
+              <h3>{WHO_WE_SERVE.enterprise.title}</h3>
+              <span className="premium-label">{WHO_WE_SERVE.enterprise.label}</span>
+              <p>{WHO_WE_SERVE.enterprise.text}</p>
+              <Link to={WHO_WE_SERVE.enterprise.link.to}>{WHO_WE_SERVE.enterprise.link.label}</Link>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -74,6 +111,36 @@ export default function HomePage() {
               </li>
             ))}
           </ol>
+        </div>
+      </section>
+
+      {/* Client results */}
+      <section className="client-results" aria-label="Client results">
+        <div className="container">
+          <h2>Client results</h2>
+          <div className="case-grid">
+            {CASE_STUDIES.map((c) => (
+              <article key={c.industry} className="case-card">
+                <h3>{c.industry}</h3>
+                <span className="placeholder-tag">Placeholder</span>
+                <p>{c.challenge}</p>
+                <p>{c.approach}</p>
+                <p>{c.result}</p>
+                <p className="note">{CASE_STUDY_NOTE}</p>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Testimonial */}
+      <section className="testimonial" aria-label="Testimonial">
+        <div className="container">
+          <blockquote>
+            <p>{TESTIMONIAL.quote}</p>
+            <cite>{TESTIMONIAL.attribution}</cite>
+          </blockquote>
+          <p className="note">{TESTIMONIAL.note}</p>
         </div>
       </section>
 

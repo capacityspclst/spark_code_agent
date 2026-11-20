@@ -7,6 +7,7 @@ import TrainingPage from './pages/TrainingPage';
 import AboutPage from './pages/AboutPage';
 import ContactPage from './pages/ContactPage';
 import NotFoundPage from './pages/NotFoundPage';
+import EngagementsPage from './pages/EngagementsPage';
 
 export function AppRoutes() {
   return (
@@ -17,6 +18,7 @@ export function AppRoutes() {
         <Route path='/training' element={<TrainingPage />} />
         <Route path='/about' element={<AboutPage />} />
         <Route path='/contact' element={<ContactPage />} />
+        <Route path='/engagements' element={<EngagementsPage />} />
         <Route path='*' element={<NotFoundPage />} />
       </Route>
     </Routes>

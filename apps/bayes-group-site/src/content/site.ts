@@ -6,6 +6,7 @@ export const CONTACT_EMAIL = 'hello@thebayesgroup.com';
 export const NAV_LINKS = [
   { label: 'Services', to: '/services' },
   { label: 'Training', to: '/training' },
+  { label: 'Engagements', to: '/engagements' },
   { label: 'About', to: '/about' },
   { label: 'Contact', to: '/contact' },
 ];
