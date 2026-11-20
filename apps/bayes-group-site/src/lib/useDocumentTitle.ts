@@ -1,8 +1,9 @@
 import { useEffect } from 'react';
-import { getPageTitle } from '../content/site';
+import { getPageMeta } from '../seo';
 
 export function useDocumentTitle(pathname: string) {
   useEffect(() => {
-    document.title = getPageTitle(pathname);
+    const meta = getPageMeta(pathname);
+    document.title = meta.title;
   }, [pathname]);
 }
