@@ -4,7 +4,6 @@ import { useDocumentTitle } from '../lib/useDocumentTitle';
 import { ENGAGEMENTS_INTRO, ENGAGEMENT_TIERS } from '../content/engagements';
 import Photo from '../components/Photo';
 
-import Photo from '../components/Photo';
 export default function EngagementsPage() {
   const { pathname } = useLocation();
   useDocumentTitle(pathname);
@@ -15,8 +14,6 @@ export default function EngagementsPage() {
         <h1>Engagements</h1>
         <p className="lead">{ENGAGEMENTS_INTRO}</p>
       </section>
-      {/* Photo banner */}
-      <Photo name="enterprise-atrium" />
       <section className="container">
         <div className="engagement-grid">
           {ENGAGEMENT_TIERS.map((tier) => (
@@ -24,7 +21,6 @@ export default function EngagementsPage() {
               <h2>{tier.name}</h2>
               <p>{tier.audience}</p>
               <p>{tier.timeline}</p>
-              {tier.premium && <span className="premium-label">Premium</span>}
               <h3>What&#39;s included</h3>
               <ul>
                 {tier.included.map((it, i) => (

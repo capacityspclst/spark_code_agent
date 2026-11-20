@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { Link } from 'react-router-dom';
 import { Wordmark } from './Wordmark';
-import { NAV_LINKS, COPYRIGHT, FOOTER_LINE, CONTACT_EMAIL } from '../content/site';
+import { NAV_LINKS, COPYRIGHT, FOOTER_LINE } from '../content/site';
 
 export default function Footer() {
   return (
@@ -10,11 +10,7 @@ export default function Footer() {
         <div className='footer-brand'>
           <Wordmark onDark />
           <p>{FOOTER_LINE}</p>
-          <p>
-            <a href={`mailto:${CONTACT_EMAIL}`} className='footer-email'>
-              {CONTACT_EMAIL}
-            </a>
-          </p>
+          
         </div>
         <nav aria-label='Footer' className='footer-nav'>
           {NAV_LINKS.map((link) => (

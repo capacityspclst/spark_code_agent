@@ -8,7 +8,6 @@
 - `dist/training/index.html`
 - `dist/about/index.html`
 - `dist/contact/index.html`
-- `dist/engagements/index.html`
 - `dist/404.html`
 
 Upload the `dist/` folder as it is to any static host. There is no backend.
