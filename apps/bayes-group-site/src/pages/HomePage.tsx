@@ -78,6 +78,7 @@ export default function HomePage() {
       <section className="section section-surface" aria-label="What we do">
         <div className="container">
           <h2>What we do</h2>
+          <p className="lead section-intro">We help your team find, build and own AI that delivers measurable results, guided by two credentialed data scientists.</p>
         </div>
         <div className="container pillars">
           {PILLARS.map((p, i) => (
