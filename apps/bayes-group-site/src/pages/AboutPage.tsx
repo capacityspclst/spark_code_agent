@@ -2,8 +2,6 @@ import * as React from 'react';
 import { useLocation } from 'react-router-dom';
 import { useDocumentTitle } from '../lib/useDocumentTitle';
 import { MISSION, WHY_BAYES, FOUNDERS, VALUES } from '../content/about';
-import Photo from '../components/Photo';
-import { AvatarSilhouette } from '../components/Illustrations';
 
 export default function AboutPage() {
   const { pathname } = useLocation();
@@ -18,8 +16,6 @@ export default function AboutPage() {
         <p className="eyebrow">Mission</p>
         <p className="lead">{MISSION}</p>
       </section>
-      {/* About office photo */}
-      <Photo name="about-office" />
       <section className="section section-surface why-bayes">
         <div className="container">
           <h2>Why Bayes</h2>
@@ -33,8 +29,6 @@ export default function AboutPage() {
             {FOUNDERS.map((f, idx) => (
               <div key={idx} className="card founder-card">
                 <span className="placeholder-tag">Placeholder</span>
-                {/* Avatar silhouette */}
-                <AvatarSilhouette />
                 <h3>{f.name}</h3>
                 <p className="founder-role">{f.role}</p>
                 <ul>
@@ -55,8 +49,6 @@ export default function AboutPage() {
           <div className="about-grid values">
             {VALUES.map((v, i) => (
               <div key={i} className="card value-card">
-                {/* Simple icon placeholder */}
-                <svg aria-hidden="true" focusable="false" width="24" height="24"><circle cx="12" cy="12" r="10" fill="#CCCCCC" /></svg>
                 <h3>{v.title}</h3>
                 <p>{v.description}</p>
               </div>

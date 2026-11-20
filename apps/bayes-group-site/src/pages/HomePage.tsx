@@ -66,14 +66,12 @@ export default function HomePage() {
           <div className="serve-panels">
             {/* SMB panel */}
             <div className="panel smb-panel">
-              <Photo name="smb-owner" />
               <h3>{WHO_WE_SERVE.smb.title}</h3>
               <p>{WHO_WE_SERVE.smb.text}</p>
               <Link to={WHO_WE_SERVE.smb.link.to}>{WHO_WE_SERVE.smb.link.label}</Link>
             </div>
             {/* Enterprise panel */}
             <div className="panel enterprise-panel">
-              <Photo name="enterprise-atrium" />
               <h3>{WHO_WE_SERVE.enterprise.title}</h3>
               <span className="premium-label">{WHO_WE_SERVE.enterprise.label}</span>
               <p>{WHO_WE_SERVE.enterprise.text}</p>
@@ -88,10 +86,6 @@ export default function HomePage() {
         <div className="container pillars">
           {PILLARS.map((p, i) => (
             <div key={p.title} className="card pillar-card">
-              {/* Photo strip on top */}
-              {p.title === 'AI Enablement' && <Photo name="strategy-session" />}
-              {p.title === 'Training' && <Photo name="team-workshop" />}
-              {p.title === 'Custom Development' && <Photo name="custom-development" />}
               <PillarIcon kind={i} />
               <h2 className="pillar-title" style={{ fontSize: 'var(--text-h3)' }}>{p.title}</h2>
               <p>{p.description}</p>

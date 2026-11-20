@@ -1,8 +1,8 @@
 export const SITE_NAME = 'The Bayes Group';
 export const TAGLINE = 'Evidence-driven AI, built for your business.';
 export const FOOTER_LINE = 'AI enablement, training and custom development.';
-export const CONTACT_EMAIL = 'hello@thebayesgroup.com';
 export const COPYRIGHT = '\u00a9 2026 The Bayes Group';
+export const CONTACT_EMAIL = 'hello@thebayesgroup.com';
 export const NAV_LINKS = [
   { label: 'Services', to: '/services' },
   { label: 'Training', to: '/training' },
@@ -18,7 +18,6 @@ export const PAGE_TITLES = {
   training: 'Training | The Bayes Group',
   about: 'About | The Bayes Group',
   contact: 'Contact | The Bayes Group',
-  engagements: 'Engagements | The Bayes Group',
   notFound: 'Page not found | The Bayes Group',
 };
 
@@ -43,8 +42,6 @@ export function getPageTitle(pathname: string): string {
       return PAGE_TITLES.about;
     case '/contact':
       return PAGE_TITLES.contact;
-    case '/engagements':
-      return PAGE_TITLES.engagements;
     default:
       return PAGE_TITLES.notFound;
   }

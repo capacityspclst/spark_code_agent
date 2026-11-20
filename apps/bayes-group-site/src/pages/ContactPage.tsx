@@ -107,16 +107,6 @@ export default function ContactPage() {
                 ))}
               </select>
             </div>
-            {/* Company size optional field */}
-            <div className="field">
-              <label htmlFor="companySize">Company size</label>
-              <select className="form-control" id="companySize" name="companySize" value={(values as any).companySize || ''} onChange={handleChange}>
-                <option value="">Choose a size</option>
-                {COMPANY_SIZE_OPTIONS.map((opt) => (
-                  <option key={opt} value={opt}>{opt}</option>
-                ))}
-              </select>
-            </div>
             <div className="field">
               <div className="field-head"><label htmlFor="message">Message</label><span className="required-tag">Required</span></div>
               <textarea className="form-control" id="message" required aria-required="true" name="message" value={values.message} onChange={handleChange} onBlur={handleBlur} rows={5} aria-invalid={!!errors.message} aria-describedby={errors.message ? 'message-error' : undefined} />
