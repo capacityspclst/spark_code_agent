@@ -3,6 +3,7 @@ import { useLocation } from 'react-router-dom';
 import { useDocumentTitle } from '../lib/useDocumentTitle';
 import { SERVICE_SECTIONS } from '../content/services';
 import { ClockIcon } from '../components/Icons';
+import Photo from '../components/Photo';
 
 export default function ServicesPage() {
   const { pathname, hash } = useLocation();
@@ -34,6 +35,10 @@ export default function ServicesPage() {
                 <p className="eyebrow">{section.title}</p>
                 <h2>{section.title}</h2>
                 {section.intro && <p>{section.intro}</p>}
+                {/* Header photo */}
+                {section.id === 'enablement' && <Photo name="strategy-session" />}
+                {section.id === 'training' && <Photo name="team-workshop" />}
+                {section.id === 'custom-development' && <Photo name="custom-development" />}
               </div>
               <div>
                 <div className="service-items">
