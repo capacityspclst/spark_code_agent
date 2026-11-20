@@ -20,7 +20,7 @@ export const BellCurveMotif = () => (
   </svg>
 );
 
-export const DataGridPattern = () => (
+export const DataGridPattern = ({ id = 'data-grid' }: { id?: string }) => (
   <svg
     width="100%"
     height="100%"
@@ -30,11 +30,11 @@ export const DataGridPattern = () => (
     className="data-grid-pattern"
   >
     <defs>
-      <pattern id="data-grid" width="32" height="32" patternUnits="userSpaceOnUse">
+      <pattern id={id} width="32" height="32" patternUnits="userSpaceOnUse">
         <path d="M32 0H0V32" stroke="#1F8A8A" strokeWidth="1" opacity="0.35" />
       </pattern>
     </defs>
-    <rect width="100%" height="100%" fill="url(#data-grid)" />
+    <rect width="100%" height="100%" fill={`url(#${id})`} />
   </svg>
 );
 

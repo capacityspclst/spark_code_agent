@@ -3,7 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { useDocumentTitle } from '../lib/useDocumentTitle';
 import { HERO, PILLARS, STEPS, WHY_POINTS, CTA_BAND, CREDIBILITY_POINTS, WHO_WE_SERVE, CASE_STUDIES, CASE_STUDY_NOTE, TESTIMONIAL } from '../content/home';
 import { ArrowIcon, CheckIcon, PillarIcon, CredibilityIcon } from '../components/Icons';
-import { BellCurveMotif } from '../components/Illustrations';
+import { BellCurveMotif, DataGridPattern } from '../components/Illustrations';
 import Photo from '../components/Photo';
 import type { PhotoName } from '../content/images';
 
@@ -19,6 +19,9 @@ export default function HomePage() {
       <section className="hero" aria-labelledby="hero-title">
         <Photo name="hero-boardroom" priority className="hero-photo" sizes="100vw" />
         <div className="hero-overlay" aria-hidden="true" />
+        <div className="hero-grid-pattern" aria-hidden="true">
+          <DataGridPattern id="data-grid-hero" />
+        </div>
         <div className="hero-motif" aria-hidden="true">
           <BellCurveMotif />
         </div>

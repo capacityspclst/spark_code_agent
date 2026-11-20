@@ -75,7 +75,7 @@ const ICON_PATHS: Record<string, React.ReactNode> = {
   deeplearning: <><circle cx="5" cy="7" r="1.8" /><circle cx="5" cy="17" r="1.8" /><circle cx="12" cy="12" r="1.8" /><circle cx="19" cy="7" r="1.8" /><circle cx="19" cy="17" r="1.8" /><path d="M6.7 7.8l3.8 3.4M6.7 16.2l3.8-3.4M13.6 11l3.8-3M13.6 13l3.8 3" /></>,
   integration: <><rect x="3" y="4" width="7" height="7" rx="1.5" /><rect x="14" y="13" width="7" height="7" rx="1.5" /><path d="M10 7.5h4a3 3 0 0 1 3 3V13M14 16.5h-4a3 3 0 0 1-3-3V11" /></>,
   // training formats
-  'half-day': <><circle cx="12" cy="12" r="9" /><path d="M12 3v18M12 7.5a4.5 4.5 0 0 1 0 9" /></>,
+  'half-day': <><path d="M3 18h18M6.5 18a5.5 5.5 0 0 1 11 0M12 6v2.5M4.8 9.8l1.7 1.7M19.2 9.8l-1.7 1.7M8 21h8" /></>,
   'one-day': <><rect x="4" y="5" width="16" height="15" rx="1.5" /><path d="M4 10h16M8 3v4M16 3v4M12 13v4" /></>,
   'multi-week': <><rect x="3" y="5" width="18" height="15" rx="1.5" /><path d="M3 10h18M7 14h3M12 14h3M7 17h3M3 7V4M21 7V4" /></>,
   // engagement tiers
