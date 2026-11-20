@@ -16,6 +16,7 @@ export const PAGE_TITLES = {
   home: 'The Bayes Group | Evidence-driven AI',
   services: 'Services | The Bayes Group',
   training: 'Training | The Bayes Group',
+  engagements: 'Engagements | The Bayes Group',
   about: 'About | The Bayes Group',
   contact: 'Contact | The Bayes Group',
   notFound: 'Page not found | The Bayes Group',
@@ -38,6 +39,8 @@ export function getPageTitle(pathname: string): string {
       return PAGE_TITLES.services;
     case '/training':
       return PAGE_TITLES.training;
+    case '/engagements':
+      return PAGE_TITLES.engagements;
     case '/about':
       return PAGE_TITLES.about;
     case '/contact':

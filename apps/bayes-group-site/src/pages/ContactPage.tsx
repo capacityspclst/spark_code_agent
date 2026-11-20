@@ -4,6 +4,7 @@ import { useDocumentTitle } from '../lib/useDocumentTitle';
 import {
   EMPTY_CONTACT_FORM,
   HELP_OPTIONS,
+  COMPANY_SIZE_OPTIONS,
   ERROR_MESSAGES,
   SUCCESS_MESSAGE,
   validateContact,
@@ -12,6 +13,8 @@ import {
 } from '../lib/contactForm';
 import { CONTACT_EMAIL } from '../content/site';
 import { AlertIcon, CheckIcon } from '../components/Icons';
+import { DataGridPattern } from '../components/Illustrations';
+import Photo from '../components/Photo';
 
 type FieldKey = keyof typeof ERROR_MESSAGES;
 type Errors = Partial<Record<FieldKey, string>>;
@@ -65,16 +68,17 @@ export default function ContactPage() {
 
   return (
     <div className="contact-page">
-      <div className="container page-head">
-        <h1>Book a consultation</h1>
-      </div>
-      <div className="container contact-grid">
-        <div className="contact-info">
+      <div className="page-band">
+        <DataGridPattern />
+        <div className="container page-head">
+          <h1>Book a consultation</h1>
           <p className="lead">Tell us what you're working on and we'll reply within one business day.</p>
           <p>
             Prefer email? <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>
           </p>
         </div>
+      </div>
+      <div className="container contact-grid">
         <div className="card contact-form-card">
           {success && (
             <div role="status" className="success-banner" tabIndex={-1} ref={bannerRef}>
@@ -99,6 +103,15 @@ export default function ContactPage() {
               <input className="form-control" id="company" name="company" type="text" autoComplete="organization" value={values.company} onChange={handleChange} />
             </div>
             <div className="field">
+              <label htmlFor="companySize">Company size</label>
+              <select className="form-control" id="companySize" name="companySize" value={values.companySize} onChange={handleChange}>
+                <option value="">Choose a size</option>
+                {COMPANY_SIZE_OPTIONS.map((opt) => (
+                  <option key={opt} value={opt}>{opt}</option>
+                ))}
+              </select>
+            </div>
+            <div className="field">
               <label htmlFor="topic">What can we help with?</label>
               <select className="form-control" id="topic" name="topic" value={values.topic} onChange={handleChange}>
                 <option value="">Choose a topic</option>
@@ -115,6 +128,17 @@ export default function ContactPage() {
             <button type="submit" className="btn btn-primary">Send message</button>
           </form>
         </div>
+        <aside className="contact-side">
+          <div className="photo-frame">
+            <Photo name="contact-meeting" />
+          </div>
+          <h2>What happens next</h2>
+          <ol className="next-steps">
+            <li><span className="step-num" aria-hidden="true">1</span><span>We reply within one business day</span></li>
+            <li><span className="step-num" aria-hidden="true">2</span><span>A 30-minute call about your goals</span></li>
+            <li><span className="step-num" aria-hidden="true">3</span><span>A written recommendation, no obligation</span></li>
+          </ol>
+        </aside>
       </div>
     </div>
   );

@@ -5,15 +5,16 @@ type PhotoProps = {
   name: keyof typeof PHOTOS;
   priority?: boolean;
   className?: string;
+  sizes?: string;
   alt?: string; // optional override
 };
 
-export default function Photo({ name, priority = false, className, alt }: PhotoProps) {
+export default function Photo({ name, priority = false, className, alt, sizes: sizesProp }: PhotoProps) {
   const { alt: defaultAlt } = PHOTOS[name];
   const imageAlt = alt ?? defaultAlt;
   const src = `/images/${name}.jpg`;
   const srcSet = `/images/${name}-768.jpg 768w, /images/${name}.jpg 1344w`;
-  const sizes = '(min-width:1024px) 50vw, 100vw';
+  const sizes = sizesProp && sizesProp.trim() ? sizesProp : '(min-width:1024px) 50vw, 100vw';
   const loading = priority ? 'eager' : 'lazy';
   return (
     <img
