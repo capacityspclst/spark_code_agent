@@ -192,7 +192,7 @@ describe('pillar card titles', () => {
 });
 
 describe('footer content', () => {
-  test.each(['/', '/services', '/contact'])('footer on %s shows only wordmark, line, nav and copyright', (p) => {
+  test.each(['/', '/services', '/contact', '/engagements'])('footer on %s shows only wordmark, line, nav and copyright', (p) => {
     renderAt(p);
     const footer = screen.getByRole('contentinfo');
     const text = norm(footer.textContent);
@@ -205,7 +205,7 @@ describe('footer content', () => {
     rest = norm(rest.replace(FOOTER_LINE, ' '));
     rest = norm(rest.replace(COPYRIGHT, ' '));
     if (!(rest === '' || rest === 'The Bayes Group')) {
-      throw new Error(`Footer has extra text besides the wordmark, line, nav and copyright: ${JSON.stringify(rest)}`);
+      throw new Error(`Footer has extra text besides the wordmark, line, email, nav and copyright: ${JSON.stringify(rest)}`);
     }
   });
 });
@@ -223,7 +223,8 @@ describe('contact form field style', () => {
     return {
       name: f.getByLabelText(/^Name\b/),
       email: f.getByLabelText(/^Email\b/),
-      company: f.getByLabelText(/^Company\b/),
+      company: f.getByLabelText(/^Company(?! size)\b/),
+      companySize: f.getByLabelText(/^Company size\b/),
       topic: f.getByLabelText(/^What can we help with\?/),
       message: f.getByLabelText(/^Message\b/),
     };
@@ -232,7 +233,7 @@ describe('contact form field style', () => {
   test('every control uses the form-control class', () => {
     const form = getForm();
     const els = Array.from(form.querySelectorAll('input, select, textarea'));
-    expect(els.length).toBeGreaterThanOrEqual(5);
+    expect(els.length).toBeGreaterThanOrEqual(6);
     for (const el of els) {
       if (!el.classList.contains('form-control')) {
         throw new Error(`Control ${el.outerHTML.slice(0, 120)} lacks class form-control`);
@@ -281,6 +282,7 @@ describe('contact form field style', () => {
     expect(c.email.getAttribute('aria-invalid')).toBe('true');
     expect(c.message.getAttribute('aria-invalid')).toBe('true');
     expect(c.company.getAttribute('aria-invalid')).not.toBe('true');
+    expect(c.companySize.getAttribute('aria-invalid')).not.toBe('true');
     expect(c.topic.getAttribute('aria-invalid')).not.toBe('true');
   });
 
@@ -291,6 +293,7 @@ describe('contact form field style', () => {
       [c.name, 'name'],
       [c.email, 'email'],
       [c.company, 'company'],
+      [c.companySize, 'companySize'],
       [c.topic, 'topic'],
       [c.message, 'message'],
     ]);

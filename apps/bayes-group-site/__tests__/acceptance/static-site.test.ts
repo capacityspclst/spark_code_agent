@@ -29,7 +29,7 @@ describe('public files', () => {
     expect(lines).toContain('Sitemap: https://thebayesgroup.com/sitemap.xml');
   });
 
-  test('sitemap.xml lists the five pages', () => {
+  test('sitemap.xml lists the six pages', () => {
     const xml = readRootFile('public/sitemap.xml');
     expect(xml).toMatch(/<urlset[^>]*xmlns="http:\/\/www\.sitemaps\.org\/schemas\/sitemap\/0\.9"/);
     const locs: string[] = [];
@@ -41,6 +41,7 @@ describe('public files', () => {
         'https://thebayesgroup.com/',
         'https://thebayesgroup.com/services',
         'https://thebayesgroup.com/training',
+        'https://thebayesgroup.com/engagements',
         'https://thebayesgroup.com/about',
         'https://thebayesgroup.com/contact',
       ].sort(),
@@ -83,6 +84,7 @@ describe('build setup', () => {
         ['index.html', /Evidence-driven AI, built for your business\./],
         ['services/index.html', /<h1[^>]*>\s*Services\s*<\/h1>/],
         ['training/index.html', /<h1[^>]*>\s*Training\s*<\/h1>/],
+        ['engagements/index.html', /<h1[^>]*>\s*Engagements\s*<\/h1>/],
         ['about/index.html', /<h1[^>]*>\s*About\s*<\/h1>/],
         ['contact/index.html', /<h1[^>]*>\s*Book a consultation\s*<\/h1>/],
         ['404.html', /<h1[^>]*>\s*Page not found\s*<\/h1>/],

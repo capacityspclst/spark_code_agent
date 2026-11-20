@@ -19,9 +19,20 @@ describe('seo metadata (src/seo.ts)', () => {
     expect(SITE_NAME).toBe('The Bayes Group');
   });
 
-  test('PAGES lists the five pages in order with their titles', () => {
-    const actual = (PAGES as any[]).map((p) => [p.path, p.title]);
-    expect(actual).toEqual(EXPECTED_PAGES);
+  test('PAGES lists the six pages: the original five in order plus Engagements', () => {
+    const all = (PAGES as any[]).map((p) => [p.path, p.title]);
+    expect(all).toHaveLength(6);
+    expect(all.filter(([p]) => p !== '/engagements')).toEqual(EXPECTED_PAGES);
+    expect(all.filter(([p]) => p === '/engagements')).toEqual([
+      ['/engagements', 'Engagements | The Bayes Group'],
+    ]);
+  });
+
+  test('engagements description', () => {
+    const page = (PAGES as any[]).find((p) => p.path === '/engagements');
+    expect(page && page.description).toBe(
+      'Right-sized AI engagements for small and medium-sized businesses, with a premium tier for enterprise.',
+    );
   });
 
   test('NOT_FOUND_PAGE', () => {
@@ -53,15 +64,21 @@ describe('seo metadata (src/seo.ts)', () => {
     ['/services/', '/services'],
     ['/services#training', '/services'],
     ['/training?x=1', '/training'],
+    ['/engagements', '/engagements'],
+    ['/engagements#enterprise', '/engagements'],
     ['/about', '/about'],
     ['/contact', '/contact'],
   ])('getPageMeta(%s) returns the %s page', (input, expectedPath) => {
     const meta: any = getPageMeta(input);
     const page = (PAGES as any[]).find((p) => p.path === expectedPath);
+    expect(page).toBeTruthy();
     expect(meta).toEqual(page);
   });
 
-  test.each(['/does-not-exist', '/services/extra', '/404'])('getPageMeta(%s) returns NOT_FOUND_PAGE', (input) => {
-    expect(getPageMeta(input)).toEqual(NOT_FOUND_PAGE);
-  });
+  test.each(['/does-not-exist', '/services/extra', '/404', '/engagements/extra'])(
+    'getPageMeta(%s) returns NOT_FOUND_PAGE',
+    (input) => {
+      expect(getPageMeta(input)).toEqual(NOT_FOUND_PAGE);
+    },
+  );
 });
