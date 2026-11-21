@@ -2,7 +2,7 @@ import * as React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useDocumentTitle } from '../lib/useDocumentTitle';
 import { ENGAGEMENTS_INTRO, TIERS, NOT_SURE } from '../content/engagements';
-import { CheckIcon, ClockIcon } from '../components/Icons';
+import { CheckIcon } from '../components/Icons';
 import Photo from '../components/Photo';
 
 export default function EngagementsPage() {
@@ -24,7 +24,6 @@ export default function EngagementsPage() {
         <div className="container">
           {TIERS.map((t) => (
             <article key={t.id} id={t.id} className={`tier-card ${t.premium ? 'premium' : ''}`}>
-              <ClockIcon className="icon-tile" />
               <h2>{t.name}</h2>
               <p className="audience">{t.audience}</p>
               <p className="timeline">{t.timeline}</p>

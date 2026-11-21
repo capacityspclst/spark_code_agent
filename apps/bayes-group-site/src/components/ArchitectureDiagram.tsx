@@ -42,10 +42,12 @@ export default function ArchitectureDiagram({ variant = 'light' }: ArchitectureD
   return (
     <svg
       role="img"
-      aria-label="System architecture: your systems, agent orchestration, models, guardrails and observability"
+      aria-labelledby={`${titleId} ${descId}`}
       viewBox={viewBox}
       xmlns="http://www.w3.org/2000/svg"
     >
+      <title id={titleId}>System architecture: your systems, agent orchestration, models, guardrails and observability</title>
+      <desc id={descId}>Diagram of system components and data flows for AI engineering.</desc>
       {labels.map((text, i) => (
         <text
           key={text}
