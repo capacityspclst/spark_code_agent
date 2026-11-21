@@ -9,6 +9,7 @@ import {
   validateContact,
   submitContact,
   ContactValues,
+  COMPANY_SIZE_OPTIONS,
 } from '../lib/contactForm';
 import { CONTACT_EMAIL } from '../content/site';
 import { AlertIcon, CheckIcon } from '../components/Icons';
@@ -103,6 +104,15 @@ export default function ContactPage() {
               <select className="form-control" id="topic" name="topic" value={values.topic} onChange={handleChange}>
                 <option value="">Choose a topic</option>
                 {HELP_OPTIONS.map((opt) => (
+                  <option key={opt} value={opt}>{opt}</option>
+                ))}
+              </select>
+            </div>
+            <div className="field">
+              <label htmlFor="companySize">Company size</label>
+              <select className="form-control" id="companySize" name="companySize" value={(values as any).companySize || ''} onChange={handleChange}>
+                <option value="">Choose a size</option>
+                {COMPANY_SIZE_OPTIONS.map((opt) => (
                   <option key={opt} value={opt}>{opt}</option>
                 ))}
               </select>

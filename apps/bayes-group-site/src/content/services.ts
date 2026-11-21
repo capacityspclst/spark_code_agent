@@ -55,6 +55,7 @@ export const SERVICE_SECTIONS: ServiceSection[] = [
       { name: 'Predictive models and ML pipelines', description: 'End-to-end pipelines for forecasting and classification tasks.' },
       { name: 'Deep-learning solutions', description: 'Custom neural network models for vision, NLP, and more.' },
       { name: 'Integration with existing systems', description: 'Seamless integration of AI components into your tech stack.' },
+      { name: 'Agentic systems and multi-system integration', description: 'We build agentic AI that connects across your enterprise systems.', link: { label: 'See how we build', to: '/systems' } },
     ],
     typicalEngagement: '2 to 6 weeks',
   },

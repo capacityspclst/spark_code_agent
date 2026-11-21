@@ -1,8 +1,24 @@
 import * as React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useDocumentTitle } from '../lib/useDocumentTitle';
-import { HERO, PILLARS, STEPS, WHY_POINTS, CTA_BAND } from '../content/home';
-import { ArrowIcon, CheckIcon, PillarIcon } from '../components/Icons';
+import {
+  HERO,
+  PILLARS,
+  STEPS,
+  WHY_POINTS,
+  CTA_BAND,
+  CREDIBILITY_POINTS,
+  AUDIENCE_PANELS,
+  SYSTEMS_BAND,
+  CAPABILITIES,
+  OPERATE_STEP,
+  EXAMPLES_SECTION,
+  EXAMPLES,
+  TESTIMONIAL,
+} from '../content/home';
+import { ArrowIcon, CheckIcon, PillarIcon, ClockIcon } from '../components/Icons';
+import ArchitectureDiagram from '../components/ArchitectureDiagram';
+import Photo from '../components/Photo';
 
 function HeroArt() {
   return (
@@ -32,7 +48,7 @@ export default function HomePage() {
       {/* Hero */}
       <section className="hero" aria-labelledby="hero-title">
         <div className="container hero-grid">
-          <div>
+          <div className="hero-text">
             <h1 id="hero-title">{HERO.title}</h1>
             <p className="lead">{HERO.valueProp}</p>
             <div className="hero-buttons">
@@ -40,7 +56,55 @@ export default function HomePage() {
               <Link to={HERO.secondary.to} className="btn btn-on-dark-secondary">{HERO.secondary.label}</Link>
             </div>
           </div>
-          <HeroArt />
+          <Photo name="hero-boardroom" alt="Modern boardroom with a presentation screen and collaboration space" priority />
+        </div>
+      </section>
+
+      {/* Credibility strip */}
+      <section className="cred-strip" aria-label="Credibility">
+        <div className="container">
+          {CREDIBILITY_POINTS.map((point) => (
+            <div key={point} className="cred-item">
+              <svg width="24" height="24" aria-hidden="true"><circle cx="12" cy="12" r="10" stroke="currentColor" fill="none" /></svg>
+              <span>{point}</span>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Who we serve panels */}
+      <section className="who-serve" aria-label="Who we serve">
+        <div className="container">
+          {AUDIENCE_PANELS.map((panel) => (
+            <div key={panel.id} className={`panel ${panel.premium ? 'premium' : ''}`} id={panel.id}>
+              <Photo name={panel.photo} alt={`Photo representing ${panel.title.toLowerCase()}`} />
+              <h2>{panel.title}</h2>
+              <p>{panel.text}</p>
+              {panel.premium && <span className="premium-label">Premium</span>}
+              <Link to={panel.link.to}>{panel.link.label}</Link>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Systems band */}
+      <section className="systems-band" aria-label="Systems">
+        <div className="container">
+          <p className="eyebrow">{SYSTEMS_BAND.eyebrow}</p>
+          <h2>{SYSTEMS_BAND.heading}</h2>
+          <div className="systems-content">
+            <ArchitectureDiagram variant="dark" />
+            <div className="capabilities">
+              {CAPABILITIES.map((c) => (
+                <div key={c.title} className="capability">
+                  <svg width="24" height="24" aria-hidden="true"><circle cx="12" cy="12" r="10" stroke="currentColor" fill="none" /></svg>
+                  <h3>{c.title}</h3>
+                  <p>{c.description}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+          <Link to={SYSTEMS_BAND.link.to}>{SYSTEMS_BAND.link.label}</Link>
         </div>
       </section>
 
@@ -74,6 +138,42 @@ export default function HomePage() {
               </li>
             ))}
           </ol>
+          <div className="operate-step">
+            <h3>{OPERATE_STEP.title}</h3>
+            <p>{OPERATE_STEP.description}</p>
+          </div>
+        </div>
+      </section>
+
+      {/* Example engagements */}
+      <section className="examples" aria-label="Examples">
+        <div className="container">
+          <p className="eyebrow">{EXAMPLES_SECTION.eyebrow}</p>
+          <h2>{EXAMPLES_SECTION.heading}</h2>
+          <div className="example-cards">
+            {EXAMPLES.map((ex) => (
+              <div key={ex.name} className="example-card">
+                <span className="tag">{EXAMPLES_SECTION.tag}</span>
+                <h3>{ex.name}</h3>
+                <p className="industry">{ex.industry}</p>
+                <dl>
+                  <dt>Challenge</dt><dd>{ex.challenge}</dd>
+                  <dt>System</dt><dd>{ex.system}</dd>
+                  <dt>Observed and sustained</dt><dd>{ex.sustained}</dd>
+                </dl>
+                <p className="note">{EXAMPLES_SECTION.note}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Testimonial */}
+      <section className="testimonial" aria-label="Testimonial">
+        <div className="container">
+          <p>{TESTIMONIAL.placeholderNote}</p>
+          <blockquote>{TESTIMONIAL.quote}</blockquote>
+          <cite>{TESTIMONIAL.attribution}</cite>
         </div>
       </section>
 

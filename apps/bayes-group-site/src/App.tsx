@@ -7,6 +7,8 @@ import TrainingPage from './pages/TrainingPage';
 import AboutPage from './pages/AboutPage';
 import ContactPage from './pages/ContactPage';
 import NotFoundPage from './pages/NotFoundPage';
+import SystemsPage from './pages/SystemsPage';
+import EngagementsPage from './pages/EngagementsPage';
 
 export function AppRoutes() {
   return (
@@ -14,7 +16,9 @@ export function AppRoutes() {
       <Route element={<Layout />}>
         <Route path='/' element={<HomePage />} />
         <Route path='/services' element={<ServicesPage />} />
+        <Route path='/systems' element={<SystemsPage />} />
         <Route path='/training' element={<TrainingPage />} />
+        <Route path='/engagements' element={<EngagementsPage />} />
         <Route path='/about' element={<AboutPage />} />
         <Route path='/contact' element={<ContactPage />} />
         <Route path='*' element={<NotFoundPage />} />

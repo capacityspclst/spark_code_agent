@@ -36,6 +36,10 @@ export default function ServicesPage() {
                 {section.intro && <p>{section.intro}</p>}
               </div>
               <div>
+                <p className="engagement">
+                  <ClockIcon />
+                  <span>Typical engagement: {section.typicalEngagement}</span>
+                </p>
                 <div className="service-items">
                   {section.items.map((item) => (
                     <div key={item.name} className="card service-item">
@@ -44,11 +48,6 @@ export default function ServicesPage() {
                     </div>
                   ))}
                 </div>
-                <p className="engagement">
-                  <ClockIcon />
-                  <span>Typical engagement: {section.typicalEngagement}</span>
-                </p>
-              </div>
             </div>
           </section>
         ))}
