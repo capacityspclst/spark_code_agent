@@ -3,7 +3,6 @@ import { useLocation } from 'react-router-dom';
 import { useDocumentTitle } from '../lib/useDocumentTitle';
 import { SERVICE_SECTIONS } from '../content/services';
 import { ClockIcon } from '../components/Icons';
-import Photo from '../components/Photo';
 
 export default function ServicesPage() {
   const { pathname, hash } = useLocation();
@@ -31,17 +30,12 @@ export default function ServicesPage() {
         {SERVICE_SECTIONS.map((section) => (
           <section key={section.id} id={section.id} className="service-section">
             <div className="service-layout">
-              <Photo name={
-                section.id === 'enablement' ? 'strategy-session' :
-                section.id === 'training' ? 'team-workshop' :
-                'custom-development'
-              } alt={`Photo representing ${section.title.toLowerCase()}`} />
               <div className="service-head">
                 <p className="eyebrow">{section.title}</p>
                 <h2>{section.title}</h2>
                 {section.intro && <p>{section.intro}</p>}
               </div>
-              <div className="service-content">
+              <div>
                 <p className="engagement">
                   <ClockIcon />
                   <span>Typical engagement: {section.typicalEngagement}</span>
@@ -54,7 +48,6 @@ export default function ServicesPage() {
                     </div>
                   ))}
                 </div>
-              </div>
             </div>
           </section>
         ))}

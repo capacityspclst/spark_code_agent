@@ -3,8 +3,6 @@ import { useLocation } from 'react-router-dom';
 import { useDocumentTitle } from '../lib/useDocumentTitle';
 import { COURSES, filterCourses, COURSE_FILTERS, AUDIENCES } from '../content/courses';
 
-import Photo from '../components/Photo';
-
 export default function TrainingPage() {
   const { pathname } = useLocation();
   useDocumentTitle(pathname);
@@ -15,8 +13,6 @@ export default function TrainingPage() {
 
   return (
     <div className="training-page">
-      {/* Photo banner */}
-      <Photo name="team-workshop" alt="Photo of a training workshop" />
       <div className="container page-head">
         <h1>Training</h1>
         <p className="lead">Practical courses that build lasting AI capability, from the boardroom to the engineering team.</p>
