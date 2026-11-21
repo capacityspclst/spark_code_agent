@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useDocumentTitle } from '../lib/useDocumentTitle';
+import { NotFoundIllustration } from '../components/Illustrations';
 
 export default function NotFoundPage() {
   const { pathname } = useLocation();
@@ -8,6 +9,7 @@ export default function NotFoundPage() {
   return (
     <div className="notfound-page">
       <div className="container">
+        <NotFoundIllustration />
         <h1>Page not found</h1>
         <p className="lead">The page you're looking for doesn't exist or has moved.</p>
         <div className="notfound-actions">

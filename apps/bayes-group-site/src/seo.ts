@@ -11,6 +11,7 @@ export const PAGES: PageMeta[] = [
   { path: '/', title: 'The Bayes Group | Evidence-driven AI', description: 'Evidence-driven AI consulting, training and custom development led by two credentialed data scientists.' },
   { path: '/services', title: 'Services | The Bayes Group', description: 'AI enablement, team training and custom AI development that deliver measurable results for your business.' },
   { path: '/training', title: 'Training | The Bayes Group', description: 'Practical AI courses for executives, managers and technical teams, taught by working data scientists.' },
+  { path: '/engagements', title: 'Engagements | The Bayes Group', description: 'Right-sized AI engagements for small and medium-sized businesses, with a premium tier for enterprise.' },
   { path: '/about', title: 'About | The Bayes Group', description: 'Meet the data scientists behind The Bayes Group and the values that guide our work.' },
   { path: '/contact', title: 'Contact | The Bayes Group', description: 'Book a consultation with The Bayes Group and get a reply within one business day.' },
 ];

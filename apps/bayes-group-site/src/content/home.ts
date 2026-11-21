@@ -1,6 +1,7 @@
 export const HERO = {
   title: 'Evidence-driven AI, built for your business.',
-  valueProp: 'We help your team find, build and own AI that delivers measurable results, guided by two credentialed data scientists.',
+  // Updated value proposition per redesign
+  valueProp: 'We help small and medium-sized businesses put AI to work, with enterprise-grade rigor and senior data scientists on every engagement.',
   primary: { label: 'Book a consultation', to: '/contact' },
   secondary: { label: 'Explore services', to: '/services' },
 };
@@ -41,3 +42,55 @@ export const CTA_BAND = {
   heading: 'Ready to put AI to work?',
   button: { label: 'Book a consultation', to: '/contact' },
 };
+
+// New redesign content
+export const CREDIBILITY_POINTS = [
+  { title: 'Credentialed data scientists' },
+  { title: 'Vendor-neutral advice' },
+  { title: 'Built for small and medium-sized businesses' },
+  { title: 'Enterprise-grade governance' },
+];
+
+export const WHO_WE_SERVE = {
+  smb: {
+    title: 'Small and medium-sized businesses',
+    text: 'Practical, right-sized AI that fits your budget and your systems. You see results in weeks, and your team owns the solution afterwards.',
+    link: { label: 'See engagements', to: '/engagements' },
+  },
+  enterprise: {
+    title: 'Enterprise',
+    label: 'Premium',
+    text: 'A dedicated senior team with custom scope for larger organizations. Governance, security and responsible-AI practices are built in from day one.',
+    link: { label: 'Enterprise engagements', to: '/engagements#enterprise' },
+  },
+};
+
+export const CASE_STUDIES = [
+  {
+    industry: 'Manufacturing',
+    challenge: 'Challenge description placeholder',
+    approach: 'Approach description placeholder',
+    result: 'Result: to be added from a real engagement.',
+  },
+  {
+    industry: 'Professional services',
+    challenge: 'Challenge description placeholder',
+    approach: 'Approach description placeholder',
+    result: 'Result: to be added from a real engagement.',
+  },
+  {
+    industry: 'Retail',
+    challenge: 'Challenge description placeholder',
+    approach: 'Approach description placeholder',
+    result: 'Result: to be added from a real engagement.',
+  },
+];
+
+export const CASE_STUDY_NOTE = 'Placeholder case study: replace with a real client engagement before launch.';
+
+export const TESTIMONIAL = {
+  quote: 'Working with The Bayes Group gave our team the confidence to use AI in our daily operations.',
+  attribution: 'Client name, Title, Company',
+  note: 'Placeholder testimonial: replace with a real client quote before launch.',
+};
+

@@ -23,6 +23,7 @@ describe('site constants', () => {
     expect(NAV_LINKS.map((l) => ({ label: l.label, to: l.to }))).toEqual([
       { label: 'Services', to: '/services' },
       { label: 'Training', to: '/training' },
+      { label: 'Engagements', to: '/engagements' },
       { label: 'About', to: '/about' },
       { label: 'Contact', to: '/contact' },
     ]);
@@ -50,6 +51,8 @@ describe('page titles', () => {
     ['/services/', 'Services | The Bayes Group'],
     ['/services#training', 'Services | The Bayes Group'],
     ['/training?x=1', 'Training | The Bayes Group'],
+    ['/engagements', 'Engagements | The Bayes Group'],
+    ['/engagements#enterprise', 'Engagements | The Bayes Group'],
     ['/about', 'About | The Bayes Group'],
     ['/contact', 'Contact | The Bayes Group'],
     ['/does-not-exist', 'Page not found | The Bayes Group'],

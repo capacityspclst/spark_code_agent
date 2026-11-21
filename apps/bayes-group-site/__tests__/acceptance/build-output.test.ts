@@ -14,9 +14,21 @@ const FILES: Array<[string, string, string]> = [
   ['index.html', 'The Bayes Group | Evidence-driven AI', 'Evidence-driven AI, built for your business.'],
   ['services/index.html', 'Services | The Bayes Group', 'Services'],
   ['training/index.html', 'Training | The Bayes Group', 'Training'],
+  ['engagements/index.html', 'Engagements | The Bayes Group', 'Engagements'],
   ['about/index.html', 'About | The Bayes Group', 'About'],
   ['contact/index.html', 'Contact | The Bayes Group', 'Book a consultation'],
   ['404.html', 'Page not found | The Bayes Group', 'Page not found'],
+];
+
+const PHOTOS = [
+  'hero-boardroom',
+  'smb-owner',
+  'team-workshop',
+  'enterprise-atrium',
+  'custom-development',
+  'strategy-session',
+  'about-office',
+  'contact-meeting',
 ];
 
 let buildError: Error | null = null;
@@ -53,5 +65,25 @@ describe('npm run build writes prerendered pages', () => {
     expect(h1s).toHaveLength(1);
     expect(norm(h1s[0].textContent)).toBe(h1Text);
     expect(doc.querySelectorAll('script[type="module"]').length).toBeGreaterThan(0);
+  });
+
+  test('dist/images holds every photo in both sizes', () => {
+    if (buildError) throw buildError;
+    for (const name of PHOTOS) {
+      for (const file of [`${name}.jpg`, `${name}-768.jpg`]) {
+        const p = path.join(DIST, 'images', file);
+        if (!fs.existsSync(p)) throw new Error(`Expected npm run build to copy dist/images/${file}`);
+      }
+    }
+  });
+
+  test('prerendered home page references the hero photo with srcset', () => {
+    if (buildError) throw buildError;
+    const doc = parse(fs.readFileSync(path.join(DIST, 'index.html'), 'utf8'));
+    const img = Array.from(doc.querySelectorAll('img')).find(
+      (i) => i.getAttribute('src') === '/images/hero-boardroom.jpg',
+    );
+    if (!img) throw new Error('dist/index.html has no <img src="/images/hero-boardroom.jpg">');
+    expect(img.getAttribute('srcset') || '').toContain('/images/hero-boardroom-768.jpg 768w');
   });
 });

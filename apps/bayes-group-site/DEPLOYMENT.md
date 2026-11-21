@@ -6,11 +6,12 @@
 - `dist/index.html` (/)
 - `dist/services/index.html`
 - `dist/training/index.html`
+- `dist/engagements/index.html`
 - `dist/about/index.html`
 - `dist/contact/index.html`
 - `dist/404.html`
 
-Upload the `dist/` folder as it is to any static host. There is no backend.
+Upload the `dist/` folder as it is to any static host. There is no backend. The photos are in `dist/images` (copied from `public/images`).
 
 No SPA rewrite rule or fallback is needed, because every page is its own file. Do not add a `_redirects` catch-all or an index.html fallback in the server config.
 
@@ -26,7 +27,7 @@ error_page 404 /404.html;
 To check a deployment, open `/services` (200, its own title) and an unknown address such as `/no-such-page` (status 404 showing "Page not found").
 
 ## SEO files
-`dist/` also contains `robots.txt` (allows everything and points to the sitemap), `sitemap.xml` (the five pages at https://thebayesgroup.com) and `favicon.svg` (linked from every page). They are copied from `public/`.
+`dist/` also contains `robots.txt` (allows everything and points to the sitemap), `sitemap.xml` (the six pages at https://thebayesgroup.com) and `favicon.svg` (linked from every page). They are copied from `public/`.
 
 ## Security headers
 Set these headers on the host:

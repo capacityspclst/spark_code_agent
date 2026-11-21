@@ -1,6 +1,9 @@
 import * as React from 'react';
 import { useLocation } from 'react-router-dom';
 import { useDocumentTitle } from '../lib/useDocumentTitle';
+import { FormatIcon } from '../components/Icons';
+import { DataGridPattern } from '../components/Illustrations';
+import Photo from '../components/Photo';
 import { COURSES, filterCourses, COURSE_FILTERS, AUDIENCES } from '../content/courses';
 
 export default function TrainingPage() {
@@ -13,11 +16,19 @@ export default function TrainingPage() {
 
   return (
     <div className="training-page">
-      <div className="container page-head">
-        <h1>Training</h1>
-        <p className="lead">Practical courses that build lasting AI capability, from the boardroom to the engineering team.</p>
+      <div className="page-band">
+        <DataGridPattern />
+        <div className="container page-head training-head">
+          <div>
+            <h1>Training</h1>
+            <p className="lead">Practical courses that build lasting AI capability, from the boardroom to the engineering team.</p>
+          </div>
+          <div className="photo-frame">
+            <Photo name="team-workshop" />
+          </div>
+        </div>
       </div>
-      <div className="container section" style={{ paddingTop: 'var(--space-4)' }}>
+      <div className="container section" style={{ paddingTop: 'var(--space-6)' }}>
         <div className="filter-bar" role="group" aria-label="Filter courses by audience">
           {COURSE_FILTERS.map((f) => (
             <button
@@ -47,6 +58,7 @@ export default function TrainingPage() {
         <div className="course-grid">
           {filtered.map((c) => (
             <div key={c.id} className="card course-card">
+              <FormatIcon format={c.format} />
               <div className="course-header">
                 <span className="audience-chip">{c.audience}</span>
                 <span className="format">{c.format}</span>
