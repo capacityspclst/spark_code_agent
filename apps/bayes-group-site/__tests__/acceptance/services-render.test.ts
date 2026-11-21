@@ -30,6 +30,15 @@ function sentenceCount(s: string): number {
   return m ? m.length : 0;
 }
 
+function deepestMatching(scope: Element, re: RegExp): Element | null {
+  const all = [scope, ...Array.from(scope.querySelectorAll('*'))].filter((e) => re.test(norm(e.textContent)));
+  const leaf = all.filter((e) => !Array.from(e.children).some((c) => re.test(norm(c.textContent))));
+  return leaf[0] || null;
+}
+
+const follows = (a: Node, b: Node) =>
+  (a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING) !== 0;
+
 afterEach(() => cleanup());
 
 const EXPECTED: Record<string, string[]> = {
@@ -90,17 +99,23 @@ describe('services page rendering', () => {
     for (const item of data.items) expect(text).toContain(norm(item.description));
   });
 
-  test.each(Object.keys(EXPECTED))('section %s ends with a Typical engagement line', (id) => {
+  test.each(Object.keys(EXPECTED))('section %s shows a Typical engagement line in its header', (id) => {
     renderAt('/services');
     const main = screen.getByRole('main');
     const section = main.querySelector(`#${id}`)!;
+    expect(section).not.toBeNull();
     const data = SERVICE_SECTIONS.find((s) => s.id === id)!;
     const text = norm(section.textContent);
-    const re = new RegExp(`Typical engagement:?\\s*${esc(norm(data.typicalEngagement))}\\.?$`);
+    const re = new RegExp(`Typical engagement:?\\s*${esc(norm(data.typicalEngagement))}`);
     expect(text).toMatch(re);
-    const lastItem = data.items[data.items.length - 1];
-    expect(text.lastIndexOf(norm(lastItem.description))).toBeLessThan(
-      text.lastIndexOf('Typical engagement'),
-    );
+    const line = deepestMatching(section, re);
+    expect(line).not.toBeNull();
+    const h2 = section.querySelector('h2');
+    expect(h2).not.toBeNull();
+    expect(follows(h2!, line!)).toBe(true);
+    const firstDescRe = new RegExp(esc(norm(data.items[0].description)));
+    const firstDesc = deepestMatching(section, firstDescRe);
+    expect(firstDesc).not.toBeNull();
+    expect(follows(line!, firstDesc!)).toBe(true);
   });
 });

@@ -61,13 +61,15 @@ describe('route change scroll and focus', () => {
     const user = userEvent.setup();
     renderAt('/');
     const main = screen.getByRole('main');
-    const explore = Array.from(main.querySelectorAll('a')).find(
-      (a) => norm(a.textContent) === 'Explore services',
+    const see = Array.from(main.querySelectorAll('a')).find(
+      (a) => norm(a.textContent) === 'See how we build' && a.getAttribute('href') === '/systems',
     );
-    expect(explore).toBeTruthy();
-    await user.click(explore!);
+    expect(see).toBeTruthy();
+    await user.click(see!);
     await waitFor(() =>
-      expect(norm(within(screen.getByRole('main')).getByRole('heading', { level: 1 }).textContent)).toBe('Services'),
+      expect(norm(within(screen.getByRole('main')).getByRole('heading', { level: 1 }).textContent)).toBe(
+        'Systems engineering',
+      ),
     );
     await waitFor(() => expect(scrolledToTop((window as any).scrollTo)).toBe(true));
     await waitFor(() => {

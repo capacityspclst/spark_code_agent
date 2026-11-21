@@ -28,7 +28,9 @@ afterEach(() => cleanup());
 
 const NAV: Array<[string, string]> = [
   ['Services', '/services'],
+  ['Systems', '/systems'],
   ['Training', '/training'],
+  ['Engagements', '/engagements'],
   ['About', '/about'],
   ['Contact', '/contact'],
 ];
@@ -36,7 +38,9 @@ const NAV: Array<[string, string]> = [
 const ROUTES: Array<[string, string, string]> = [
   ['/', 'The Bayes Group | Evidence-driven AI', 'Evidence-driven AI, built for your business.'],
   ['/services', 'Services | The Bayes Group', 'Services'],
+  ['/systems', 'Systems engineering | The Bayes Group', 'Systems engineering'],
   ['/training', 'Training | The Bayes Group', 'Training'],
+  ['/engagements', 'Engagements | The Bayes Group', 'Engagements'],
   ['/about', 'About | The Bayes Group', 'About'],
   ['/contact', 'Contact | The Bayes Group', 'Book a consultation'],
   ['/this-page-does-not-exist', 'Page not found | The Bayes Group', 'Page not found'],
@@ -115,6 +119,8 @@ describe('mobile menu', () => {
       const link = within(panel as HTMLElement).getByRole('link', { name: label });
       expect(link.getAttribute('href')).toBe(to);
     }
+    const cta = within(panel as HTMLElement).getByRole('link', { name: 'Book a consultation' });
+    expect(cta.getAttribute('href')).toBe('/contact');
 
     await user.click(btn);
     expect(btn.getAttribute('aria-expanded')).toBe('false');

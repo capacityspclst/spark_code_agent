@@ -3,10 +3,11 @@ import { HERO, PILLARS, STEPS, WHY_POINTS, CTA_BAND } from '../../src/content/ho
 describe('home content', () => {
   test('hero', () => {
     expect(HERO.title).toBe('Evidence-driven AI, built for your business.');
-    expect(typeof HERO.valueProp).toBe('string');
-    expect(HERO.valueProp.trim().length).toBeGreaterThan(0);
+    expect(HERO.valueProp).toBe(
+      'We design, build and run AI systems for small and medium-sized businesses, from single agents to multi-system architectures, with enterprise-grade rigor and senior data scientists on every engagement.',
+    );
     expect(HERO.primary).toEqual({ label: 'Book a consultation', to: '/contact' });
-    expect(HERO.secondary).toEqual({ label: 'Explore services', to: '/services' });
+    expect(HERO.secondary).toEqual({ label: 'See how we build', to: '/systems' });
   });
 
   test('three pillars link to service sections', () => {

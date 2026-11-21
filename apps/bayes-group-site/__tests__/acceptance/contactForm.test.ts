@@ -1,6 +1,7 @@
 import {
   EMPTY_CONTACT_FORM,
   HELP_OPTIONS,
+  COMPANY_SIZE_OPTIONS,
   ERROR_MESSAGES,
   SUCCESS_MESSAGE,
   isValidEmail,
@@ -18,8 +19,21 @@ const valid = {
 
 describe('contact form constants', () => {
   test('values', () => {
-    expect(EMPTY_CONTACT_FORM).toEqual({ name: '', email: '', company: '', topic: '', message: '' });
+    expect(EMPTY_CONTACT_FORM).toEqual({
+      name: '',
+      email: '',
+      company: '',
+      companySize: '',
+      topic: '',
+      message: '',
+    });
     expect([...HELP_OPTIONS]).toEqual(['AI Enablement', 'Training', 'Custom Development', 'Not sure yet']);
+    expect([...(COMPANY_SIZE_OPTIONS as any)]).toEqual([
+      '1-49 employees',
+      '50-249 employees',
+      '250-999 employees',
+      '1,000+ employees',
+    ]);
     expect(ERROR_MESSAGES).toEqual({
       name: 'Please enter your name.',
       email: 'Please enter a valid email address.',
@@ -90,10 +104,18 @@ describe('submitContact', () => {
   });
 
   test('valid submit succeeds, clears values, makes no request', async () => {
-    const result: any = await submitContact({ ...valid });
+    const result: any = await submitContact({ ...valid } as any);
     expect(result.ok).toBe(true);
     expect(result.message).toBe("Thanks, we'll be in touch within one business day.");
-    expect(result.values).toEqual({ name: '', email: '', company: '', topic: '', message: '' });
+    expect(result.values).toEqual({
+      name: '',
+      email: '',
+      company: '',
+      companySize: '',
+      topic: '',
+      message: '',
+    });
+    expect(result.values).toEqual(EMPTY_CONTACT_FORM);
     expect(g.fetch).not.toHaveBeenCalled();
     expect(g.XMLHttpRequest).not.toHaveBeenCalled();
   });

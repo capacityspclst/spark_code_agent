@@ -44,6 +44,7 @@ describe('services content', () => {
         'Predictive models and ML pipelines',
         'Deep-learning solutions',
         'Integration with existing systems',
+        'Agentic systems and multi-system integration',
       ]),
     );
   });
