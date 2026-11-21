@@ -36,11 +36,13 @@ export default function SystemsPage() {
               {sec.items.map((it) => (
                 <li key={it}>
                   {/* placeholder icon */}
-                  <svg width="24" height="24" aria-hidden="true"><circle cx="12" cy="12" r="10" stroke="currentColor" fill="none" /></svg>
+                  <svg width="24" height="24" aria-hidden="true" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke="currentColor" fill="none" /></svg>
                   {it}
                 </li>
               ))}
             </ul>
+            {/* illustration placeholder */}
+            <svg width="24" height="24" aria-hidden="true" viewBox="0 0 24 24"><rect width="24" height="24" fill="none" stroke="currentColor" /></svg>
           </div>
         </section>
       ))}
@@ -52,7 +54,7 @@ export default function SystemsPage() {
           <div className="deliverable-grid">
             {DELIVERABLES.map((name) => (
               <div key={name} className="card deliverable-card">
-                <svg width="24" height="24" aria-hidden="true"><circle cx="12" cy="12" r="10" stroke="currentColor" fill="none" /></svg>
+                <svg width="24" height="24" aria-hidden="true" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke="currentColor" fill="none" /></svg>
                 <span className="monospace">{name}</span>
               </div>
             ))}

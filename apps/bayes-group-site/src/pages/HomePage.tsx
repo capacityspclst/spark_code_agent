@@ -113,6 +113,11 @@ export default function HomePage() {
         <div className="container pillars">
           {PILLARS.map((p, i) => (
             <div key={p.title} className="card pillar-card">
+              <Photo name={
+                i === 0 ? 'strategy-session' :
+                i === 1 ? 'team-workshop' :
+                'custom-development'
+              } alt={`Photo for ${p.title.toLowerCase()}`} />
               <PillarIcon kind={i} />
               <h2 className="pillar-title" style={{ fontSize: 'var(--text-h3)' }}>{p.title}</h2>
               <p>{p.description}</p>
@@ -174,6 +179,13 @@ export default function HomePage() {
           <p>{TESTIMONIAL.placeholderNote}</p>
           <blockquote>{TESTIMONIAL.quote}</blockquote>
           <cite>{TESTIMONIAL.attribution}</cite>
+        </div>
+      </section>
+
+      {/* Photo of office */}
+      <section className="photo-office" aria-label="Office photo">
+        <div className="container">
+          <Photo name="about-office" alt="Photo of the office interior" />
         </div>
       </section>
 

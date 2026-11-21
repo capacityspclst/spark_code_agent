@@ -13,6 +13,7 @@ import {
 } from '../lib/contactForm';
 import { CONTACT_EMAIL } from '../content/site';
 import { AlertIcon, CheckIcon } from '../components/Icons';
+import Photo from '../components/Photo';
 
 type FieldKey = keyof typeof ERROR_MESSAGES;
 type Errors = Partial<Record<FieldKey, string>>;
@@ -125,7 +126,7 @@ export default function ContactPage() {
             <button type="submit" className="btn btn-primary">Send message</button>
           </form>
         </div>
-      </div>
+        <Photo name="contact-meeting" alt="Photo of a consultation meeting" />      </div>
     </div>
   );
 }

@@ -1,4 +1,5 @@
 import * as React from 'react';
+import Photo from '../components/Photo';
 import { useLocation } from 'react-router-dom';
 import { useDocumentTitle } from '../lib/useDocumentTitle';
 import { MISSION, WHY_BAYES, FOUNDERS, VALUES } from '../content/about';
@@ -12,6 +13,7 @@ export default function AboutPage() {
       <div className="container page-head">
         <h1>About</h1>
       </div>
+      <Photo name="about-office" alt="Photo of the office environment" />
       <section className="container mission" style={{ paddingBottom: 'var(--space-6)' }}>
         <p className="eyebrow">Mission</p>
         <p className="lead">{MISSION}</p>
