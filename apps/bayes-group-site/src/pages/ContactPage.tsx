@@ -79,14 +79,6 @@ export default function ContactPage() {
           </p>
         </div>
         <Photo name="contact-meeting" alt="Consultation meeting photo" />
-        <div className="what-next">
-          <h2>What happens next</h2>
-          <ol>
-            <li>We reply within one business day</li>
-            <li>A 30-minute call about your goals</li>
-            <li>A written recommendation, no obligation</li>
-          </ol>
-        </div>
         <div className="card contact-form-card">
           {success && (
             <div role="status" className="success-banner" tabIndex={-1} ref={bannerRef}>

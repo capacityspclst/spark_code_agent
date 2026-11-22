@@ -13,7 +13,7 @@ function writePage(route, url) {
 }
 
 writePage('', '/');
-for (const p of ['/services', '/training', '/about', '/contact', '/systems', '/engagements']) {
+for (const p of ['/services', '/training', '/about', '/contact']) {
   writePage(p.slice(1), p);
 }
 fs.writeFileSync(path.join(DIST, '404.html'), buildPageHtml(template, '/404'));

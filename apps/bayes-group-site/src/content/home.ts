@@ -54,7 +54,7 @@ export const AUDIENCE_PANELS = [
   {
     id: 'smb',
     title: 'Small and medium-sized businesses',
-    text: 'Practical, fast, right-sized AI that solves a real problem in weeks, not quarters. We build it with your people so your team owns it afterwards.',
+    text: 'Practical, right-sized AI with fast results. We build it with your team so your team owns it afterwards.',
     link: { label: 'See engagements', to: '/engagements' },
     photo: 'smb-owner',
     premium: false,
@@ -62,7 +62,7 @@ export const AUDIENCE_PANELS = [
   {
     id: 'enterprise',
     title: 'Enterprise',
-    text: 'A dedicated senior team for multi-system and agentic programs across your organization. Governance, security reviews and responsible-AI policy come built in.',
+    text: 'A dedicated senior team for multi-system programs and governance. Senior experts ensure security and responsible AI.',
     link: { label: 'Enterprise engagements', to: '/engagements#enterprise' },
     photo: 'enterprise-atrium',
     premium: true,
