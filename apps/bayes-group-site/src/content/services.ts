@@ -1,6 +1,7 @@
 export type ServiceItem = {
   name: string;
   description: string;
+  link?: { label: string; to: string };
 };
 
 export type ServiceSection = {
