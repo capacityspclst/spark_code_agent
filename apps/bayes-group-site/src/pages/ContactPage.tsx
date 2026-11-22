@@ -68,16 +68,18 @@ export default function ContactPage() {
 
   return (
     <div className="contact-page">
-      <div className="container page-head">
-        <p className="eyebrow">Contact</p>
-        <h1>Book a consultation</h1>
-      </div>
+      <section className="page-hero band-navy" aria-labelledby="contact-hero">
+        <DataGridMotif className="band-motif" />
+        <div className="container band-content">
+          <p className="eyebrow">CONTACT</p>
+          <h1 id="contact-hero">Book a consultation</h1>
+          <p className="lead">Tell us what you're working on and we'll reply within one business day.</p>
+          <p>Prefer email? <a href={`mailto:${CONTACT_EMAIL}`} className="footer-email" style={{ color: 'var(--color-accent-light)' }}>{CONTACT_EMAIL}</a></p>
+        </div>
+      </section>
       <div className="container contact-grid">
         <div className="contact-info">
-          <p className="lead">Tell us what you're working on and we'll reply within one business day.</p>
-          <p>
-            Prefer email? <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>
-          </p>
+          {/* empty, content moved to band */}
         </div>
         <div className="card contact-form-card">
           {success && (
@@ -138,7 +140,5 @@ export default function ContactPage() {
             <li>A written recommendation, no obligation</li>
           </ol>
         </aside>
-      </div>
-    </div>
-  );
+      </div>  );
 }

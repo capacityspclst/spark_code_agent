@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { Link } from 'react-router-dom';
 import { Wordmark } from './Wordmark';
-import { NAV_LINKS, COPYRIGHT, FOOTER_LINE, CONTACT_EMAIL } from '../content/site';
+import { COPYRIGHT, FOOTER_LINE, CONTACT_EMAIL } from '../content/site';
 
 const SERVICE_LINKS = [
   { label: 'AI Enablement', to: '/services#enablement' },
@@ -26,29 +26,25 @@ export default function Footer() {
             <p>{FOOTER_LINE}</p>
             <a className="footer-email" href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>
           </div>
-          <nav className="footer-col" aria-label="Services links">
-            <h2 className="footer-heading">Services</h2>
-            <ul>
-              {SERVICE_LINKS.map((l) => (
-                <li key={l.to}><Link to={l.to}>{l.label}</Link></li>
-              ))}
-            </ul>
-          </nav>
-          <nav className="footer-col" aria-label="Company links">
-            <h2 className="footer-heading">Company</h2>
-            <ul>
-              {COMPANY_LINKS.map((l) => (
-                <li key={l.to}><Link to={l.to}>{l.label}</Link></li>
-              ))}
-            </ul>
-          </nav>
           <nav aria-label="Footer" className="footer-nav">
-            <ul>
-              {NAV_LINKS.map((link) => (
-                <li key={link.to}><Link to={link.to}>{link.label}</Link></li>
-              ))}
-            </ul>
+            <nav className="footer-col" aria-label="Services links">
+              <h2 className="footer-heading">Services</h2>
+              <ul>
+                {SERVICE_LINKS.map((l) => (
+                  <li key={l.to}><Link to={l.to}>{l.label}</Link></li>
+                ))}
+              </ul>
+            </nav>
+            <nav className="footer-col" aria-label="Company links">
+              <h2 className="footer-heading">Company</h2>
+              <ul>
+                {COMPANY_LINKS.map((l) => (
+                  <li key={l.to}><Link to={l.to}>{l.label}</Link></li>
+                ))}
+              </ul>
+            </nav>
           </nav>
+
         </div>
         <div className="footer-bottom">
           <p className="footer-copy">{COPYRIGHT}</p>
