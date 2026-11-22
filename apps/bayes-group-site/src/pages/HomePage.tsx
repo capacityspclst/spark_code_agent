@@ -93,6 +93,7 @@ export default function HomePage() {
                   className="panel-photo"
                 />
                 {panel.premium && <span className="premium-label">Premium</span>}
+                <p className="eyebrow">{panel.premium ? 'For large organizations' : 'For growing teams'}</p>
                 <h2>{panel.title}</h2>
                 <p>{panel.text}</p>
                 <Link to={panel.link.to} className="text-link">
