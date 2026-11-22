@@ -20,7 +20,7 @@ export default function Footer() {
   return (
     <footer className="site-footer on-dark">
       <div className="container">
-        <div className="footer-inner">
+        <div className="footer-grid">
           <div className="footer-brand">
             <Wordmark onDark />
             <p>{FOOTER_LINE}</p>

@@ -75,13 +75,11 @@ export default function ContactPage() {
           <p className="eyebrow">CONTACT</p>
           <h1 id="contact-hero">Book a consultation</h1>
           <p className="lead">Tell us what you're working on and we'll reply within one business day.</p>
-          <p>Prefer email? <a href={`mailto:${CONTACT_EMAIL}`} className="footer-email" style={{ color: 'var(--color-accent-light)' }}>{CONTACT_EMAIL}</a></p>
+          <p className="band-email">Prefer email? <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a></p>
         </div>
       </section>
+      <section className="section contact-section">
       <div className="container contact-grid">
-        <div className="contact-info">
-          {/* empty, content moved to band */}
-        </div>
         <div className="card contact-form-card">
           {success && (
             <div role="status" className="success-banner" tabIndex={-1} ref={bannerRef}>
@@ -142,6 +140,7 @@ export default function ContactPage() {
           </ol>
         </aside>
       </div>
+      </section>
     </div>
   );
 }
