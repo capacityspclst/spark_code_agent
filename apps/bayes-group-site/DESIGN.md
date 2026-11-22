@@ -17,7 +17,7 @@
 - **See how we build** → `/systems` → **Book a consultation**.
 - Who we serve → **See engagements** / **Enterprise engagements** → `/engagements` → a tier button → `/contact`.
 
-The header and footer hold all six links and the CTA on every page, so no page is a dead end.
+The header holds all six links and the CTA on every page. The footer's Services and Company columns also reach every page, so no page is a dead end.
 
 ## Screens and states
 The site is static: no data loading, no network, no spinners. React hydrates the prerendered HTML. Long words and the email use `overflow-wrap:anywhere`. Photos reserve their space with width/height (no layout shift). Under a broken image the alt text shows on the navy fallback background `#0B1F3A`.
@@ -54,7 +54,7 @@ The site is static: no data loading, no network, no spinners. React hydrates the
 The last heading in main is the CTA h2. The last link in main is **Book a consultation**.
 
 **Systems**
-1. Navy hero with the diagram
+1. Navy hero: text (eyebrow, h1, lead) and the architecture diagram, side by side on desktop, stacked text-then-diagram on phones and tablets
 2. `#agentic` [white]
 3. `#architecture` [pale]
 4. `#observability` [white]
@@ -68,14 +68,18 @@ The last heading in main is the CTA h2. The last link in main is **Book a consul
 - A "Not sure which fits?" line [white].
 
 **Services**
-- Navy header band with the data-grid motif.
+- Navy page header band with the data-grid motif.
 - Three sections [white, pale, white], each with a two-column header and a grid of item cards.
 
 **Training:** photo banner, then filter and grid. Default count "Showing 6 courses". Filtered count, e.g. "Showing 2 courses for Managers". Empty: "No courses for this audience yet." with **Show all courses**.
 
 **About:** mission beside the photo, two founder cards (amber **Placeholder** tag, avatar marked "Photo placeholder", note "Placeholder: replace with founder credentials and bio."), and four value cards.
 
-**Contact**
+**Contact (in order)**
+1. Navy page header band [navy + data-grid motif]: eyebrow "CONTACT", h1 "Book a consultation", the lead and the "Prefer email?" mailto line. No form in the band.
+2. Form section [page's normal background, usual section padding]: the two-column form and the "What happens next" card, unchanged.
+
+Form states:
 - Default: empty fields, with the "Required" tag on Name, Email and Message.
 - Error: on blur and on submit; focus moves to the first invalid field. Messages: "Please enter your name." / "Please enter a valid email address." / "Please enter a message."
 - Success: green status banner, focused, form cleared.
@@ -97,24 +101,27 @@ The last heading in main is the CTA h2. The last link in main is **Book a consul
 - Credibility strip: a 2×2 grid inside a white card, margin-top −48px.
 - Who we serve: panels stacked, SMB first.
 - Systems band: diagram on top (the stacked variant), capabilities below.
+- Systems hero: `.systems-hero__grid` is one column, 32px gap: text first, diagram below (phone svg).
 - How we work: steps stacked, no connecting line.
 - Two-column blocks stack photo-first.
-- Contact: form first, then the "What happens next" photo card.
-- Footer: stacked, 32px gap.
+- Contact: navy header band, then form, then the "What happens next" photo card.
+- Footer: the three groups stack (brand, Services, Company), 32px gap, then the hairline and copyright.
 
 **Desktop (1280–1440px)**, 12-column grid with 32px gutters:
 - Hero: min-height 680px. Text spans columns 1–7. The overlay is a left→right gradient.
 - Credibility strip: 4 columns in one bar, 24px padding.
 - Who we serve: SMB panel 7 columns, Enterprise panel 5 columns, equal height.
 - Systems band: diagram 7 columns, capabilities 5 columns, stacked as 4 rows.
+- Systems hero (≥1024px): `.systems-hero__grid { grid-template-columns: minmax(0,2fr) minmax(0,3fr); align-items:center; gap:48px }`. Text column (eyebrow, h1, lead) left, about 40%; diagram right, vertically centered. The base rule has no multi-column template.
 - Pillars: 3 columns. Examples: 3 columns.
 - Steps: a 4-column `ol`; a 2px `#1F8A8A` line behind the 48px circles at `top:24px; left:12.5%; right:12.5%`. "Operate & improve" sits below as a full-width card, 32px margin-top.
 - Why: photo 5 columns, a 2×2 points grid in 7 columns.
 - Systems sections: text 7 columns, illustration 5 columns (sides alternate). Deliverables: 3×2 grid.
 - Engagements: business tiers in 3 columns; Enterprise full width as 2 columns (photo 5 | content 7).
 - Services headers: photo 5 columns | text 7 columns. Items: a 2-column grid.
-- Contact: form 7 columns | aside 5 columns.
-- Footer: 4 columns (brand 2fr | Services | Company | Footer nav), with the copyright row below a hairline.
+- Page header bands (Services, Systems-style inner pages, Training, Engagements, About, Contact): text block max-width 760px, left-aligned in the container.
+- Contact: form 7 columns | aside 5 columns, in the section below the band.
+- Footer (≥1024px): `.footer-grid { grid-template-columns: 2fr 1fr 1fr; gap:48px }` (brand | Services | Company), with the copyright row below a hairline. No 4-track footer rule exists.
 
 **No empty half-columns:** every text column beside a photo holds an eyebrow, an h2, a paragraph and a list, link or meta line, vertically centered.
 
@@ -156,7 +163,8 @@ The last heading in main is the CTA h2. The last link in main is **Book a consul
 - Eyebrows: teal `#17696A` on light, `#5FC4C4` on navy.
 - Icons: `#17696A` inside `#E6F2F2` tiles.
 - `#1F8A8A`: decorative lines, diagram strokes and motifs only (never text on light).
-- Motifs: `#5FC4C4` at 12% opacity.
+- Motifs (data-grid, bell curve): `#5FC4C4` at 12% opacity, `aria-hidden`.
+- Page header band: `--color-navy` background; h1 white; lead `#B8C4D6`; links `#5FC4C4`.
 
 **Contrast pairs**
 
@@ -180,16 +188,16 @@ The last heading in main is the CTA h2. The last link in main is **Book a consul
 | #7A8699 | #FFFFFF | form control and filter borders | ui |
 | #17696A | #FFFFFF | focus ring, focused input border | ui |
 | #17696A | #F2F7F7 | focus ring on pale | ui |
-| #FFFFFF | #0B1F3A | headings, body, footer links, selected filter, testimonial | normal |
-| #FFFFFF | #071528 | CTA band and footer text, Enterprise card text | normal |
+| #FFFFFF | #0B1F3A | headings, page-band h1, body, selected filter, testimonial | normal |
+| #FFFFFF | #071528 | CTA band and footer text, footer links, Enterprise card text | normal |
 | #FFFFFF | #102A4C | dark diagram box labels, deliverable cards | normal |
 | #FFFFFF | #304158 | hero h1 over photo (worst case of overlay) | large |
 | #B8C4D6 | #304158 | hero value prop over photo | normal |
 | #5FC4C4 | #304158 | hero eyebrow over photo | normal |
-| #B8C4D6 | #0B1F3A | muted text on navy, placeholder testimonial note | normal |
+| #B8C4D6 | #0B1F3A | page-band lead, "Prefer email?" text, muted text on navy | normal |
 | #B8C4D6 | #071528 | footer line, copyright | normal |
 | #B8C4D6 | #102A4C | capability and deliverable descriptions | normal |
-| #5FC4C4 | #0B1F3A | eyebrows, links and hover on navy | normal |
+| #5FC4C4 | #0B1F3A | eyebrows (incl. CONTACT), mailto link, links and hover on navy | normal |
 | #5FC4C4 | #071528 | footer column headings, links on deep navy | normal |
 | #5FC4C4 | #102A4C | dark diagram group labels | normal |
 | #5FC4C4 | #0B1F3A | focus ring, diagram strokes on dark | ui |
@@ -213,6 +221,14 @@ The last heading in main is the CTA h2. The last link in main is **Book a consul
 - Sticky, 72px. Wordmark; links Services, Systems, Training, Engagements, About, Contact (15px, 600); **Book a consultation** (44px tall).
 - Current link: `aria-current="page"` plus a 2px teal underline.
 - Below 1024px: the **Menu** button (`aria-expanded`, `aria-controls="mobile-nav"`). Its panel holds 48px links plus a full-width CTA, and closes on a link click, on Escape and on a second press of Menu.
+
+**Page header band** (shared by Services, Training, Engagements, About and Contact; same classes everywhere)
+- First section in main. `--color-navy` background, the data-grid motif as an `aria-hidden` svg, padding 64px (phone) / 96px (desktop) plus header offset.
+- Content: `.eyebrow` (`#5FC4C4`, uppercase), h1 white at `--text-h1`, lead `#B8C4D6` at `--text-lead`, 16px below the h1.
+- Contact adds a second line, 12px below the lead: "Prefer email?" in `#B8C4D6` followed by `<a href="mailto:hello@thebayesgroup.com">` in `#5FC4C4`, underlined, hover white, `overflow-wrap:anywhere`.
+
+**Systems hero**
+- Navy, same padding as the band. One `.systems-hero__grid` with exactly two children: `.systems-hero__text` (eyebrow, h1, lead `<p>`) first in the DOM, then `.systems-hero__diagram` holding `<ArchitectureDiagram>` with its current variant. Diagram unchanged.
 
 **Button**
 - 48px tall, 0 24px padding, radius 6px, sans 600 at 16px.
@@ -238,18 +254,11 @@ The last heading in main is the CTA h2. The last link in main is **Book a consul
 
 **Audience panel:** a photo on top (240px) and a body padded 32px. The SMB panel is white. The Enterprise panel is `#071528` with the `#5FC4C4` **Premium** pill (12px mono, 4px 10px padding) and its link in `#5FC4C4`.
 
-**ArchitectureDiagram**
-- Light and dark variants.
-- Desktop svg: `viewBox="0 0 960 600"`.
-- Rows:
-  - "Your systems" group (y 24), holding 4 boxes.
-  - "Agent orchestration" group (y 200, x 0–620), holding 3 boxes.
-  - On the right (x 660–960), stacked: "Models (vendor-neutral)" and "Guardrails & evaluations".
-  - "Observability" group spanning the full width (y 440), holding 4 boxes.
-- Boxes: radius 8. Labels: mono `<text>`, 15px; group labels 13px uppercase.
-- Lines: solid arrows (`marker-end`, 2px teal) from top to middle, and a double-ended arrow between orchestration and Models. Dashed lines (`4 4`, 1.5px) run from every box to Observability.
-- Phone svg: `viewBox="0 0 340 820"`, all groups stacked, labels 13px. It shows below 768px; the desktop svg shows at 768px and up; the inactive one is `display:none`.
-- Each svg has `role="img"`, `aria-labelledby` pointing at its own `<title>` and `<desc>` (useId).
+**ArchitectureDiagram** (unchanged)
+- Light and dark variants. Desktop svg `viewBox="0 0 960 600"`: "Your systems" (y 24, 4 boxes); "Agent orchestration" (y 200, x 0–620, 3 boxes); right stack (x 660–960) "Models (vendor-neutral)" and "Guardrails & evaluations"; "Observability" full width (y 440, 4 boxes).
+- Boxes radius 8; labels mono 15px; group labels 13px uppercase. Solid 2px teal arrows top→middle, a double-ended arrow orchestration↔Models; dashed `4 4` 1.5px lines from every box to Observability.
+- Phone svg `viewBox="0 0 340 820"`, stacked, labels 13px, below 768px; desktop svg at 768px and up; the inactive one is `display:none`.
+- Each svg has `role="img"` and `aria-labelledby` its own `<title>` and `<desc>` (useId).
 
 **Steps:** an `ol` of 48px `#17696A` circles with white serif numerals, an h3 title and one sentence. "Operate & improve" is a card with an infinity icon tile.
 
@@ -259,24 +268,28 @@ The last heading in main is the CTA h2. The last link in main is **Book a consul
 
 **Tier card:** an h2 name, audience, a clock icon with the timeline, the h3 "What's included", check-icon list items and a full-width button. Enterprise: `#071528` background, 2px `#5FC4C4` outline, radius 16px, the photo, and the Premium pill.
 
-**Filter button, course card, form field, alert banner:** as now (pills 44px; `.form-control` 48px with a 1.5px `#7A8699` border; error `<p id="{field}-error">` linked by `aria-describedby`; selects with a chevron). Course cards gain a format icon tile.
+**Filter button, course card, form field, alert banner:** as now (pills 44px; `.form-control` 48px with a 1.5px `#7A8699` border; error `<p id="{field}-error">` linked by `aria-describedby`; selects with a chevron). Course cards have a format icon tile.
 
 **Avatar placeholder:** an 80px circle `#E6EBF1` with a `#556275` silhouette, `role="img" aria-label="Photo placeholder"`, and visible "Photo placeholder" text.
 
-**Footer:** `#071528`, padding 64/80px, bell-curve motif at 8% opacity. Columns as in the Layout section, with links 15px white and 32px tall.
+**Footer**
+- `#071528`, padding 64/80px, bell-curve motif at 8% opacity.
+- `.footer-grid` has exactly three children: (1) brand group: wordmark, the line, the mailto link; (2) Services group: h2 "Services" + links; (3) Company group: h2 "Company" + links. If `<nav aria-label="Footer">` wraps groups 2 and 3, it uses `display: contents` so the grid sees three tracks.
+- Headings 13px mono uppercase `#5FC4C4`; links 15px white, 32px tall (44px hit area via padding).
+- Copyright row below a 1px `rgba(255,255,255,.12)` hairline, 32px above, outside the grid.
 
 ## Accessibility
 - **Landmarks:** the skip link "Skip to main content", then `<header>`, `<nav aria-label="Main">`, `<main id="main" tabIndex=-1>`, `<footer>` and `<nav aria-label="Footer">`.
-- **Headings:** one h1 per page, in order h1→h2→h3 with no skipped levels. Footer column headings are h2 styled at 13px.
+- **Headings:** one h1 per page, in order h1→h2→h3 with no skipped levels. On Contact the h1 is in the band; the form section's headings follow as h2. Footer headings are only "Services" and "Company", h2 styled at 13px.
 - **Labels:** every control has a `<label for>`. Required fields carry `required`, `aria-required` and the visible "Required" text. The form uses `noValidate`. The Menu button has a text label.
 - **Images:** descriptive alt on every photo (e.g. "Business owner reviewing figures on a laptop in a workshop"). Photos are never presented as the firm's team or clients. Motifs and icons are `aria-hidden`. Diagrams use title and desc.
 - **Keyboard:**
-  - Tab order follows the visual order.
+  - Tab order follows the visual order (Systems hero: text, then diagram; footer: brand email, Services links, Company links).
   - Escape closes the Menu and returns focus to the toggle.
   - After a route change, focus moves to main.
   - Hash links land below the header.
 - **Status:** the filter count and the success banner use `role="status"`.
-- **Not color alone:** the selected filter has a check icon; errors have an icon and text; the current nav link is underlined; Premium and Placeholder are shown as text labels; dashed versus solid lines are explained in the diagram desc.
+- **Not color alone:** the selected filter has a check icon; errors have an icon and text; the current nav link and on-navy links are underlined; Premium and Placeholder are text labels; dashed versus solid lines are explained in the diagram desc.
 - **Hydration:** the server and client render the same markup. Window is read only in effects.
 - **Language:** `<html lang="en">`.
 
@@ -301,24 +314,29 @@ The last heading in main is the CTA h2. The last link in main is **Book a consul
 
 **Home section eyebrows and headings**
 - "WHAT WE DO" / "What we do", with **Learn more** links.
-- "HOW WE WORK" / "How we work". The steps stay as now. Operate & improve: "We monitor, evaluate and improve what we built, or hand it to your team with runbooks."
-- Example engagements: the task text verbatim.
+- "HOW WE WORK" / "How we work". Operate & improve: "We monitor, evaluate and improve what we built, or hand it to your team with runbooks."
+- Example engagements: as now.
 - "TESTIMONIAL" / "What clients say", with the placeholder note and the attribution "Client name, Title, Company".
-- "WHY US" / "Why The Bayes Group", with the points as now.
+- "WHY US" / "Why The Bayes Group", points as now.
 - "GET STARTED" / CTA band as now.
 
-**Systems:** the h1, lead and the four sections' items and deliverables as in the task. CTA: "Have a system in mind?" with "Tell us what it needs to connect to. We'll reply within one business day." and **Book a consultation**.
+**Systems:** the hero eyebrow, h1, lead and the four sections' items and deliverables as now. CTA: "Have a system in mind?" with "Tell us what it needs to connect to. We'll reply within one business day." and **Book a consultation**.
 
-**Engagements:** the h1, intro, tier names, timelines and items as in the task. Buttons: **Book a consultation** and **Talk to us about enterprise**. Closing line: "Not sure which fits? **Talk to us**".
+**Engagements:** h1, intro, tier names, timelines and items as now. Buttons: **Book a consultation** and **Talk to us about enterprise**. Closing line: "Not sure which fits? **Talk to us**".
 
 **Services:** the custom-development item "Agentic systems and multi-system integration" with **See how we build**. Engagement lines stay as now.
 
 **Contact**
+- Band eyebrow: "Contact" (rendered uppercase "CONTACT").
+- h1: "Book a consultation".
+- Lead: "Tell us what you're working on and we'll reply within one business day."
+- Email line: "Prefer email? hello@thebayesgroup.com" (the address is the mailto link).
 - Field label "Company size", first option "Choose a size", then the four size options.
 - "What happens next": "We reply within one business day", "A 30-minute call about your goals", "A written recommendation, no obligation".
-- All other copy as now.
+- Button **Send message**; success "Thanks, we'll be in touch within one business day."; all other copy as now.
 
 **Footer**
-- "AI enablement, training and custom development."
-- hello@thebayesgroup.com
+- Brand: wordmark, "AI enablement, training and custom development.", hello@thebayesgroup.com.
+- "Services": AI Enablement, Training, Custom Development, Systems engineering, Engagements.
+- "Company": About, Contact.
 - "© 2026 The Bayes Group"
