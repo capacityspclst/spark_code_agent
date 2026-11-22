@@ -30,18 +30,23 @@ export function buildPageHtml(template: string, url: string): string {
   const ogTitle = `<meta property="og:title" content="${escapeAttr(meta.title)}">`;
   const ogDesc = `<meta property="og:description" content="${escapeAttr(meta.description)}">`;
   const ogType = `<meta property="og:type" content="website">`;
+  const ogUrl = `<meta property="og:url" content="${escapeAttr('https://thebayesgroup.com' + (meta.path === '/' ? '/' : meta.path))}">`;
   const ogSite = `<meta property="og:site_name" content="${escapeAttr('The Bayes Group')}">`;
   const canonical = `<link rel="canonical" href="${escapeAttr('https://thebayesgroup.com' + meta.path)}">`;
   const icon = `<link rel="icon" type="image/svg+xml" href="/favicon.svg">`;
 
-  const headInsert = [titleTag, descTag, ogTitle, ogDesc, ogType, ogSite, canonical, icon].join('\n');
+  const headInsert = [titleTag, descTag, ogTitle, ogDesc, ogUrl, ogType, ogSite, canonical, icon].join('\n');
 
   // Insert before </head>
   html = html.replace('</head>', `${headInsert}\n</head>`);
 
   // Insert rendered content into #root
   const rendered = render(url);
-  html = html.replace('<div id="root"></div>', `<div id="root">${rendered}</div>`);
+  // Remove any <title> elements inside SVGs to avoid duplicate <title> tags in the document head.
+  const sanitized = rendered.replace(/<svg[^>]*>[\s\S]*?<\/svg>/g, (svg) =>
+    svg.replace(/<title[^>]*>.*?<\/title>/gi, ''),
+  );
+  html = html.replace('<div id="root"></div>', `<div id="root">${sanitized}</div>`);
 
   return html;
 }

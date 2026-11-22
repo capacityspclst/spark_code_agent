@@ -1,12 +1,14 @@
 export type ServiceItem = {
   name: string;
   description: string;
+  link?: { label: string; to: string };
 };
 
 export type ServiceSection = {
   id: string;
   title: string;
   intro?: string;
+  photo?: string;
   items: ServiceItem[];
   typicalEngagement: string;
 };
@@ -15,6 +17,8 @@ export const SERVICE_SECTIONS: ServiceSection[] = [
   {
     id: 'enablement',
     title: 'AI Enablement',
+    intro: 'We start with your data, processes and goals to find where AI will pay off. You leave with a clear, prioritized roadmap and the governance to follow it.',
+    photo: 'strategy-session',
     items: [
       {
         name: 'AI readiness assessment',
@@ -38,6 +42,8 @@ export const SERVICE_SECTIONS: ServiceSection[] = [
   {
     id: 'training',
     title: 'Training',
+    intro: 'Hands-on sessions teach your people the fundamentals and the advanced techniques. Each format is built for the audience in the room, from executives to engineers.',
+    photo: 'team-workshop',
     items: [
       { name: 'Executive AI briefings', description: 'Short sessions for leaders to understand AI impact and strategy.' },
       { name: 'Hands-on team workshops', description: 'Practical workshops to build AI skills within your teams.' },
@@ -49,12 +55,15 @@ export const SERVICE_SECTIONS: ServiceSection[] = [
   {
     id: 'custom-development',
     title: 'Custom Development',
+    intro: 'We design and build production-grade AI systems that fit the stack you already run. Your team gets the knowledge transfer to own them afterwards.',
+    photo: 'custom-development',
     items: [
       { name: 'LLM and retrieval-augmented (RAG) applications', description: 'We build large language model solutions with context retrieval.' },
       { name: 'AI agents and workflow automation', description: 'Design and implement AI-driven agents to automate processes.' },
       { name: 'Predictive models and ML pipelines', description: 'End-to-end pipelines for forecasting and classification tasks.' },
       { name: 'Deep-learning solutions', description: 'Custom neural network models for vision, NLP, and more.' },
       { name: 'Integration with existing systems', description: 'Seamless integration of AI components into your tech stack.' },
+      { name: 'Agentic systems and multi-system integration', description: 'We build agentic AI that connects across your enterprise systems.', link: { label: 'See how we build', to: '/systems' } },
     ],
     typicalEngagement: '2 to 6 weeks',
   },

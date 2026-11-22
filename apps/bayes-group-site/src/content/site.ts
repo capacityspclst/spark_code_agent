@@ -5,7 +5,9 @@ export const COPYRIGHT = '\u00a9 2026 The Bayes Group';
 export const CONTACT_EMAIL = 'hello@thebayesgroup.com';
 export const NAV_LINKS = [
   { label: 'Services', to: '/services' },
+  { label: 'Systems', to: '/systems' },
   { label: 'Training', to: '/training' },
+  { label: 'Engagements', to: '/engagements' },
   { label: 'About', to: '/about' },
   { label: 'Contact', to: '/contact' },
 ];
@@ -14,6 +16,8 @@ export const CTA = { label: 'Book a consultation', to: '/contact' };
 export const PAGE_TITLES = {
   home: 'The Bayes Group | Evidence-driven AI',
   services: 'Services | The Bayes Group',
+  systems: 'Systems engineering | The Bayes Group',
+  engagements: 'Engagements | The Bayes Group',
   training: 'Training | The Bayes Group',
   about: 'About | The Bayes Group',
   contact: 'Contact | The Bayes Group',
@@ -35,8 +39,12 @@ export function getPageTitle(pathname: string): string {
       return PAGE_TITLES.home;
     case '/services':
       return PAGE_TITLES.services;
+    case '/systems':
+      return PAGE_TITLES.systems;
     case '/training':
       return PAGE_TITLES.training;
+    case '/engagements':
+      return PAGE_TITLES.engagements;
     case '/about':
       return PAGE_TITLES.about;
     case '/contact':

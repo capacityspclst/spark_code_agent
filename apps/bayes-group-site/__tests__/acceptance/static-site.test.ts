@@ -29,7 +29,7 @@ describe('public files', () => {
     expect(lines).toContain('Sitemap: https://thebayesgroup.com/sitemap.xml');
   });
 
-  test('sitemap.xml lists the five pages', () => {
+  test('sitemap.xml lists the seven pages', () => {
     const xml = readRootFile('public/sitemap.xml');
     expect(xml).toMatch(/<urlset[^>]*xmlns="http:\/\/www\.sitemaps\.org\/schemas\/sitemap\/0\.9"/);
     const locs: string[] = [];
@@ -40,7 +40,9 @@ describe('public files', () => {
       [
         'https://thebayesgroup.com/',
         'https://thebayesgroup.com/services',
+        'https://thebayesgroup.com/systems',
         'https://thebayesgroup.com/training',
+        'https://thebayesgroup.com/engagements',
         'https://thebayesgroup.com/about',
         'https://thebayesgroup.com/contact',
       ].sort(),

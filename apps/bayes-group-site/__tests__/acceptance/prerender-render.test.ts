@@ -31,7 +31,9 @@ const norm = (s: string | null | undefined) => (s || '').replace(/\s+/g, ' ').tr
 const PAGES: Array<[string, string, string, string | null]> = [
   ['/', 'The Bayes Group | Evidence-driven AI', 'Evidence-driven AI, built for your business.', 'https://thebayesgroup.com/'],
   ['/services', 'Services | The Bayes Group', 'Services', 'https://thebayesgroup.com/services'],
+  ['/systems', 'Systems engineering | The Bayes Group', 'Systems engineering', 'https://thebayesgroup.com/systems'],
   ['/training', 'Training | The Bayes Group', 'Training', 'https://thebayesgroup.com/training'],
+  ['/engagements', 'Engagements | The Bayes Group', 'Engagements', 'https://thebayesgroup.com/engagements'],
   ['/about', 'About | The Bayes Group', 'About', 'https://thebayesgroup.com/about'],
   ['/contact', 'Contact | The Bayes Group', 'Book a consultation', 'https://thebayesgroup.com/contact'],
   ['/404', 'Page not found | The Bayes Group', 'Page not found', null],
@@ -39,7 +41,9 @@ const PAGES: Array<[string, string, string, string | null]> = [
 
 const NAV: Array<[string, string]> = [
   ['Services', '/services'],
+  ['Systems', '/systems'],
   ['Training', '/training'],
+  ['Engagements', '/engagements'],
   ['About', '/about'],
   ['Contact', '/contact'],
 ];
@@ -63,8 +67,6 @@ function oneMeta(doc: Document, key: string, url: string): string {
 }
 
 describe('buildPageHtml produces complete pages', () => {
-  const descriptions: string[] = [];
-
   describe.each(PAGES)('page %s', (url, title, h1Text, canonical) => {
     let html = '';
     let doc: Document;
@@ -84,7 +86,6 @@ describe('buildPageHtml produces complete pages', () => {
       const d = oneMeta(doc, 'description', url);
       expect(d).toBe(meta.description);
       expect(d.trim().length).toBeGreaterThan(0);
-      descriptions.push(d);
     });
 
     test('has Open Graph tags', () => {
@@ -159,6 +160,21 @@ describe('buildPageHtml produces complete pages', () => {
     expect(ids).toEqual(['enablement', 'training', 'custom-development']);
   });
 
+  test('systems page HTML contains the four sections and the diagram', () => {
+    const root = parse(buildPageHtml(TEMPLATE, '/systems')).getElementById('root')!;
+    const ids = Array.from(
+      root.querySelectorAll('#agentic, #architecture, #observability, #sustainability'),
+    ).map((e) => e.id);
+    expect(ids).toEqual(['agentic', 'architecture', 'observability', 'sustainability']);
+    const texts = Array.from(root.querySelectorAll('svg text')).map((t) => norm(t.textContent));
+    expect(texts.join(' | ')).toContain('Observability');
+  });
+
+  test('engagements page HTML contains the enterprise tier', () => {
+    const root = parse(buildPageHtml(TEMPLATE, '/engagements')).getElementById('root')!;
+    expect(root.querySelector('#enterprise')).not.toBeNull();
+  });
+
   test('contact page HTML contains the form', () => {
     const root = parse(buildPageHtml(TEMPLATE, '/contact')).getElementById('root')!;
     const form = root.querySelector('form');
@@ -224,9 +240,12 @@ describe('prerendered markup hydrates without mismatches', () => {
     return container;
   }
 
-  test.each(['/', '/services', '/about', '/contact', '/training', '/404'])('%s hydrates cleanly', async (url) => {
-    await hydrateAt(url);
-  });
+  test.each(['/', '/services', '/systems', '/engagements', '/about', '/contact', '/training', '/404'])(
+    '%s hydrates cleanly',
+    async (url) => {
+      await hydrateAt(url);
+    },
+  );
 
   test('training filter works after hydration', async () => {
     const user = userEvent.setup();

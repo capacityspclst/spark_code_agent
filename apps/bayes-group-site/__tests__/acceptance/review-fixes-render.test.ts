@@ -7,7 +7,7 @@ import * as React from 'react';
 import { render, screen, within, cleanup } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { PILLARS, STEPS } from '../../src/content/home';
-import { FOOTER_LINE, COPYRIGHT, TAGLINE } from '../../src/content/site';
+import { FOOTER_LINE, COPYRIGHT, TAGLINE, CONTACT_EMAIL } from '../../src/content/site';
 
 const nodeUtil = require('util');
 const g: any = globalThis as any;
@@ -201,9 +201,15 @@ describe('footer content', () => {
     expect(footer.querySelector('nav[aria-label="Footer"]')).not.toBeNull();
     const clone = footer.cloneNode(true) as HTMLElement;
     Array.from(clone.querySelectorAll('a, nav, svg')).forEach((e) => e.remove());
+    // Column headings ("Services", "Company") are allowed.
+    Array.from(clone.querySelectorAll('*')).forEach((e) => {
+      const t = norm(e.textContent);
+      if ((t === 'Services' || t === 'Company') && e.isConnected !== false) e.remove();
+    });
     let rest = norm(clone.textContent);
     rest = norm(rest.replace(FOOTER_LINE, ' '));
     rest = norm(rest.replace(COPYRIGHT, ' '));
+    rest = norm(rest.replace(CONTACT_EMAIL, ' '));
     if (!(rest === '' || rest === 'The Bayes Group')) {
       throw new Error(`Footer has extra text besides the wordmark, line, nav and copyright: ${JSON.stringify(rest)}`);
     }
@@ -223,7 +229,8 @@ describe('contact form field style', () => {
     return {
       name: f.getByLabelText(/^Name\b/),
       email: f.getByLabelText(/^Email\b/),
-      company: f.getByLabelText(/^Company\b/),
+      company: f.getByLabelText(/^Company(?! size)\b/),
+      companySize: f.getByLabelText(/^Company size\b/),
       topic: f.getByLabelText(/^What can we help with\?/),
       message: f.getByLabelText(/^Message\b/),
     };
@@ -281,6 +288,7 @@ describe('contact form field style', () => {
     expect(c.email.getAttribute('aria-invalid')).toBe('true');
     expect(c.message.getAttribute('aria-invalid')).toBe('true');
     expect(c.company.getAttribute('aria-invalid')).not.toBe('true');
+    expect(c.companySize.getAttribute('aria-invalid')).not.toBe('true');
     expect(c.topic.getAttribute('aria-invalid')).not.toBe('true');
   });
 
@@ -291,6 +299,7 @@ describe('contact form field style', () => {
       [c.name, 'name'],
       [c.email, 'email'],
       [c.company, 'company'],
+      [c.companySize, 'companySize'],
       [c.topic, 'topic'],
       [c.message, 'message'],
     ]);

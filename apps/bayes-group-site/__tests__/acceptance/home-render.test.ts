@@ -63,12 +63,12 @@ describe('home page rendering', () => {
     const h1 = within(main).getByRole('heading', { level: 1 });
     expect(norm(h1.textContent)).toBe('Evidence-driven AI, built for your business.');
     const hero = ancestorWhere(h1, main, (el) =>
-      Array.from(el.querySelectorAll('a')).some((a) => norm(a.textContent) === 'Explore services'),
+      Array.from(el.querySelectorAll('a')).some((a) => norm(a.textContent) === 'See how we build'),
     );
     const links = Array.from(hero.querySelectorAll('a'));
-    const explore = links.find((a) => norm(a.textContent) === 'Explore services');
+    const see = links.find((a) => norm(a.textContent) === 'See how we build');
     const book = links.find((a) => norm(a.textContent) === 'Book a consultation');
-    expect(explore && explore.getAttribute('href')).toBe('/services');
+    expect(see && see.getAttribute('href')).toBe('/systems');
     expect(book && book.getAttribute('href')).toBe('/contact');
   });
 

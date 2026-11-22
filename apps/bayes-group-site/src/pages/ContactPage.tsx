@@ -9,12 +9,15 @@ import {
   validateContact,
   submitContact,
   ContactValues,
+  COMPANY_SIZE_OPTIONS,
 } from '../lib/contactForm';
 import { CONTACT_EMAIL } from '../content/site';
 import { AlertIcon, CheckIcon } from '../components/Icons';
 
 type FieldKey = keyof typeof ERROR_MESSAGES;
 type Errors = Partial<Record<FieldKey, string>>;
+
+import Photo from '../components/Photo';
 
 export default function ContactPage() {
   const { pathname } = useLocation();
@@ -66,6 +69,7 @@ export default function ContactPage() {
   return (
     <div className="contact-page">
       <div className="container page-head">
+        <p className="eyebrow">Contact</p>
         <h1>Book a consultation</h1>
       </div>
       <div className="container contact-grid">
@@ -108,6 +112,15 @@ export default function ContactPage() {
               </select>
             </div>
             <div className="field">
+              <label htmlFor="companySize">Company size</label>
+              <select className="form-control" id="companySize" name="companySize" value={(values as any).companySize || ''} onChange={handleChange}>
+                <option value="">Choose a size</option>
+                {COMPANY_SIZE_OPTIONS.map((opt) => (
+                  <option key={opt} value={opt}>{opt}</option>
+                ))}
+              </select>
+            </div>
+            <div className="field">
               <div className="field-head"><label htmlFor="message">Message</label><span className="required-tag">Required</span></div>
               <textarea className="form-control" id="message" required aria-required="true" name="message" value={values.message} onChange={handleChange} onBlur={handleBlur} rows={5} aria-invalid={!!errors.message} aria-describedby={errors.message ? 'message-error' : undefined} />
               {errors.message && <p id="message-error" className="error-message"><AlertIcon />{errors.message}</p>}
@@ -115,6 +128,16 @@ export default function ContactPage() {
             <button type="submit" className="btn btn-primary">Send message</button>
           </form>
         </div>
+        <aside className="contact-aside">
+          <Photo name="contact-meeting" alt="Two colleagues in a consultation meeting at a table" sizes="(min-width: 1024px) 40vw, 100vw" />
+          <p className="eyebrow">Next steps</p>
+          <h2>What happens next</h2>
+          <ol className="next-steps">
+            <li>We reply within one business day</li>
+            <li>A 30-minute call about your goals</li>
+            <li>A written recommendation, no obligation</li>
+          </ol>
+        </aside>
       </div>
     </div>
   );

@@ -1,0 +1,1271 @@
+{
+  "summary": "Redesign apps/bayes-group-site as a senior engineering and consulting firm site. The stack stays the same: Vite + React + TS + react-router, plain CSS tokens, system fonts, prerendered static pages, hydration, and no backend or third-party scripts.\n\nNew pieces:\n- A shared inline-SVG ArchitectureDiagram component, a Photo component (srcset, sizes, lazy loading) and a consistent line-icon set.\n- Two new pages, /systems and /engagements, each prerendered with its own title, description, Open Graph tags and canonical link.\n- A richer Home: credibility strip, Who we serve, systems band, pillars with photos, How we work plus Operate & improve, illustrative example engagements, placeholder testimonial, Why The Bayes Group and the CTA band.\n- Two-column Services headers, a Training photo banner with format icons, About avatars and value icons, Contact in two columns with an optional Company size select, and a 404 bell-curve illustration.\n- The header nav becomes Services, Systems, Training, Engagements, About, Contact; the footer gets columns.\n- The sitemap lists seven pages, and DEPLOYMENT.md is updated.\n\nThese changes alter existing behavior, so the matching existing tests will be updated:\n- the Home hero secondary button,\n- the nav and footer link sets,\n- the empty contact form now including companySize,\n- the custom-development service items,\n- the prerendered and sitemap page lists.",
+  "files": [
+    "src/content/home.ts",
+    "src/content/systems.ts",
+    "src/content/engagements.ts",
+    "src/content/services.ts",
+    "src/content/site.ts",
+    "src/content/about.ts",
+    "src/lib/contactForm.ts",
+    "src/seo.ts",
+    "src/App.tsx",
+    "src/entry-server.tsx",
+    "scripts/prerender.mjs",
+    "src/components/Header.tsx",
+    "src/components/Footer.tsx",
+    "src/components/Icons.tsx",
+    "src/components/ArchitectureDiagram.tsx",
+    "src/components/Photo.tsx",
+    "src/components/Motifs.tsx",
+    "src/pages/HomePage.tsx",
+    "src/pages/SystemsPage.tsx",
+    "src/pages/EngagementsPage.tsx",
+    "src/pages/ServicesPage.tsx",
+    "src/pages/TrainingPage.tsx",
+    "src/pages/AboutPage.tsx",
+    "src/pages/ContactPage.tsx",
+    "src/pages/NotFoundPage.tsx",
+    "src/styles/theme.css",
+    "src/styles/global.css",
+    "src/theme/tokens.ts",
+    "public/sitemap.xml",
+    "DEPLOYMENT.md",
+    "DESIGN.md"
+  ],
+  "steps": [
+    "Tokens (src/styles/theme.css, src/theme/tokens.ts):\n- Keep the existing tokens.\n- Add --color-navy-deep #071528, --color-surface-teal #F2F7F7, --color-hairline #E3E8EF and --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace.\n- Set the type scale: hero h1 clamp to 38-40px on phones and 60-64px at \u22651024px; h2 28-32px on phones and 40-44px on desktop; body 17-18px with line-height 1.6.\n- Section padding is 64px on phones and 96px on desktop; the container max-width is 1200px, centered; use an 8px spacing scale.\n- Add a .eyebrow class: small, uppercase, teal, and on navy use the light teal. Every section has an eyebrow above its h2.\n- Cards: radius 12px, 1px #E3E8EF border, soft shadow, translateY(-2px) on hover.\n- Add .icon-tile: a 44px pale-teal rounded square that holds the icon.\n- Add a @media (prefers-reduced-motion: reduce) block that removes all transitions, animations and transforms.\n- html and body keep overflow-x: hidden. Use system fonts only, with no @import or url() to external hosts.",
+    "Photos (src/components/Photo.tsx, export function Photo({ name, alt, sizes, priority?, className? })):\n- Render <img src=\"/images/{name}.jpg\" srcSet=\"/images/{name}-768.jpg 768w, /images/{name}.jpg 1344w\" sizes={sizes} width=\"1344\" height=\"768\" decoding=\"async\" alt={alt}>.\n- Add loading=\"lazy\" unless priority is set (only the home hero sets priority).\n- Use a descriptive, non-empty alt. Photos are never captioned or presented as the firm's own team or clients.\n- Where text sits on a photo, wrap it in a container with a navy gradient overlay (::after or a div) so the text meets WCAG AA.",
+    "Icons and motifs (src/components/Icons.tsx, src/components/Motifs.tsx):\n- Draw every icon as a line icon on a 24x24 viewBox with fill=\"none\", stroke=\"currentColor\", stroke-width 1.5-2, aria-hidden=\"true\" and focusable=\"false\".\n- Provide an icon for every service item, training format, engagement tier, systems capability, deliverable, credibility point and value, plus a check icon.\n- In Motifs.tsx add BellCurveMotif and DataGridMotif background SVGs, both aria-hidden, plus a small BellCurveIllustration for the 404 page.",
+    "ArchitectureDiagram (src/components/ArchitectureDiagram.tsx, export function ArchitectureDiagram({ variant?: 'light' | 'dark' }) and default export):\n- Render ONE <svg role=\"img\" viewBox=\"...\"> with no width or height attributes (CSS width:100%; height:auto).\n- Its first children are <title> \"System architecture: your systems, agent orchestration, models, guardrails and observability\" and <desc> (non-empty). Set aria-labelledby to their ids, built with useId (or fixed ids) so they are hydration-safe.\n- Every label is a <text> element in the monospace font (font-family var(--font-mono) via class) and at least 12px when rendered on phones. Labels, exactly:\n  - Top row: 'Your systems', containing 'CRM', 'ERP', 'Data warehouse', 'Documents'.\n  - Middle row: 'Agent orchestration', containing 'Planner', 'Tool-using agents', 'Human approval'.\n  - Beside the orchestration row: 'Models (vendor-neutral)' and 'Guardrails & evaluations'.\n  - Bottom, spanning the full width: 'Observability', containing 'Traces', 'Metrics', 'Cost', 'Evaluations'.\n- Lines: arrow <line>/<path> elements with marker-end from Your systems to orchestration and between orchestration and Models. Dashed lines (stroke-dasharray) run from every box down to Observability.\n- The 'dark' variant uses white and teal; 'light' uses navy and teal.\n- Optionally render a second, vertically stacked svg for phones toggled by CSS. If you do, both must contain the same labels, and the hidden one must be display:none, not aria-hidden content duplicated for screen readers.",
+    "Home content (src/content/home.ts, keeping the existing exports HERO, PILLARS, STEPS, WHY_POINTS, CTA_BAND and their shapes):\n- HERO.title stays 'Evidence-driven AI, built for your business.'\n- HERO.valueProp becomes exactly: 'We design, build and run AI systems for small and medium-sized businesses, from single agents to multi-system architectures, with enterprise-grade rigor and senior data scientists on every engagement.'\n- HERO.primary is {label:'Book a consultation', to:'/contact'} and HERO.secondary is {label:'See how we build', to:'/systems'}.\n- PILLARS, STEPS (Assess, Design, Build, Enable, one sentence each) and WHY_POINTS stay as now, and so does CTA_BAND.\n- Add CREDIBILITY_POINTS: string[] = ['Credentialed data scientists', 'Vendor-neutral advice', 'Built for small and medium-sized businesses', 'Enterprise-grade governance'].\n- Add AUDIENCE_PANELS: [{id:'smb', title:'Small and medium-sized businesses', text (two sentences), link:{label:'See engagements', to:'/engagements'}, photo:'smb-owner', premium:false}, {id:'enterprise', title:'Enterprise', text (two sentences), link:{label:'Enterprise engagements', to:'/engagements#enterprise'}, photo:'enterprise-atrium', premium:true}].\n- Add SYSTEMS_BAND = {eyebrow:'WHAT WE BUILD', heading:'Systems built to be observed and sustained', link:{label:'How we build systems', to:'/systems'}}.\n- Add CAPABILITIES: [{title, description}] titled 'Agentic development', 'Multi-system architecture', 'Observable by design', 'Sustainable to run', in that order, one sentence each, as the task describes.\n- Add OPERATE_STEP = {title:'Operate & improve', description}.\n- Add EXAMPLES_SECTION = {eyebrow:'EXAMPLE ENGAGEMENTS', heading:'The kinds of systems we build', tag:'Illustrative example', note:'Illustrative example of an engagement type, not a client case study.'}.\n- Add EXAMPLES: [{industry, name, challenge, system, sustained}] in this order:\n  - Professional services / 'Agentic document intake'\n  - Manufacturing / 'Connected maintenance forecasting'\n  - Retail / 'Customer service copilot'\n  Use the task's three lines for each. EXAMPLES contain no digits and no '%'.\n- Add TESTIMONIAL = {quote, attribution:'Client name, Title, Company', placeholderNote:'Placeholder testimonial: replace with a real client quote before launch.'}.",
+    "HomePage order:\n1. Hero section, at least 640px tall on desktop: hero-boardroom Photo with priority, the overlay and BellCurveMotif, the h1, the value prop, and Links 'Book a consultation'\u2192/contact and 'See how we build'\u2192/systems.\n2. Credibility strip: a raised white bar overlapping the hero's bottom edge, with the four points, each with an icon in an icon tile.\n3. Who we serve: the two panels; the Enterprise panel shows a visible 'Premium' label and is on dark navy.\n4. Systems band (navy, DataGrid or BellCurve motif): ArchitectureDiagram variant dark, the four capabilities, and the 'How we build systems' link.\n5. Pillar cards: each has a photo strip on top, an icon tile, the title, the description and 'Learn more'\u2192/services#..., the only 'Learn more' links on the page, in that order.\n6. 'How we work': h2, an <ol> with exactly 4 <li> steps, then a separate block (not inside that ol) for 'Operate & improve'.\n7. Examples (on white or pale teal-grey).\n8. Testimonial on navy.\n9. 'Why The Bayes Group' beside the about-office photo.\n10. CTA band 'Ready to put AI to work?' on navy with BellCurveMotif. The last heading in main is the CTA h2, and the last link in main is 'Book a consultation'\u2192/contact.\n\nSection backgrounds alternate white, pale teal-grey and navy, with at least three navy bands and never two white card-grid sections in a row.",
+    "Systems content (src/content/systems.ts):\n- export const SYSTEMS_LEAD = 'We design AI systems the way mature engineering teams build software: specific to your business, connected to the systems you already run, observable from day one and built to be maintained.'\n- export const SYSTEMS_SECTIONS: Array<{id, eyebrow, title, intro, items: string[]}>, with ids and titles in order:\n  - 'agentic' / 'Agentic development'\n  - 'architecture' / 'Multi-system architecture'\n  - 'observability' / 'Observable by design'\n  - 'sustainability' / 'Built to be sustained'\n  Each has exactly 4 items, worded as in the task.\n- export const DELIVERABLES_HEADING = 'What every system ships with'\n- export const DELIVERABLES: string[] = ['Architecture diagram & decision records', 'Evaluation suite', 'Tracing & dashboards', 'Runbooks', 'Cost & usage budgets', 'Handover training']\n- export const SYSTEMS_CTA = {heading:'Have a system in mind?', button:{label:'Book a consultation', to:'/contact'}}",
+    "SystemsPage (src/pages/SystemsPage.tsx, route /systems):\n- Navy hero with h1 'Systems engineering', SYSTEMS_LEAD and ArchitectureDiagram (dark).\n- The four <section id=...> blocks, each with eyebrow, h2, intro, a <ul> of 4 <li> with icons, and a small aria-hidden SVG illustration.\n- The navy deliverables section: h2 DELIVERABLES_HEADING and six items, each with an icon tile and the name in a monospace class.\n- The CTA band.\n- Document title 'Systems engineering | The Bayes Group'.",
+    "Engagements content (src/content/engagements.ts):\n- export const ENGAGEMENTS_INTRO = 'Right-sized engagements for small and medium-sized businesses, and a premium tier for enterprise.'\n- export const TIERS: Array<{id, name, audience, timeline, included: string[], cta:{label,to}, premium: boolean}>, in this order:\n  - {id:'jumpstart', name:'Jumpstart', timeline:'2 to 4 weeks'}\n  - {id:'build', name:'Build', timeline:'6 to 12 weeks'}\n  - {id:'partner', name:'Partner', timeline:'Ongoing, monthly'}\n  - {id:'enterprise', name:'Enterprise', timeline:'Custom scope', premium:true}\n- The first three have audience 'For small and medium-sized businesses' and cta {label:'Book a consultation', to:'/contact'}. Enterprise has cta {label:'Talk to us about enterprise', to:'/contact'}.\n- Each tier's included list holds the task's items (4 for Jumpstart, Build and Partner; 5 for Enterprise).\n- No prices: no currency symbols and no digits other than the timelines.\n- export const NOT_SURE = {text:'Not sure which fits?', link:{label:'Talk to us', to:'/contact'}}",
+    "EngagementsPage (route /engagements):\n- h1 'Engagements' and the intro.\n- Four tier cards as <article> elements with id = tier.id, so the Enterprise card has id 'enterprise'.\n- Each card shows: name (h2), audience, timeline, the heading 'What's included', a <ul> with a check icon per item, and the CTA Link.\n- The Enterprise card has a visible 'Premium' label and the enterprise-atrium photo, and is styled dark navy, larger, with a teal outline.\n- Then the 'Not sure which fits?' line with a link to /contact.\n- Document title 'Engagements | The Bayes Group'.",
+    "Services content (src/content/services.ts):\n- Keep SERVICE_SECTIONS (ids enablement, training, custom-development) with the existing items, descriptions and typicalEngagement.\n- Append to custom-development a 6th item {name:'Agentic systems and multi-system integration', description, link:{label:'See how we build', to:'/systems'}}. The item type gets an optional link.\n- Give each section an intro of two sentences and a photo name: strategy-session, team-workshop, custom-development.",
+    "ServicesPage:\n- h1 'Services' on a navy band with DataGridMotif.\n- Each section header is two columns on desktop: the photo, plus eyebrow, h2, intro and the 'Typical engagement' line.\n- Items sit in a 2-column grid of cards with icon tiles. The new item renders its 'See how we build' Link to /systems.\n- Keep the section ids and hash scrolling.",
+    "TrainingPage:\n- A team-workshop photo banner on top.\n- Keep the filter buttons (All, Executives, Managers, Technical teams, with aria-pressed), the count status and the course card content.\n- Add an icon tile per format.\n- Keep the content/courses exports unchanged.",
+    "AboutPage:\n- Mission and Why Bayes beside the about-office photo.\n- Founder cards as now, each with an inline-SVG neutral avatar silhouette (role=\"img\", aria-label=\"Photo placeholder\") and the visible text 'Photo placeholder'.\n- Values with icon tiles.\n- Content exports unchanged.",
+    "Contact form logic (src/lib/contactForm.ts):\n- EMPTY_CONTACT_FORM becomes {name:'', email:'', company:'', companySize:'', topic:'', message:''}.\n- Add export const COMPANY_SIZE_OPTIONS = ['1-49 employees', '50-249 employees', '250-999 employees', '1,000+ employees'] as const.\n- companySize is optional and never produces an error.\n- submitContact keeps its contract: the success result's values equal EMPTY_CONTACT_FORM, and the failure result keeps the input values.\n- validateContact must accept input that omits companySize.",
+    "ContactPage:\n- Two columns on desktop.\n- Form card: the existing fields, plus <label for=\"companySize\">Company size</label> and <select id=\"companySize\" name=\"companySize\" class=\"form-control\"> placed right after Company. Its first option is 'Choose a size' (value '') followed by the four COMPANY_SIZE_OPTIONS. It never gets aria-invalid.\n- Other column: the contact-meeting photo and an h2 'What happens next' with an <ol> of three items: 'We reply within one business day', 'A 30-minute call about your goals', 'A written recommendation, no obligation'.\n- Keep the h1 'Book a consultation', the mailto link hello@thebayesgroup.com, the messages and the success banner.",
+    "NotFoundPage: h1 'Page not found', the link to '/' as now, and the BellCurveIllustration.",
+    "Navigation (src/content/site.ts, Header, Footer):\n- Keep the existing site.ts exports, and make the main nav list exactly [Services /services, Systems /systems, Training /training, Engagements /engagements, About /about, Contact /contact].\n- Header: renders those six plus 'Book a consultation'\u2192/contact. It is sticky. An effect adds class 'is-scrolled' (white with a hairline bottom border) when window.scrollY>0; read window only in effects.\n- The phone 'Menu' button keeps aria-expanded and aria-controls=\"mobile-nav\"; the panel holds the six links plus the CTA.\n- Footer: navy, with columns:\n  - the wordmark, 'AI enablement, training and custom development.' and a hello@thebayesgroup.com mailto;\n  - <nav aria-label=\"Footer\"> containing the six links;\n  - a 'Services' column with AI Enablement\u2192/services#enablement, Training\u2192/services#training, Custom Development\u2192/services#custom-development, Systems engineering\u2192/systems, Engagements\u2192/engagements;\n  - a 'Company' column with About\u2192/about and Contact\u2192/contact;\n  - '\u00a9 2026 The Bayes Group'.",
+    "SEO and routes:\n- Add page meta for /systems: title 'Systems engineering | The Bayes Group', description 'Agentic and multi-system AI, designed to be observable from day one and built to be sustained by your team.'\n- Add page meta for /engagements: title 'Engagements | The Bayes Group', description 'Right-sized AI engagements for small and medium-sized businesses, and a premium enterprise tier.'\n- Each page has og:title, og:description, og:url, og:type and a canonical link https://thebayesgroup.com/systems or https://thebayesgroup.com/engagements.\n- Register both routes in src/App.tsx (AppRoutes) and in entry-server render(), and add them to scripts/prerender.mjs so the build writes dist/systems/index.html and dist/engagements/index.html.\n- public/sitemap.xml lists exactly the seven pages: /, /services, /systems, /training, /engagements, /about, /contact.",
+    "DEPLOYMENT.md:\n- List all seven page files plus 404.html.\n- Say: upload dist/ as it is; every page is its own file, so no rewrite rule is needed; unknown addresses get 404.html; images are in dist/images.\n- The sitemap lists seven pages.\n- Keep the security headers section, with img-src 'self' data:.",
+    "Update DESIGN.md to describe the new design. Do not add analytics, external fonts, CDNs or third-party scripts. npm run build stays: vite build, then the server bundle, then the prerender."
+  ],
+  "has_ui": true,
+  "tests": "jest",
+  "test_kind": "jest",
+  "acceptance_files": {
+    "__tests__/acceptance/about-render.test.ts": "/**\n * @jest-environment jsdom\n */\nimport * as React from 'react';\nimport { render, screen, within, cleanup } from '@testing-library/react';\nimport { MISSION, WHY_BAYES, FOUNDERS, VALUES } from '../../src/content/about';\n\nconst nodeUtil = require('util');\nconst g: any = globalThis as any;\nif (typeof g.TextEncoder === 'undefined') g.TextEncoder = nodeUtil.TextEncoder;\nif (typeof g.TextDecoder === 'undefined') g.TextDecoder = nodeUtil.TextDecoder;\ng.scrollTo = jest.fn();\n(window as any).scrollTo = jest.fn();\n(Element.prototype as any).scrollIntoView = jest.fn();\n\nconst { MemoryRouter } = require('react-router-dom');\nconst { AppRoutes } = require('../../src/App');\n\nfunction renderAt(path: string) {\n  return render(\n    React.createElement(MemoryRouter, { initialEntries: [path] }, React.createElement(AppRoutes)),\n  );\n}\n\nconst norm = (s: string | null | undefined) => (s || '').replace(/\\s+/g, ' ').trim();\n\nfunction ancestorWhere(start: Element, scope: Element, pred: (el: Element) => boolean): Element {\n  let el: Element | null = start;\n  while (el) {\n    if (pred(el)) return el;\n    if (el === scope) break;\n    el = el.parentElement;\n  }\n  throw new Error('No ancestor matched');\n}\n\nafterEach(() => cleanup());\n\ndescribe('about page rendering', () => {\n  test('h1 About, mission and Why Bayes', () => {\n    renderAt('/about');\n    const main = screen.getByRole('main');\n    expect(norm(within(main).getByRole('heading', { level: 1 }).textContent)).toBe('About');\n    const text = norm(main.textContent);\n    expect(text).toContain(norm(MISSION));\n    expect(within(main).getAllByRole('heading', { name: /Why Bayes/i }).length).toBeGreaterThan(0);\n    expect(text).toContain(norm(WHY_BAYES));\n    expect(WHY_BAYES).toMatch(/Bayesian/i);\n    expect(WHY_BAYES).toMatch(/updat/i);\n    expect(WHY_BAYES).toMatch(/engagement/i);\n  });\n\n  test('two founder cards marked as placeholders to be replaced', () => {\n    renderAt('/about');\n    const main = screen.getByRole('main');\n    const names = within(main).getAllByText('Founder Name');\n    expect(names).toHaveLength(2);\n    const cards = names.map((n, i) => {\n      const f = FOUNDERS[i];\n      const parts = [f.name, f.role, f.bio, ...f.credentials].map((p) => norm(p));\n      return ancestorWhere(n, main, (el) => parts.every((p) => norm(el.textContent).includes(p)));\n    });\n    expect(cards[0]).not.toBe(cards[1]);\n    expect(cards[0].contains(cards[1])).toBe(false);\n    expect(cards[1].contains(cards[0])).toBe(false);\n    for (const card of cards) {\n      const t = norm(card.textContent);\n      expect(t).toContain('Co-founder & Principal Data Scientist');\n      expect(t).toMatch(/placeholder/i);\n      expect(t).toMatch(/replace/i);\n    }\n  });\n\n  test('four values rendered', () => {\n    renderAt('/about');\n    const main = screen.getByRole('main');\n    const text = norm(main.textContent);\n    for (const title of ['Evidence over hype', 'Build to transfer', 'Vendor-neutral', 'Responsible by design']) {\n      expect(within(main).getAllByText(title).length).toBeGreaterThan(0);\n    }\n    for (const v of VALUES as any[]) {\n      expect(text).toContain(norm(v.description));\n    }\n  });\n});\n",
+    "__tests__/acceptance/about.test.ts": "import { MISSION, WHY_BAYES, FOUNDERS, VALUES } from '../../src/content/about';\n\ndescribe('about content', () => {\n  test('mission and why bayes', () => {\n    expect(MISSION.trim().length).toBeGreaterThan(0);\n    expect(WHY_BAYES).toMatch(/bayes/i);\n    expect(WHY_BAYES).toMatch(/evidence/i);\n    expect(WHY_BAYES).toMatch(/belief/i);\n  });\n\n  test('two placeholder founders', () => {\n    expect(FOUNDERS).toHaveLength(2);\n    for (const f of FOUNDERS) {\n      expect(f.name).toBe('Founder Name');\n      expect(f.role).toBe('Co-founder & Principal Data Scientist');\n      expect(Array.isArray(f.credentials)).toBe(true);\n      expect(f.credentials.length).toBeGreaterThan(0);\n      expect(f.bio.trim().length).toBeGreaterThan(0);\n      expect(f.placeholder).toBe(true);\n    }\n  });\n\n  test('four values', () => {\n    expect(VALUES.map((v) => v.title)).toEqual([\n      'Evidence over hype',\n      'Build to transfer',\n      'Vendor-neutral',\n      'Responsible by design',\n    ]);\n  });\n});\n",
+    "__tests__/acceptance/build-output.test.ts": "/**\n * @jest-environment jsdom\n */\nimport * as fs from 'fs';\nimport * as path from 'path';\nimport { execSync } from 'child_process';\n\nconst ROOT = path.resolve(__dirname, '..', '..');\nconst DIST = path.join(ROOT, 'dist');\n\nconst norm = (s: string | null | undefined) => (s || '').replace(/\\s+/g, ' ').trim();\n\nconst FILES: Array<[string, string, string]> = [\n  ['index.html', 'The Bayes Group | Evidence-driven AI', 'Evidence-driven AI, built for your business.'],\n  ['services/index.html', 'Services | The Bayes Group', 'Services'],\n  ['training/index.html', 'Training | The Bayes Group', 'Training'],\n  ['about/index.html', 'About | The Bayes Group', 'About'],\n  ['contact/index.html', 'Contact | The Bayes Group', 'Book a consultation'],\n  ['404.html', 'Page not found | The Bayes Group', 'Page not found'],\n];\n\nlet buildError: Error | null = null;\n\nbeforeAll(() => {\n  try {\n    execSync('npm run build', { cwd: ROOT, stdio: 'pipe', timeout: 540000 });\n  } catch (e: any) {\n    buildError = new Error(\n      `npm run build failed:\\n${String(e && e.stdout ? e.stdout : '')}\\n${String(e && e.stderr ? e.stderr : e)}`,\n    );\n  }\n}, 600000);\n\nfunction parse(html: string): Document {\n  return new DOMParser().parseFromString(html, 'text/html');\n}\n\ndescribe('npm run build writes prerendered pages', () => {\n  test.each(FILES)('dist/%s is a complete prerendered page', (rel, title, h1Text) => {\n    if (buildError) throw buildError;\n    const p = path.join(DIST, rel);\n    if (!fs.existsSync(p)) throw new Error(`Expected npm run build to write dist/${rel}`);\n    const doc = parse(fs.readFileSync(p, 'utf8'));\n    const titles = doc.querySelectorAll('title');\n    expect(titles).toHaveLength(1);\n    expect(norm(titles[0].textContent)).toBe(title);\n    const root = doc.getElementById('root');\n    expect(root).not.toBeNull();\n    expect(root!.querySelector('header')).not.toBeNull();\n    expect(root!.querySelectorAll('main')).toHaveLength(1);\n    expect(root!.querySelector('footer')).not.toBeNull();\n    const h1s = root!.querySelectorAll('h1');\n    expect(h1s).toHaveLength(1);\n    expect(norm(h1s[0].textContent)).toBe(h1Text);\n    expect(doc.querySelectorAll('script[type=\"module\"]').length).toBeGreaterThan(0);\n  });\n});\n",
+    "__tests__/acceptance/contactForm.test.ts": "import {\n  EMPTY_CONTACT_FORM,\n  HELP_OPTIONS,\n  COMPANY_SIZE_OPTIONS,\n  ERROR_MESSAGES,\n  SUCCESS_MESSAGE,\n  isValidEmail,\n  validateContact,\n  submitContact,\n} from '../../src/lib/contactForm';\n\nconst valid = {\n  name: 'Test User',\n  email: 'test.user@example.com',\n  company: 'Example Corp',\n  topic: 'Training',\n  message: 'We would like a workshop for our analytics team.',\n};\n\ndescribe('contact form constants', () => {\n  test('values', () => {\n    expect(EMPTY_CONTACT_FORM).toEqual({\n      name: '',\n      email: '',\n      company: '',\n      companySize: '',\n      topic: '',\n      message: '',\n    });\n    expect([...HELP_OPTIONS]).toEqual(['AI Enablement', 'Training', 'Custom Development', 'Not sure yet']);\n    expect([...(COMPANY_SIZE_OPTIONS as any)]).toEqual([\n      '1-49 employees',\n      '50-249 employees',\n      '250-999 employees',\n      '1,000+ employees',\n    ]);\n    expect(ERROR_MESSAGES).toEqual({\n      name: 'Please enter your name.',\n      email: 'Please enter a valid email address.',\n      message: 'Please enter a message.',\n    });\n    expect(SUCCESS_MESSAGE).toBe(\"Thanks, we'll be in touch within one business day.\");\n  });\n});\n\ndescribe('isValidEmail', () => {\n  test.each(['test.user@example.com', 'a.b@sub.example.co.uk', '  test.user@example.com  '])(\n    'valid: %s',\n    (e) => expect(isValidEmail(e)).toBe(true),\n  );\n  test.each(['', 'not-an-email', 'a@b', 'a b@example.com', '@example.com', 'test.user@'])(\n    'invalid: %s',\n    (e) => expect(isValidEmail(e)).toBe(false),\n  );\n});\n\ndescribe('validateContact', () => {\n  test('valid input has no errors', () => {\n    expect(validateContact(valid)).toEqual({});\n  });\n\n  test('company and topic are optional', () => {\n    expect(validateContact({ ...valid, company: '', topic: '' })).toEqual({});\n  });\n\n  test('empty form reports all three errors', () => {\n    expect(validateContact({ ...EMPTY_CONTACT_FORM })).toEqual({\n      name: 'Please enter your name.',\n      email: 'Please enter a valid email address.',\n      message: 'Please enter a message.',\n    });\n  });\n\n  test('whitespace-only counts as empty', () => {\n    const errors = validateContact({ ...valid, name: '   ', message: '\\n  ' });\n    expect(errors).toEqual({\n      name: 'Please enter your name.',\n      message: 'Please enter a message.',\n    });\n  });\n\n  test('invalid email only', () => {\n    expect(validateContact({ ...valid, email: 'not-an-email' })).toEqual({\n      email: 'Please enter a valid email address.',\n    });\n  });\n});\n\ndescribe('submitContact', () => {\n  const g = globalThis as any;\n  let originalFetch: any;\n  let originalXHR: any;\n  beforeEach(() => {\n    originalFetch = g.fetch;\n    originalXHR = g.XMLHttpRequest;\n    g.fetch = jest.fn(() => Promise.reject(new Error('network not allowed')));\n    g.XMLHttpRequest = jest.fn(() => {\n      throw new Error('network not allowed');\n    });\n  });\n  afterEach(() => {\n    g.fetch = originalFetch;\n    g.XMLHttpRequest = originalXHR;\n  });\n\n  test('valid submit succeeds, clears values, makes no request', async () => {\n    const result: any = await submitContact({ ...valid } as any);\n    expect(result.ok).toBe(true);\n    expect(result.message).toBe(\"Thanks, we'll be in touch within one business day.\");\n    expect(result.values).toEqual({\n      name: '',\n      email: '',\n      company: '',\n      companySize: '',\n      topic: '',\n      message: '',\n    });\n    expect(result.values).toEqual(EMPTY_CONTACT_FORM);\n    expect(g.fetch).not.toHaveBeenCalled();\n    expect(g.XMLHttpRequest).not.toHaveBeenCalled();\n  });\n\n  test('invalid submit returns errors and keeps values', async () => {\n    const input = { ...valid, email: 'bad', message: '' };\n    const result: any = await submitContact(input);\n    expect(result.ok).toBe(false);\n    expect(result.errors).toEqual({\n      email: 'Please enter a valid email address.',\n      message: 'Please enter a message.',\n    });\n    expect(result.values).toEqual(input);\n    expect(g.fetch).not.toHaveBeenCalled();\n  });\n});\n",
+    "__tests__/acceptance/courses.test.ts": "import {\n  AUDIENCES,\n  FORMATS,\n  COURSE_FILTERS,\n  COURSES,\n  filterCourses,\n} from '../../src/content/courses';\n\ndescribe('course catalog', () => {\n  test('constants', () => {\n    expect([...AUDIENCES]).toEqual(['Executives', 'Managers', 'Technical teams']);\n    expect([...FORMATS]).toEqual(['Half-day briefing', '1-day workshop', 'Multi-week bootcamp']);\n    expect([...COURSE_FILTERS]).toEqual(['All', 'Executives', 'Managers', 'Technical teams']);\n  });\n\n  test('at least six well-formed courses', () => {\n    expect(COURSES.length).toBeGreaterThanOrEqual(6);\n    const ids = COURSES.map((c) => c.id);\n    expect(new Set(ids).size).toBe(ids.length);\n    for (const c of COURSES) {\n      expect(c.title.trim().length).toBeGreaterThan(0);\n      expect(AUDIENCES as readonly string[]).toContain(c.audience);\n      expect(FORMATS as readonly string[]).toContain(c.format);\n      expect(c.duration.trim().length).toBeGreaterThan(0);\n      expect(c.learn).toHaveLength(3);\n      for (const l of c.learn) expect(l.trim().length).toBeGreaterThan(0);\n    }\n  });\n\n  test('every audience has at least one course', () => {\n    for (const a of AUDIENCES) {\n      expect(COURSES.some((c) => c.audience === a)).toBe(true);\n    }\n  });\n});\n\ndescribe('filterCourses', () => {\n  test('All returns every course as a new array', () => {\n    const result = filterCourses(COURSES, 'All');\n    expect(result).toHaveLength(COURSES.length);\n    expect(result).not.toBe(COURSES);\n    expect(result.map((c) => c.id)).toEqual(COURSES.map((c) => c.id));\n  });\n\n  test.each(['Executives', 'Managers', 'Technical teams'] as const)(\n    'filter %s returns only that audience',\n    (aud) => {\n      const result = filterCourses(COURSES, aud);\n      const expected = COURSES.filter((c) => c.audience === aud).map((c) => c.id);\n      expect(result.map((c) => c.id)).toEqual(expected);\n      expect(result.length).toBeGreaterThan(0);\n      for (const c of result) expect(c.audience).toBe(aud);\n    },\n  );\n\n  test('does not mutate input', () => {\n    const snapshot = JSON.parse(JSON.stringify(COURSES));\n    const ids = COURSES.map((c) => c.id);\n    filterCourses(COURSES, 'Managers');\n    filterCourses(COURSES, 'All');\n    expect(COURSES.map((c) => c.id)).toEqual(ids);\n    expect(JSON.parse(JSON.stringify(COURSES))).toEqual(snapshot);\n  });\n});\n",
+    "__tests__/acceptance/deployment-doc.test.ts": "import * as fs from 'fs';\nimport * as path from 'path';\n\nconst ROOT = path.resolve(__dirname, '..', '..');\nconst md = fs.readFileSync(path.join(ROOT, 'DEPLOYMENT.md'), 'utf8');\nconst flat = md.replace(/\\s+/g, ' ');\n\ndescribe('DEPLOYMENT.md static hosting guidance', () => {\n  test('says dist/ can be uploaded as it is', () => {\n    expect(flat).toMatch(/dist/);\n    expect(flat).toMatch(/\\bas[- ]is\\b|as it is/i);\n    expect(flat).toMatch(/upload/i);\n  });\n\n  test('says no rewrite rule is needed because every page is its own file', () => {\n    expect(flat).toMatch(\n      /no (spa )?(rewrite|fallback)|rewrite[^.]{0,60}(not|isn't|is not) (needed|required|necessary)|without (any |a )?(spa )?(rewrite|fallback)|(don't|do not|doesn't|does not) need (a |any )?(spa )?(rewrite|fallback)/i,\n    );\n    expect(flat).toMatch(/own (html )?file|its own|separate (html )?file/i);\n  });\n\n  test('says unknown addresses get 404.html', () => {\n    expect(flat).toMatch(\n      /(unknown|missing|non-?existent|not found|nonexistent)[^.]{0,120}404\\.html|404\\.html[^.]{0,120}(unknown|missing|non-?existent|nonexistent)/i,\n    );\n  });\n});\n",
+    "__tests__/acceptance/home-render.test.ts": "/**\n * @jest-environment jsdom\n */\nimport * as React from 'react';\nimport { render, screen, within, cleanup } from '@testing-library/react';\nimport { PILLARS, STEPS, WHY_POINTS } from '../../src/content/home';\n\nconst nodeUtil = require('util');\nconst g: any = globalThis as any;\nif (typeof g.TextEncoder === 'undefined') g.TextEncoder = nodeUtil.TextEncoder;\nif (typeof g.TextDecoder === 'undefined') g.TextDecoder = nodeUtil.TextDecoder;\ng.scrollTo = jest.fn();\n(window as any).scrollTo = jest.fn();\n(Element.prototype as any).scrollIntoView = jest.fn();\n\nconst { MemoryRouter } = require('react-router-dom');\nconst { AppRoutes } = require('../../src/App');\n\nfunction renderAt(path: string) {\n  return render(\n    React.createElement(MemoryRouter, { initialEntries: [path] }, React.createElement(AppRoutes)),\n  );\n}\n\nconst norm = (s: string | null | undefined) => (s || '').replace(/\\s+/g, ' ').trim();\n\nfunction sentenceCount(s: string): number {\n  const m = s.trim().match(/[.!?](?=\\s+[A-Z0-9\"']|\\s*$)/g);\n  return m ? m.length : 0;\n}\n\nfunction ancestorWhere(start: Element, scope: Element, pred: (el: Element) => boolean): Element {\n  let el: Element | null = start;\n  while (el) {\n    if (pred(el)) return el;\n    if (el === scope) break;\n    el = el.parentElement;\n  }\n  throw new Error('No ancestor matched');\n}\n\nconst follows = (a: Node, b: Node) =>\n  (a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING) !== 0;\n\nafterEach(() => cleanup());\n\nfunction pillarCard(main: HTMLElement, title: string, description: string): Element {\n  const candidates = within(main).getAllByText(title);\n  for (const c of candidates) {\n    try {\n      return ancestorWhere(c, main, (el) => norm(el.textContent).includes(norm(description)));\n    } catch (e) {\n      /* try next */\n    }\n  }\n  throw new Error(`No pillar card for ${title}`);\n}\n\ndescribe('home page rendering', () => {\n  test('hero h1 and buttons', () => {\n    renderAt('/');\n    const main = screen.getByRole('main');\n    const h1 = within(main).getByRole('heading', { level: 1 });\n    expect(norm(h1.textContent)).toBe('Evidence-driven AI, built for your business.');\n    const hero = ancestorWhere(h1, main, (el) =>\n      Array.from(el.querySelectorAll('a')).some((a) => norm(a.textContent) === 'See how we build'),\n    );\n    const links = Array.from(hero.querySelectorAll('a'));\n    const see = links.find((a) => norm(a.textContent) === 'See how we build');\n    const book = links.find((a) => norm(a.textContent) === 'Book a consultation');\n    expect(see && see.getAttribute('href')).toBe('/systems');\n    expect(book && book.getAttribute('href')).toBe('/contact');\n  });\n\n  test('pillar descriptions have two or three sentences', () => {\n    for (const p of PILLARS) {\n      const n = sentenceCount(p.description);\n      expect(n).toBeGreaterThanOrEqual(2);\n      expect(n).toBeLessThanOrEqual(3);\n    }\n  });\n\n  test('three pillar cards with Learn more links', () => {\n    renderAt('/');\n    const main = screen.getByRole('main');\n    const expected = [\n      ['AI Enablement', '/services#enablement'],\n      ['Training', '/services#training'],\n      ['Custom Development', '/services#custom-development'],\n    ];\n    for (const [title, href] of expected) {\n      const p = PILLARS.find((x) => x.title === title)!;\n      const card = pillarCard(main, title, p.description);\n      const learn = Array.from(card.querySelectorAll('a')).find((a) =>\n        /Learn more/.test(a.textContent || ''),\n      );\n      expect(learn).toBeTruthy();\n      expect(learn!.getAttribute('href')).toBe(href);\n    }\n    const learnHrefs = Array.from(main.querySelectorAll('a'))\n      .filter((a) => /Learn more/.test(a.textContent || ''))\n      .map((a) => a.getAttribute('href'));\n    expect(learnHrefs).toEqual(expected.map((e) => e[1]));\n  });\n\n  test('How we work has four numbered steps in order, one sentence each', () => {\n    for (const s of STEPS) expect(sentenceCount(s.description)).toBe(1);\n    renderAt('/');\n    const main = screen.getByRole('main');\n    const heading = within(main).getByRole('heading', { name: 'How we work' });\n    const section = ancestorWhere(heading, main, (el) =>\n      STEPS.every((s) => norm(el.textContent).includes(s.description.trim())),\n    );\n    const els = ['Assess', 'Design', 'Build', 'Enable'].map(\n      (t) => within(section as HTMLElement).getAllByText(t)[0],\n    );\n    for (let i = 1; i < els.length; i++) expect(follows(els[i - 1], els[i])).toBe(true);\n    const text = norm(section.textContent);\n    const ol = section.querySelector('ol');\n    const numbered =\n      (ol !== null && ol.querySelectorAll('li').length === 4) ||\n      /1[\\s\\S]*Assess[\\s\\S]*2[\\s\\S]*Design[\\s\\S]*3[\\s\\S]*Build[\\s\\S]*4[\\s\\S]*Enable/.test(text);\n    expect(numbered).toBe(true);\n  });\n\n  test('Why The Bayes Group section covers the four points', () => {\n    renderAt('/');\n    const main = screen.getByRole('main');\n    const heading = within(main).getByRole('heading', { name: 'Why The Bayes Group' });\n    const section = ancestorWhere(heading, main, (el) =>\n      WHY_POINTS.every((w) => norm(el.textContent).includes(norm(w.title))),\n    );\n    const text = norm(section.textContent).toLowerCase();\n    expect(text).toContain('credentialed');\n    expect(text).toContain('data scientist');\n    expect(text).toMatch(/hands-on|builder/);\n    expect(text).toMatch(/vendor[- ]neutral/);\n    expect(text).toContain('transfer');\n    expect(text).toMatch(/\\bowns?\\b/);\n  });\n\n  test('sections appear in order and the page ends with the CTA band', () => {\n    renderAt('/');\n    const main = screen.getByRole('main');\n    const h1 = within(main).getByRole('heading', { level: 1 });\n    const pillar = pillarCard(main, PILLARS[0].title, PILLARS[0].description);\n    const how = within(main).getByRole('heading', { name: 'How we work' });\n    const why = within(main).getByRole('heading', { name: 'Why The Bayes Group' });\n    const cta = within(main).getByRole('heading', { name: 'Ready to put AI to work?' });\n    const order = [h1, pillar, how, why, cta];\n    for (let i = 1; i < order.length; i++) expect(follows(order[i - 1], order[i])).toBe(true);\n\n    const headings = main.querySelectorAll('h1, h2, h3, h4, h5, h6');\n    expect(headings[headings.length - 1]).toBe(cta);\n    const links = main.querySelectorAll('a');\n    const last = links[links.length - 1];\n    expect(norm(last.textContent)).toBe('Book a consultation');\n    expect(last.getAttribute('href')).toBe('/contact');\n    expect(follows(cta, last)).toBe(true);\n  });\n});\n",
+    "__tests__/acceptance/home.test.ts": "import { HERO, PILLARS, STEPS, WHY_POINTS, CTA_BAND } from '../../src/content/home';\n\ndescribe('home content', () => {\n  test('hero', () => {\n    expect(HERO.title).toBe('Evidence-driven AI, built for your business.');\n    expect(HERO.valueProp).toBe(\n      'We design, build and run AI systems for small and medium-sized businesses, from single agents to multi-system architectures, with enterprise-grade rigor and senior data scientists on every engagement.',\n    );\n    expect(HERO.primary).toEqual({ label: 'Book a consultation', to: '/contact' });\n    expect(HERO.secondary).toEqual({ label: 'See how we build', to: '/systems' });\n  });\n\n  test('three pillars link to service sections', () => {\n    expect(PILLARS.map((p) => [p.title, p.href])).toEqual([\n      ['AI Enablement', '/services#enablement'],\n      ['Training', '/services#training'],\n      ['Custom Development', '/services#custom-development'],\n    ]);\n    for (const p of PILLARS) {\n      expect(p.description.trim().length).toBeGreaterThan(0);\n    }\n  });\n\n  test('four steps in order', () => {\n    expect(STEPS.map((s) => s.title)).toEqual(['Assess', 'Design', 'Build', 'Enable']);\n    for (const s of STEPS) {\n      expect(s.description.trim().length).toBeGreaterThan(0);\n    }\n  });\n\n  test('why points cover the four themes', () => {\n    expect(WHY_POINTS).toHaveLength(4);\n    const text = WHY_POINTS.map((w) => `${w.title} ${w.description}`).join(' ').toLowerCase();\n    expect(text).toContain('credentialed');\n    expect(text).toMatch(/hands-on|builder/);\n    expect(text).toContain('vendor');\n    expect(text).toMatch(/transfer|own/);\n  });\n\n  test('cta band', () => {\n    expect(CTA_BAND.heading).toBe('Ready to put AI to work?');\n    expect(CTA_BAND.button).toEqual({ label: 'Book a consultation', to: '/contact' });\n  });\n});\n",
+    "__tests__/acceptance/hydrated-contact-submit.test.ts": "/**\n * @jest-environment jsdom\n */\nimport * as React from 'react';\nimport { act, within, waitFor } from '@testing-library/react';\nimport userEvent from '@testing-library/user-event';\n\nconst nodeUtil = require('util');\nconst g: any = globalThis as any;\nif (typeof g.TextEncoder === 'undefined') g.TextEncoder = nodeUtil.TextEncoder;\nif (typeof g.TextDecoder === 'undefined') g.TextDecoder = nodeUtil.TextDecoder;\ng.scrollTo = jest.fn();\n(window as any).scrollTo = jest.fn();\n(Element.prototype as any).scrollIntoView = jest.fn();\n\nconst { MemoryRouter } = require('react-router-dom');\nconst { hydrateRoot } = require('react-dom/client');\nconst { AppRoutes } = require('../../src/App');\nconst { render: serverRender } = require('../../src/entry-server');\nconst { SUCCESS_MESSAGE } = require('../../src/lib/contactForm');\n\nconst norm = (s: string | null | undefined) => (s || '').replace(/\\s+/g, ' ').trim();\n\nlet mounted: { root: any; container: HTMLElement } | null = null;\n\nafterEach(async () => {\n  if (mounted) {\n    const m = mounted;\n    mounted = null;\n    await act(async () => {\n      m.root.unmount();\n    });\n    m.container.remove();\n  }\n});\n\ntest('contact form submits successfully after hydration', async () => {\n  const user = userEvent.setup();\n  const container = document.createElement('div');\n  container.id = 'root';\n  container.innerHTML = serverRender('/contact');\n  document.body.appendChild(container);\n  let root: any;\n  await act(async () => {\n    root = hydrateRoot(\n      container,\n      React.createElement(MemoryRouter, { initialEntries: ['/contact'] }, React.createElement(AppRoutes)),\n      { onRecoverableError: () => {} },\n    );\n  });\n  mounted = { root, container };\n  const main = container.querySelector('main') as HTMLElement;\n  const form = main.querySelector('form') as HTMLElement;\n  const f = within(form);\n  await user.type(f.getByLabelText(/^Name\\b/), 'Test User');\n  await user.type(f.getByLabelText(/^Email\\b/), 'test.user@example.com');\n  await user.type(f.getByLabelText(/^Message\\b/), 'We would like a workshop for our analytics team.');\n  await user.click(f.getByRole('button', { name: 'Send message' }));\n  await waitFor(() => expect(norm(main.textContent)).toContain(SUCCESS_MESSAGE));\n  expect(norm(main.textContent)).not.toContain('Please enter your name.');\n});\n",
+    "__tests__/acceptance/layout-render.test.ts": "/**\n * @jest-environment jsdom\n */\nimport * as React from 'react';\nimport { render, screen, within, cleanup } from '@testing-library/react';\nimport userEvent from '@testing-library/user-event';\n\nconst nodeUtil = require('util');\nconst g: any = globalThis as any;\nif (typeof g.TextEncoder === 'undefined') g.TextEncoder = nodeUtil.TextEncoder;\nif (typeof g.TextDecoder === 'undefined') g.TextDecoder = nodeUtil.TextDecoder;\ng.scrollTo = jest.fn();\n(window as any).scrollTo = jest.fn();\n(Element.prototype as any).scrollIntoView = jest.fn();\n\nconst { MemoryRouter } = require('react-router-dom');\nconst { AppRoutes } = require('../../src/App');\n\nfunction renderAt(path: string) {\n  return render(\n    React.createElement(MemoryRouter, { initialEntries: [path] }, React.createElement(AppRoutes)),\n  );\n}\n\nconst norm = (s: string | null | undefined) => (s || '').replace(/\\s+/g, ' ').trim();\n\nafterEach(() => cleanup());\n\nconst NAV: Array<[string, string]> = [\n  ['Services', '/services'],\n  ['Systems', '/systems'],\n  ['Training', '/training'],\n  ['Engagements', '/engagements'],\n  ['About', '/about'],\n  ['Contact', '/contact'],\n];\n\nconst ROUTES: Array<[string, string, string]> = [\n  ['/', 'The Bayes Group | Evidence-driven AI', 'Evidence-driven AI, built for your business.'],\n  ['/services', 'Services | The Bayes Group', 'Services'],\n  ['/systems', 'Systems engineering | The Bayes Group', 'Systems engineering'],\n  ['/training', 'Training | The Bayes Group', 'Training'],\n  ['/engagements', 'Engagements | The Bayes Group', 'Engagements'],\n  ['/about', 'About | The Bayes Group', 'About'],\n  ['/contact', 'Contact | The Bayes Group', 'Book a consultation'],\n  ['/this-page-does-not-exist', 'Page not found | The Bayes Group', 'Page not found'],\n];\n\ndescribe.each(ROUTES)('page %s', (path, title, h1Text) => {\n  test('sets the document title', () => {\n    document.title = '';\n    renderAt(path);\n    expect(document.title).toBe(title);\n  });\n\n  test('has exactly one h1 with the expected text', () => {\n    const { container } = renderAt(path);\n    const h1s = container.querySelectorAll('h1');\n    expect(h1s).toHaveLength(1);\n    expect(norm(h1s[0].textContent)).toBe(h1Text);\n  });\n\n  test('uses header, nav, main and footer landmarks', () => {\n    renderAt(path);\n    const banner = screen.getByRole('banner');\n    expect(banner.tagName).toBe('HEADER');\n    expect(banner.querySelector('nav')).not.toBeNull();\n    expect(screen.getAllByRole('main')).toHaveLength(1);\n    expect(screen.getByRole('main').tagName).toBe('MAIN');\n    expect(screen.getByRole('contentinfo').tagName).toBe('FOOTER');\n  });\n\n  test('header has the wordmark home link, nav links and the CTA', () => {\n    renderAt(path);\n    const banner = screen.getByRole('banner');\n    const homeLinks = within(banner)\n      .getAllByRole('link', { name: /The Bayes Group/, hidden: true })\n      .filter((a) => a.getAttribute('href') === '/');\n    expect(homeLinks.length).toBeGreaterThan(0);\n    expect(homeLinks[0].querySelector('svg')).not.toBeNull();\n    for (const [label, to] of NAV) {\n      const links = within(banner).getAllByRole('link', { name: label, hidden: true });\n      expect(links.some((a) => a.getAttribute('href') === to)).toBe(true);\n    }\n    const cta = within(banner).getAllByRole('link', { name: 'Book a consultation', hidden: true });\n    expect(cta.some((a) => a.getAttribute('href') === '/contact')).toBe(true);\n  });\n\n  test('footer has the wordmark, line, nav links and copyright', () => {\n    renderAt(path);\n    const footer = screen.getByRole('contentinfo');\n    expect(footer.querySelector('svg')).not.toBeNull();\n    const text = norm(footer.textContent);\n    expect(text).toContain('The Bayes Group');\n    expect(text).toContain('AI enablement, training and custom development.');\n    expect(text).toContain('\\u00a9 2026 The Bayes Group');\n    for (const [label, to] of NAV) {\n      const links = within(footer).getAllByRole('link', { name: label, hidden: true });\n      expect(links.some((a) => a.getAttribute('href') === to)).toBe(true);\n    }\n  });\n});\n\ndescribe('mobile menu', () => {\n  test('Menu button opens and closes the navigation links', async () => {\n    const user = userEvent.setup();\n    renderAt('/');\n    const banner = screen.getByRole('banner');\n    const btn = within(banner).getByRole('button', { name: /menu/i });\n    expect(btn.getAttribute('aria-expanded')).toBe('false');\n    const controlsId = btn.getAttribute('aria-controls');\n    expect(controlsId).toBeTruthy();\n\n    await user.click(btn);\n    expect(btn.getAttribute('aria-expanded')).toBe('true');\n    const panel = document.getElementById(controlsId as string);\n    expect(panel).not.toBeNull();\n    for (const [label, to] of NAV) {\n      const link = within(panel as HTMLElement).getByRole('link', { name: label });\n      expect(link.getAttribute('href')).toBe(to);\n    }\n    const cta = within(panel as HTMLElement).getByRole('link', { name: 'Book a consultation' });\n    expect(cta.getAttribute('href')).toBe('/contact');\n\n    await user.click(btn);\n    expect(btn.getAttribute('aria-expanded')).toBe('false');\n  });\n});\n\ndescribe('not found page', () => {\n  test('unknown route shows Page not found with a link home', () => {\n    renderAt('/no/such/page');\n    const main = screen.getByRole('main');\n    expect(within(main).getByRole('heading', { level: 1 }).textContent).toBe('Page not found');\n    const homeLinks = Array.from(main.querySelectorAll('a')).filter(\n      (a) => a.getAttribute('href') === '/',\n    );\n    expect(homeLinks.length).toBeGreaterThan(0);\n  });\n});\n",
+    "__tests__/acceptance/main-hydrate.test.ts": "/**\n * @jest-environment jsdom\n */\nconst nodeUtil = require('util');\nconst g: any = globalThis as any;\nif (typeof g.TextEncoder === 'undefined') g.TextEncoder = nodeUtil.TextEncoder;\nif (typeof g.TextDecoder === 'undefined') g.TextDecoder = nodeUtil.TextDecoder;\ng.scrollTo = jest.fn();\n(window as any).scrollTo = jest.fn();\n(Element.prototype as any).scrollIntoView = jest.fn();\n\nconst mockHydrateRoot = jest.fn(() => ({ render: jest.fn(), unmount: jest.fn() }));\nconst mockRender = jest.fn();\nconst mockCreateRoot = jest.fn(() => ({ render: mockRender, unmount: jest.fn() }));\n\njest.mock('react-dom/client', () => {\n  const api = { hydrateRoot: mockHydrateRoot, createRoot: mockCreateRoot };\n  return { __esModule: true, ...api, default: api };\n});\njest.mock('../../src/styles/global.css', () => ({}), { virtual: true });\njest.mock('../../src/styles/theme.css', () => ({}), { virtual: true });\n\nconst { render: serverRender } = require('../../src/entry-server');\n\nbeforeEach(() => {\n  mockHydrateRoot.mockClear();\n  mockCreateRoot.mockClear();\n  mockRender.mockClear();\n  document.body.innerHTML = '';\n});\n\ndescribe('browser entry (src/main.tsx)', () => {\n  test('hydrates prerendered markup with hydrateRoot', () => {\n    const root = document.createElement('div');\n    root.id = 'root';\n    root.innerHTML = serverRender('/');\n    document.body.appendChild(root);\n    jest.isolateModules(() => {\n      require('../../src/main');\n    });\n    expect(mockHydrateRoot).toHaveBeenCalledTimes(1);\n    expect((mockHydrateRoot.mock.calls[0] as any[])[0]).toBe(root);\n    expect(mockCreateRoot).not.toHaveBeenCalled();\n  });\n\n  test('mounts into #root (hydrateRoot or createRoot) when #root is empty', () => {\n    const root = document.createElement('div');\n    root.id = 'root';\n    document.body.appendChild(root);\n    jest.isolateModules(() => {\n      require('../../src/main');\n    });\n    const total = mockHydrateRoot.mock.calls.length + mockCreateRoot.mock.calls.length;\n    expect(total).toBe(1);\n    const call = (mockHydrateRoot.mock.calls[0] || mockCreateRoot.mock.calls[0]) as any[];\n    expect(call[0]).toBe(root);\n  });\n});\n",
+    "__tests__/acceptance/navigation-hash-render.test.ts": "/**\n * @jest-environment jsdom\n */\nimport * as React from 'react';\nimport { render, screen, cleanup, waitFor } from '@testing-library/react';\nimport userEvent from '@testing-library/user-event';\n\nconst nodeUtil = require('util');\nconst g: any = globalThis as any;\nif (typeof g.TextEncoder === 'undefined') g.TextEncoder = nodeUtil.TextEncoder;\nif (typeof g.TextDecoder === 'undefined') g.TextDecoder = nodeUtil.TextDecoder;\n\nconst { MemoryRouter } = require('react-router-dom');\nconst { AppRoutes } = require('../../src/App');\n\nlet intoView: Element[] = [];\n\nbeforeEach(() => {\n  intoView = [];\n  g.scrollTo = jest.fn();\n  (window as any).scrollTo = g.scrollTo;\n  (Element.prototype as any).scrollIntoView = function (this: Element) {\n    intoView.push(this);\n  };\n});\n\nafterEach(() => cleanup());\n\nfunction scrolledToTop(fn: any): boolean {\n  return fn.mock.calls.some(\n    (a: any[]) =>\n      (a[0] === 0 && (a[1] === 0 || a[1] === undefined)) ||\n      (a[0] !== null && typeof a[0] === 'object' && a[0].top === 0),\n  );\n}\n\ntest('a link with a hash scrolls to the section and not to the top', async () => {\n  const user = userEvent.setup();\n  render(React.createElement(MemoryRouter, { initialEntries: ['/'] }, React.createElement(AppRoutes)));\n  const main = screen.getByRole('main');\n  const learn = Array.from(main.querySelectorAll('a')).find(\n    (a) => a.getAttribute('href') === '/services#training',\n  );\n  expect(learn).toBeTruthy();\n  await user.click(learn!);\n  await waitFor(() => expect(intoView.map((e) => e.id)).toContain('training'));\n  expect(scrolledToTop((window as any).scrollTo)).toBe(false);\n});\n",
+    "__tests__/acceptance/navigation-render.test.ts": "/**\n * @jest-environment jsdom\n */\nimport * as React from 'react';\nimport { render, screen, within, cleanup, waitFor } from '@testing-library/react';\nimport userEvent from '@testing-library/user-event';\n\nconst nodeUtil = require('util');\nconst g: any = globalThis as any;\nif (typeof g.TextEncoder === 'undefined') g.TextEncoder = nodeUtil.TextEncoder;\nif (typeof g.TextDecoder === 'undefined') g.TextDecoder = nodeUtil.TextDecoder;\n\nconst { MemoryRouter } = require('react-router-dom');\nconst { AppRoutes } = require('../../src/App');\n\nlet intoView: Element[] = [];\n\nbeforeEach(() => {\n  intoView = [];\n  g.scrollTo = jest.fn();\n  (window as any).scrollTo = g.scrollTo;\n  (Element.prototype as any).scrollIntoView = function (this: Element) {\n    intoView.push(this);\n  };\n});\n\nafterEach(() => cleanup());\n\nfunction renderAt(path: string) {\n  return render(\n    React.createElement(MemoryRouter, { initialEntries: [path] }, React.createElement(AppRoutes)),\n  );\n}\n\nconst norm = (s: string | null | undefined) => (s || '').replace(/\\s+/g, ' ').trim();\n\nfunction scrolledToTop(fn: any): boolean {\n  return fn.mock.calls.some(\n    (a: any[]) =>\n      (a[0] === 0 && (a[1] === 0 || a[1] === undefined)) ||\n      (a[0] !== null && typeof a[0] === 'object' && a[0].top === 0),\n  );\n}\n\ndescribe('route change scroll and focus', () => {\n  test('first page load does not scroll or move focus', () => {\n    renderAt('/');\n    const main = screen.getByRole('main');\n    expect((window as any).scrollTo).not.toHaveBeenCalled();\n    expect(intoView).toHaveLength(0);\n    expect(document.activeElement).not.toBe(main);\n  });\n\n  test('first page load with a hash does not scroll', () => {\n    renderAt('/services#training');\n    expect((window as any).scrollTo).not.toHaveBeenCalled();\n    expect(intoView).toHaveLength(0);\n  });\n\n  test('navigating to another page scrolls to the top and focuses main', async () => {\n    const user = userEvent.setup();\n    renderAt('/');\n    const main = screen.getByRole('main');\n    const see = Array.from(main.querySelectorAll('a')).find(\n      (a) => norm(a.textContent) === 'See how we build' && a.getAttribute('href') === '/systems',\n    );\n    expect(see).toBeTruthy();\n    await user.click(see!);\n    await waitFor(() =>\n      expect(norm(within(screen.getByRole('main')).getByRole('heading', { level: 1 }).textContent)).toBe(\n        'Systems engineering',\n      ),\n    );\n    await waitFor(() => expect(scrolledToTop((window as any).scrollTo)).toBe(true));\n    await waitFor(() => {\n      const m = screen.getByRole('main');\n      expect(m.id).toBe('main');\n      expect(document.activeElement).toBe(m);\n    });\n  });\n\n  test('navigating with a footer link also scrolls and focuses main', async () => {\n    const user = userEvent.setup();\n    renderAt('/services');\n    const footer = screen.getByRole('contentinfo');\n    const about = within(footer)\n      .getAllByRole('link', { name: 'About', hidden: true })\n      .find((a) => a.getAttribute('href') === '/about');\n    expect(about).toBeTruthy();\n    await user.click(about!);\n    await waitFor(() =>\n      expect(norm(within(screen.getByRole('main')).getByRole('heading', { level: 1 }).textContent)).toBe('About'),\n    );\n    await waitFor(() => expect(scrolledToTop((window as any).scrollTo)).toBe(true));\n    await waitFor(() => expect(document.activeElement).toBe(screen.getByRole('main')));\n  });\n\n  test('a link with a hash scrolls to that section', async () => {\n    const user = userEvent.setup();\n    renderAt('/');\n    const main = screen.getByRole('main');\n    const learn = Array.from(main.querySelectorAll('a')).find(\n      (a) => a.getAttribute('href') === '/services#training',\n    );\n    expect(learn).toBeTruthy();\n    await user.click(learn!);\n    await waitFor(() => expect(document.getElementById('training')).not.toBeNull());\n    await waitFor(() => {\n      const ids = intoView.map((e) => e.id);\n      if (!ids.includes('training')) {\n        throw new Error(`Expected scrollIntoView on #training, got calls on: ${JSON.stringify(ids)}`);\n      }\n    });\n  });\n});\n",
+    "__tests__/acceptance/prerender-render.test.ts": "/**\n * @jest-environment jsdom\n */\nimport * as fs from 'fs';\nimport * as path from 'path';\nimport * as React from 'react';\nimport { act, within } from '@testing-library/react';\nimport userEvent from '@testing-library/user-event';\n\nconst nodeUtil = require('util');\nconst g: any = globalThis as any;\nif (typeof g.TextEncoder === 'undefined') g.TextEncoder = nodeUtil.TextEncoder;\nif (typeof g.TextDecoder === 'undefined') g.TextDecoder = nodeUtil.TextDecoder;\ng.scrollTo = jest.fn();\n(window as any).scrollTo = jest.fn();\n(Element.prototype as any).scrollIntoView = jest.fn();\n\nconst { MemoryRouter } = require('react-router-dom');\nconst { hydrateRoot } = require('react-dom/client');\nconst { AppRoutes } = require('../../src/App');\nconst { render: serverRender, buildPageHtml } = require('../../src/entry-server');\nconst { getPageMeta } = require('../../src/seo');\nconst { FOOTER_LINE, COPYRIGHT } = require('../../src/content/site');\nconst { COURSES } = require('../../src/content/courses');\n\nconst ROOT = path.resolve(__dirname, '..', '..');\nconst TEMPLATE = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');\n\nconst norm = (s: string | null | undefined) => (s || '').replace(/\\s+/g, ' ').trim();\n\nconst PAGES: Array<[string, string, string, string | null]> = [\n  ['/', 'The Bayes Group | Evidence-driven AI', 'Evidence-driven AI, built for your business.', 'https://thebayesgroup.com/'],\n  ['/services', 'Services | The Bayes Group', 'Services', 'https://thebayesgroup.com/services'],\n  ['/systems', 'Systems engineering | The Bayes Group', 'Systems engineering', 'https://thebayesgroup.com/systems'],\n  ['/training', 'Training | The Bayes Group', 'Training', 'https://thebayesgroup.com/training'],\n  ['/engagements', 'Engagements | The Bayes Group', 'Engagements', 'https://thebayesgroup.com/engagements'],\n  ['/about', 'About | The Bayes Group', 'About', 'https://thebayesgroup.com/about'],\n  ['/contact', 'Contact | The Bayes Group', 'Book a consultation', 'https://thebayesgroup.com/contact'],\n  ['/404', 'Page not found | The Bayes Group', 'Page not found', null],\n];\n\nconst NAV: Array<[string, string]> = [\n  ['Services', '/services'],\n  ['Systems', '/systems'],\n  ['Training', '/training'],\n  ['Engagements', '/engagements'],\n  ['About', '/about'],\n  ['Contact', '/contact'],\n];\n\nfunction parse(html: string): Document {\n  return new DOMParser().parseFromString(html, 'text/html');\n}\n\nfunction metas(doc: Document, key: string): Element[] {\n  return Array.from(doc.querySelectorAll('meta')).filter(\n    (m) => m.getAttribute('property') === key || m.getAttribute('name') === key,\n  );\n}\n\nfunction oneMeta(doc: Document, key: string, url: string): string {\n  const found = metas(doc, key);\n  if (found.length !== 1) {\n    throw new Error(`buildPageHtml(template, '${url}') must have exactly one meta ${key}, found ${found.length}`);\n  }\n  return found[0].getAttribute('content') || '';\n}\n\ndescribe('buildPageHtml produces complete pages', () => {\n  describe.each(PAGES)('page %s', (url, title, h1Text, canonical) => {\n    let html = '';\n    let doc: Document;\n    beforeAll(() => {\n      html = buildPageHtml(TEMPLATE, url);\n      doc = parse(html);\n    });\n\n    test('has exactly one title with the page title', () => {\n      const titles = doc.querySelectorAll('title');\n      expect(titles).toHaveLength(1);\n      expect(norm(titles[0].textContent)).toBe(title);\n    });\n\n    test('has its own meta description from src/seo.ts', () => {\n      const meta: any = getPageMeta(url);\n      const d = oneMeta(doc, 'description', url);\n      expect(d).toBe(meta.description);\n      expect(d.trim().length).toBeGreaterThan(0);\n    });\n\n    test('has Open Graph tags', () => {\n      const meta: any = getPageMeta(url);\n      expect(oneMeta(doc, 'og:title', url)).toBe(title);\n      expect(oneMeta(doc, 'og:description', url)).toBe(meta.description);\n      expect(oneMeta(doc, 'og:type', url)).toBe('website');\n      expect(oneMeta(doc, 'og:site_name', url)).toBe('The Bayes Group');\n    });\n\n    if (canonical) {\n      test('has the canonical link', () => {\n        const links = Array.from(doc.querySelectorAll('link')).filter((l) =>\n          (l.getAttribute('rel') || '').split(/\\s+/).includes('canonical'),\n        );\n        expect(links).toHaveLength(1);\n        expect(links[0].getAttribute('href')).toBe(canonical);\n      });\n    }\n\n    test('links the favicon', () => {\n      const icons = Array.from(doc.querySelectorAll('link')).filter((l) =>\n        (l.getAttribute('rel') || '').toLowerCase().split(/\\s+/).includes('icon'),\n      );\n      expect(icons.length).toBeGreaterThan(0);\n      for (const i of icons) expect(i.getAttribute('href')).toBe('/favicon.svg');\n    });\n\n    test('#root contains the full page: header, one h1, main, footer', () => {\n      const root = doc.getElementById('root');\n      if (!root) throw new Error(`No #root in buildPageHtml(template, '${url}'):\\n${html.slice(0, 2000)}`);\n      const h1s = root.querySelectorAll('h1');\n      expect(h1s).toHaveLength(1);\n      expect(norm(h1s[0].textContent)).toBe(h1Text);\n      expect(root.querySelector('header')).not.toBeNull();\n      expect(root.querySelectorAll('main')).toHaveLength(1);\n      const footer = root.querySelector('footer');\n      expect(footer).not.toBeNull();\n      const ft = norm(footer!.textContent);\n      expect(ft).toContain(FOOTER_LINE);\n      expect(ft).toContain(COPYRIGHT);\n      const header = root.querySelector('header')!;\n      for (const [, to] of NAV) {\n        const hrefs = Array.from(header.querySelectorAll('a')).map((a) => a.getAttribute('href'));\n        expect(hrefs).toContain(to);\n      }\n    });\n\n    test('keeps the template module scripts and html lang', () => {\n      const templateDoc = parse(TEMPLATE);\n      const srcs = (d: Document) =>\n        Array.from(d.querySelectorAll('script[type=\"module\"]')).map((s) => s.getAttribute('src'));\n      expect(srcs(doc)).toEqual(srcs(templateDoc));\n      expect(doc.documentElement.getAttribute('lang')).toBe('en');\n    });\n  });\n\n  test('descriptions differ between pages', () => {\n    const all = PAGES.map(([url]) => oneMeta(parse(buildPageHtml(TEMPLATE, url)), 'description', url));\n    expect(new Set(all).size).toBe(all.length);\n  });\n\n  test('training page HTML contains every course title', () => {\n    const root = parse(buildPageHtml(TEMPLATE, '/training')).getElementById('root')!;\n    const text = norm(root.textContent);\n    for (const c of COURSES as any[]) expect(text).toContain(norm(c.title));\n  });\n\n  test('services page HTML contains the three sections', () => {\n    const root = parse(buildPageHtml(TEMPLATE, '/services')).getElementById('root')!;\n    const ids = Array.from(root.querySelectorAll('#enablement, #training, #custom-development')).map((e) => e.id);\n    expect(ids).toEqual(['enablement', 'training', 'custom-development']);\n  });\n\n  test('systems page HTML contains the four sections and the diagram', () => {\n    const root = parse(buildPageHtml(TEMPLATE, '/systems')).getElementById('root')!;\n    const ids = Array.from(\n      root.querySelectorAll('#agentic, #architecture, #observability, #sustainability'),\n    ).map((e) => e.id);\n    expect(ids).toEqual(['agentic', 'architecture', 'observability', 'sustainability']);\n    const texts = Array.from(root.querySelectorAll('svg text')).map((t) => norm(t.textContent));\n    expect(texts.join(' | ')).toContain('Observability');\n  });\n\n  test('engagements page HTML contains the enterprise tier', () => {\n    const root = parse(buildPageHtml(TEMPLATE, '/engagements')).getElementById('root')!;\n    expect(root.querySelector('#enterprise')).not.toBeNull();\n  });\n\n  test('contact page HTML contains the form', () => {\n    const root = parse(buildPageHtml(TEMPLATE, '/contact')).getElementById('root')!;\n    const form = root.querySelector('form');\n    expect(form).not.toBeNull();\n    expect(norm(form!.textContent)).toContain('Send message');\n  });\n\n  test('render(url) returns the page markup as a string', () => {\n    const out: string = serverRender('/about');\n    expect(typeof out).toBe('string');\n    expect(out).toMatch(/<main/);\n    expect(out).toMatch(/<h1[^>]*>\\s*About\\s*<\\/h1>/);\n  });\n});\n\ndescribe('prerendered markup hydrates without mismatches', () => {\n  const mounted: Array<{ root: any; container: HTMLElement }> = [];\n\n  afterEach(async () => {\n    while (mounted.length) {\n      const m = mounted.pop()!;\n      await act(async () => {\n        m.root.unmount();\n      });\n      m.container.remove();\n    }\n  });\n\n  async function hydrateAt(url: string) {\n    const markup: string = serverRender(url);\n    const container = document.createElement('div');\n    container.id = 'root';\n    container.innerHTML = markup;\n    document.body.appendChild(container);\n    const h1Before = container.querySelector('h1');\n    const errors: string[] = [];\n    const spy = jest.spyOn(console, 'error').mockImplementation((...args: any[]) => {\n      errors.push(args.map((a) => String(a)).join(' '));\n    });\n    let root: any;\n    try {\n      await act(async () => {\n        root = hydrateRoot(\n          container,\n          React.createElement(MemoryRouter, { initialEntries: [url] }, React.createElement(AppRoutes)),\n          {\n            onRecoverableError: (e: any) => errors.push('recoverable: ' + String((e && e.message) || e)),\n          },\n        );\n      });\n    } finally {\n      spy.mockRestore();\n    }\n    mounted.push({ root, container });\n    const hydrationErrors = errors.filter((e) =>\n      /hydrat|did not match|server html|server rendered|recoverable/i.test(e),\n    );\n    if (hydrationErrors.length > 0) {\n      throw new Error(`Hydrating ${url} reported mismatches:\\n${hydrationErrors.join('\\n')}`);\n    }\n    expect(h1Before).not.toBeNull();\n    expect(container.querySelector('h1')).toBe(h1Before);\n    return container;\n  }\n\n  test.each(['/', '/services', '/systems', '/engagements', '/about', '/contact', '/training', '/404'])(\n    '%s hydrates cleanly',\n    async (url) => {\n      await hydrateAt(url);\n    },\n  );\n\n  test('training filter works after hydration', async () => {\n    const user = userEvent.setup();\n    const container = await hydrateAt('/training');\n    const main = container.querySelector('main') as HTMLElement;\n    await user.click(within(main).getByRole('button', { name: 'Managers' }));\n    expect(within(main).getByRole('button', { name: 'Managers' }).getAttribute('aria-pressed')).toBe('true');\n    const visible = (COURSES as any[])\n      .filter((c) => within(main).queryAllByText(c.title).length > 0)\n      .map((c) => c.id);\n    expect(visible).toEqual((COURSES as any[]).filter((c) => c.audience === 'Managers').map((c) => c.id));\n  });\n\n  test('Menu button works after hydration', async () => {\n    const user = userEvent.setup();\n    const container = await hydrateAt('/');\n    const header = container.querySelector('header') as HTMLElement;\n    const btn = within(header).getByRole('button', { name: /menu/i });\n    expect(btn.getAttribute('aria-expanded')).toBe('false');\n    await user.click(btn);\n    expect(btn.getAttribute('aria-expanded')).toBe('true');\n  });\n\n  test('contact form validates after hydration', async () => {\n    const user = userEvent.setup();\n    const container = await hydrateAt('/contact');\n    const main = container.querySelector('main') as HTMLElement;\n    await user.click(within(main).getByRole('button', { name: 'Send message' }));\n    const text = norm(main.textContent);\n    expect(text).toContain('Please enter your name.');\n    expect(text).toContain('Please enter a valid email address.');\n    expect(text).toContain('Please enter a message.');\n  });\n});\n",
+    "__tests__/acceptance/review-fixes-render.test.ts": "/**\n * @jest-environment jsdom\n */\nimport * as fs from 'fs';\nimport * as path from 'path';\nimport * as React from 'react';\nimport { render, screen, within, cleanup } from '@testing-library/react';\nimport userEvent from '@testing-library/user-event';\nimport { PILLARS, STEPS } from '../../src/content/home';\nimport { FOOTER_LINE, COPYRIGHT, TAGLINE, CONTACT_EMAIL } from '../../src/content/site';\n\nconst nodeUtil = require('util');\nconst g: any = globalThis as any;\nif (typeof g.TextEncoder === 'undefined') g.TextEncoder = nodeUtil.TextEncoder;\nif (typeof g.TextDecoder === 'undefined') g.TextDecoder = nodeUtil.TextDecoder;\ng.scrollTo = jest.fn();\n(window as any).scrollTo = jest.fn();\n(Element.prototype as any).scrollIntoView = jest.fn();\n\nconst { MemoryRouter } = require('react-router-dom');\nconst { AppRoutes } = require('../../src/App');\n\nconst ROOT = path.resolve(__dirname, '..', '..');\n\nfunction renderAt(p: string) {\n  return render(\n    React.createElement(MemoryRouter, { initialEntries: [p] }, React.createElement(AppRoutes)),\n  );\n}\n\nconst norm = (s: string | null | undefined) => (s || '').replace(/\\s+/g, ' ').trim();\nconst escRe = (s: string) => s.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\$&');\n\nafterEach(() => cleanup());\n\nfunction listFiles(dir: string): string[] {\n  const out: string[] = [];\n  if (!fs.existsSync(dir)) return out;\n  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {\n    const full = path.join(dir, entry.name);\n    if (entry.isDirectory()) out.push(...listFiles(full));\n    else out.push(full);\n  }\n  return out;\n}\n\nfunction allCss(): string {\n  return listFiles(path.join(ROOT, 'src'))\n    .filter((f) => f.endsWith('.css'))\n    .map((f) => fs.readFileSync(f, 'utf8'))\n    .join('\\n')\n    .replace(/\\/\\*[\\s\\S]*?\\*\\//g, '');\n}\n\ntype Rule = { selector: string; body: string };\n\nfunction cssRules(css: string): Rule[] {\n  const out: Rule[] = [];\n  const re = /([^{}]+)\\{([^{}]*)\\}/g;\n  let m: RegExpExecArray | null;\n  while ((m = re.exec(css))) out.push({ selector: m[1].trim(), body: m[2] });\n  return out;\n}\n\nfunction hasClass(selector: string, cls: string): boolean {\n  return new RegExp(`\\\\.${escRe(cls)}(?![\\\\w-])`).test(selector);\n}\n\nfunction desktopBlocks(css: string): string[] {\n  const out: string[] = [];\n  const re = /@media[^{]*min-width\\s*:\\s*(1024px|64rem|64em)[^{]*\\{/g;\n  let m: RegExpExecArray | null;\n  while ((m = re.exec(css))) {\n    let depth = 1;\n    let i = re.lastIndex;\n    const start = i;\n    while (i < css.length && depth > 0) {\n      if (css[i] === '{') depth++;\n      else if (css[i] === '}') depth--;\n      i++;\n    }\n    out.push(css.slice(start, i - 1));\n  }\n  return out;\n}\n\nfunction classesIn(el: Element): string[] {\n  const set = new Set<string>();\n  const all = [el, ...Array.from(el.querySelectorAll('*'))];\n  for (const e of all) {\n    for (const c of (e.getAttribute('class') || '').split(/\\s+/)) if (c) set.add(c);\n  }\n  return Array.from(set);\n}\n\nfunction ancestorWhere(start: Element, scope: Element, pred: (el: Element) => boolean): Element {\n  let el: Element | null = start;\n  while (el) {\n    if (pred(el)) return el;\n    if (el === scope) break;\n    el = el.parentElement;\n  }\n  throw new Error('No ancestor matched');\n}\n\ndescribe('How we work styling', () => {\n  function howSection(): Element {\n    renderAt('/');\n    const main = screen.getByRole('main');\n    const heading = within(main).getByRole('heading', { name: 'How we work' });\n    const section = heading.closest('section');\n    if (section && STEPS.every((s) => norm(section.textContent).includes(norm(s.description)))) return section;\n    return ancestorWhere(heading, main, (el) =>\n      STEPS.every((s) => norm(el.textContent).includes(norm(s.description))),\n    );\n  }\n\n  test('every class used in the section has a CSS rule', () => {\n    const section = howSection();\n    const classes = classesIn(section);\n    expect(classes.length).toBeGreaterThan(0);\n    const rules = cssRules(allCss());\n    const missing = classes.filter((c) => !rules.some((r) => hasClass(r.selector, c)));\n    if (missing.length) throw new Error(`Classes in How we work without CSS rules: ${missing.join(', ')}`);\n  });\n\n  test('four columns at 1024px and wider', () => {\n    const classes = classesIn(howSection());\n    const blocks = desktopBlocks(allCss());\n    const ok = blocks.some((b) =>\n      cssRules(b).some(\n        (r) =>\n          classes.some((c) => hasClass(r.selector, c)) &&\n          /grid-template-columns\\s*:\\s*repeat\\(\\s*4\\s*,/.test(r.body),\n      ),\n    );\n    if (!ok) {\n      throw new Error(\n        `No rule inside @media (min-width: 1024px) gives a How we work class grid-template-columns: repeat(4, ...). Classes: ${classes.join(', ')}`,\n      );\n    }\n  });\n\n  test('a connecting line drawn with a pseudo-element', () => {\n    const classes = classesIn(howSection());\n    const rules = cssRules(allCss());\n    const ok = rules.some(\n      (r) =>\n        /::?(before|after)/.test(r.selector) &&\n        classes.some((c) => hasClass(r.selector, c)) &&\n        /(var\\(--color-(border|accent|accent-light|accent-strong)\\)|#[0-9a-f]{3,6})/i.test(r.body),\n    );\n    if (!ok) throw new Error(`No ::before/::after rule on a How we work class draws a colored line. Classes: ${classes.join(', ')}`);\n  });\n});\n\ndescribe('pillar card titles', () => {\n  test('pillar title element has a class with its own serif styling and every pillar class has a rule', () => {\n    renderAt('/');\n    const main = screen.getByRole('main');\n    const rules = cssRules(allCss());\n    const serifRe = /font-family\\s*:\\s*(var\\(--font-serif\\)|[^;]*(?<!sans-)\\bserif\\b)/i;\n    for (const p of PILLARS) {\n      const candidates = within(main)\n        .getAllByText(p.title)\n        .filter((el) => el.tagName !== 'A' && !el.closest('a'));\n      let titleEl: Element | null = null;\n      let card: Element | null = null;\n      for (const c of candidates) {\n        try {\n          const found = ancestorWhere(c, main, (el) => norm(el.textContent).includes(norm(p.description)));\n          if (found !== main) {\n            titleEl = c;\n            card = found;\n            break;\n          }\n        } catch (e) {\n          /* try next */\n        }\n      }\n      if (!titleEl || !card) throw new Error(`No pillar title element found for \"${p.title}\"`);\n      const cls = (titleEl.getAttribute('class') || '').split(/\\s+/).filter(Boolean);\n      if (!cls.length) throw new Error(`Pillar title \"${p.title}\" has no class`);\n      const serif = rules.some(\n        (r) => cls.some((c) => hasClass(r.selector, c)) && serifRe.test(r.body),\n      );\n      if (!serif) throw new Error(`No CSS rule for pillar title classes (${cls.join(', ')}) sets a serif font-family`);\n      const missing = classesIn(card).filter((c) => !rules.some((r) => hasClass(r.selector, c)));\n      if (missing.length) throw new Error(`Pillar card classes without CSS rules: ${missing.join(', ')}`);\n    }\n  });\n});\n\ndescribe('footer content', () => {\n  test.each(['/', '/services', '/contact'])('footer on %s shows only wordmark, line, nav and copyright', (p) => {\n    renderAt(p);\n    const footer = screen.getByRole('contentinfo');\n    const text = norm(footer.textContent);\n    expect(text.split(FOOTER_LINE).length - 1).toBe(1);\n    expect(text).not.toContain(TAGLINE);\n    expect(footer.querySelector('nav[aria-label=\"Footer\"]')).not.toBeNull();\n    const clone = footer.cloneNode(true) as HTMLElement;\n    Array.from(clone.querySelectorAll('a, nav, svg')).forEach((e) => e.remove());\n    // Column headings (\"Services\", \"Company\") are allowed.\n    Array.from(clone.querySelectorAll('*')).forEach((e) => {\n      const t = norm(e.textContent);\n      if ((t === 'Services' || t === 'Company') && e.isConnected !== false) e.remove();\n    });\n    let rest = norm(clone.textContent);\n    rest = norm(rest.replace(FOOTER_LINE, ' '));\n    rest = norm(rest.replace(COPYRIGHT, ' '));\n    rest = norm(rest.replace(CONTACT_EMAIL, ' '));\n    if (!(rest === '' || rest === 'The Bayes Group')) {\n      throw new Error(`Footer has extra text besides the wordmark, line, nav and copyright: ${JSON.stringify(rest)}`);\n    }\n  });\n});\n\ndescribe('contact form field style', () => {\n  function getForm(): HTMLFormElement {\n    renderAt('/contact');\n    const form = screen.getByRole('main').querySelector('form');\n    if (!form) throw new Error('No form on /contact');\n    return form as HTMLFormElement;\n  }\n\n  function controls(form: HTMLFormElement) {\n    const f = within(form);\n    return {\n      name: f.getByLabelText(/^Name\\b/),\n      email: f.getByLabelText(/^Email\\b/),\n      company: f.getByLabelText(/^Company(?! size)\\b/),\n      companySize: f.getByLabelText(/^Company size\\b/),\n      topic: f.getByLabelText(/^What can we help with\\?/),\n      message: f.getByLabelText(/^Message\\b/),\n    };\n  }\n\n  test('every control uses the form-control class', () => {\n    const form = getForm();\n    const els = Array.from(form.querySelectorAll('input, select, textarea'));\n    expect(els.length).toBeGreaterThanOrEqual(5);\n    for (const el of els) {\n      if (!el.classList.contains('form-control')) {\n        throw new Error(`Control ${el.outerHTML.slice(0, 120)} lacks class form-control`);\n      }\n    }\n  });\n\n  test('CSS: grey border, teal focus, red only when invalid', () => {\n    const rules = cssRules(allCss());\n    const parts = (r: Rule) => r.selector.split(',').map((s) => s.trim());\n    const base = rules.some(\n      (r) =>\n        parts(r).some((s) => hasClass(s, 'form-control') && !/[:[]/.test(s)) &&\n        /border(-color)?\\s*:[^;]*(var\\(--color-input-border\\)|#7a8699)/i.test(r.body),\n    );\n    if (!base) throw new Error('No .form-control rule with border var(--color-input-border)');\n    const focus = rules.some(\n      (r) =>\n        parts(r).some((s) => /\\.form-control(?![\\w-])[^,]*:focus/.test(s)) &&\n        /border(-color)?\\s*:[^;]*(var\\(--color-accent(-strong)?\\)|#17696a|#1f8a8a)/i.test(r.body),\n    );\n    if (!focus) throw new Error('No .form-control:focus rule with a teal border-color');\n    const invalid = rules.some(\n      (r) =>\n        parts(r).some((s) => /\\.form-control(?![\\w-])[^,]*\\[aria-invalid=[\"']?true[\"']?\\]/.test(s)) &&\n        /border(-color)?\\s*:[^;]*(var\\(--color-error\\)|#b42318)/i.test(r.body),\n    );\n    if (!invalid) throw new Error('No .form-control[aria-invalid=\"true\"] rule with border-color var(--color-error)');\n    for (const r of rules) {\n      if (!/border(-color)?\\s*:[^;]*(var\\(--color-error\\)|#b42318)/i.test(r.body)) continue;\n      for (const s of parts(r)) {\n        if (/form-control|input|select|textarea/.test(s) && !/aria-invalid/.test(s)) {\n          throw new Error(`Field border turns red without aria-invalid in selector \"${s}\"`);\n        }\n      }\n    }\n  });\n\n  test('only fields with an error are aria-invalid', async () => {\n    const user = userEvent.setup();\n    const form = getForm();\n    const c = controls(form);\n    for (const el of Object.values(c)) expect(el.getAttribute('aria-invalid')).not.toBe('true');\n    await user.click(within(form).getByRole('button', { name: 'Send message' }));\n    expect(c.name.getAttribute('aria-invalid')).toBe('true');\n    expect(c.email.getAttribute('aria-invalid')).toBe('true');\n    expect(c.message.getAttribute('aria-invalid')).toBe('true');\n    expect(c.company.getAttribute('aria-invalid')).not.toBe('true');\n    expect(c.companySize.getAttribute('aria-invalid')).not.toBe('true');\n    expect(c.topic.getAttribute('aria-invalid')).not.toBe('true');\n  });\n\n  test('Required is shown the same way on every required field', () => {\n    const form = getForm();\n    const c = controls(form);\n    const fieldByEl = new Map<Element, string>([\n      [c.name, 'name'],\n      [c.email, 'email'],\n      [c.company, 'company'],\n      [c.companySize, 'companySize'],\n      [c.topic, 'topic'],\n      [c.message, 'message'],\n    ]);\n    const allControls = Array.from(fieldByEl.keys());\n\n    function fieldOf(marker: Element): string | null {\n      const label = marker.closest('label');\n      if (label) {\n        const forId = label.getAttribute('for');\n        if (forId) {\n          const target = allControls.find((el) => el.id === forId);\n          if (target) return fieldByEl.get(target) || null;\n        }\n        const inner = allControls.filter((el) => label.contains(el));\n        if (inner.length === 1) return fieldByEl.get(inner[0]) || null;\n      }\n      let el: Element | null = marker.parentElement;\n      while (el && el !== form) {\n        const inside = allControls.filter((ctl) => el!.contains(ctl));\n        if (inside.length === 1) return fieldByEl.get(inside[0]) || null;\n        if (inside.length > 1) return null;\n        el = el.parentElement;\n      }\n      return null;\n    }\n\n    const markers = within(form).getAllByText(/^\\s*\\(?\\s*required\\s*\\)?\\s*$/i);\n    const counts: Record<string, number> = {};\n    for (const m of markers) {\n      const f = fieldOf(m);\n      if (!f) throw new Error(`\"Required\" marker not associated with exactly one field: ${m.outerHTML.slice(0, 120)}`);\n      counts[f] = (counts[f] || 0) + 1;\n    }\n    expect(counts).toEqual({ name: 1, email: 1, message: 1 });\n    const shape = (t: HTMLElement) => `${t.tagName}|${(t.getAttribute('class') || '').trim()}`;\n    expect(new Set(markers.map(shape)).size).toBe(1);\n  });\n});\n",
+    "__tests__/acceptance/seo-extra-render.test.ts": "/**\n * @jest-environment jsdom\n */\nimport * as fs from 'fs';\nimport * as path from 'path';\nimport * as React from 'react';\nimport { render, screen, within, cleanup } from '@testing-library/react';\n\nconst nodeUtil = require('util');\nconst g: any = globalThis as any;\nif (typeof g.TextEncoder === 'undefined') g.TextEncoder = nodeUtil.TextEncoder;\nif (typeof g.TextDecoder === 'undefined') g.TextDecoder = nodeUtil.TextDecoder;\ng.scrollTo = jest.fn();\n(window as any).scrollTo = jest.fn();\n(Element.prototype as any).scrollIntoView = jest.fn();\n\nconst { MemoryRouter } = require('react-router-dom');\nconst { AppRoutes } = require('../../src/App');\nconst { buildPageHtml } = require('../../src/entry-server');\n\nconst ROOT = path.resolve(__dirname, '..', '..');\nconst TEMPLATE = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');\n\nafterEach(() => cleanup());\n\nconst normD = (d: string | null) => (d || '').replace(/[\\s,]+/g, ' ').trim();\n\ntest('404 page has a canonical link to the site URL plus its path', () => {\n  const doc = new DOMParser().parseFromString(buildPageHtml(TEMPLATE, '/404'), 'text/html');\n  const links = Array.from(doc.querySelectorAll('link')).filter((l) =>\n    (l.getAttribute('rel') || '').split(/\\s+/).includes('canonical'),\n  );\n  expect(links).toHaveLength(1);\n  expect(links[0].getAttribute('href')).toBe('https://thebayesgroup.com/404');\n});\n\ntest('favicon.svg contains the bell-curve path from the wordmark, stroked teal', () => {\n  render(React.createElement(MemoryRouter, { initialEntries: ['/'] }, React.createElement(AppRoutes)));\n  const banner = screen.getByRole('banner');\n  const home = within(banner)\n    .getAllByRole('link', { name: /The Bayes Group/, hidden: true })\n    .find((a) => a.getAttribute('href') === '/');\n  expect(home).toBeTruthy();\n  const wordmarkDs = Array.from(home!.querySelectorAll('svg path'))\n    .map((p) => normD(p.getAttribute('d')))\n    .filter(Boolean);\n  expect(wordmarkDs.length).toBeGreaterThan(0);\n\n  const svgText = fs.readFileSync(path.join(ROOT, 'public', 'favicon.svg'), 'utf8');\n  const fav = new DOMParser().parseFromString(svgText, 'image/svg+xml');\n  const paths = Array.from(fav.getElementsByTagName('path'));\n  const match = paths.find((p) => wordmarkDs.includes(normD(p.getAttribute('d'))));\n  if (!match) {\n    throw new Error(`favicon.svg has no path matching the wordmark's bell curve. Wordmark paths: ${wordmarkDs.join(' | ')}`);\n  }\n  let stroke = '';\n  let el: Element | null = match;\n  while (el && !stroke) {\n    stroke = el.getAttribute('stroke') || '';\n    const style = el.getAttribute('style') || '';\n    const m = style.match(/stroke\\s*:\\s*([^;]+)/);\n    if (!stroke && m) stroke = m[1].trim();\n    el = el.parentElement;\n  }\n  expect(stroke.toLowerCase()).toBe('#1f8a8a');\n});\n",
+    "__tests__/acceptance/seo.test.ts": "import { SITE_URL, SITE_NAME, PAGES, NOT_FOUND_PAGE, getPageMeta } from '../../src/seo';\n\nfunction sentenceCount(s: string): number {\n  const m = s.trim().match(/[.!?](?=\\s+[A-Z0-9\"']|\\s*$)/g);\n  return m ? m.length : 0;\n}\n\nconst EXPECTED_PAGES: Array<[string, string]> = [\n  ['/', 'The Bayes Group | Evidence-driven AI'],\n  ['/services', 'Services | The Bayes Group'],\n  ['/systems', 'Systems engineering | The Bayes Group'],\n  ['/training', 'Training | The Bayes Group'],\n  ['/engagements', 'Engagements | The Bayes Group'],\n  ['/about', 'About | The Bayes Group'],\n  ['/contact', 'Contact | The Bayes Group'],\n];\n\nconst key = (p: [string, string]) => `${p[0]} => ${p[1]}`;\n\ndescribe('seo metadata (src/seo.ts)', () => {\n  test('site constants', () => {\n    expect(SITE_URL).toBe('https://thebayesgroup.com');\n    expect(SITE_NAME).toBe('The Bayes Group');\n  });\n\n  test('PAGES lists the seven pages with their titles', () => {\n    const actual = (PAGES as any[]).map((p) => key([p.path, p.title])).sort();\n    expect(actual).toEqual(EXPECTED_PAGES.map(key).sort());\n  });\n\n  test('NOT_FOUND_PAGE', () => {\n    expect((NOT_FOUND_PAGE as any).path).toBe('/404');\n    expect((NOT_FOUND_PAGE as any).title).toBe('Page not found | The Bayes Group');\n  });\n\n  test('systems description is about agentic, multi-system, observable and sustainable AI', () => {\n    const d: string = (getPageMeta('/systems') as any).description;\n    expect(d).toMatch(/agentic/i);\n    expect(d).toMatch(/multi-system/i);\n    expect(d).toMatch(/observ/i);\n    expect(d).toMatch(/sustain/i);\n  });\n\n  test('every description is one unique sentence ending with a period', () => {\n    const all = [...(PAGES as any[]), NOT_FOUND_PAGE as any];\n    const descs = all.map((p) => p.description as string);\n    for (let i = 0; i < all.length; i++) {\n      const d = descs[i];\n      if (typeof d !== 'string' || d.trim().length < 20) {\n        throw new Error(`Description for ${all[i].path} is missing or too short: ${JSON.stringify(d)}`);\n      }\n      if (!d.trim().endsWith('.')) {\n        throw new Error(`Description for ${all[i].path} must end with a period: ${JSON.stringify(d)}`);\n      }\n      if (sentenceCount(d) !== 1) {\n        throw new Error(`Description for ${all[i].path} must be exactly one sentence: ${JSON.stringify(d)}`);\n      }\n    }\n    expect(new Set(descs).size).toBe(descs.length);\n  });\n\n  test.each([\n    ['/', '/'],\n    ['/services', '/services'],\n    ['/services/', '/services'],\n    ['/services#training', '/services'],\n    ['/systems', '/systems'],\n    ['/systems/', '/systems'],\n    ['/training?x=1', '/training'],\n    ['/engagements', '/engagements'],\n    ['/engagements#enterprise', '/engagements'],\n    ['/about', '/about'],\n    ['/contact', '/contact'],\n  ])('getPageMeta(%s) returns the %s page', (input, expectedPath) => {\n    const meta: any = getPageMeta(input);\n    const page = (PAGES as any[]).find((p) => p.path === expectedPath);\n    expect(page).toBeTruthy();\n    expect(meta).toEqual(page);\n  });\n\n  test.each(['/does-not-exist', '/services/extra', '/systems/extra', '/404'])(\n    'getPageMeta(%s) returns NOT_FOUND_PAGE',\n    (input) => {\n      expect(getPageMeta(input)).toEqual(NOT_FOUND_PAGE);\n    },\n  );\n});\n",
+    "__tests__/acceptance/services-render.test.ts": "/**\n * @jest-environment jsdom\n */\nimport * as React from 'react';\nimport { render, screen, within, cleanup } from '@testing-library/react';\nimport { SERVICE_SECTIONS } from '../../src/content/services';\n\nconst nodeUtil = require('util');\nconst g: any = globalThis as any;\nif (typeof g.TextEncoder === 'undefined') g.TextEncoder = nodeUtil.TextEncoder;\nif (typeof g.TextDecoder === 'undefined') g.TextDecoder = nodeUtil.TextDecoder;\ng.scrollTo = jest.fn();\n(window as any).scrollTo = jest.fn();\n(Element.prototype as any).scrollIntoView = jest.fn();\n\nconst { MemoryRouter } = require('react-router-dom');\nconst { AppRoutes } = require('../../src/App');\n\nfunction renderAt(path: string) {\n  return render(\n    React.createElement(MemoryRouter, { initialEntries: [path] }, React.createElement(AppRoutes)),\n  );\n}\n\nconst norm = (s: string | null | undefined) => (s || '').replace(/\\s+/g, ' ').trim();\nconst esc = (s: string) => s.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\$&');\n\nfunction sentenceCount(s: string): number {\n  const m = s.trim().match(/[.!?](?=\\s+[A-Z0-9\"']|\\s*$)/g);\n  return m ? m.length : 0;\n}\n\nfunction deepestMatching(scope: Element, re: RegExp): Element | null {\n  const all = [scope, ...Array.from(scope.querySelectorAll('*'))].filter((e) => re.test(norm(e.textContent)));\n  const leaf = all.filter((e) => !Array.from(e.children).some((c) => re.test(norm(c.textContent))));\n  return leaf[0] || null;\n}\n\nconst follows = (a: Node, b: Node) =>\n  (a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING) !== 0;\n\nafterEach(() => cleanup());\n\nconst EXPECTED: Record<string, string[]> = {\n  enablement: [\n    'AI readiness assessment',\n    'Use-case discovery and prioritization',\n    'AI strategy and roadmap',\n    'AI governance and responsible-AI policy',\n  ],\n  training: [\n    'Executive AI briefings',\n    'Hands-on team workshops',\n    'Deep-learning bootcamps for technical teams',\n    'Custom curricula',\n  ],\n  'custom-development': [\n    'LLM and retrieval-augmented (RAG) applications',\n    'AI agents and workflow automation',\n    'Predictive models and ML pipelines',\n    'Deep-learning solutions',\n    'Integration with existing systems',\n  ],\n};\n\ndescribe('services page rendering', () => {\n  test('h1 Services', () => {\n    renderAt('/services');\n    const main = screen.getByRole('main');\n    expect(norm(within(main).getByRole('heading', { level: 1 }).textContent)).toBe('Services');\n  });\n\n  test('sections rendered with ids in order', () => {\n    renderAt('/services');\n    const main = screen.getByRole('main');\n    const ids = Array.from(\n      main.querySelectorAll('#enablement, #training, #custom-development'),\n    ).map((e) => e.id);\n    expect(ids).toEqual(['enablement', 'training', 'custom-development']);\n  });\n\n  test('every item description is one sentence', () => {\n    for (const s of SERVICE_SECTIONS) {\n      for (const item of s.items) {\n        expect(sentenceCount(item.description)).toBe(1);\n      }\n    }\n  });\n\n  test.each(Object.keys(EXPECTED))('section %s lists its items with descriptions', (id) => {\n    renderAt('/services');\n    const main = screen.getByRole('main');\n    const section = main.querySelector(`#${id}`);\n    expect(section).not.toBeNull();\n    const text = norm(section!.textContent);\n    const lower = text.toLowerCase();\n    for (const name of EXPECTED[id]) expect(lower).toContain(name.toLowerCase());\n    const data = SERVICE_SECTIONS.find((s) => s.id === id)!;\n    for (const item of data.items) expect(text).toContain(norm(item.description));\n  });\n\n  test.each(Object.keys(EXPECTED))('section %s shows a Typical engagement line in its header', (id) => {\n    renderAt('/services');\n    const main = screen.getByRole('main');\n    const section = main.querySelector(`#${id}`)!;\n    expect(section).not.toBeNull();\n    const data = SERVICE_SECTIONS.find((s) => s.id === id)!;\n    const text = norm(section.textContent);\n    const re = new RegExp(`Typical engagement:?\\\\s*${esc(norm(data.typicalEngagement))}`);\n    expect(text).toMatch(re);\n    const line = deepestMatching(section, re);\n    expect(line).not.toBeNull();\n    const h2 = section.querySelector('h2');\n    expect(h2).not.toBeNull();\n    expect(follows(h2!, line!)).toBe(true);\n    const firstDescRe = new RegExp(esc(norm(data.items[0].description)));\n    const firstDesc = deepestMatching(section, firstDescRe);\n    expect(firstDesc).not.toBeNull();\n    expect(follows(line!, firstDesc!)).toBe(true);\n  });\n});\n",
+    "__tests__/acceptance/services.test.ts": "import { SERVICE_SECTIONS } from '../../src/content/services';\n\nconst lc = (xs: string[]) => xs.map((x) => x.toLowerCase());\n\ndescribe('services content', () => {\n  test('sections in order', () => {\n    expect(SERVICE_SECTIONS.map((s) => s.id)).toEqual([\n      'enablement',\n      'training',\n      'custom-development',\n    ]);\n  });\n\n  test('enablement items', () => {\n    const s = SERVICE_SECTIONS.find((x) => x.id === 'enablement')!;\n    expect(lc(s.items.map((i) => i.name))).toEqual(\n      lc([\n        'AI readiness assessment',\n        'Use-case discovery and prioritization',\n        'AI strategy and roadmap',\n        'AI governance and responsible-AI policy',\n      ]),\n    );\n  });\n\n  test('training items', () => {\n    const s = SERVICE_SECTIONS.find((x) => x.id === 'training')!;\n    expect(lc(s.items.map((i) => i.name))).toEqual(\n      lc([\n        'Executive AI briefings',\n        'Hands-on team workshops',\n        'Deep-learning bootcamps for technical teams',\n        'Custom curricula',\n      ]),\n    );\n  });\n\n  test('custom development items', () => {\n    const s = SERVICE_SECTIONS.find((x) => x.id === 'custom-development')!;\n    expect(lc(s.items.map((i) => i.name))).toEqual(\n      lc([\n        'LLM and retrieval-augmented (RAG) applications',\n        'AI agents and workflow automation',\n        'Predictive models and ML pipelines',\n        'Deep-learning solutions',\n        'Integration with existing systems',\n        'Agentic systems and multi-system integration',\n      ]),\n    );\n  });\n\n  test('every item has a description and every section a typical engagement', () => {\n    for (const s of SERVICE_SECTIONS) {\n      expect(s.title.trim().length).toBeGreaterThan(0);\n      expect(typeof s.typicalEngagement).toBe('string');\n      expect(s.typicalEngagement.trim().length).toBeGreaterThan(0);\n      for (const item of s.items) {\n        expect(item.description.trim().length).toBeGreaterThan(0);\n      }\n    }\n  });\n});\n",
+    "__tests__/acceptance/site.test.ts": "import {\n  SITE_NAME,\n  TAGLINE,\n  FOOTER_LINE,\n  COPYRIGHT,\n  CONTACT_EMAIL,\n  NAV_LINKS,\n  CTA,\n  PAGE_TITLES,\n  getPageTitle,\n} from '../../src/content/site';\n\ndescribe('site constants', () => {\n  test('brand strings', () => {\n    expect(SITE_NAME).toBe('The Bayes Group');\n    expect(TAGLINE).toBe('Evidence-driven AI, built for your business.');\n    expect(FOOTER_LINE).toBe('AI enablement, training and custom development.');\n    expect(COPYRIGHT).toBe('\\u00a9 2026 The Bayes Group');\n    expect(CONTACT_EMAIL).toBe('hello@thebayesgroup.com');\n  });\n\n  test('nav links in order', () => {\n    expect(NAV_LINKS.map((l) => ({ label: l.label, to: l.to }))).toEqual([\n      { label: 'Services', to: '/services' },\n      { label: 'Systems', to: '/systems' },\n      { label: 'Training', to: '/training' },\n      { label: 'Engagements', to: '/engagements' },\n      { label: 'About', to: '/about' },\n      { label: 'Contact', to: '/contact' },\n    ]);\n  });\n\n  test('header CTA', () => {\n    expect(CTA.label).toBe('Book a consultation');\n    expect(CTA.to).toBe('/contact');\n  });\n});\n\ndescribe('page titles', () => {\n  test('PAGE_TITLES values', () => {\n    expect(PAGE_TITLES.home).toBe('The Bayes Group | Evidence-driven AI');\n    expect(PAGE_TITLES.services).toBe('Services | The Bayes Group');\n    expect(PAGE_TITLES.training).toBe('Training | The Bayes Group');\n    expect(PAGE_TITLES.about).toBe('About | The Bayes Group');\n    expect(PAGE_TITLES.contact).toBe('Contact | The Bayes Group');\n    expect(PAGE_TITLES.notFound).toBe('Page not found | The Bayes Group');\n  });\n\n  test.each([\n    ['/', 'The Bayes Group | Evidence-driven AI'],\n    ['/services', 'Services | The Bayes Group'],\n    ['/services/', 'Services | The Bayes Group'],\n    ['/services#training', 'Services | The Bayes Group'],\n    ['/systems', 'Systems engineering | The Bayes Group'],\n    ['/systems#agentic', 'Systems engineering | The Bayes Group'],\n    ['/training?x=1', 'Training | The Bayes Group'],\n    ['/engagements', 'Engagements | The Bayes Group'],\n    ['/engagements#enterprise', 'Engagements | The Bayes Group'],\n    ['/about', 'About | The Bayes Group'],\n    ['/contact', 'Contact | The Bayes Group'],\n    ['/does-not-exist', 'Page not found | The Bayes Group'],\n    ['/services/extra', 'Page not found | The Bayes Group'],\n  ])('getPageTitle(%s) -> %s', (pathname, expected) => {\n    expect(getPageTitle(pathname)).toBe(expected);\n  });\n});\n",
+    "__tests__/acceptance/static-site.test.ts": "import * as fs from 'fs';\nimport * as os from 'os';\nimport * as path from 'path';\nimport { execSync } from 'child_process';\n\nconst ROOT = path.resolve(__dirname, '..', '..');\n\nfunction readRootFile(rel: string): string {\n  const p = path.join(ROOT, rel);\n  if (!fs.existsSync(p)) throw new Error(`Expected file ${rel} to exist at ${p}`);\n  return fs.readFileSync(p, 'utf8');\n}\n\ndescribe('public files', () => {\n  test('favicon.svg is the teal bell-curve mark', () => {\n    const svg = readRootFile('public/favicon.svg');\n    expect(svg).toMatch(/<svg[^>]*xmlns=\"http:\\/\\/www\\.w3\\.org\\/2000\\/svg\"/);\n    expect(svg).toMatch(/viewBox=/);\n    expect(svg).toMatch(/<path/);\n    expect(svg.toLowerCase()).toContain('#1f8a8a');\n  });\n\n  test('robots.txt allows everything and points to the sitemap', () => {\n    const txt = readRootFile('public/robots.txt');\n    const lines = txt.split(/\\r?\\n/).map((l) => l.trim());\n    expect(lines).toContain('User-agent: *');\n    expect(lines.some((l) => l === 'Allow: /' || l === 'Disallow:')).toBe(true);\n    expect(lines.some((l) => /^Disallow:\\s*\\S/.test(l))).toBe(false);\n    expect(lines).toContain('Sitemap: https://thebayesgroup.com/sitemap.xml');\n  });\n\n  test('sitemap.xml lists the seven pages', () => {\n    const xml = readRootFile('public/sitemap.xml');\n    expect(xml).toMatch(/<urlset[^>]*xmlns=\"http:\\/\\/www\\.sitemaps\\.org\\/schemas\\/sitemap\\/0\\.9\"/);\n    const locs: string[] = [];\n    const re = /<loc>\\s*([^<]+?)\\s*<\\/loc>/g;\n    let m: RegExpExecArray | null;\n    while ((m = re.exec(xml))) locs.push(m[1]);\n    expect(locs.sort()).toEqual(\n      [\n        'https://thebayesgroup.com/',\n        'https://thebayesgroup.com/services',\n        'https://thebayesgroup.com/systems',\n        'https://thebayesgroup.com/training',\n        'https://thebayesgroup.com/engagements',\n        'https://thebayesgroup.com/about',\n        'https://thebayesgroup.com/contact',\n      ].sort(),\n    );\n  });\n});\n\ndescribe('build setup', () => {\n  test('build script runs vite build then the prerender script', () => {\n    const pkg = JSON.parse(readRootFile('package.json'));\n    const build: string = (pkg.scripts && pkg.scripts.build) || '';\n    expect(build).toMatch(/vite build/);\n    expect(build).toMatch(/node scripts\\/prerender\\.mjs/);\n    expect(build.indexOf('vite build')).toBeLessThan(build.indexOf('prerender'));\n  });\n\n  test('prerender script writes every page and 404.html', () => {\n    // Build in an isolated copy so this does not race other tests that build into ROOT/dist.\n    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'bayes-prerender-'));\n    try {\n      const skip = new Set(['node_modules', 'dist', '.git', 'coverage']);\n      for (const entry of fs.readdirSync(ROOT)) {\n        if (skip.has(entry)) continue;\n        (fs as any).cpSync(path.join(ROOT, entry), path.join(tmp, entry), { recursive: true });\n      }\n      fs.symlinkSync(\n        path.join(ROOT, 'node_modules'),\n        path.join(tmp, 'node_modules'),\n        process.platform === 'win32' ? 'junction' : 'dir',\n      );\n      try {\n        execSync('npm run build', { cwd: tmp, stdio: 'pipe', timeout: 540000 });\n      } catch (e: any) {\n        throw new Error(\n          `npm run build failed:\\n${String(e && e.stdout ? e.stdout : '')}\\n${String(e && e.stderr ? e.stderr : e)}`,\n        );\n      }\n      const dist = path.join(tmp, 'dist');\n      const expected: Array<[string, RegExp]> = [\n        ['index.html', /Evidence-driven AI, built for your business\\./],\n        ['services/index.html', /<h1[^>]*>\\s*Services\\s*<\\/h1>/],\n        ['training/index.html', /<h1[^>]*>\\s*Training\\s*<\\/h1>/],\n        ['about/index.html', /<h1[^>]*>\\s*About\\s*<\\/h1>/],\n        ['contact/index.html', /<h1[^>]*>\\s*Book a consultation\\s*<\\/h1>/],\n        ['404.html', /<h1[^>]*>\\s*Page not found\\s*<\\/h1>/],\n      ];\n      for (const [rel, h1] of expected) {\n        const p = path.join(dist, rel);\n        if (!fs.existsSync(p)) throw new Error(`Expected npm run build to write dist/${rel}`);\n        const html = fs.readFileSync(p, 'utf8');\n        expect(html).toMatch(/id=[\"']root[\"'][^>]*>\\s*<\\S/);\n        expect(html).toMatch(/<main/);\n        expect(html).toMatch(h1);\n      }\n    } finally {\n      try {\n        fs.rmSync(tmp, { recursive: true, force: true });\n      } catch (e) {\n        /* ignore cleanup errors */\n      }\n    }\n  }, 600000);\n\n  test('main.tsx hydrates the prerendered markup', () => {\n    const src = readRootFile('src/main.tsx');\n    expect(src).toContain('hydrateRoot');\n  });\n\n  test('entry-server uses renderToString with a StaticRouter', () => {\n    const src = readRootFile('src/entry-server.tsx');\n    expect(src).toContain('renderToString');\n    expect(src).toContain('StaticRouter');\n  });\n\n  test('hash targets clear the sticky header', () => {\n    const css = fs\n      .readdirSync(path.join(ROOT, 'src', 'styles'))\n      .filter((f) => f.endsWith('.css'))\n      .map((f) => fs.readFileSync(path.join(ROOT, 'src', 'styles', f), 'utf8'))\n      .join('\\n');\n    expect(css).toMatch(/scroll-margin-top\\s*:/);\n  });\n});\n\ndescribe('DEPLOYMENT.md', () => {\n  test('describes static hosting without an SPA rewrite', () => {\n    const md = readRootFile('DEPLOYMENT.md');\n    expect(md).toContain('404.html');\n    expect(md).toContain('dist');\n    expect(md).not.toMatch(/\\/\\*\\s+\\/index\\.html\\s+200/);\n    expect(md).not.toMatch(/try_files[^;\\n]*\\/index\\.html/);\n  });\n});\n",
+    "__tests__/acceptance/theme.test.ts": "import * as fs from 'fs';\nimport * as path from 'path';\nimport { THEME } from '../../src/theme/tokens';\nimport { contrastRatio } from '../../src/lib/contrast';\n\nconst ROOT = path.resolve(__dirname, '..', '..');\n\nfunction readRootFile(rel: string): string {\n  const p = path.join(ROOT, rel);\n  if (!fs.existsSync(p)) {\n    throw new Error(`Expected file ${rel} to exist at ${p}`);\n  }\n  return fs.readFileSync(p, 'utf8');\n}\n\nfunction listFiles(dir: string): string[] {\n  const out: string[] = [];\n  if (!fs.existsSync(dir)) return out;\n  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {\n    const full = path.join(dir, entry.name);\n    if (entry.isDirectory()) out.push(...listFiles(full));\n    else out.push(full);\n  }\n  return out;\n}\n\nfunction allSourceText(): string {\n  return listFiles(path.join(ROOT, 'src'))\n    .filter((f) => /\\.(ts|tsx|css)$/.test(f))\n    .map((f) => fs.readFileSync(f, 'utf8'))\n    .join('\\n');\n}\n\ndescribe('contrastRatio', () => {\n  test('black on white is 21', () => {\n    expect(contrastRatio('#000000', '#FFFFFF')).toBeCloseTo(21, 1);\n  });\n  test('same color is 1', () => {\n    expect(contrastRatio('#1F8A8A', '#1F8A8A')).toBeCloseTo(1, 5);\n  });\n  test('symmetric and case-insensitive', () => {\n    expect(contrastRatio('#0b1f3a', '#ffffff')).toBeCloseTo(contrastRatio('#FFFFFF', '#0B1F3A'), 5);\n  });\n  test('known value: #777777 on white ~ 4.48', () => {\n    expect(contrastRatio('#777777', '#FFFFFF')).toBeCloseTo(4.48, 1);\n  });\n});\n\ndescribe('theme tokens', () => {\n  test('brand colors', () => {\n    expect(THEME.navy.toUpperCase()).toBe('#0B1F3A');\n    expect(THEME.accent.toUpperCase()).toBe('#1F8A8A');\n    expect(THEME.white.toUpperCase()).toBe('#FFFFFF');\n  });\n\n  test('text colors meet WCAG AA on white', () => {\n    for (const key of ['text', 'mutedText', 'accentText'] as const) {\n      const c = (THEME as any)[key] as string;\n      if (typeof c !== 'string' || !/^#[0-9a-fA-F]{6}$/.test(c)) {\n        throw new Error(`THEME.${key} must be a 6-digit hex color, got ${JSON.stringify(c)}`);\n      }\n      const ratio = contrastRatio(c, '#FFFFFF');\n      if (ratio < 4.5) throw new Error(`THEME.${key} ${c} contrast on white is ${ratio}, need >= 4.5`);\n    }\n  });\n\n  test('white on navy meets AA', () => {\n    expect(contrastRatio('#FFFFFF', THEME.navy)).toBeGreaterThanOrEqual(4.5);\n  });\n});\n\ndescribe('static files', () => {\n  test('theme.css defines tokens', () => {\n    const css = readRootFile('src/styles/theme.css');\n    expect(css).toMatch(/:root/);\n    expect(css).toMatch(/--color-navy\\s*:\\s*#0B1F3A/i);\n    expect(css).toMatch(/--color-accent\\s*:\\s*#1F8A8A/i);\n    expect(css).toMatch(/--font-serif\\s*:[^;]*\\bserif\\b/);\n    expect(css).toMatch(/--font-sans\\s*:[^;]*sans-serif/);\n    expect(css).not.toMatch(/@import[^;]*https?:/i);\n  });\n\n  test('index.html loads no external resources', () => {\n    const html = readRootFile('index.html');\n    expect(html).toMatch(/<html[^>]*lang=\"en\"/i);\n    expect(html).toMatch(/name=\"viewport\"/i);\n    expect(html).toContain('The Bayes Group | Evidence-driven AI');\n    expect(html).not.toMatch(/<script[^>]+src=[\"']https?:/i);\n    expect(html).not.toMatch(/<script[^>]+src=[\"']\\/\\//i);\n    expect(html).not.toMatch(/<link[^>]+href=[\"'](https?:)?\\/\\//i);\n  });\n\n  test('no font CDNs or analytics in sources', () => {\n    const src = allSourceText();\n    expect(src).not.toMatch(/fonts\\.googleapis|fonts\\.gstatic|googletagmanager|google-analytics/i);\n  });\n\n  test('package.json build script and no install hooks', () => {\n    const pkg = JSON.parse(readRootFile('package.json'));\n    expect(pkg.scripts && pkg.scripts.build).toMatch(/vite build/);\n    for (const hook of ['preinstall', 'postinstall', 'prepare']) {\n      if (pkg.scripts[hook] !== undefined) {\n        throw new Error(`package.json must not define a \"${hook}\" script, found: ${pkg.scripts[hook]}`);\n      }\n    }\n    const deps = { ...(pkg.dependencies || {}), ...(pkg.devDependencies || {}) };\n    expect(deps).toHaveProperty('react');\n    expect(deps).toHaveProperty('react-router-dom');\n  });\n\n  test('UI sources contain key interactive pieces', () => {\n    const src = allSourceText();\n    for (const s of ['Menu', 'aria-expanded', 'aria-pressed', 'Send message', 'What can we help with?', 'Page not found', 'noValidate']) {\n      if (!src.includes(s)) throw new Error(`Expected src/ to contain \"${s}\"`);\n    }\n  });\n});\n",
+    "__tests__/acceptance/training-render.test.ts": "/**\n * @jest-environment jsdom\n */\nimport * as React from 'react';\nimport { render, screen, within, cleanup } from '@testing-library/react';\nimport userEvent from '@testing-library/user-event';\nimport { COURSES } from '../../src/content/courses';\n\nconst nodeUtil = require('util');\nconst g: any = globalThis as any;\nif (typeof g.TextEncoder === 'undefined') g.TextEncoder = nodeUtil.TextEncoder;\nif (typeof g.TextDecoder === 'undefined') g.TextDecoder = nodeUtil.TextDecoder;\ng.scrollTo = jest.fn();\n(window as any).scrollTo = jest.fn();\n(Element.prototype as any).scrollIntoView = jest.fn();\n\nconst { MemoryRouter } = require('react-router-dom');\nconst { AppRoutes } = require('../../src/App');\n\nfunction renderAt(path: string) {\n  return render(\n    React.createElement(MemoryRouter, { initialEntries: [path] }, React.createElement(AppRoutes)),\n  );\n}\n\nconst norm = (s: string | null | undefined) => (s || '').replace(/\\s+/g, ' ').trim();\n\nfunction ancestorWhere(start: Element, scope: Element, pred: (el: Element) => boolean): Element {\n  let el: Element | null = start;\n  while (el) {\n    if (pred(el)) return el;\n    if (el === scope) break;\n    el = el.parentElement;\n  }\n  throw new Error('No ancestor matched');\n}\n\nafterEach(() => cleanup());\n\nfunction visibleIds(main: HTMLElement): string[] {\n  return COURSES.filter((c) => within(main).queryAllByText(c.title).length > 0).map((c) => c.id);\n}\n\ndescribe('training page rendering', () => {\n  test('h1 Training', () => {\n    renderAt('/training');\n    const main = screen.getByRole('main');\n    expect(norm(within(main).getByRole('heading', { level: 1 }).textContent)).toBe('Training');\n  });\n\n  test('each course card shows title, audience, format, duration and a You will learn list of three', () => {\n    renderAt('/training');\n    const main = screen.getByRole('main');\n    const cards = new Set<Element>();\n    for (const c of COURSES) {\n      const titleEl = within(main).getAllByText(c.title)[0];\n      const parts = [c.title, c.audience, c.format, c.duration, ...c.learn].map((p) => norm(p));\n      const card = ancestorWhere(titleEl, main, (el) =>\n        parts.every((p) => norm(el.textContent).includes(p)),\n      );\n      expect(card).not.toBe(main);\n      expect(norm(card.textContent)).toContain('You will learn');\n      const lists = Array.from(card.querySelectorAll('ul, ol'));\n      const hasLearnList = lists.some((list) => {\n        const lis = Array.from(list.querySelectorAll('li'));\n        return (\n          lis.length === 3 &&\n          c.learn.every((l) => lis.some((li) => norm(li.textContent).includes(norm(l))))\n        );\n      });\n      expect(hasLearnList).toBe(true);\n      cards.add(card);\n    }\n    expect(cards.size).toBe(COURSES.length);\n    expect(cards.size).toBeGreaterThanOrEqual(6);\n  });\n\n  test('four filter buttons above the catalog, All selected initially', () => {\n    renderAt('/training');\n    const main = screen.getByRole('main');\n    const firstTitle = within(main).getAllByText(COURSES[0].title)[0];\n    for (const name of ['All', 'Executives', 'Managers', 'Technical teams']) {\n      const btn = within(main).getByRole('button', { name });\n      expect(\n        btn.compareDocumentPosition(firstTitle) & Node.DOCUMENT_POSITION_FOLLOWING,\n      ).toBeTruthy();\n      expect(btn.getAttribute('aria-pressed')).toBe(name === 'All' ? 'true' : 'false');\n    }\n    expect(visibleIds(main)).toEqual(COURSES.map((c) => c.id));\n  });\n\n  test('choosing a filter shows only that audience and marks the button pressed', async () => {\n    const user = userEvent.setup();\n    renderAt('/training');\n    const main = screen.getByRole('main');\n    const names = ['All', 'Executives', 'Managers', 'Technical teams'];\n    for (const aud of ['Executives', 'Managers', 'Technical teams']) {\n      await user.click(within(main).getByRole('button', { name: aud }));\n      const expected = COURSES.filter((c) => c.audience === aud).map((c) => c.id);\n      expect(expected.length).toBeGreaterThan(0);\n      expect(visibleIds(main)).toEqual(expected);\n      for (const n of names) {\n        const pressed = within(main).getByRole('button', { name: n }).getAttribute('aria-pressed');\n        if (n === aud) expect(pressed).toBe('true');\n        else expect(pressed).not.toBe('true');\n      }\n    }\n    await user.click(within(main).getByRole('button', { name: 'All' }));\n    expect(visibleIds(main)).toEqual(COURSES.map((c) => c.id));\n    expect(within(main).getByRole('button', { name: 'All' }).getAttribute('aria-pressed')).toBe(\n      'true',\n    );\n    for (const n of ['Executives', 'Managers', 'Technical teams']) {\n      expect(within(main).getByRole('button', { name: n }).getAttribute('aria-pressed')).not.toBe(\n        'true',\n      );\n    }\n  });\n});\n",
+    "__tests__/acceptance/architecture-diagram-render.test.ts": "/**\n * @jest-environment jsdom\n */\nimport * as fs from 'fs';\nimport * as path from 'path';\nimport * as React from 'react';\nimport { render, screen, cleanup } from '@testing-library/react';\n\nconst nodeUtil = require('util');\nconst g: any = globalThis as any;\nif (typeof g.TextEncoder === 'undefined') g.TextEncoder = nodeUtil.TextEncoder;\nif (typeof g.TextDecoder === 'undefined') g.TextDecoder = nodeUtil.TextDecoder;\ng.scrollTo = jest.fn();\n(window as any).scrollTo = jest.fn();\n(Element.prototype as any).scrollIntoView = jest.fn();\n\nconst { MemoryRouter } = require('react-router-dom');\nconst { AppRoutes } = require('../../src/App');\nconst DiagramModule = require('../../src/components/ArchitectureDiagram');\nconst ArchitectureDiagram = DiagramModule.ArchitectureDiagram || DiagramModule.default;\n\nconst ROOT = path.resolve(__dirname, '..', '..');\n\nconst norm = (s: string | null | undefined) => (s || '').replace(/\\s+/g, ' ').trim();\nconst escRe = (s: string) => s.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\$&');\n\nafterEach(() => cleanup());\n\nfunction renderAt(p: string) {\n  return render(\n    React.createElement(MemoryRouter, { initialEntries: [p] }, React.createElement(AppRoutes)),\n  );\n}\n\nfunction listFiles(dir: string): string[] {\n  const out: string[] = [];\n  if (!fs.existsSync(dir)) return out;\n  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {\n    const full = path.join(dir, entry.name);\n    if (entry.isDirectory()) out.push(...listFiles(full));\n    else out.push(full);\n  }\n  return out;\n}\n\nfunction allCss(): string {\n  return listFiles(path.join(ROOT, 'src'))\n    .filter((f) => f.endsWith('.css'))\n    .map((f) => fs.readFileSync(f, 'utf8'))\n    .join('\\n')\n    .replace(/\\/\\*[\\s\\S]*?\\*\\//g, '');\n}\n\ntype Rule = { selector: string; body: string };\nfunction cssRules(css: string): Rule[] {\n  const out: Rule[] = [];\n  const re = /([^{}]+)\\{([^{}]*)\\}/g;\n  let m: RegExpExecArray | null;\n  while ((m = re.exec(css))) out.push({ selector: m[1].trim(), body: m[2] });\n  return out;\n}\nfunction hasClass(selector: string, cls: string): boolean {\n  return new RegExp(`\\\\.${escRe(cls)}(?![\\\\w-])`).test(selector);\n}\nconst MONO_RE = /font-family\\s*:[^;}]*(var\\(--font-mono\\)|monospace|ui-monospace)/i;\nfunction isMono(el: Element, stop: Element, rules: Rule[]): boolean {\n  let e: Element | null = el;\n  while (e) {\n    if (/mono/i.test(e.getAttribute('font-family') || '')) return true;\n    if (/font-family\\s*:[^;]*mono/i.test(e.getAttribute('style') || '')) return true;\n    const cls = (e.getAttribute('class') || '').split(/\\s+/).filter(Boolean);\n    if (cls.some((c) => rules.some((r) => hasClass(r.selector, c) && MONO_RE.test(r.body)))) return true;\n    if (e === stop) break;\n    e = e.parentElement;\n  }\n  return false;\n}\n\nconst LABELS = [\n  'Your systems',\n  'CRM',\n  'ERP',\n  'Data warehouse',\n  'Documents',\n  'Agent orchestration',\n  'Planner',\n  'Tool-using agents',\n  'Human approval',\n  'Models (vendor-neutral)',\n  'Guardrails & evaluations',\n  'Observability',\n  'Traces',\n  'Metrics',\n  'Cost',\n  'Evaluations',\n];\n\nfunction diagramSvgs(scope: Element): SVGElement[] {\n  return Array.from(scope.querySelectorAll('svg')).filter(\n    (s) => s.querySelector('text') && !(s.parentElement && s.parentElement.closest('svg')),\n  ) as SVGElement[];\n}\n\nfunction textsOf(svg: Element): string[] {\n  return Array.from(svg.querySelectorAll('text')).map((t) => norm(t.textContent));\n}\n\ndescribe.each(['light', 'dark'])('ArchitectureDiagram variant %s', (variant) => {\n  function renderDiagram() {\n    const { container } = render(React.createElement(ArchitectureDiagram, { variant }));\n    const svgs = diagramSvgs(container);\n    expect(svgs.length).toBeGreaterThan(0);\n    return { container, svgs };\n  }\n\n  test('is inline SVG with a viewBox and no fixed pixel width or height', () => {\n    const { svgs } = renderDiagram();\n    for (const svg of svgs) {\n      expect(svg.getAttribute('viewBox') || '').toMatch(\n        /^\\s*-?[\\d.]+[\\s,]+-?[\\d.]+[\\s,]+[\\d.]+[\\s,]+[\\d.]+\\s*$/,\n      );\n      for (const attr of ['width', 'height']) {\n        const v = svg.getAttribute(attr);\n        if (v !== null) expect(v).not.toMatch(/^\\s*[\\d.]+\\s*(px)?\\s*$/);\n      }\n      expect(svg.getAttribute('style') || '').not.toMatch(/(^|;)\\s*width\\s*:\\s*[\\d.]+px/);\n    }\n  });\n\n  test('has role img with a title and desc for screen readers', () => {\n    const { svgs } = renderDiagram();\n    for (const svg of svgs) {\n      expect(svg.getAttribute('role')).toBe('img');\n      const title = svg.querySelector('title');\n      const desc = svg.querySelector('desc');\n      expect(title).not.toBeNull();\n      expect(desc).not.toBeNull();\n      expect(norm(title!.textContent).length).toBeGreaterThan(0);\n      expect(norm(desc!.textContent).length).toBeGreaterThan(0);\n    }\n  });\n\n  test('every layer and box is labeled exactly with real <text> elements', () => {\n    const { svgs } = renderDiagram();\n    for (const svg of svgs) {\n      const texts = textsOf(svg);\n      for (const label of LABELS) {\n        if (!texts.includes(label)) {\n          throw new Error(`Diagram has no <text> labeled \"${label}\". Labels: ${texts.join(' | ')}`);\n        }\n      }\n    }\n  });\n\n  test('labels use the monospace font', () => {\n    const { container, svgs } = renderDiagram();\n    const rules = cssRules(allCss());\n    for (const svg of svgs) {\n      for (const t of Array.from(svg.querySelectorAll('text'))) {\n        if (!isMono(t, container, rules)) {\n          throw new Error(`Diagram label \"${norm(t.textContent)}\" is not set in the monospace font`);\n        }\n      }\n    }\n  });\n});\n\ndescribe('the same diagram is used on Systems and Home', () => {\n  function diagramIn(main: HTMLElement): Element | undefined {\n    return diagramSvgs(main).find((svg) => {\n      const texts = textsOf(svg);\n      return LABELS.every((l) => texts.includes(l));\n    });\n  }\n\n  test('Systems page shows the architecture diagram', () => {\n    renderAt('/systems');\n    expect(diagramIn(screen.getByRole('main'))).toBeTruthy();\n  });\n\n  test('Home systems band shows the architecture diagram', () => {\n    renderAt('/');\n    const main = screen.getByRole('main');\n    const svg = diagramIn(main);\n    expect(svg).toBeTruthy();\n    const h2 = Array.from(main.querySelectorAll('h2')).find(\n      (h) => norm(h.textContent) === 'Systems built to be observed and sustained',\n    );\n    expect(h2).toBeTruthy();\n    let band: Element | null = h2!.parentElement;\n    while (band && band !== main && !band.contains(svg!)) band = band.parentElement;\n    expect(band).not.toBeNull();\n    expect(band!.contains(svg!)).toBe(true);\n  });\n});\n",
+    "__tests__/acceptance/photos-render.test.ts": "/**\n * @jest-environment jsdom\n */\nimport * as React from 'react';\nimport { render, screen, cleanup } from '@testing-library/react';\n\nconst nodeUtil = require('util');\nconst g: any = globalThis as any;\nif (typeof g.TextEncoder === 'undefined') g.TextEncoder = nodeUtil.TextEncoder;\nif (typeof g.TextDecoder === 'undefined') g.TextDecoder = nodeUtil.TextDecoder;\ng.scrollTo = jest.fn();\n(window as any).scrollTo = jest.fn();\n(Element.prototype as any).scrollIntoView = jest.fn();\n\nconst { MemoryRouter } = require('react-router-dom');\nconst { AppRoutes } = require('../../src/App');\n\nfunction renderAt(p: string) {\n  return render(\n    React.createElement(MemoryRouter, { initialEntries: [p] }, React.createElement(AppRoutes)),\n  );\n}\n\nafterEach(() => cleanup());\n\nconst EXPECTED: Array<[string, string[]]> = [\n  ['/', ['hero-boardroom', 'smb-owner', 'enterprise-atrium', 'strategy-session', 'team-workshop', 'custom-development', 'about-office']],\n  ['/services', ['strategy-session', 'team-workshop', 'custom-development']],\n  ['/training', ['team-workshop']],\n  ['/engagements', ['enterprise-atrium']],\n  ['/about', ['about-office']],\n  ['/contact', ['contact-meeting']],\n];\n\nfunction photoName(img: Element): string | null {\n  const m = (img.getAttribute('src') || '').match(/\\/images\\/([\\w-]+?)(-768)?\\.jpg$/);\n  return m ? m[1] : null;\n}\n\nfunction srcsetOf(img: Element): string {\n  const own = img.getAttribute('srcset') || img.getAttribute('srcSet') || '';\n  const pic = img.closest('picture');\n  const sources = pic\n    ? Array.from(pic.querySelectorAll('source')).map((s) => s.getAttribute('srcset') || '')\n    : [];\n  return [own, ...sources].join(', ');\n}\n\nfunction photos(main: HTMLElement): HTMLImageElement[] {\n  return Array.from(main.querySelectorAll('img')).filter((i) => photoName(i) !== null) as HTMLImageElement[];\n}\n\ndescribe.each(EXPECTED)('photos on %s', (p, names) => {\n  test('shows the expected photos', () => {\n    renderAt(p);\n    const found = photos(screen.getByRole('main')).map(photoName);\n    for (const n of names) expect(found).toContain(n);\n  });\n\n  test('each photo has srcset 768w and 1344w, sizes, width, height, decoding async and descriptive alt', () => {\n    renderAt(p);\n    const imgs = photos(screen.getByRole('main'));\n    expect(imgs.length).toBeGreaterThan(0);\n    for (const img of imgs) {\n      const name = photoName(img)!;\n      const srcset = srcsetOf(img);\n      expect(srcset).toContain(`/images/${name}-768.jpg 768w`);\n      expect(srcset).toContain(`/images/${name}.jpg 1344w`);\n      expect((img.getAttribute('sizes') || '').trim().length).toBeGreaterThan(0);\n      expect(Number(img.getAttribute('width'))).toBeGreaterThan(0);\n      expect(Number(img.getAttribute('height'))).toBeGreaterThan(0);\n      expect(img.getAttribute('decoding')).toBe('async');\n      const alt = (img.getAttribute('alt') || '').trim();\n      expect(alt.length).toBeGreaterThanOrEqual(10);\n      expect(alt.toLowerCase()).not.toContain(name);\n      expect(alt).not.toMatch(/\\.jpg/i);\n    }\n  });\n\n  test('photos load lazily except the home hero', () => {\n    renderAt(p);\n    for (const img of photos(screen.getByRole('main'))) {\n      const name = photoName(img);\n      if (p === '/' && name === 'hero-boardroom') {\n        expect(img.getAttribute('loading')).not.toBe('lazy');\n      } else {\n        expect(img.getAttribute('loading')).toBe('lazy');\n      }\n    }\n  });\n});\n",
+    "__tests__/acceptance/home-redesign-render.test.ts": "/**\n * @jest-environment jsdom\n */\nimport * as React from 'react';\nimport { render, screen, within, cleanup } from '@testing-library/react';\nimport {\n  HERO,\n  STEPS,\n  CREDIBILITY_POINTS,\n  AUDIENCE_PANELS,\n  SYSTEMS_BAND,\n  CAPABILITIES,\n  OPERATE_STEP,\n  EXAMPLES_SECTION,\n  EXAMPLES,\n  TESTIMONIAL,\n} from '../../src/content/home';\n\nconst nodeUtil = require('util');\nconst g: any = globalThis as any;\nif (typeof g.TextEncoder === 'undefined') g.TextEncoder = nodeUtil.TextEncoder;\nif (typeof g.TextDecoder === 'undefined') g.TextDecoder = nodeUtil.TextDecoder;\ng.scrollTo = jest.fn();\n(window as any).scrollTo = jest.fn();\n(Element.prototype as any).scrollIntoView = jest.fn();\n\nconst { MemoryRouter } = require('react-router-dom');\nconst { AppRoutes } = require('../../src/App');\n\nfunction renderAt(p: string) {\n  return render(\n    React.createElement(MemoryRouter, { initialEntries: [p] }, React.createElement(AppRoutes)),\n  );\n}\n\nconst norm = (s: string | null | undefined) => (s || '').replace(/\\s+/g, ' ').trim();\n\nfunction sentenceCount(s: string): number {\n  const m = s.trim().match(/[.!?](?=\\s+[A-Z0-9\"']|\\s*$)/g);\n  return m ? m.length : 0;\n}\n\nfunction ancestorWhere(start: Element, scope: Element, pred: (el: Element) => boolean): Element {\n  let el: Element | null = start;\n  while (el) {\n    if (pred(el)) return el;\n    if (el === scope) break;\n    el = el.parentElement;\n  }\n  throw new Error('No ancestor matched');\n}\n\nfunction deepest(scope: Element, str: string): Element {\n  const target = norm(str);\n  const all = [scope, ...Array.from(scope.querySelectorAll('*'))].filter((e) =>\n    norm(e.textContent).includes(target),\n  );\n  const leaf = all.filter((e) => !Array.from(e.children).some((c) => norm(c.textContent).includes(target)));\n  if (!leaf.length) throw new Error(`Text not found: ${str}`);\n  return leaf[0];\n}\n\nconst follows = (a: Node, b: Node) =>\n  (a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING) !== 0;\n\nconst linkIn = (el: Element, label: string, href: string) =>\n  Array.from(el.querySelectorAll('a')).some(\n    (a) => norm(a.textContent) === label && a.getAttribute('href') === href,\n  );\n\nconst iconSvgs = (el: Element) =>\n  Array.from(el.querySelectorAll('svg')).filter((s) => !s.querySelector('text'));\n\nafterEach(() => cleanup());\n\nconst EX: any[] = EXAMPLES as any[];\nconst CAPS: any[] = CAPABILITIES as any[];\nconst PANELS: any[] = AUDIENCE_PANELS as any[];\n\ndescribe('home content additions', () => {\n  test('credibility points', () => {\n    expect(CREDIBILITY_POINTS).toEqual([\n      'Credentialed data scientists',\n      'Vendor-neutral advice',\n      'Built for small and medium-sized businesses',\n      'Enterprise-grade governance',\n    ]);\n  });\n\n  test('audience panels', () => {\n    expect(PANELS.map((p) => [p.id, p.title, p.link, p.photo, p.premium])).toEqual([\n      ['smb', 'Small and medium-sized businesses', { label: 'See engagements', to: '/engagements' }, 'smb-owner', false],\n      ['enterprise', 'Enterprise', { label: 'Enterprise engagements', to: '/engagements#enterprise' }, 'enterprise-atrium', true],\n    ]);\n    const smb = PANELS[0].text as string;\n    expect(sentenceCount(smb)).toBe(2);\n    expect(smb).toMatch(/practical|right-sized/i);\n    expect(smb).toMatch(/fast/i);\n    expect(smb).toMatch(/\\bown/i);\n    const ent = PANELS[1].text as string;\n    expect(sentenceCount(ent)).toBe(2);\n    expect(ent).toMatch(/dedicated/i);\n    expect(ent).toMatch(/senior/i);\n    expect(ent).toMatch(/multi-system/i);\n    expect(ent).toMatch(/governance/i);\n  });\n\n  test('systems band and capabilities', () => {\n    expect(SYSTEMS_BAND).toEqual({\n      eyebrow: 'WHAT WE BUILD',\n      heading: 'Systems built to be observed and sustained',\n      link: { label: 'How we build systems', to: '/systems' },\n    });\n    expect(CAPS.map((c) => c.title)).toEqual([\n      'Agentic development',\n      'Multi-system architecture',\n      'Observable by design',\n      'Sustainable to run',\n    ]);\n    for (const c of CAPS) expect(sentenceCount(c.description)).toBe(1);\n    const kw: RegExp[][] = [\n      [/plan/i, /tool/i, /approv/i],\n      [/CRM/, /ERP/, /data/i, /documents/i, /silo/i],\n      [/trac/i, /metric/i, /cost/i, /evaluat/i, /day one/i],\n      [/runbook/i, /budget/i, /model-agnostic/i, /\\bown/i],\n    ];\n    CAPS.forEach((c, i) => kw[i].forEach((re) => expect(c.description).toMatch(re)));\n  });\n\n  test('operate step', () => {\n    const s: any = OPERATE_STEP;\n    expect(s.title).toBe('Operate & improve');\n    expect(s.description).toMatch(/monitor/i);\n    expect(s.description).toMatch(/evaluat/i);\n    expect(s.description).toMatch(/improv/i);\n    expect(s.description).toMatch(/runbook/i);\n  });\n\n  test('examples section and examples', () => {\n    expect(EXAMPLES_SECTION).toEqual({\n      eyebrow: 'EXAMPLE ENGAGEMENTS',\n      heading: 'The kinds of systems we build',\n      tag: 'Illustrative example',\n      note: 'Illustrative example of an engagement type, not a client case study.',\n    });\n    expect(EX.map((e) => [e.industry, e.name])).toEqual([\n      ['Professional services', 'Agentic document intake'],\n      ['Manufacturing', 'Connected maintenance forecasting'],\n      ['Retail', 'Customer service copilot'],\n    ]);\n    const kw: Array<Record<string, RegExp[]>> = [\n      {\n        challenge: [/email/i, /format/i, /by hand/i],\n        system: [/classif/i, /extract/i, /practice-management/i, /approv/i, /uncertain/i],\n        sustained: [/trace/i, /end to end/i, /accuracy/i, /evaluation set/i, /weekly review queue/i],\n      },\n      {\n        challenge: [/sensor/i, /maintenance system/i, /ERP/],\n        system: [/forecast/i, /all three/i, /work orders?/i],\n        sustained: [/data-quality/i, /drift/i, /retraining runbooks?/i, /owner/i],\n      },\n      {\n        challenge: [/several systems/i, /question/i],\n        system: [/retrieval-augmented/i, /product catalog/i, /order system/i, /polic/i, /draft/i],\n        sustained: [/answer-quality/i, /cost per conversation/i, /guardrails/i, /monthly/i],\n      },\n    ];\n    EX.forEach((e, i) => {\n      for (const field of ['challenge', 'system', 'sustained']) {\n        for (const re of kw[i][field]) expect(e[field]).toMatch(re);\n      }\n      const all = [e.industry, e.name, e.challenge, e.system, e.sustained].join(' ');\n      expect(all).not.toMatch(/[0-9%]/);\n    });\n  });\n\n  test('placeholder testimonial', () => {\n    const t: any = TESTIMONIAL;\n    expect(t.attribution).toBe('Client name, Title, Company');\n    expect(t.placeholderNote).toBe('Placeholder testimonial: replace with a real client quote before launch.');\n    expect(norm(t.quote).length).toBeGreaterThan(0);\n  });\n});\n\ndescribe('home page redesign rendering', () => {\n  test('hero contains the h1 and the value proposition', () => {\n    renderAt('/');\n    const main = screen.getByRole('main');\n    const h1 = within(main).getByRole('heading', { level: 1 });\n    const hero = ancestorWhere(h1, main, (el) => linkIn(el, 'See how we build', '/systems'));\n    expect(hero).not.toBe(main);\n    expect(norm(hero.textContent)).toContain(\n      'We design, build and run AI systems for small and medium-sized businesses, from single agents to multi-system architectures, with enterprise-grade rigor and senior data scientists on every engagement.',\n    );\n    expect(norm(HERO.valueProp)).toBe(norm(hero.textContent).match(/We design, build and run[^]*?engagement\\./)![0]);\n  });\n\n  test('credibility strip shows four points, each with an icon', () => {\n    renderAt('/');\n    const main = screen.getByRole('main');\n    for (const point of CREDIBILITY_POINTS as string[]) {\n      const el = within(main).getAllByText(point)[0];\n      const item = ancestorWhere(el, main, (e) => iconSvgs(e).length > 0);\n      expect(item).not.toBe(main);\n      for (const other of (CREDIBILITY_POINTS as string[]).filter((p) => p !== point)) {\n        expect(norm(item.textContent)).not.toContain(other);\n      }\n    }\n  });\n\n  test('small and medium-sized businesses panel', () => {\n    renderAt('/');\n    const main = screen.getByRole('main');\n    const title = within(main).getAllByText('Small and medium-sized businesses')[0];\n    const panel = ancestorWhere(title, main, (e) => linkIn(e, 'See engagements', '/engagements'));\n    expect(panel).not.toBe(main);\n    expect(norm(panel.textContent)).toContain(norm(PANELS[0].text));\n    expect(linkIn(panel, 'Enterprise engagements', '/engagements#enterprise')).toBe(false);\n    const imgs = Array.from(panel.querySelectorAll('img')).map((i) => i.getAttribute('src') || '');\n    expect(imgs.some((s) => s.includes('smb-owner'))).toBe(true);\n  });\n\n  test('Enterprise panel with Premium label', () => {\n    renderAt('/');\n    const main = screen.getByRole('main');\n    let panel: Element | null = null;\n    for (const t of within(main).getAllByText('Enterprise')) {\n      try {\n        panel = ancestorWhere(t, main, (e) => linkIn(e, 'Enterprise engagements', '/engagements#enterprise'));\n        break;\n      } catch (e) {\n        /* next */\n      }\n    }\n    expect(panel).not.toBeNull();\n    expect(panel).not.toBe(main);\n    expect(linkIn(panel!, 'See engagements', '/engagements')).toBe(false);\n    const text = norm(panel!.textContent);\n    expect(text).toContain(norm(PANELS[1].text));\n    expect(Array.from(panel!.querySelectorAll('*')).some((e) => norm(e.textContent) === 'Premium')).toBe(true);\n    const imgs = Array.from(panel!.querySelectorAll('img')).map((i) => i.getAttribute('src') || '');\n    expect(imgs.some((s) => s.includes('enterprise-atrium'))).toBe(true);\n  });\n\n  test('systems band: eyebrow, h2, four capabilities with icons, and the link', () => {\n    renderAt('/');\n    const main = screen.getByRole('main');\n    const h2 = within(main).getByRole('heading', { name: 'Systems built to be observed and sustained' });\n    expect(h2.tagName).toBe('H2');\n    const band = ancestorWhere(h2, main, (e) =>\n      CAPS.every((c) => norm(e.textContent).includes(c.title)) && linkIn(e, 'How we build systems', '/systems'),\n    );\n    expect(band).not.toBe(main);\n    expect(norm(band.textContent)).toMatch(/what we build/i);\n    for (const c of CAPS) {\n      const titleEl = within(band as HTMLElement).getAllByText(c.title)[0];\n      const card = ancestorWhere(titleEl, band, (e) => norm(e.textContent).includes(norm(c.description)));\n      expect(card).not.toBe(band);\n      expect(iconSvgs(card).length).toBeGreaterThan(0);\n      for (const other of CAPS.filter((o) => o !== c)) expect(norm(card.textContent)).not.toContain(other.title);\n    }\n  });\n\n  test('How we work has the Operate & improve step after the four numbered steps', () => {\n    renderAt('/');\n    const main = screen.getByRole('main');\n    const heading = within(main).getByRole('heading', { name: 'How we work' });\n    const section = ancestorWhere(heading, main, (el) =>\n      STEPS.every((s) => norm(el.textContent).includes(norm(s.description))) &&\n      norm(el.textContent).includes(norm((OPERATE_STEP as any).description)),\n    );\n    expect(section).not.toBe(main);\n    const ol = Array.from(section.querySelectorAll('ol')).find((o) => o.querySelectorAll('li').length === 4);\n    expect(ol).toBeTruthy();\n    const op = deepest(section, 'Operate & improve');\n    expect(ol!.contains(op)).toBe(false);\n    expect(follows(ol!, op)).toBe(true);\n  });\n\n  test('example engagements section', () => {\n    renderAt('/');\n    const main = screen.getByRole('main');\n    const h2 = within(main).getByRole('heading', { name: 'The kinds of systems we build' });\n    expect(h2.tagName).toBe('H2');\n    const section = ancestorWhere(h2, main, (e) => EX.every((x) => norm(e.textContent).includes(x.name)));\n    expect(section).not.toBe(main);\n    const text = norm(section.textContent);\n    expect(text).toMatch(/example engagements/i);\n    expect(text).toContain('Illustrative example of an engagement type, not a client case study.');\n    for (const ex of EX) {\n      const nameEl = deepest(section, ex.name);\n      const card = ancestorWhere(nameEl, section, (e) =>\n        [ex.industry, ex.challenge, ex.system, ex.sustained].every((p) => norm(e.textContent).includes(norm(p))),\n      );\n      expect(card).not.toBe(section);\n      for (const other of EX.filter((o) => o !== ex)) expect(norm(card.textContent)).not.toContain(other.name);\n      const tag = Array.from(card.querySelectorAll('*')).some((e) => norm(e.textContent) === 'Illustrative example');\n      expect(tag).toBe(true);\n    }\n  });\n\n  test('placeholder testimonial is marked and attributed', () => {\n    renderAt('/');\n    const main = screen.getByRole('main');\n    const note = deepest(main, 'Placeholder testimonial: replace with a real client quote before launch.');\n    const block = ancestorWhere(note, main, (e) =>\n      norm(e.textContent).includes('Client name, Title, Company') &&\n      norm(e.textContent).includes(norm((TESTIMONIAL as any).quote)),\n    );\n    expect(block).not.toBe(main);\n  });\n\n  test('sections appear in the required order', () => {\n    renderAt('/');\n    const main = screen.getByRole('main');\n    const order: Element[] = [\n      within(main).getByRole('heading', { level: 1 }),\n      within(main).getAllByText('Credentialed data scientists')[0],\n      within(main).getAllByText('Small and medium-sized businesses')[0],\n      within(main).getByRole('heading', { name: 'Systems built to be observed and sustained' }),\n      within(main).getAllByText('AI Enablement')[0],\n      within(main).getByRole('heading', { name: 'How we work' }),\n      within(main).getByRole('heading', { name: 'The kinds of systems we build' }),\n      deepest(main, 'Placeholder testimonial: replace with a real client quote before launch.'),\n      within(main).getByRole('heading', { name: 'Why The Bayes Group' }),\n      within(main).getByRole('heading', { name: 'Ready to put AI to work?' }),\n    ];\n    for (let i = 1; i < order.length; i++) expect(follows(order[i - 1], order[i])).toBe(true);\n  });\n});\n",
+    "__tests__/acceptance/systems-render.test.ts": "/**\n * @jest-environment jsdom\n */\nimport * as fs from 'fs';\nimport * as path from 'path';\nimport * as React from 'react';\nimport { render, screen, within, cleanup } from '@testing-library/react';\nimport {\n  SYSTEMS_LEAD,\n  SYSTEMS_SECTIONS,\n  DELIVERABLES_HEADING,\n  DELIVERABLES,\n  SYSTEMS_CTA,\n} from '../../src/content/systems';\n\nconst nodeUtil = require('util');\nconst g: any = globalThis as any;\nif (typeof g.TextEncoder === 'undefined') g.TextEncoder = nodeUtil.TextEncoder;\nif (typeof g.TextDecoder === 'undefined') g.TextDecoder = nodeUtil.TextDecoder;\ng.scrollTo = jest.fn();\n(window as any).scrollTo = jest.fn();\n(Element.prototype as any).scrollIntoView = jest.fn();\n\nconst { MemoryRouter } = require('react-router-dom');\nconst { AppRoutes } = require('../../src/App');\n\nconst ROOT = path.resolve(__dirname, '..', '..');\n\nfunction renderAt(p: string) {\n  return render(\n    React.createElement(MemoryRouter, { initialEntries: [p] }, React.createElement(AppRoutes)),\n  );\n}\n\nconst norm = (s: string | null | undefined) => (s || '').replace(/\\s+/g, ' ').trim();\nconst escRe = (s: string) => s.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\$&');\n\nfunction ancestorWhere(start: Element, scope: Element, pred: (el: Element) => boolean): Element {\n  let el: Element | null = start;\n  while (el) {\n    if (pred(el)) return el;\n    if (el === scope) break;\n    el = el.parentElement;\n  }\n  throw new Error('No ancestor matched');\n}\n\nfunction deepest(scope: Element, str: string): Element {\n  const target = norm(str);\n  const all = [scope, ...Array.from(scope.querySelectorAll('*'))].filter((e) =>\n    norm(e.textContent).includes(target),\n  );\n  const leaf = all.filter((e) => !Array.from(e.children).some((c) => norm(c.textContent).includes(target)));\n  if (!leaf.length) throw new Error(`Text not found: ${str}`);\n  return leaf[0];\n}\n\nfunction listFiles(dir: string): string[] {\n  const out: string[] = [];\n  if (!fs.existsSync(dir)) return out;\n  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {\n    const full = path.join(dir, entry.name);\n    if (entry.isDirectory()) out.push(...listFiles(full));\n    else out.push(full);\n  }\n  return out;\n}\nfunction allCss(): string {\n  return listFiles(path.join(ROOT, 'src'))\n    .filter((f) => f.endsWith('.css'))\n    .map((f) => fs.readFileSync(f, 'utf8'))\n    .join('\\n')\n    .replace(/\\/\\*[\\s\\S]*?\\*\\//g, '');\n}\ntype Rule = { selector: string; body: string };\nfunction cssRules(css: string): Rule[] {\n  const out: Rule[] = [];\n  const re = /([^{}]+)\\{([^{}]*)\\}/g;\n  let m: RegExpExecArray | null;\n  while ((m = re.exec(css))) out.push({ selector: m[1].trim(), body: m[2] });\n  return out;\n}\nfunction hasClass(selector: string, cls: string): boolean {\n  return new RegExp(`\\\\.${escRe(cls)}(?![\\\\w-])`).test(selector);\n}\nconst MONO_RE = /font-family\\s*:[^;}]*(var\\(--font-mono\\)|monospace|ui-monospace)/i;\nfunction isMono(el: Element, stop: Element, rules: Rule[]): boolean {\n  let e: Element | null = el;\n  while (e) {\n    if (/font-family\\s*:[^;]*mono/i.test(e.getAttribute('style') || '')) return true;\n    const cls = (e.getAttribute('class') || '').split(/\\s+/).filter(Boolean);\n    if (cls.some((c) => rules.some((r) => hasClass(r.selector, c) && MONO_RE.test(r.body)))) return true;\n    if (e === stop) break;\n    e = e.parentElement;\n  }\n  return false;\n}\n\nafterEach(() => cleanup());\n\nconst SECTIONS: any[] = SYSTEMS_SECTIONS as any[];\n\nconst KEYWORDS: Record<string, RegExp[][]> = {\n  agentic: [[/planning/i, /tool-using/i], [/human approval/i, /consequential/i], [/evaluation suites?/i, /ships?/i], [/limits/i, /agent/i]],\n  architecture: [[/CRM/, /ERP/, /data warehouses?/i, /document stores?/i], [/event-driven/i, /API/], [/data contracts/i], [/security reviews?/i, /least-privilege/i]],\n  observability: [[/end-to-end tracing/i, /agent step/i], [/metrics/i, /dashboards/i, /quality/i, /latency/i, /cost/i], [/alerts?/i, /drift/i], [/evaluation results/i, /over time/i]],\n  sustainability: [[/runbooks/i, /on-call/i], [/cost budgets/i, /usage limits/i], [/model-agnostic/i, /swap/i], [/decision records/i, /handover training/i]],\n};\n\ndescribe('systems content', () => {\n  test('lead, sections, deliverables and CTA', () => {\n    expect(SYSTEMS_LEAD).toBe(\n      'We design AI systems the way mature engineering teams build software: specific to your business, connected to the systems you already run, observable from day one and built to be maintained.',\n    );\n    expect(SECTIONS.map((s) => [s.id, s.title])).toEqual([\n      ['agentic', 'Agentic development'],\n      ['architecture', 'Multi-system architecture'],\n      ['observability', 'Observable by design'],\n      ['sustainability', 'Built to be sustained'],\n    ]);\n    for (const s of SECTIONS) {\n      expect(s.items).toHaveLength(4);\n      expect(norm(s.eyebrow).length).toBeGreaterThan(0);\n      expect(norm(s.intro).length).toBeGreaterThan(0);\n      KEYWORDS[s.id].forEach((res, i) => res.forEach((re) => expect(s.items[i]).toMatch(re)));\n    }\n    expect(DELIVERABLES_HEADING).toBe('What every system ships with');\n    expect(DELIVERABLES).toEqual([\n      'Architecture diagram & decision records',\n      'Evaluation suite',\n      'Tracing & dashboards',\n      'Runbooks',\n      'Cost & usage budgets',\n      'Handover training',\n    ]);\n    expect(SYSTEMS_CTA).toEqual({\n      heading: 'Have a system in mind?',\n      button: { label: 'Book a consultation', to: '/contact' },\n    });\n  });\n});\n\ndescribe('systems page rendering', () => {\n  test('hero has the h1, lead sentence and diagram', () => {\n    renderAt('/systems');\n    const main = screen.getByRole('main');\n    const h1 = within(main).getByRole('heading', { level: 1 });\n    expect(norm(h1.textContent)).toBe('Systems engineering');\n    const hero = ancestorWhere(h1, main, (e) => norm(e.textContent).includes(norm(SYSTEMS_LEAD)));\n    expect(hero).not.toBe(main);\n    const texts = Array.from(hero.querySelectorAll('svg text')).map((t) => norm(t.textContent));\n    expect(texts).toContain('Agent orchestration');\n  });\n\n  test.each(SECTIONS.map((s) => s.id))('section %s has eyebrow, h2, intro, 4 icon items and an illustration', (id) => {\n    renderAt('/systems');\n    const main = screen.getByRole('main');\n    const data = SECTIONS.find((s) => s.id === id);\n    const section = main.querySelector(`#${id}`)!;\n    expect(section).not.toBeNull();\n    const h2 = section.querySelector('h2');\n    expect(h2).not.toBeNull();\n    expect(norm(h2!.textContent)).toBe(data.title);\n    const text = norm(section.textContent);\n    expect(text.toLowerCase()).toContain(norm(data.eyebrow).toLowerCase());\n    const p = Array.from(section.querySelectorAll('p')).find((x) => norm(x.textContent).includes(norm(data.intro)));\n    expect(p).toBeTruthy();\n    const ul = Array.from(section.querySelectorAll('ul')).find((u) => u.querySelectorAll('li').length === 4);\n    expect(ul).toBeTruthy();\n    const lis = Array.from(ul!.querySelectorAll('li'));\n    lis.forEach((li, i) => {\n      expect(norm(li.textContent)).toContain(norm(data.items[i]));\n      expect(li.querySelector('svg')).not.toBeNull();\n    });\n    const illustration = Array.from(section.querySelectorAll('svg')).filter((s) => !ul!.contains(s));\n    expect(illustration.length).toBeGreaterThan(0);\n  });\n\n  test('deliverables: six items, each with an icon tile and a monospace name', () => {\n    renderAt('/systems');\n    const main = screen.getByRole('main');\n    const h2 = within(main).getByRole('heading', { name: 'What every system ships with' });\n    expect(h2.tagName).toBe('H2');\n    const section = ancestorWhere(h2, main, (e) => (DELIVERABLES as string[]).every((d) => norm(e.textContent).includes(d)));\n    expect(section).not.toBe(main);\n    const rules = cssRules(allCss());\n    for (const name of DELIVERABLES as string[]) {\n      const nameEl = deepest(section, name);\n      expect(norm(nameEl.textContent)).toBe(name);\n      const card = ancestorWhere(nameEl, section, (e) => !!e.querySelector('svg'));\n      expect(card).not.toBe(section);\n      for (const other of (DELIVERABLES as string[]).filter((d) => d !== name)) {\n        expect(norm(card.textContent)).not.toContain(other);\n      }\n      expect(card.querySelector('svg')!.getAttribute('viewBox')).toBe('0 0 24 24');\n      if (!isMono(nameEl, card, rules)) throw new Error(`Deliverable \"${name}\" is not in the monospace font`);\n    }\n  });\n\n  test('CTA band Have a system in mind? with Book a consultation', () => {\n    renderAt('/systems');\n    const main = screen.getByRole('main');\n    const h2 = within(main).getByRole('heading', { name: 'Have a system in mind?' });\n    const band = ancestorWhere(h2, main, (e) =>\n      Array.from(e.querySelectorAll('a')).some(\n        (a) => norm(a.textContent) === 'Book a consultation' && a.getAttribute('href') === '/contact',\n      ),\n    );\n    expect(band).not.toBe(main);\n  });\n});\n",
+    "__tests__/acceptance/engagements-render.test.ts": "/**\n * @jest-environment jsdom\n */\nimport * as React from 'react';\nimport { render, screen, within, cleanup } from '@testing-library/react';\nimport { ENGAGEMENTS_INTRO, TIERS, NOT_SURE } from '../../src/content/engagements';\n\nconst nodeUtil = require('util');\nconst g: any = globalThis as any;\nif (typeof g.TextEncoder === 'undefined') g.TextEncoder = nodeUtil.TextEncoder;\nif (typeof g.TextDecoder === 'undefined') g.TextDecoder = nodeUtil.TextDecoder;\ng.scrollTo = jest.fn();\n(window as any).scrollTo = jest.fn();\n(Element.prototype as any).scrollIntoView = jest.fn();\n\nconst { MemoryRouter } = require('react-router-dom');\nconst { AppRoutes } = require('../../src/App');\n\nfunction renderAt(p: string) {\n  return render(\n    React.createElement(MemoryRouter, { initialEntries: [p] }, React.createElement(AppRoutes)),\n  );\n}\n\nconst norm = (s: string | null | undefined) => (s || '').replace(/\\s+/g, ' ').trim();\n\nfunction ancestorWhere(start: Element, scope: Element, pred: (el: Element) => boolean): Element {\n  let el: Element | null = start;\n  while (el) {\n    if (pred(el)) return el;\n    if (el === scope) break;\n    el = el.parentElement;\n  }\n  throw new Error('No ancestor matched');\n}\n\nfunction deepest(scope: Element, str: string): Element {\n  const target = norm(str);\n  const all = [scope, ...Array.from(scope.querySelectorAll('*'))].filter((e) =>\n    norm(e.textContent).includes(target),\n  );\n  const leaf = all.filter((e) => !Array.from(e.children).some((c) => norm(c.textContent).includes(target)));\n  if (!leaf.length) throw new Error(`Text not found: ${str}`);\n  return leaf[0];\n}\n\nconst follows = (a: Node, b: Node) =>\n  (a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING) !== 0;\n\nafterEach(() => cleanup());\n\nconst T: any[] = TIERS as any[];\nconst SMB = 'For small and medium-sized businesses';\n\nconst KEYWORDS: RegExp[][][] = [\n  [[/readiness assessment/i], [/top three use cases/i, /prioriti/i], [/quick-win prototype/i], [/90-day roadmap/i]],\n  [[/custom AI system/i, /deploy/i], [/integration/i, /existing systems/i], [/tracing/i, /dashboards/i, /day one/i], [/training/i, /runbooks/i]],\n  [[/senior data scientist/i, /on call/i], [/monthly improvement sprints/i], [/monitoring/i, /evaluations/i, /model updates/i], [/quarterly roadmap reviews/i]],\n  [[/dedicated senior team/i], [/multi-system/i, /agentic programs/i], [/governance/i, /responsible-AI policy/i], [/security/i, /compliance reviews/i], [/priority support/i]],\n];\n\ndescribe('engagements content', () => {\n  test('intro and tiers', () => {\n    expect(ENGAGEMENTS_INTRO).toBe(\n      'Right-sized engagements for small and medium-sized businesses, and a premium tier for enterprise.',\n    );\n    expect(T.map((t) => [t.id, t.name, t.timeline, t.premium])).toEqual([\n      ['jumpstart', 'Jumpstart', '2 to 4 weeks', false],\n      ['build', 'Build', '6 to 12 weeks', false],\n      ['partner', 'Partner', 'Ongoing, monthly', false],\n      ['enterprise', 'Enterprise', 'Custom scope', true],\n    ]);\n    for (const t of T.slice(0, 3)) {\n      expect(t.audience).toBe(SMB);\n      expect(t.cta).toEqual({ label: 'Book a consultation', to: '/contact' });\n    }\n    expect(T[3].cta).toEqual({ label: 'Talk to us about enterprise', to: '/contact' });\n    expect(T.map((t) => t.included.length)).toEqual([4, 4, 4, 5]);\n    T.forEach((t, i) => KEYWORDS[i].forEach((res, j) => res.forEach((re) => expect(t.included[j]).toMatch(re))));\n    expect(JSON.stringify(T)).not.toMatch(/[$\u20ac\u00a3]/);\n    expect((NOT_SURE as any).text).toBe('Not sure which fits?');\n    expect((NOT_SURE as any).link.to).toBe('/contact');\n  });\n});\n\ndescribe('engagements page rendering', () => {\n  test('h1, intro and no prices', () => {\n    renderAt('/engagements');\n    const main = screen.getByRole('main');\n    expect(norm(within(main).getByRole('heading', { level: 1 }).textContent)).toBe('Engagements');\n    const text = norm(main.textContent);\n    expect(text).toContain(ENGAGEMENTS_INTRO);\n    expect(text).not.toMatch(/[$\u20ac\u00a3]/);\n  });\n\n  test('four tier cards in order', () => {\n    renderAt('/engagements');\n    const main = screen.getByRole('main');\n    const NAMES = ['Jumpstart', 'Build', 'Partner', 'Enterprise'];\n    const TIMELINES = ['2 to 4 weeks', '6 to 12 weeks', 'Ongoing, monthly', 'Custom scope'];\n    const headings: Element[] = [];\n    const cards: Element[] = [];\n    NAMES.forEach((name, i) => {\n      const candidates = within(main)\n        .queryAllByRole('heading')\n        .filter((h) => norm(h.textContent) === name && h.tagName !== 'H1');\n      let found: { h: Element; card: Element } | null = null;\n      for (const h of candidates) {\n        try {\n          const card = ancestorWhere(h, main, (el) => norm(el.textContent).includes(TIMELINES[i]));\n          if (card !== main) {\n            found = { h, card };\n            break;\n          }\n        } catch (e) {\n          /* try next */\n        }\n      }\n      if (!found) throw new Error(`No tier card with heading \"${name}\" and timeline \"${TIMELINES[i]}\"`);\n      headings.push(found.h);\n      cards.push(found.card);\n    });\n    for (let i = 1; i < headings.length; i++) expect(follows(headings[i - 1], headings[i])).toBe(true);\n    for (let i = 0; i < cards.length; i++) {\n      for (let j = 0; j < cards.length; j++) {\n        if (i !== j) expect(cards[i].contains(headings[j])).toBe(false);\n      }\n    }\n  });\n\n  test.each(T.map((t) => t.id))('tier %s card content', (id) => {\n    renderAt('/engagements');\n    const main = screen.getByRole('main');\n    const t = T.find((x) => x.id === id);\n    const card = main.querySelector(`article#${id}`)!;\n    expect(card).not.toBeNull();\n    const h2 = card.querySelector('h2');\n    expect(h2).not.toBeNull();\n    expect(norm(h2!.textContent)).toBe(t.name);\n    const text = norm(card.textContent);\n    expect(text).toContain(t.audience);\n    expect(text).toContain(t.timeline);\n    expect(text).toMatch(/What['\u2019]s included/);\n    const ul = Array.from(card.querySelectorAll('ul')).find((u) => u.querySelectorAll('li').length === t.included.length);\n    expect(ul).toBeTruthy();\n    Array.from(ul!.querySelectorAll('li')).forEach((li, i) => {\n      expect(norm(li.textContent)).toContain(norm(t.included[i]));\n      expect(li.querySelector('svg')).not.toBeNull();\n    });\n    const tierIcon = Array.from(card.querySelectorAll('svg')).filter((s) => !ul!.contains(s));\n    expect(tierIcon.length).toBeGreaterThan(0);\n    const cta = Array.from(card.querySelectorAll('a')).find((a) => norm(a.textContent) === t.cta.label);\n    expect(cta).toBeTruthy();\n    expect(cta!.getAttribute('href')).toBe('/contact');\n  });\n\n  test('Enterprise card is premium with the atrium photo', () => {\n    renderAt('/engagements');\n    const card = screen.getByRole('main').querySelector('article#enterprise')!;\n    expect(Array.from(card.querySelectorAll('*')).some((e) => norm(e.textContent) === 'Premium')).toBe(true);\n    const srcs = Array.from(card.querySelectorAll('img')).map((i) => i.getAttribute('src') || '');\n    expect(srcs.some((s) => s.includes('enterprise-atrium'))).toBe(true);\n    const cta = Array.from(card.querySelectorAll('a')).find((a) => norm(a.textContent) === 'Talk to us about enterprise');\n    expect(cta && cta.getAttribute('href')).toBe('/contact');\n  });\n\n  test('Not sure which fits? line with a link to /contact below the tiers', () => {\n    renderAt('/engagements');\n    const main = screen.getByRole('main');\n    const el = deepest(main, 'Not sure which fits?');\n    const last = main.querySelector('article#enterprise')!;\n    expect(follows(last, el)).toBe(true);\n    const block = ancestorWhere(el, main, (e) =>\n      Array.from(e.querySelectorAll('a')).some((a) => a.getAttribute('href') === '/contact'),\n    );\n    expect(block).not.toBe(main);\n    expect(block.querySelector('article')).toBeNull();\n  });\n});\n",
+    "test_acceptance.py": "#!/usr/bin/env python3\n\"\"\"Runs the app's acceptance tests: the Jest files in __tests__/acceptance/. Generated by the pipeline; the tests\nthemselves are locked files written by the planner. ACCEPTANCE_MILESTONE=N runs only the tests of milestones 1..N.\"\"\"\nimport json\nimport os\nimport subprocess\nimport sys\n\nhere = os.path.dirname(os.path.abspath(__file__))\nos.chdir(here)\nif not os.path.isdir(\"node_modules\"):\n    lock = os.path.exists(\"package-lock.json\")\n    subprocess.run([\"npm\", \"ci\" if lock else \"install\", \"--include=dev\", \"--no-audit\", \"--no-fund\"], check=False, timeout=1500)\ncmd = [\"npx\", \"jest\", \"--ci\", \"__tests__/acceptance\"]\nm = os.environ.get(\"ACCEPTANCE_MILESTONE\", \"\")\nif m.isdigit():\n    cmd += [\"-t\", \"^(\" + \"|\".join(\"M%d\" % i for i in range(1, int(m) + 1)) + \"): \"]\n# The app's own test script may add node flags (e.g. --experimental-vm-modules): use the same ones.\ntry:\n    script = json.load(open(\"package.json\")).get(\"scripts\", {}).get(\"test\", \"\")\nexcept (OSError, ValueError):\n    script = \"\"\nenv = dict(os.environ)\nif \"--experimental-vm-modules\" in script:\n    env[\"NODE_OPTIONS\"] = (env.get(\"NODE_OPTIONS\", \"\") + \" --experimental-vm-modules\").strip()\nprint(\"Running: \" + \" \".join(cmd), flush=True)\nsys.exit(subprocess.run(cmd, env=env, timeout=1500).returncode)\n"
+  },
+  "acceptance_test": "#!/usr/bin/env python3\n\"\"\"Runs the app's acceptance tests: the Jest files in __tests__/acceptance/. Generated by the pipeline; the tests\nthemselves are locked files written by the planner. ACCEPTANCE_MILESTONE=N runs only the tests of milestones 1..N.\"\"\"\nimport json\nimport os\nimport subprocess\nimport sys\n\nhere = os.path.dirname(os.path.abspath(__file__))\nos.chdir(here)\nif not os.path.isdir(\"node_modules\"):\n    lock = os.path.exists(\"package-lock.json\")\n    subprocess.run([\"npm\", \"ci\" if lock else \"install\", \"--include=dev\", \"--no-audit\", \"--no-fund\"], check=False, timeout=1500)\ncmd = [\"npx\", \"jest\", \"--ci\", \"__tests__/acceptance\"]\nm = os.environ.get(\"ACCEPTANCE_MILESTONE\", \"\")\nif m.isdigit():\n    cmd += [\"-t\", \"^(\" + \"|\".join(\"M%d\" % i for i in range(1, int(m) + 1)) + \"): \"]\n# The app's own test script may add node flags (e.g. --experimental-vm-modules): use the same ones.\ntry:\n    script = json.load(open(\"package.json\")).get(\"scripts\", {}).get(\"test\", \"\")\nexcept (OSError, ValueError):\n    script = \"\"\nenv = dict(os.environ)\nif \"--experimental-vm-modules\" in script:\n    env[\"NODE_OPTIONS\"] = (env.get(\"NODE_OPTIONS\", \"\") + \" --experimental-vm-modules\").strip()\nprint(\"Running: \" + \" \".join(cmd), flush=True)\nsys.exit(subprocess.run(cmd, env=env, timeout=1500).returncode)\n",
+  "requirements": [
+    {
+      "id": "R1",
+      "section": "general",
+      "kind": "constraint",
+      "text": "Keep the existing stack: Vite + React + TypeScript + react-router."
+    },
+    {
+      "id": "R2",
+      "section": "general",
+      "kind": "constraint",
+      "text": "Use plain CSS with the design-token theme."
+    },
+    {
+      "id": "R3",
+      "section": "general",
+      "kind": "constraint",
+      "text": "Use system fonts only."
+    },
+    {
+      "id": "R4",
+      "section": "general",
+      "kind": "logic",
+      "text": "Every page is prerendered to its own HTML file."
+    },
+    {
+      "id": "R5",
+      "section": "general",
+      "kind": "logic",
+      "text": "Every prerendered page has its own title."
+    },
+    {
+      "id": "R6",
+      "section": "general",
+      "kind": "logic",
+      "text": "Every prerendered page has its own meta description."
+    },
+    {
+      "id": "R7",
+      "section": "general",
+      "kind": "logic",
+      "text": "Every prerendered page has its own Open Graph tags."
+    },
+    {
+      "id": "R8",
+      "section": "general",
+      "kind": "logic",
+      "text": "Every prerendered page has its own canonical link."
+    },
+    {
+      "id": "R9",
+      "section": "general",
+      "kind": "logic",
+      "text": "The training filter remains hydrated and working."
+    },
+    {
+      "id": "R10",
+      "section": "general",
+      "kind": "logic",
+      "text": "The Menu button remains hydrated and working."
+    },
+    {
+      "id": "R11",
+      "section": "general",
+      "kind": "logic",
+      "text": "The contact form remains hydrated and working."
+    },
+    {
+      "id": "R12",
+      "section": "general",
+      "kind": "constraint",
+      "text": "No backend, analytics, third-party scripts or external CDNs."
+    },
+    {
+      "id": "R13",
+      "section": "general",
+      "kind": "constraint",
+      "text": "Existing acceptance tests keep passing except where this task changes that behavior."
+    },
+    {
+      "id": "R14",
+      "section": "general",
+      "kind": "ui",
+      "text": "Brand colors: deep navy #0B1F3A, white, and teal #1F8A8A as the one accent; darker navy #071528 for premium bands, pale teal-grey #F2F7F7 for alternate section backgrounds, hairline #E3E8EF for borders."
+    },
+    {
+      "id": "R15",
+      "section": "general",
+      "kind": "ui",
+      "text": "Headings use a Georgia-style system serif font."
+    },
+    {
+      "id": "R16",
+      "section": "general",
+      "kind": "ui",
+      "text": "Body text uses a sans-serif font."
+    },
+    {
+      "id": "R17",
+      "section": "general",
+      "kind": "ui",
+      "text": "System monospace (ui-monospace) is used only for small technical labels: diagram labels, eyebrow tags and deliverable names."
+    },
+    {
+      "id": "R18",
+      "section": "general",
+      "kind": "ui",
+      "text": "WCAG AA contrast everywhere, including text over photos and on the diagrams."
+    },
+    {
+      "id": "R19",
+      "section": "general",
+      "kind": "ui",
+      "text": "Subtle motion only: fade/slide-in of sections and hover lifts."
+    },
+    {
+      "id": "R20",
+      "section": "general",
+      "kind": "ui",
+      "text": "All motion is turned off under prefers-reduced-motion."
+    },
+    {
+      "id": "R21",
+      "section": "general",
+      "kind": "ui",
+      "text": "Hero h1 is 60-64px on desktop (1440px)."
+    },
+    {
+      "id": "R22",
+      "section": "general",
+      "kind": "ui",
+      "text": "Hero h1 is 38-40px on phones (390px)."
+    },
+    {
+      "id": "R23",
+      "section": "general",
+      "kind": "ui",
+      "text": "Section h2 is 40-44px on desktop."
+    },
+    {
+      "id": "R24",
+      "section": "general",
+      "kind": "ui",
+      "text": "Section h2 is 28-32px on phones."
+    },
+    {
+      "id": "R25",
+      "section": "general",
+      "kind": "ui",
+      "text": "Body text is 17-18px with line-height 1.6."
+    },
+    {
+      "id": "R26",
+      "section": "general",
+      "kind": "ui",
+      "text": "Every section has a small uppercase teal eyebrow label above its h2 (e.g. \"WHO WE SERVE\", \"WHAT WE BUILD\")."
+    },
+    {
+      "id": "R27",
+      "section": "general",
+      "kind": "ui",
+      "text": "Content max width is 1200px, centered."
+    },
+    {
+      "id": "R28",
+      "section": "general",
+      "kind": "ui",
+      "text": "Section padding is 96px top and bottom on desktop."
+    },
+    {
+      "id": "R29",
+      "section": "general",
+      "kind": "ui",
+      "text": "Section padding is 64px top and bottom on phones."
+    },
+    {
+      "id": "R30",
+      "section": "general",
+      "kind": "ui",
+      "text": "An 8px spacing scale is used throughout."
+    },
+    {
+      "id": "R31",
+      "section": "general",
+      "kind": "ui",
+      "text": "No horizontal scrolling at 390px width."
+    },
+    {
+      "id": "R32",
+      "section": "general",
+      "kind": "ui",
+      "text": "Section backgrounds alternate white, pale teal-grey and navy."
+    },
+    {
+      "id": "R33",
+      "section": "1",
+      "kind": "ui",
+      "text": "Home has at least three navy bands (systems, testimonial, call to action)."
+    },
+    {
+      "id": "R34",
+      "section": "1",
+      "kind": "ui",
+      "text": "Home never has two plain white sections of card grids in a row."
+    },
+    {
+      "id": "R35",
+      "section": "general",
+      "kind": "ui",
+      "text": "Wherever a photo sits beside text on desktop, the text column holds a heading, a paragraph and at least one supporting element (list, link or meta line)."
+    },
+    {
+      "id": "R36",
+      "section": "general",
+      "kind": "ui",
+      "text": "Cards have a 12px radius and a 1px #E3E8EF border."
+    },
+    {
+      "id": "R37",
+      "section": "general",
+      "kind": "ui",
+      "text": "Cards have a soft shadow that lifts slightly on hover."
+    },
+    {
+      "id": "R38",
+      "section": "general",
+      "kind": "ui",
+      "text": "Every card icon sits in a 44px pale-teal rounded-square tile, not bare on the card."
+    },
+    {
+      "id": "R39",
+      "section": "general",
+      "kind": "logic",
+      "text": "Diagrams are inline SVG using a viewBox with no fixed pixel widths, so they scale with the page."
+    },
+    {
+      "id": "R40",
+      "section": "general",
+      "kind": "logic",
+      "text": "Diagram labels are real <text> elements in the monospace font."
+    },
+    {
+      "id": "R41",
+      "section": "general",
+      "kind": "logic",
+      "text": "Diagrams have a title and desc for screen readers."
+    },
+    {
+      "id": "R42",
+      "section": "general",
+      "kind": "ui",
+      "text": "On phones a wide diagram may stack vertically but its labels stay readable (at least 12px)."
+    },
+    {
+      "id": "R43",
+      "section": "general",
+      "kind": "constraint",
+      "text": "Use only the existing photos in public/images/ (hero-boardroom, smb-owner, team-workshop, enterprise-atrium, custom-development, strategy-session, about-office, contact-meeting, each as NAME.jpg and NAME-768.jpg); do not generate or download images."
+    },
+    {
+      "id": "R44",
+      "section": "general",
+      "kind": "logic",
+      "text": "Photos are rendered with <img> (or <picture>) with a srcset including the 768w and 1344w versions."
+    },
+    {
+      "id": "R45",
+      "section": "general",
+      "kind": "logic",
+      "text": "Photos have a sizes attribute."
+    },
+    {
+      "id": "R46",
+      "section": "general",
+      "kind": "logic",
+      "text": "Photos have width and height attributes."
+    },
+    {
+      "id": "R47",
+      "section": "general",
+      "kind": "logic",
+      "text": "Photos use loading=\"lazy\" except the hero photo."
+    },
+    {
+      "id": "R48",
+      "section": "general",
+      "kind": "logic",
+      "text": "Photos use decoding=\"async\"."
+    },
+    {
+      "id": "R49",
+      "section": "general",
+      "kind": "logic",
+      "text": "Photos have descriptive alt text."
+    },
+    {
+      "id": "R50",
+      "section": "general",
+      "kind": "ui",
+      "text": "Photos are never captioned or presented as the firm's own team or clients."
+    },
+    {
+      "id": "R51",
+      "section": "general",
+      "kind": "ui",
+      "text": "Where text sits on a photo, a navy gradient overlay is placed behind the text so it meets WCAG AA."
+    },
+    {
+      "id": "R52",
+      "section": "general",
+      "kind": "constraint",
+      "text": "Illustrations are inline SVG in the brand colors, with no image files."
+    },
+    {
+      "id": "R53",
+      "section": "general",
+      "kind": "logic",
+      "text": "Every service item has a line icon."
+    },
+    {
+      "id": "R54",
+      "section": "general",
+      "kind": "logic",
+      "text": "Every training format has a line icon."
+    },
+    {
+      "id": "R55",
+      "section": "general",
+      "kind": "logic",
+      "text": "Every engagement tier has a line icon."
+    },
+    {
+      "id": "R56",
+      "section": "general",
+      "kind": "logic",
+      "text": "Every systems capability has a line icon."
+    },
+    {
+      "id": "R57",
+      "section": "general",
+      "kind": "logic",
+      "text": "Every deliverable has a line icon."
+    },
+    {
+      "id": "R58",
+      "section": "general",
+      "kind": "ui",
+      "text": "Icons are drawn in one consistent style on a 24px grid with 1.5-2px strokes."
+    },
+    {
+      "id": "R59",
+      "section": "general",
+      "kind": "ui",
+      "text": "A subtle background motif of overlapping bell curves or a fine data-grid pattern appears behind the hero."
+    },
+    {
+      "id": "R60",
+      "section": "general",
+      "kind": "ui",
+      "text": "A subtle background motif of overlapping bell curves or a fine data-grid pattern appears behind the navy bands."
+    },
+    {
+      "id": "R61",
+      "section": "general",
+      "kind": "logic",
+      "text": "The architecture diagram is one React component used on the Systems page and in the Home systems band."
+    },
+    {
+      "id": "R62",
+      "section": "general",
+      "kind": "logic",
+      "text": "Architecture diagram top row is labeled \"Your systems\" and contains \"CRM\", \"ERP\", \"Data warehouse\" and \"Documents\"."
+    },
+    {
+      "id": "R63",
+      "section": "general",
+      "kind": "logic",
+      "text": "Architecture diagram middle row is labeled \"Agent orchestration\" and contains \"Planner\", \"Tool-using agents\" and \"Human approval\"."
+    },
+    {
+      "id": "R64",
+      "section": "general",
+      "kind": "logic",
+      "text": "Architecture diagram has \"Models (vendor-neutral)\" beside the orchestration row."
+    },
+    {
+      "id": "R65",
+      "section": "general",
+      "kind": "logic",
+      "text": "Architecture diagram has \"Guardrails & evaluations\" beside the orchestration row."
+    },
+    {
+      "id": "R66",
+      "section": "general",
+      "kind": "logic",
+      "text": "Architecture diagram has a bottom \"Observability\" layer spanning the full width, containing \"Traces\", \"Metrics\", \"Cost\" and \"Evaluations\"."
+    },
+    {
+      "id": "R67",
+      "section": "general",
+      "kind": "ui",
+      "text": "Architecture diagram has arrows from Your systems into Agent orchestration."
+    },
+    {
+      "id": "R68",
+      "section": "general",
+      "kind": "ui",
+      "text": "Architecture diagram has arrows between orchestration and Models."
+    },
+    {
+      "id": "R69",
+      "section": "general",
+      "kind": "ui",
+      "text": "Architecture diagram has dashed lines from every box down into the Observability layer."
+    },
+    {
+      "id": "R70",
+      "section": "general",
+      "kind": "ui",
+      "text": "Architecture diagram uses navy and teal on light backgrounds."
+    },
+    {
+      "id": "R71",
+      "section": "general",
+      "kind": "ui",
+      "text": "Architecture diagram uses white and teal on navy backgrounds."
+    },
+    {
+      "id": "R72",
+      "section": "general",
+      "kind": "logic",
+      "text": "Header nav links are Services, Systems, Training, Engagements, About, Contact, plus the \"Book a consultation\" button."
+    },
+    {
+      "id": "R73",
+      "section": "general",
+      "kind": "logic",
+      "text": "Footer nav lists the same six links: Services, Systems, Training, Engagements, About, Contact."
+    },
+    {
+      "id": "R74",
+      "section": "general",
+      "kind": "ui",
+      "text": "The header is sticky."
+    },
+    {
+      "id": "R75",
+      "section": "general",
+      "kind": "ui",
+      "text": "The header is white with a hairline bottom border once the page scrolls."
+    },
+    {
+      "id": "R76",
+      "section": "general",
+      "kind": "ui",
+      "text": "On phones the header links collapse into the \"Menu\" button."
+    },
+    {
+      "id": "R77",
+      "section": "1",
+      "kind": "logic",
+      "text": "Home keeps the h1 \"Evidence-driven AI, built for your business.\""
+    },
+    {
+      "id": "R78",
+      "section": "1",
+      "kind": "logic",
+      "text": "Home value proposition reads \"We design, build and run AI systems for small and medium-sized businesses, from single agents to multi-system architectures, with enterprise-grade rigor and senior data scientists on every engagement.\""
+    },
+    {
+      "id": "R79",
+      "section": "1",
+      "kind": "logic",
+      "text": "Home sections appear in order: hero, credibility strip, who we serve, systems band, pillar cards, how we work, example engagements, testimonial, why The Bayes Group, call-to-action band."
+    },
+    {
+      "id": "R80",
+      "section": "1",
+      "kind": "ui",
+      "text": "Home hero is at least 640px tall on desktop."
+    },
+    {
+      "id": "R81",
+      "section": "1",
+      "kind": "ui",
+      "text": "Home hero shows the full-width hero-boardroom photo with the navy gradient overlay and the bell-curve motif."
+    },
+    {
+      "id": "R82",
+      "section": "1",
+      "kind": "logic",
+      "text": "Home hero contains the h1 and the value proposition."
+    },
+    {
+      "id": "R83",
+      "section": "1",
+      "kind": "logic",
+      "text": "Home hero has a \"Book a consultation\" button linking to /contact."
+    },
+    {
+      "id": "R84",
+      "section": "1",
+      "kind": "logic",
+      "text": "Home hero has a \"See how we build\" button linking to /systems."
+    },
+    {
+      "id": "R85",
+      "section": "1",
+      "kind": "ui",
+      "text": "Credibility strip sits right under the hero, overlapping the hero's bottom edge as a raised white bar."
+    },
+    {
+      "id": "R86",
+      "section": "1",
+      "kind": "logic",
+      "text": "Credibility strip has four points with icons: \"Credentialed data scientists\", \"Vendor-neutral advice\", \"Built for small and medium-sized businesses\", \"Enterprise-grade governance\"."
+    },
+    {
+      "id": "R87",
+      "section": "1",
+      "kind": "constraint",
+      "text": "Credibility strip contains no numbers, client names or logos."
+    },
+    {
+      "id": "R88",
+      "section": "1",
+      "kind": "ui",
+      "text": "Who we serve shows two side-by-side panels on desktop."
+    },
+    {
+      "id": "R89",
+      "section": "1",
+      "kind": "ui",
+      "text": "Who we serve panels stack on phones."
+    },
+    {
+      "id": "R90",
+      "section": "1",
+      "kind": "ui",
+      "text": "The \"Small and medium-sized businesses\" panel is the larger, primary panel with the smb-owner photo."
+    },
+    {
+      "id": "R91",
+      "section": "1",
+      "kind": "logic",
+      "text": "The \"Small and medium-sized businesses\" panel has two sentences about practical, right-sized AI with fast results and a team that owns it afterwards."
+    },
+    {
+      "id": "R92",
+      "section": "1",
+      "kind": "logic",
+      "text": "The \"Small and medium-sized businesses\" panel has a link \"See engagements\" to /engagements."
+    },
+    {
+      "id": "R93",
+      "section": "1",
+      "kind": "ui",
+      "text": "The \"Enterprise\" panel is a premium panel on dark navy with the enterprise-atrium photo."
+    },
+    {
+      "id": "R94",
+      "section": "1",
+      "kind": "logic",
+      "text": "The \"Enterprise\" panel has two sentences about a dedicated senior team, multi-system programs and governance for larger organizations."
+    },
+    {
+      "id": "R95",
+      "section": "1",
+      "kind": "logic",
+      "text": "The \"Enterprise\" panel has a \"Premium\" label."
+    },
+    {
+      "id": "R96",
+      "section": "1",
+      "kind": "logic",
+      "text": "The \"Enterprise\" panel has a link \"Enterprise engagements\" to /engagements#enterprise."
+    },
+    {
+      "id": "R97",
+      "section": "1",
+      "kind": "logic",
+      "text": "Home systems band has eyebrow \"WHAT WE BUILD\" and h2 \"Systems built to be observed and sustained\"."
+    },
+    {
+      "id": "R98",
+      "section": "1",
+      "kind": "ui",
+      "text": "Home systems band is navy."
+    },
+    {
+      "id": "R99",
+      "section": "1",
+      "kind": "ui",
+      "text": "Home systems band shows the architecture diagram on one side on desktop and on top on phones."
+    },
+    {
+      "id": "R100",
+      "section": "1",
+      "kind": "logic",
+      "text": "Home systems band lists \"Agentic development\" with its icon and one sentence (agents that plan, use your tools and hand off to people for approval)."
+    },
+    {
+      "id": "R101",
+      "section": "1",
+      "kind": "logic",
+      "text": "Home systems band lists \"Multi-system architecture\" with its icon and one sentence (AI that connects your CRM, ERP, data and documents instead of adding another silo)."
+    },
+    {
+      "id": "R102",
+      "section": "1",
+      "kind": "logic",
+      "text": "Home systems band lists \"Observable by design\" with its icon and one sentence (tracing, metrics, cost and evaluation dashboards from day one)."
+    },
+    {
+      "id": "R103",
+      "section": "1",
+      "kind": "logic",
+      "text": "Home systems band lists \"Sustainable to run\" with its icon and one sentence (runbooks, cost budgets, model-agnostic design and a team trained to own it)."
+    },
+    {
+      "id": "R104",
+      "section": "1",
+      "kind": "logic",
+      "text": "Home systems band ends with a link \"How we build systems\" to /systems."
+    },
+    {
+      "id": "R105",
+      "section": "1",
+      "kind": "logic",
+      "text": "Home \"AI Enablement\" pillar card has \"Learn more\" linking to /services#enablement."
+    },
+    {
+      "id": "R106",
+      "section": "1",
+      "kind": "logic",
+      "text": "Home \"Training\" pillar card has \"Learn more\" linking to /services#training."
+    },
+    {
+      "id": "R107",
+      "section": "1",
+      "kind": "logic",
+      "text": "Home \"Custom Development\" pillar card has \"Learn more\" linking to /services#custom-development."
+    },
+    {
+      "id": "R108",
+      "section": "1",
+      "kind": "ui",
+      "text": "Each pillar card has its icon tile."
+    },
+    {
+      "id": "R109",
+      "section": "1",
+      "kind": "ui",
+      "text": "Pillar cards have a photo strip on top: strategy-session for AI Enablement, team-workshop for Training, custom-development for Custom Development."
+    },
+    {
+      "id": "R110",
+      "section": "1",
+      "kind": "logic",
+      "text": "\"How we work\" shows the four numbered steps Assess, Design, Build, Enable as now."
+    },
+    {
+      "id": "R111",
+      "section": "1",
+      "kind": "ui",
+      "text": "\"How we work\" numbered step markers are joined by a line on desktop."
+    },
+    {
+      "id": "R112",
+      "section": "1",
+      "kind": "logic",
+      "text": "\"How we work\" has a fifth, wider step \"Operate & improve\" (we monitor, evaluate and improve what we built, or hand it to your team with runbooks) under the four steps."
+    },
+    {
+      "id": "R113",
+      "section": "1",
+      "kind": "logic",
+      "text": "Example engagements section has eyebrow \"EXAMPLE ENGAGEMENTS\" and h2 \"The kinds of systems we build\"."
+    },
+    {
+      "id": "R114",
+      "section": "1",
+      "kind": "logic",
+      "text": "Each of the three example engagement cards has a teal \"Illustrative example\" tag, an industry, a short system name and three lines (challenge, system, how it is observed and sustained)."
+    },
+    {
+      "id": "R115",
+      "section": "1",
+      "kind": "logic",
+      "text": "Example engagements include the note \"Illustrative example of an engagement type, not a client case study.\""
+    },
+    {
+      "id": "R116",
+      "section": "1",
+      "kind": "constraint",
+      "text": "Example engagements invent no client names, numbers, percentages or outcomes."
+    },
+    {
+      "id": "R117",
+      "section": "1",
+      "kind": "logic",
+      "text": "Professional services example \"Agentic document intake\" with the specified challenge (documents by email in many formats keyed in by hand), system (agents classify and extract into the practice-management system with a person approving anything uncertain), and observed and sustained (every document traced end to end, accuracy evaluation set, weekly review queue)."
+    },
+    {
+      "id": "R118",
+      "section": "1",
+      "kind": "logic",
+      "text": "Manufacturing example \"Connected maintenance forecasting\" with the specified challenge (sensor data, maintenance system and ERP never talk), system (forecasting pipeline joining all three and scheduling maintenance work orders), and observed and sustained (data-quality and drift monitors, retraining runbooks, an owner on the client's team)."
+    },
+    {
+      "id": "R119",
+      "section": "1",
+      "kind": "logic",
+      "text": "Retail example \"Customer service copilot\" with the specified challenge (staff search several systems per question), system (retrieval-augmented assistant over product catalog, order system and policies that drafts answers for staff), and observed and sustained (answer-quality evaluations, cost per conversation tracked, guardrails reviewed monthly)."
+    },
+    {
+      "id": "R120",
+      "section": "1",
+      "kind": "ui",
+      "text": "Home has one testimonial block on navy."
+    },
+    {
+      "id": "R121",
+      "section": "1",
+      "kind": "logic",
+      "text": "The testimonial is marked \"Placeholder testimonial: replace with a real client quote before launch.\" and attributed to \"Client name, Title, Company\"."
+    },
+    {
+      "id": "R122",
+      "section": "1",
+      "kind": "logic",
+      "text": "\"Why The Bayes Group\" keeps its four points as now."
+    },
+    {
+      "id": "R123",
+      "section": "1",
+      "kind": "ui",
+      "text": "\"Why The Bayes Group\" sits beside the about-office photo."
+    },
+    {
+      "id": "R124",
+      "section": "1",
+      "kind": "logic",
+      "text": "Home has the call-to-action band \"Ready to put AI to work?\" with the \"Book a consultation\" button."
+    },
+    {
+      "id": "R125",
+      "section": "1",
+      "kind": "ui",
+      "text": "The Home call-to-action band is on navy with the bell-curve motif."
+    },
+    {
+      "id": "R126",
+      "section": "2",
+      "kind": "logic",
+      "text": "New Systems page exists at /systems."
+    },
+    {
+      "id": "R127",
+      "section": "2",
+      "kind": "logic",
+      "text": "Systems page title is \"Systems engineering | The Bayes Group\"."
+    },
+    {
+      "id": "R128",
+      "section": "2",
+      "kind": "logic",
+      "text": "Systems page h1 is \"Systems engineering\"."
+    },
+    {
+      "id": "R129",
+      "section": "2",
+      "kind": "logic",
+      "text": "Systems page meta description is about agentic and multi-system AI that is observable and sustainable."
+    },
+    {
+      "id": "R130",
+      "section": "2",
+      "kind": "logic",
+      "text": "Systems hero has the lead sentence \"We design AI systems the way mature engineering teams build software: specific to your business, connected to the systems you already run, observable from day one and built to be maintained.\""
+    },
+    {
+      "id": "R131",
+      "section": "2",
+      "kind": "ui",
+      "text": "Systems hero is navy with the architecture diagram large beside the text on desktop and under it on phones."
+    },
+    {
+      "id": "R132",
+      "section": "2",
+      "kind": "ui",
+      "text": "Systems page's four sections alternate white and pale teal-grey backgrounds."
+    },
+    {
+      "id": "R133",
+      "section": "2",
+      "kind": "logic",
+      "text": "Each of the four Systems sections has an id, eyebrow, h2, a paragraph, a bulleted list of 4 items with icons, and a small supporting SVG illustration."
+    },
+    {
+      "id": "R134",
+      "section": "2",
+      "kind": "logic",
+      "text": "Systems section id \"agentic\" with h2 \"Agentic development\" lists: planning and tool-using agents; human approval steps for consequential actions; evaluation suites before anything ships; clear limits on what each agent may do."
+    },
+    {
+      "id": "R135",
+      "section": "2",
+      "kind": "logic",
+      "text": "Systems section id \"architecture\" with h2 \"Multi-system architecture\" lists: integration with CRM, ERP, data warehouses and document stores; event-driven and API-based designs; data contracts between systems; security reviews and least-privilege access."
+    },
+    {
+      "id": "R136",
+      "section": "2",
+      "kind": "logic",
+      "text": "Systems section id \"observability\" with h2 \"Observable by design\" lists: end-to-end tracing of every request and agent step; metrics and dashboards for quality, latency and cost; alerts when quality or data drifts; evaluation results tracked over time."
+    },
+    {
+      "id": "R137",
+      "section": "2",
+      "kind": "logic",
+      "text": "Systems section id \"sustainability\" with h2 \"Built to be sustained\" lists: runbooks and on-call guides; cost budgets and usage limits; model-agnostic design so models can be swapped; architecture decision records and handover training."
+    },
+    {
+      "id": "R138",
+      "section": "2",
+      "kind": "ui",
+      "text": "\"What every system ships with\" section is on navy."
+    },
+    {
+      "id": "R139",
+      "section": "2",
+      "kind": "logic",
+      "text": "\"What every system ships with\" shows six deliverables, each with an icon tile and a monospace name: \"Architecture diagram & decision records\", \"Evaluation suite\", \"Tracing & dashboards\", \"Runbooks\", \"Cost & usage budgets\", \"Handover training\"."
+    },
+    {
+      "id": "R140",
+      "section": "2",
+      "kind": "logic",
+      "text": "Systems page has a call-to-action band \"Have a system in mind?\" with the \"Book a consultation\" button."
+    },
+    {
+      "id": "R141",
+      "section": "3",
+      "kind": "logic",
+      "text": "New Engagements page exists at /engagements."
+    },
+    {
+      "id": "R142",
+      "section": "3",
+      "kind": "logic",
+      "text": "Engagements page title is \"Engagements | The Bayes Group\"."
+    },
+    {
+      "id": "R143",
+      "section": "3",
+      "kind": "logic",
+      "text": "Engagements page h1 is \"Engagements\"."
+    },
+    {
+      "id": "R144",
+      "section": "3",
+      "kind": "logic",
+      "text": "Engagements page has the intro sentence \"Right-sized engagements for small and medium-sized businesses, and a premium tier for enterprise.\""
+    },
+    {
+      "id": "R145",
+      "section": "3",
+      "kind": "logic",
+      "text": "Engagements shows four tier cards in order: Jumpstart, Build, Partner, Enterprise."
+    },
+    {
+      "id": "R146",
+      "section": "3",
+      "kind": "constraint",
+      "text": "No prices appear anywhere on the Engagements page."
+    },
+    {
+      "id": "R147",
+      "section": "3",
+      "kind": "logic",
+      "text": "\"Jumpstart\" tier is for small and medium-sized businesses, timeline \"2 to 4 weeks\", includes: AI readiness assessment, top three use cases prioritized, one quick-win prototype, a 90-day roadmap."
+    },
+    {
+      "id": "R148",
+      "section": "3",
+      "kind": "logic",
+      "text": "\"Build\" tier is for small and medium-sized businesses, timeline \"6 to 12 weeks\", includes: one custom AI system designed, built and deployed; integration with your existing systems; tracing and dashboards from day one; team training and runbooks."
+    },
+    {
+      "id": "R149",
+      "section": "3",
+      "kind": "logic",
+      "text": "\"Partner\" tier is for small and medium-sized businesses, timeline \"Ongoing, monthly\", includes: a senior data scientist on call; monthly improvement sprints; monitoring, evaluations and model updates; quarterly roadmap reviews."
+    },
+    {
+      "id": "R150",
+      "section": "3",
+      "kind": "logic",
+      "text": "\"Enterprise\" tier has section id \"enterprise\", a \"Premium\" label, timeline \"Custom scope\", and includes: a dedicated senior team; multi-system and agentic programs; AI governance and responsible-AI policy; security and compliance reviews; priority support."
+    },
+    {
+      "id": "R151",
+      "section": "3",
+      "kind": "ui",
+      "text": "Enterprise tier is styled as the premium tier: dark navy card, larger, with a teal outline and the enterprise-atrium photo."
+    },
+    {
+      "id": "R152",
+      "section": "3",
+      "kind": "logic",
+      "text": "Each tier card shows its name, who it is for, the timeline, and a \"What's included\" list."
+    },
+    {
+      "id": "R153",
+      "section": "3",
+      "kind": "ui",
+      "text": "\"What's included\" list items have check icons."
+    },
+    {
+      "id": "R154",
+      "section": "3",
+      "kind": "logic",
+      "text": "Jumpstart, Build and Partner cards each have a \"Book a consultation\" button linking to /contact."
+    },
+    {
+      "id": "R155",
+      "section": "3",
+      "kind": "logic",
+      "text": "Enterprise card has a \"Talk to us about enterprise\" button linking to /contact."
+    },
+    {
+      "id": "R156",
+      "section": "3",
+      "kind": "logic",
+      "text": "Below the tiers a short \"Not sure which fits?\" line has a link to /contact."
+    },
+    {
+      "id": "R157",
+      "section": "4",
+      "kind": "logic",
+      "text": "Services page h1 is \"Services\"."
+    },
+    {
+      "id": "R158",
+      "section": "4",
+      "kind": "ui",
+      "text": "Services h1 sits on a navy band with the data-grid motif."
+    },
+    {
+      "id": "R159",
+      "section": "4",
+      "kind": "logic",
+      "text": "Services has sections with ids enablement, training and custom-development in that order."
+    },
+    {
+      "id": "R160",
+      "section": "4",
+      "kind": "logic",
+      "text": "Services sections keep the same items, descriptions and \"Typical engagement\" lines as now."
+    },
+    {
+      "id": "R161",
+      "section": "4",
+      "kind": "ui",
+      "text": "Each Services section header is two columns on desktop: the photo on one side (strategy-session, team-workshop, custom-development respectively)."
+    },
+    {
+      "id": "R162",
+      "section": "4",
+      "kind": "logic",
+      "text": "Each Services section header text column holds the eyebrow, h2, a two-sentence intro paragraph and the \"Typical engagement\" line."
+    },
+    {
+      "id": "R163",
+      "section": "4",
+      "kind": "ui",
+      "text": "Every Services item has its icon tile, laid out in a two-column grid on desktop."
+    },
+    {
+      "id": "R164",
+      "section": "4",
+      "kind": "logic",
+      "text": "Custom-development section includes the item \"Agentic systems and multi-system integration\" with a link \"See how we build\" to /systems."
+    },
+    {
+      "id": "R165",
+      "section": "5",
+      "kind": "logic",
+      "text": "Training page h1 is \"Training\"."
+    },
+    {
+      "id": "R166",
+      "section": "5",
+      "kind": "logic",
+      "text": "Training keeps the same course catalog and course card content as now."
+    },
+    {
+      "id": "R167",
+      "section": "5",
+      "kind": "logic",
+      "text": "Training filter buttons are All, Executives, Managers, Technical teams."
+    },
+    {
+      "id": "R168",
+      "section": "5",
+      "kind": "logic",
+      "text": "The selected training filter button has aria-pressed set."
+    },
+    {
+      "id": "R169",
+      "section": "5",
+      "kind": "ui",
+      "text": "Training page has a team-workshop photo banner on top."
+    },
+    {
+      "id": "R170",
+      "section": "5",
+      "kind": "ui",
+      "text": "Course cards show an icon tile for each format: Half-day briefing, 1-day workshop, Multi-week bootcamp."
+    },
+    {
+      "id": "R171",
+      "section": "6",
+      "kind": "logic",
+      "text": "About page h1 is \"About\"."
+    },
+    {
+      "id": "R172",
+      "section": "6",
+      "kind": "logic",
+      "text": "About keeps the mission and \"Why Bayes\" paragraphs as now."
+    },
+    {
+      "id": "R173",
+      "section": "6",
+      "kind": "ui",
+      "text": "About mission and \"Why Bayes\" paragraphs sit beside the about-office photo."
+    },
+    {
+      "id": "R174",
+      "section": "6",
+      "kind": "logic",
+      "text": "About keeps the two founder cards with clearly marked placeholder content."
+    },
+    {
+      "id": "R175",
+      "section": "6",
+      "kind": "logic",
+      "text": "Each founder card has an inline-SVG neutral avatar silhouette marked \"Photo placeholder\"."
+    },
+    {
+      "id": "R176",
+      "section": "6",
+      "kind": "logic",
+      "text": "About shows four values: Evidence over hype; Build to transfer; Vendor-neutral; Responsible by design."
+    },
+    {
+      "id": "R177",
+      "section": "6",
+      "kind": "ui",
+      "text": "Each About value has its icon tile."
+    },
+    {
+      "id": "R178",
+      "section": "7",
+      "kind": "logic",
+      "text": "Contact page h1 is \"Book a consultation\"."
+    },
+    {
+      "id": "R179",
+      "section": "7",
+      "kind": "logic",
+      "text": "Contact page shows the email hello@thebayesgroup.com."
+    },
+    {
+      "id": "R180",
+      "section": "7",
+      "kind": "logic",
+      "text": "Contact form keeps the same fields, validation messages and success message as now."
+    },
+    {
+      "id": "R181",
+      "section": "7",
+      "kind": "ui",
+      "text": "Contact page is two columns on desktop: form card on one side, contact-meeting photo with \"What happens next\" on the other."
+    },
+    {
+      "id": "R182",
+      "section": "7",
+      "kind": "logic",
+      "text": "\"What happens next\" has three steps: We reply within one business day; A 30-minute call about your goals; A written recommendation, no obligation."
+    },
+    {
+      "id": "R183",
+      "section": "7",
+      "kind": "logic",
+      "text": "Contact form has an optional \"Company size\" select placed after Company."
+    },
+    {
+      "id": "R184",
+      "section": "7",
+      "kind": "logic",
+      "text": "\"Company size\" options are \"1-49 employees\", \"50-249 employees\", \"250-999 employees\", \"1,000+ employees\"."
+    },
+    {
+      "id": "R185",
+      "section": "8",
+      "kind": "logic",
+      "text": "Page not found has h1 \"Page not found\" and the link back to the home page."
+    },
+    {
+      "id": "R186",
+      "section": "8",
+      "kind": "ui",
+      "text": "Page not found shows a small bell-curve illustration."
+    },
+    {
+      "id": "R187",
+      "section": "general",
+      "kind": "ui",
+      "text": "Footer is navy and in columns on desktop."
+    },
+    {
+      "id": "R188",
+      "section": "general",
+      "kind": "logic",
+      "text": "Footer shows the wordmark with \"AI enablement, training and custom development.\" and the email."
+    },
+    {
+      "id": "R189",
+      "section": "general",
+      "kind": "logic",
+      "text": "Footer has a \"Services\" column with AI Enablement, Training, Custom Development, Systems engineering, Engagements."
+    },
+    {
+      "id": "R190",
+      "section": "general",
+      "kind": "logic",
+      "text": "Footer has a \"Company\" column with About, Contact."
+    },
+    {
+      "id": "R191",
+      "section": "general",
+      "kind": "logic",
+      "text": "Footer bottom line reads \"\u00a9 2026 The Bayes Group\"."
+    },
+    {
+      "id": "R192",
+      "section": "general",
+      "kind": "logic",
+      "text": "/systems is added to the prerendered pages."
+    },
+    {
+      "id": "R193",
+      "section": "general",
+      "kind": "logic",
+      "text": "/engagements is added to the prerendered pages."
+    },
+    {
+      "id": "R194",
+      "section": "general",
+      "kind": "logic",
+      "text": "public/sitemap.xml lists seven pages, including /systems and /engagements."
+    },
+    {
+      "id": "R195",
+      "section": "general",
+      "kind": "constraint",
+      "text": "DEPLOYMENT.md is updated for a static host: upload dist/ as it is; every page is its own file; unknown addresses get 404.html; images are in dist/images."
+    }
+  ],
+  "uncovered_requirements": [],
+  "weak_tests": [
+    "engagements page rendering Enterprise card is premium with the atrium photo (wrong: It requires the card to be an <article id=\"enterprise\">, but the task only asks for a section id \"enterprise\", so a correct <section> or <div> with that id would fail.)",
+    "engagements page rendering Not sure which fits? line with a link to /contact below the tiers (wrong: It depends on an article#enterprise element and on cards being <article> tags, an element choice the task does not specify.)"
+  ]
+}

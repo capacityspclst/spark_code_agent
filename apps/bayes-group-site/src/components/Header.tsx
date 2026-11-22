@@ -12,6 +12,15 @@ export default function Header() {
   const close = () => setMenuOpen(false);
   const location = useLocation();
 
+  const [scrolled, setScrolled] = React.useState(false);
+
+  React.useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 0);
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+
   React.useEffect(() => {
     setMenuOpen(false);
   }, [location.pathname]);
@@ -29,7 +38,7 @@ export default function Header() {
   }, [menuOpen]);
 
   return (
-    <header className='site-header'>
+    <header className={`site-header${scrolled ? ' is-scrolled' : ''}`}>
       <div className='container header-inner'>
         <Wordmark />
         {/* Desktop nav */}
