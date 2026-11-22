@@ -13,6 +13,12 @@ const ITEM_ICONS: Record<string, IconName[]> = {
   'custom-development': ['database', 'agent', 'chart', 'layers', 'network', 'flow'],
 };
 
+const SECTION_EYEBROWS: Record<string, string> = {
+  enablement: 'Strategy and roadmap',
+  training: 'Capability building',
+  'custom-development': 'Engineering and delivery',
+};
+
 const PHOTO_ALTS: Record<string, string> = {
   enablement: 'Colleagues in a strategy session around a table with documents and laptops',
   training: 'A facilitator leading a team workshop at a whiteboard',
@@ -60,7 +66,7 @@ export default function ServicesPage() {
                 className="service-photo"
               />
               <div className="service-head">
-                <p className="eyebrow">{section.title}</p>
+                <p className="eyebrow">{SECTION_EYEBROWS[section.id] ?? 'Services'}</p>
                 <h2>{section.title}</h2>
                 {section.intro && <p>{section.intro}</p>}
                 <p className="engagement">
