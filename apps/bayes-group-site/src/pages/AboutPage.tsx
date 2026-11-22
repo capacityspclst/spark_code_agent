@@ -30,7 +30,7 @@ export default function AboutPage() {
           <div className="about-grid founders">
             {FOUNDERS.map((f, idx) => (
               <div key={idx} className="card founder-card">
-                <span className="placeholder-tag">Placeholder</span>
+                <span className="placeholder-tag">Photo placeholder</span>
                 <h3>{f.name}</h3>
                 <p className="founder-role">{f.role}</p>
                 <ul>
