@@ -62,7 +62,7 @@ export const AUDIENCE_PANELS = [
   {
     id: 'enterprise',
     title: 'Enterprise',
-    text: 'A dedicated senior team for multi-system programs and governance. Senior experts ensure security and responsible AI.',
+    text: 'A dedicated senior team for multi-system and agentic programs across your organization. Governance, security reviews and responsible-AI policy come built in.',
     link: { label: 'Enterprise engagements', to: '/engagements#enterprise' },
     photo: 'enterprise-atrium',
     premium: true,

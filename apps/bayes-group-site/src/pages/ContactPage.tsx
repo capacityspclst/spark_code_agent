@@ -78,7 +78,6 @@ export default function ContactPage() {
             Prefer email? <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>
           </p>
         </div>
-        <Photo name="contact-meeting" alt="Consultation meeting photo" />
         <div className="card contact-form-card">
           {success && (
             <div role="status" className="success-banner" tabIndex={-1} ref={bannerRef}>
@@ -128,6 +127,15 @@ export default function ContactPage() {
             <button type="submit" className="btn btn-primary">Send message</button>
           </form>
         </div>
+        <aside className="contact-aside">
+          <Photo name="contact-meeting" alt="Two colleagues in a consultation meeting at a table" sizes="(min-width: 1024px) 40vw, 100vw" />
+          <h2>What happens next</h2>
+          <ol className="next-steps">
+            <li>We reply within one business day</li>
+            <li>A 30-minute call about your goals</li>
+            <li>A written recommendation, no obligation</li>
+          </ol>
+        </aside>
       </div>
     </div>
   );
