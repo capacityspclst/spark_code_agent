@@ -75,6 +75,7 @@ export default function HomePage() {
       {/* Who we serve panels */}
       <section className="who-serve" aria-label="Who we serve">
         <div className="container">
+          <p className="eyebrow">WHO WE SERVE</p>
           {AUDIENCE_PANELS.map((panel) => (
             <div key={panel.id} className={`panel ${panel.premium ? 'premium' : ''}`} id={panel.id}>
               <Photo name={panel.photo} alt={`Photo representing ${panel.title.toLowerCase()}`} />
@@ -113,6 +114,7 @@ export default function HomePage() {
         <div className="container pillars">
           {PILLARS.map((p, i) => (
             <div key={p.title} className="card pillar-card">
+              <Photo name={['strategy-session','team-workshop','custom-development'][i]} alt={`${p.title} illustration`} />
               <PillarIcon kind={i} />
               <h2 className="pillar-title" style={{ fontSize: 'var(--text-h3)' }}>{p.title}</h2>
               <p>{p.description}</p>
@@ -195,6 +197,7 @@ export default function HomePage() {
               </div>
             ))}
           </div>
+          <Photo name="about-office" alt="About office photo" />
         </div>
       </section>
 

@@ -17,6 +17,8 @@ import { AlertIcon, CheckIcon } from '../components/Icons';
 type FieldKey = keyof typeof ERROR_MESSAGES;
 type Errors = Partial<Record<FieldKey, string>>;
 
+import Photo from '../components/Photo';
+
 export default function ContactPage() {
   const { pathname } = useLocation();
   useDocumentTitle(pathname);
@@ -76,6 +78,7 @@ export default function ContactPage() {
             Prefer email? <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>
           </p>
         </div>
+        <Photo name="contact-meeting" alt="Consultation meeting photo" />
         <div className="card contact-form-card">
           {success && (
             <div role="status" className="success-banner" tabIndex={-1} ref={bannerRef}>

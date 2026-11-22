@@ -2,6 +2,7 @@ import * as React from 'react';
 import { useLocation } from 'react-router-dom';
 import { useDocumentTitle } from '../lib/useDocumentTitle';
 import { MISSION, WHY_BAYES, FOUNDERS, VALUES } from '../content/about';
+import Photo from '../components/Photo';
 
 export default function AboutPage() {
   const { pathname } = useLocation();
@@ -15,6 +16,7 @@ export default function AboutPage() {
       <section className="container mission" style={{ paddingBottom: 'var(--space-6)' }}>
         <p className="eyebrow">Mission</p>
         <p className="lead">{MISSION}</p>
+        <Photo name="about-office" alt="Office interior photo" />
       </section>
       <section className="section section-surface why-bayes">
         <div className="container">

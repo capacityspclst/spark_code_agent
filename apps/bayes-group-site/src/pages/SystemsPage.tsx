@@ -41,6 +41,8 @@ export default function SystemsPage() {
                 </li>
               ))}
             </ul>
+            {/* illustration placeholder */}
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" stroke="currentColor" fill="none" /></svg>
           </div>
         </section>
       ))}
@@ -52,7 +54,7 @@ export default function SystemsPage() {
           <div className="deliverable-grid">
             {DELIVERABLES.map((name) => (
               <div key={name} className="card deliverable-card">
-                <svg width="24" height="24" aria-hidden="true"><circle cx="12" cy="12" r="10" stroke="currentColor" fill="none" /></svg>
+                <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" stroke="currentColor" fill="none" /></svg>
                 <span className="monospace">{name}</span>
               </div>
             ))}

@@ -41,7 +41,11 @@ export function buildPageHtml(template: string, url: string): string {
 
   // Insert rendered content into #root
   const rendered = render(url);
-  html = html.replace('<div id="root"></div>', `<div id="root">${rendered}</div>`);
+  // Remove any <title> elements inside SVGs to avoid duplicate <title> tags in the document head.
+  const sanitized = rendered.replace(/<svg[^>]*>[\s\S]*?<\/svg>/g, (svg) =>
+    svg.replace(/<title[^>]*>.*?<\/title>/gi, ''),
+  );
+  html = html.replace('<div id="root"></div>', `<div id="root">${sanitized}</div>`);
 
   return html;
 }

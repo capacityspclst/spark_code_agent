@@ -1,4 +1,5 @@
 import * as React from 'react';
+import Photo from '../components/Photo';
 import { useLocation } from 'react-router-dom';
 import { useDocumentTitle } from '../lib/useDocumentTitle';
 import { COURSES, filterCourses, COURSE_FILTERS, AUDIENCES } from '../content/courses';
@@ -17,6 +18,8 @@ export default function TrainingPage() {
         <h1>Training</h1>
         <p className="lead">Practical courses that build lasting AI capability, from the boardroom to the engineering team.</p>
       </div>
+      {/* Banner photo */}
+      <Photo name="team-workshop" alt="Training workshop photo" />
       <div className="container section" style={{ paddingTop: 'var(--space-4)' }}>
         <div className="filter-bar" role="group" aria-label="Filter courses by audience">
           {COURSE_FILTERS.map((f) => (
