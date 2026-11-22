@@ -1,50 +1,41 @@
 import * as React from 'react';
 
-/** Simple background motif components (inline SVG) */
+/** Background motif components (inline SVG, decorative). */
 
-// Bell curve motif – subtle background pattern
+// Overlapping bell curves, stroked in light teal at low opacity.
 export function BellCurveMotif({ className }: { className?: string }) {
   return (
     <svg
       className={className}
-      viewBox="0 0 200 100"
+      viewBox="0 0 1200 400"
+      preserveAspectRatio="xMidYMax slice"
       aria-hidden="true"
       focusable="false"
+      fill="none"
+      stroke="#5FC4C4"
+      strokeWidth="2"
     >
-      {/* Two overlapping bell curves */}
-      <path
-        d="M0 80 C30 30, 70 30, 100 80 S170 130, 200 80"
-        fill="none"
-        stroke="var(--color-accent-light)"
-        strokeWidth="8"
-        opacity="0.12"
-      />
-      <path
-        d="M0 85 C40 35, 80 35, 120 85 S180 135, 200 85"
-        fill="none"
-        stroke="var(--color-accent-light)"
-        strokeWidth="5"
-        opacity="0.08"
-      />
+      <path d="M-50 380 C150 380 250 60 450 60 S750 380 950 380" opacity="0.12" />
+      <path d="M100 380 C300 380 400 100 600 100 S900 380 1100 380" opacity="0.12" />
+      <path d="M300 380 C500 380 600 20 800 20 S1100 380 1300 380" opacity="0.12" />
+      <path d="M-200 380 C0 380 100 140 300 140 S600 380 800 380" opacity="0.12" />
+      <path d="M0 380H1200" opacity="0.12" />
     </svg>
   );
 }
 
-// Data-grid motif – fine grid pattern
+// Fine data-grid pattern.
 export function DataGridMotif({ className }: { className?: string }) {
+  const id = `grid-${React.useId().replace(/[^a-zA-Z0-9]/g, '')}`;
   return (
-    <svg
-      className={className}
-      viewBox="0 0 100 100"
-      aria-hidden="true"
-      focusable="false"
-    >
+    <svg className={className} width="100%" height="100%" aria-hidden="true" focusable="false">
       <defs>
-        <pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse">
-          <path d="M10 0 L0 0 0 10" fill="none" stroke="var(--color-accent-light)" strokeWidth="0.5" opacity="0.2" />
+        <pattern id={id} width="32" height="32" patternUnits="userSpaceOnUse">
+          <path d="M32 0H0V32" fill="none" stroke="#5FC4C4" strokeWidth="1" opacity="0.12" />
+          <circle cx="0" cy="0" r="1.5" fill="#5FC4C4" opacity="0.12" />
         </pattern>
       </defs>
-      <rect width="100%" height="100%" fill="url(#grid)" />
+      <rect width="100%" height="100%" fill={`url(#${id})`} />
     </svg>
   );
 }
@@ -57,14 +48,13 @@ export function BellCurveIllustration({ className }: { className?: string }) {
       viewBox="0 0 300 150"
       aria-hidden="true"
       focusable="false"
+      fill="none"
+      strokeLinecap="round"
     >
-      <path
-        d="M0 120 C50 20, 100 20, 150 120 S250 220, 300 120"
-        fill="none"
-        stroke="var(--color-accent-light)"
-        strokeWidth="6"
-        opacity="0.15"
-      />
+      <path d="M10 130H290" stroke="#B8C4D6" strokeWidth="2" />
+      <path d="M10 130 C70 130 100 20 150 20 S230 130 290 130" stroke="#1F8A8A" strokeWidth="4" />
+      <path d="M40 130 C90 130 120 55 165 55 S240 130 280 130" stroke="#5FC4C4" strokeWidth="3" />
+      <path d="M150 20V130" stroke="#1F8A8A" strokeWidth="2" strokeDasharray="4 6" />
     </svg>
   );
 }

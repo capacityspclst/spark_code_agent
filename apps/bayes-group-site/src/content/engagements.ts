@@ -46,7 +46,7 @@ export const TIERS = [
   {
     id: 'enterprise',
     name: 'Enterprise',
-    audience: 'For small and medium-sized businesses',
+    audience: 'For enterprise organizations',
     timeline: 'Custom scope',
     included: [
       'A dedicated senior team',

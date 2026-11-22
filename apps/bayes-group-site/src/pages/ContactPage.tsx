@@ -69,6 +69,7 @@ export default function ContactPage() {
   return (
     <div className="contact-page">
       <div className="container page-head">
+        <p className="eyebrow">Contact</p>
         <h1>Book a consultation</h1>
       </div>
       <div className="container contact-grid">
@@ -129,6 +130,7 @@ export default function ContactPage() {
         </div>
         <aside className="contact-aside">
           <Photo name="contact-meeting" alt="Two colleagues in a consultation meeting at a table" sizes="(min-width: 1024px) 40vw, 100vw" />
+          <p className="eyebrow">Next steps</p>
           <h2>What happens next</h2>
           <ol className="next-steps">
             <li>We reply within one business day</li>

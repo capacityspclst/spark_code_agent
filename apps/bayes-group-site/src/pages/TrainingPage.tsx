@@ -1,8 +1,16 @@
 import * as React from 'react';
 import Photo from '../components/Photo';
+import { IconTile } from '../components/Icons';
+import type { IconName } from '../components/Icons';
 import { useLocation } from 'react-router-dom';
 import { useDocumentTitle } from '../lib/useDocumentTitle';
 import { COURSES, filterCourses, COURSE_FILTERS, AUDIENCES } from '../content/courses';
+
+const FORMAT_ICONS: Record<string, IconName> = {
+  'Half-day briefing': 'briefcase',
+  '1-day workshop': 'users',
+  'Multi-week bootcamp': 'code',
+};
 
 export default function TrainingPage() {
   const { pathname } = useLocation();
@@ -14,13 +22,16 @@ export default function TrainingPage() {
 
   return (
     <div className="training-page">
-      <div className="container page-head">
-        <h1>Training</h1>
-        <p className="lead">Practical courses that build lasting AI capability, from the boardroom to the engineering team.</p>
-      </div>
-      {/* Banner photo */}
-      <Photo name="team-workshop" alt="Training workshop photo" />
-      <div className="container section" style={{ paddingTop: 'var(--space-4)' }}>
+      <section className="training-banner">
+        <Photo name="team-workshop" alt="A facilitator leading a team workshop at a whiteboard" sizes="100vw" className="banner-photo" />
+        <div className="hero-overlay" aria-hidden="true" />
+        <div className="container banner-text">
+          <p className="eyebrow">Courses</p>
+          <h1>Training</h1>
+          <p className="lead">Practical courses that build lasting AI capability, from the boardroom to the engineering team.</p>
+        </div>
+      </section>
+      <div className="container section">
         <div className="filter-bar" role="group" aria-label="Filter courses by audience">
           {COURSE_FILTERS.map((f) => (
             <button
@@ -50,6 +61,7 @@ export default function TrainingPage() {
         <div className="course-grid">
           {filtered.map((c) => (
             <div key={c.id} className="card course-card">
+              <IconTile name={FORMAT_ICONS[c.format]} />
               <div className="course-header">
                 <span className="audience-chip">{c.audience}</span>
                 <span className="format">{c.format}</span>
