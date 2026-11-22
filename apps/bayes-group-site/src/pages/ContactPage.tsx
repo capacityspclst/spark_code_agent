@@ -12,6 +12,7 @@ import {
   COMPANY_SIZE_OPTIONS,
 } from '../lib/contactForm';
 import { CONTACT_EMAIL } from '../content/site';
+import { DataGridMotif } from '../components/Motifs';
 import { AlertIcon, CheckIcon } from '../components/Icons';
 
 type FieldKey = keyof typeof ERROR_MESSAGES;
@@ -140,5 +141,7 @@ export default function ContactPage() {
             <li>A written recommendation, no obligation</li>
           </ol>
         </aside>
-      </div>  );
+      </div>
+    </div>
+  );
 }
