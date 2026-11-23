@@ -1,5 +1,7 @@
 # DESIGN.md: The Bayes Group marketing site (prerendered static)
 
+> **Scope of the current change:** documentation only. `DEPLOYMENT.md` is updated so that it matches the seven-page site described below. No UI, copy, token, component or route changes. Every screen, state and acceptance test stays exactly as specified here.
+
 ## Users and goal
 **Users:** owners, operations leaders and technical managers at small and medium-sized businesses (first), plus enterprise leaders buying a premium program. They arrive from referrals, search or shared links, often on a phone, and they distrust AI hype.
 
@@ -20,7 +22,22 @@
 The header holds all six links and the CTA on every page. The footer's Services and Company columns also reach every page, so no page is a dead end.
 
 ## Screens and states
-The site is static: no data loading, no network, no spinners. React hydrates the prerendered HTML. Long words and the email use `overflow-wrap:anywhere`. Photos reserve their space with width/height (no layout shift). Under a broken image the alt text shows on the navy fallback background `#0B1F3A`.
+The site is static: no data loading, no network, no spinners. React hydrates the prerendered HTML. Long words and the email use `overflow-wrap:anywhere`. Photos reserve their space with width/height (no layout shift). If an image fails to load, its alt text shows on the navy fallback background `#0B1F3A`.
+
+**Pages and built files** (what `npm run build` writes; `DEPLOYMENT.md` lists exactly these)
+
+| Path | Prerendered file |
+|---|---|
+| / | dist/index.html |
+| /services | dist/services/index.html |
+| /systems | dist/systems/index.html |
+| /training | dist/training/index.html |
+| /engagements | dist/engagements/index.html |
+| /about | dist/about/index.html |
+| /contact | dist/contact/index.html |
+| any unknown address | dist/404.html (status 404, "Page not found") |
+
+`sitemap.xml` lists the seven pages at https://thebayesgroup.com. `robots.txt`, `favicon.svg` and `dist/images/` (the site's photos) are copied from `public/`.
 
 **Page metadata.** Each page has one title, a description, og:title, og:description, og:url, og:type, a canonical link and the favicon.
 
@@ -54,7 +71,7 @@ The site is static: no data loading, no network, no spinners. React hydrates the
 The last heading in main is the CTA h2. The last link in main is **Book a consultation**.
 
 **Systems**
-1. Navy hero: text (eyebrow, h1, lead) and the architecture diagram, side by side on desktop, stacked text-then-diagram on phones and tablets
+1. Navy hero: text (eyebrow, h1, lead) and the architecture diagram. They sit side by side on desktop and stack text-then-diagram on phones and tablets.
 2. `#agentic` [white]
 3. `#architecture` [pale]
 4. `#observability` [white]
@@ -71,9 +88,15 @@ The last heading in main is the CTA h2. The last link in main is **Book a consul
 - Navy page header band with the data-grid motif.
 - Three sections [white, pale, white], each with a two-column header and a grid of item cards.
 
-**Training:** photo banner, then filter and grid. Default count "Showing 6 courses". Filtered count, e.g. "Showing 2 courses for Managers". Empty: "No courses for this audience yet." with **Show all courses**.
+**Training:** photo banner, then filter and grid.
+- Default count: "Showing 6 courses".
+- Filtered count, for example: "Showing 2 courses for Managers".
+- Empty: "No courses for this audience yet." with **Show all courses**.
 
-**About:** mission beside the photo, two founder cards (amber **Placeholder** tag, avatar marked "Photo placeholder", note "Placeholder: replace with founder credentials and bio."), and four value cards.
+**About:** mission beside the photo, two founder cards and four value cards. Each founder card has:
+- an amber **Placeholder** tag;
+- an avatar marked "Photo placeholder";
+- the note "Placeholder: replace with founder credentials and bio."
 
 **Contact (in order)**
 1. Navy page header band [navy + data-grid motif]: eyebrow "CONTACT", h1 "Book a consultation", the lead and the "Prefer email?" mailto line. No form in the band.
@@ -81,7 +104,7 @@ The last heading in main is the CTA h2. The last link in main is **Book a consul
 
 Form states:
 - Default: empty fields, with the "Required" tag on Name, Email and Message.
-- Error: on blur and on submit; focus moves to the first invalid field. Messages: "Please enter your name." / "Please enter a valid email address." / "Please enter a message."
+- Error: shown on blur and on submit; focus moves to the first invalid field. Messages: "Please enter your name." / "Please enter a valid email address." / "Please enter a message."
 - Success: green status banner, focused, form cleared.
 - Loading: none. The button is never disabled.
 - Company size never errors.
@@ -101,23 +124,23 @@ Form states:
 - Credibility strip: a 2×2 grid inside a white card, margin-top −48px.
 - Who we serve: panels stacked, SMB first.
 - Systems band: diagram on top (the stacked variant), capabilities below.
-- Systems hero: `.systems-hero__grid` is one column, 32px gap: text first, diagram below (phone svg).
+- Systems hero: `.systems-hero__grid` is one column with a 32px gap: text first, diagram below (phone svg).
 - How we work: steps stacked, no connecting line.
 - Two-column blocks stack photo-first.
-- Contact: navy header band, then form, then the "What happens next" photo card.
-- Footer: the three groups stack (brand, Services, Company), 32px gap, then the hairline and copyright.
+- Contact: navy header band, then the form, then the "What happens next" photo card.
+- Footer: the three groups stack (brand, Services, Company) with a 32px gap, then the hairline and copyright.
 
-**Desktop (1280–1440px)**, 12-column grid with 32px gutters:
+**Desktop (1280–1440px):** 12-column grid with 32px gutters.
 - Hero: min-height 680px. Text spans columns 1–7. The overlay is a left→right gradient.
 - Credibility strip: 4 columns in one bar, 24px padding.
 - Who we serve: SMB panel 7 columns, Enterprise panel 5 columns, equal height.
-- Systems band: diagram 7 columns, capabilities 5 columns, stacked as 4 rows.
-- Systems hero (≥1024px): `.systems-hero__grid { grid-template-columns: minmax(0,2fr) minmax(0,3fr); align-items:center; gap:48px }`. Text column (eyebrow, h1, lead) left, about 40%; diagram right, vertically centered. The base rule has no multi-column template.
+- Systems band: diagram 7 columns; capabilities 5 columns, stacked as 4 rows.
+- Systems hero (≥1024px): `.systems-hero__grid { grid-template-columns: minmax(0,2fr) minmax(0,3fr); align-items:center; gap:48px }`. Text column (eyebrow, h1, lead) on the left, about 40%; diagram on the right, vertically centered. The base rule has no multi-column template.
 - Pillars: 3 columns. Examples: 3 columns.
-- Steps: a 4-column `ol`; a 2px `#1F8A8A` line behind the 48px circles at `top:24px; left:12.5%; right:12.5%`. "Operate & improve" sits below as a full-width card, 32px margin-top.
-- Why: photo 5 columns, a 2×2 points grid in 7 columns.
+- Steps: a 4-column `ol`. A 2px `#1F8A8A` line runs behind the 48px circles at `top:24px; left:12.5%; right:12.5%`. "Operate & improve" sits below as a full-width card, 32px margin-top.
+- Why: photo 5 columns; a 2×2 points grid in 7 columns.
 - Systems sections: text 7 columns, illustration 5 columns (sides alternate). Deliverables: 3×2 grid.
-- Engagements: business tiers in 3 columns; Enterprise full width as 2 columns (photo 5 | content 7).
+- Engagements: business tiers in 3 columns. Enterprise is full width as 2 columns (photo 5 | content 7).
 - Services headers: photo 5 columns | text 7 columns. Items: a 2-column grid.
 - Page header bands (Services, Systems-style inner pages, Training, Engagements, About, Contact): text block max-width 760px, left-aligned in the container.
 - Contact: form 7 columns | aside 5 columns, in the section below the band.
@@ -126,7 +149,7 @@ Form states:
 **No empty half-columns:** every text column beside a photo holds an eyebrow, an h2, a paragraph and a list, link or meta line, vertically centered.
 
 ## Design tokens
-**Approach:** plain CSS. Tokens live in `src/styles/theme.css` and are mirrored in `src/theme/tokens.ts`; component classes live in `global.css`. Fonts are system fonts only. There is no dark theme.
+**Approach:** plain CSS. Tokens live in `src/styles/theme.css` and are mirrored in `src/theme/tokens.ts`. Component classes live in `global.css`. Fonts are system fonts only. There is no dark theme.
 
 ```css
 :root {
@@ -212,84 +235,122 @@ Form states:
 ## Components
 **General**
 - Every touch target is at least 44×44px.
-- Focus-visible: `--focus-ring` with a 2px offset; `#5FC4C4` on navy.
+- Focus-visible: `--focus-ring` with a 2px offset; the ring is `#5FC4C4` on navy.
 - Transitions are 200ms ease-out.
-- Sections fade and slide up 16px once on entering view (IntersectionObserver in an effect; the content is visible without JS).
+- Sections fade in and slide up 16px once when they enter the view. This uses an IntersectionObserver in an effect, and the content is visible without JS.
 - `prefers-reduced-motion: reduce` removes all transitions, animations and transforms, and smooth scroll.
 
 **Header**
-- Sticky, 72px. Wordmark; links Services, Systems, Training, Engagements, About, Contact (15px, 600); **Book a consultation** (44px tall).
+- Sticky, 72px tall. It holds the wordmark; the links Services, Systems, Training, Engagements, About and Contact (15px, 600); and **Book a consultation** (44px tall).
 - Current link: `aria-current="page"` plus a 2px teal underline.
-- Below 1024px: the **Menu** button (`aria-expanded`, `aria-controls="mobile-nav"`). Its panel holds 48px links plus a full-width CTA, and closes on a link click, on Escape and on a second press of Menu.
+- Below 1024px: the **Menu** button (`aria-expanded`, `aria-controls="mobile-nav"`). Its panel holds 48px links plus a full-width CTA. The panel closes on a link click, on Escape and on a second press of Menu.
 
 **Page header band** (shared by Services, Training, Engagements, About and Contact; same classes everywhere)
-- First section in main. `--color-navy` background, the data-grid motif as an `aria-hidden` svg, padding 64px (phone) / 96px (desktop) plus header offset.
-- Content: `.eyebrow` (`#5FC4C4`, uppercase), h1 white at `--text-h1`, lead `#B8C4D6` at `--text-lead`, 16px below the h1.
-- Contact adds a second line, 12px below the lead: "Prefer email?" in `#B8C4D6` followed by `<a href="mailto:hello@thebayesgroup.com">` in `#5FC4C4`, underlined, hover white, `overflow-wrap:anywhere`.
+- First section in main. `--color-navy` background, with the data-grid motif as an `aria-hidden` svg. Padding 64px (phone) / 96px (desktop), plus the header offset.
+- Content: `.eyebrow` (`#5FC4C4`, uppercase), h1 white at `--text-h1`, and the lead in `#B8C4D6` at `--text-lead`, 16px below the h1.
+- Contact adds a second line, 12px below the lead: "Prefer email?" in `#B8C4D6`, followed by `<a href="mailto:hello@thebayesgroup.com">`. The link is `#5FC4C4`, underlined, white on hover, with `overflow-wrap:anywhere`.
 
 **Systems hero**
-- Navy, same padding as the band. One `.systems-hero__grid` with exactly two children: `.systems-hero__text` (eyebrow, h1, lead `<p>`) first in the DOM, then `.systems-hero__diagram` holding `<ArchitectureDiagram>` with its current variant. Diagram unchanged.
+- Navy, with the same padding as the band.
+- One `.systems-hero__grid` with exactly two children:
+  - `.systems-hero__text` (eyebrow, h1, lead `<p>`), first in the DOM;
+  - `.systems-hero__diagram`, holding `<ArchitectureDiagram>` with its current variant.
+- The diagram is unchanged.
 
 **Button**
 - 48px tall, 0 24px padding, radius 6px, sans 600 at 16px.
 - Primary: `#17696A`, hover `#115455`, active translateY(1px).
 - Secondary: white with a 1.5px navy border.
-- On dark: primary is white with navy text; secondary has a 1.5px white border.
+- On dark: the primary is white with navy text; the secondary has a 1.5px white border.
 - Disabled styling exists but is never used on submit. There is no loading state (static site).
 
 **Eyebrow (`.eyebrow`):** mono, 13px, uppercase, 600. It is the first child of every section header.
 
 **Icon (`Icons.tsx`):** 24px grid, 1.75px stroke, round caps, `currentColor`, `aria-hidden`, `focusable="false"`.
 
-**Icon tile (`.icon-tile`):** 44×44, radius 10px, `#E6F2F2`, holds a 24px `#17696A` icon, 16px margin below.
+**Icon tile (`.icon-tile`):** 44×44, radius 10px, `#E6F2F2`. Holds a 24px `#17696A` icon, with 16px margin below.
 
 **Card**
-- White, 1px `#E3E8EF`, radius 12px, padding 24px (32px desktop), `--shadow-card`.
+- White, 1px `#E3E8EF` border, radius 12px, padding 24px (32px desktop), `--shadow-card`.
 - Hover (linked cards): translateY(−2px) plus `--shadow-card-hover`.
 - Dark card: `#102A4C` with a 1px `rgba(95,196,196,.25)` border.
 
-**Photo (`Photo.tsx`):** srcset 768w/1344w, sizes per slot (hero `100vw`; half-width slots `(min-width:1024px) 50vw, 100vw`), width 1344, height 768, `decoding="async"`, lazy except the hero, `object-fit:cover`, radius 12px except the hero. Photo strips on pillar cards are 180px tall.
+**Photo (`Photo.tsx`)**
+- srcset 768w/1344w, with `sizes` per slot: hero `100vw`; half-width slots `(min-width:1024px) 50vw, 100vw`.
+- width 1344, height 768, `decoding="async"`, lazy loading except the hero.
+- `object-fit:cover`, radius 12px except the hero.
+- Photo strips on pillar cards are 180px tall.
 
 **Credibility strip:** white card, radius 12px, `--shadow-card-hover`. Each point is an icon tile plus a 16px/600 navy label.
 
 **Audience panel:** a photo on top (240px) and a body padded 32px. The SMB panel is white. The Enterprise panel is `#071528` with the `#5FC4C4` **Premium** pill (12px mono, 4px 10px padding) and its link in `#5FC4C4`.
 
 **ArchitectureDiagram** (unchanged)
-- Light and dark variants. Desktop svg `viewBox="0 0 960 600"`: "Your systems" (y 24, 4 boxes); "Agent orchestration" (y 200, x 0–620, 3 boxes); right stack (x 660–960) "Models (vendor-neutral)" and "Guardrails & evaluations"; "Observability" full width (y 440, 4 boxes).
-- Boxes radius 8; labels mono 15px; group labels 13px uppercase. Solid 2px teal arrows top→middle, a double-ended arrow orchestration↔Models; dashed `4 4` 1.5px lines from every box to Observability.
-- Phone svg `viewBox="0 0 340 820"`, stacked, labels 13px, below 768px; desktop svg at 768px and up; the inactive one is `display:none`.
-- Each svg has `role="img"` and `aria-labelledby` its own `<title>` and `<desc>` (useId).
+- Light and dark variants.
+- Desktop svg `viewBox="0 0 960 600"`:
+  - "Your systems" (y 24, 4 boxes);
+  - "Agent orchestration" (y 200, x 0–620, 3 boxes);
+  - a right stack (x 660–960) with "Models (vendor-neutral)" and "Guardrails & evaluations";
+  - "Observability" full width (y 440, 4 boxes).
+- Boxes have radius 8. Labels are mono 15px; group labels are 13px uppercase.
+- Lines: solid 2px teal arrows from top to middle; a double-ended arrow between orchestration and Models; dashed `4 4` 1.5px lines from every box to Observability.
+- Phone svg `viewBox="0 0 340 820"`, stacked, labels 13px, used below 768px. The desktop svg is used at 768px and up. The inactive one is `display:none`.
+- Each svg has `role="img"` and `aria-labelledby` pointing to its own `<title>` and `<desc>` (useId).
 
-**Steps:** an `ol` of 48px `#17696A` circles with white serif numerals, an h3 title and one sentence. "Operate & improve" is a card with an infinity icon tile.
+**Steps:** an `ol` of 48px `#17696A` circles with white serif numerals, each with an h3 title and one sentence. "Operate & improve" is a card with an infinity icon tile.
 
-**Example card:** the "Illustrative example" tag, a mono industry line, an h3 system name, and a `dl` with Challenge / System / Observed and sustained (labels 13px mono uppercase). The section note sits below the grid, 14px muted.
+**Example card:** the "Illustrative example" tag, a mono industry line, an h3 system name, and a `dl` with Challenge / System / Observed and sustained (labels 13px mono uppercase). The section note sits below the grid in 14px muted text.
 
-**Testimonial:** a `figure` with a 64px teal-light quote mark, a 24px serif `blockquote` and a `figcaption`. The placeholder note sits above, 14px `#B8C4D6`.
+**Testimonial:** a `figure` with a 64px teal-light quote mark, a 24px serif `blockquote` and a `figcaption`. The placeholder note sits above it in 14px `#B8C4D6`.
 
-**Tier card:** an h2 name, audience, a clock icon with the timeline, the h3 "What's included", check-icon list items and a full-width button. Enterprise: `#071528` background, 2px `#5FC4C4` outline, radius 16px, the photo, and the Premium pill.
+**Tier card:** an h2 name, the audience, a clock icon with the timeline, the h3 "What's included", check-icon list items and a full-width button. Enterprise: `#071528` background, 2px `#5FC4C4` outline, radius 16px, the photo and the Premium pill.
 
-**Filter button, course card, form field, alert banner:** as now (pills 44px; `.form-control` 48px with a 1.5px `#7A8699` border; error `<p id="{field}-error">` linked by `aria-describedby`; selects with a chevron). Course cards have a format icon tile.
+**Filter button, course card, form field, alert banner:** as now.
+- Filter pills are 44px.
+- `.form-control` is 48px with a 1.5px `#7A8699` border.
+- Each error is a `<p id="{field}-error">` linked by `aria-describedby`.
+- Selects have a chevron.
+- Course cards have a format icon tile.
 
-**Avatar placeholder:** an 80px circle `#E6EBF1` with a `#556275` silhouette, `role="img" aria-label="Photo placeholder"`, and visible "Photo placeholder" text.
+**Avatar placeholder:** an 80px `#E6EBF1` circle with a `#556275` silhouette, `role="img" aria-label="Photo placeholder"`, and visible "Photo placeholder" text.
 
 **Footer**
 - `#071528`, padding 64/80px, bell-curve motif at 8% opacity.
-- `.footer-grid` has exactly three children: (1) brand group: wordmark, the line, the mailto link; (2) Services group: h2 "Services" + links; (3) Company group: h2 "Company" + links. If `<nav aria-label="Footer">` wraps groups 2 and 3, it uses `display: contents` so the grid sees three tracks.
-- Headings 13px mono uppercase `#5FC4C4`; links 15px white, 32px tall (44px hit area via padding).
-- Copyright row below a 1px `rgba(255,255,255,.12)` hairline, 32px above, outside the grid.
+- `.footer-grid` has exactly three children:
+  1. brand group: wordmark, the line, the mailto link;
+  2. Services group: h2 "Services" and its links;
+  3. Company group: h2 "Company" and its links.
+- If `<nav aria-label="Footer">` wraps groups 2 and 3, it uses `display: contents` so the grid still sees three tracks.
+- Headings are 13px mono uppercase `#5FC4C4`. Links are 15px white, 32px tall, with a 44px hit area via padding.
+- The copyright row sits outside the grid, below a 1px `rgba(255,255,255,.12)` hairline with 32px above it.
 
 ## Accessibility
 - **Landmarks:** the skip link "Skip to main content", then `<header>`, `<nav aria-label="Main">`, `<main id="main" tabIndex=-1>`, `<footer>` and `<nav aria-label="Footer">`.
-- **Headings:** one h1 per page, in order h1→h2→h3 with no skipped levels. On Contact the h1 is in the band; the form section's headings follow as h2. Footer headings are only "Services" and "Company", h2 styled at 13px.
-- **Labels:** every control has a `<label for>`. Required fields carry `required`, `aria-required` and the visible "Required" text. The form uses `noValidate`. The Menu button has a text label.
-- **Images:** descriptive alt on every photo (e.g. "Business owner reviewing figures on a laptop in a workshop"). Photos are never presented as the firm's team or clients. Motifs and icons are `aria-hidden`. Diagrams use title and desc.
+- **Headings:**
+  - One h1 per page, in order h1→h2→h3 with no skipped levels.
+  - On Contact the h1 is in the band; the form section's headings follow as h2.
+  - The only footer headings are "Services" and "Company", as h2 styled at 13px.
+- **Labels:**
+  - Every control has a `<label for>`.
+  - Required fields carry `required`, `aria-required` and the visible "Required" text.
+  - The form uses `noValidate`.
+  - The Menu button has a text label.
+- **Images:**
+  - Every photo has descriptive alt text (e.g. "Business owner reviewing figures on a laptop in a workshop").
+  - Photos are never presented as the firm's team or clients.
+  - Motifs and icons are `aria-hidden`. Diagrams use title and desc.
 - **Keyboard:**
   - Tab order follows the visual order (Systems hero: text, then diagram; footer: brand email, Services links, Company links).
   - Escape closes the Menu and returns focus to the toggle.
   - After a route change, focus moves to main.
   - Hash links land below the header.
 - **Status:** the filter count and the success banner use `role="status"`.
-- **Not color alone:** the selected filter has a check icon; errors have an icon and text; the current nav link and on-navy links are underlined; Premium and Placeholder are text labels; dashed versus solid lines are explained in the diagram desc.
+- **Not color alone:**
+  - The selected filter has a check icon.
+  - Errors have an icon and text.
+  - The current nav link and on-navy links are underlined.
+  - Premium and Placeholder are text labels.
+  - The diagram desc explains dashed versus solid lines.
 - **Hydration:** the server and client render the same markup. Window is read only in effects.
 - **Language:** `<html lang="en">`.
 
@@ -317,23 +378,23 @@ Form states:
 - "HOW WE WORK" / "How we work". Operate & improve: "We monitor, evaluate and improve what we built, or hand it to your team with runbooks."
 - Example engagements: as now.
 - "TESTIMONIAL" / "What clients say", with the placeholder note and the attribution "Client name, Title, Company".
-- "WHY US" / "Why The Bayes Group", points as now.
+- "WHY US" / "Why The Bayes Group", with the points as now.
 - "GET STARTED" / CTA band as now.
 
-**Systems:** the hero eyebrow, h1, lead and the four sections' items and deliverables as now. CTA: "Have a system in mind?" with "Tell us what it needs to connect to. We'll reply within one business day." and **Book a consultation**.
+**Systems:** the hero eyebrow, h1 and lead, and the four sections' items and deliverables, stay as now. CTA: "Have a system in mind?" with "Tell us what it needs to connect to. We'll reply within one business day." and **Book a consultation**.
 
 **Engagements:** h1, intro, tier names, timelines and items as now. Buttons: **Book a consultation** and **Talk to us about enterprise**. Closing line: "Not sure which fits? **Talk to us**".
 
 **Services:** the custom-development item "Agentic systems and multi-system integration" with **See how we build**. Engagement lines stay as now.
 
 **Contact**
-- Band eyebrow: "Contact" (rendered uppercase "CONTACT").
+- Band eyebrow: "Contact" (rendered uppercase as "CONTACT").
 - h1: "Book a consultation".
 - Lead: "Tell us what you're working on and we'll reply within one business day."
 - Email line: "Prefer email? hello@thebayesgroup.com" (the address is the mailto link).
-- Field label "Company size", first option "Choose a size", then the four size options.
+- Field label "Company size": first option "Choose a size", then the four size options.
 - "What happens next": "We reply within one business day", "A 30-minute call about your goals", "A written recommendation, no obligation".
-- Button **Send message**; success "Thanks, we'll be in touch within one business day."; all other copy as now.
+- Button **Send message**. Success: "Thanks, we'll be in touch within one business day." All other copy as now.
 
 **Footer**
 - Brand: wordmark, "AI enablement, training and custom development.", hello@thebayesgroup.com.
