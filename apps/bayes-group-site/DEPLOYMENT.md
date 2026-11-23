@@ -5,7 +5,9 @@
 
 - `dist/index.html` (/)
 - `dist/services/index.html`
+- `dist/systems/index.html`
 - `dist/training/index.html`
+- `dist/engagements/index.html`
 - `dist/about/index.html`
 - `dist/contact/index.html`
 - `dist/404.html`
@@ -26,7 +28,7 @@ error_page 404 /404.html;
 To check a deployment, open `/services` (200, its own title) and an unknown address such as `/no-such-page` (status 404 showing "Page not found").
 
 ## SEO files
-`dist/` also contains `robots.txt` (allows everything and points to the sitemap), `sitemap.xml` (the five pages at https://thebayesgroup.com) and `favicon.svg` (linked from every page). They are copied from `public/`.
+`dist/` also contains `robots.txt` (allows everything and points to the sitemap), `sitemap.xml` (lists the seven pages at https://thebayesgroup.com: `/`, `/services`, `/systems`, `/training`, `/engagements`, `/about`, `/contact`), `favicon.svg` (linked from every page), and `dist/images/` (holds the site's photos). All of these are copied from `public/`.
 
 ## Security headers
 Set these headers on the host:
