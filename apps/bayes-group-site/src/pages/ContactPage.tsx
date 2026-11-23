@@ -69,11 +69,18 @@ export default function ContactPage() {
     if (Object.keys(validation).length > 0) {
       setSuccess(false);
       setShowSummary(true);
+      const firstInvalid = (['name', 'email', 'message'] as FieldKey[]).find((k) => validation[k]);
       setTimeout(() => {
-        const banner = summaryRef.current;
-        if (!banner) return;
-        banner.focus({ preventScroll: true });
-        banner.scrollIntoView?.({ block: 'start' });
+        const input = firstInvalid ? (document.getElementById(firstInvalid) as HTMLElement | null) : null;
+        if (!input) {
+          const banner = summaryRef.current;
+          banner?.focus({ preventScroll: true });
+          banner?.scrollIntoView?.({ block: 'start' });
+          return;
+        }
+        const wrapper = (input.closest('.field') as HTMLElement | null) || input;
+        input.focus({ preventScroll: true });
+        wrapper.scrollIntoView?.({ block: 'start' });
       }, 0);
       void form;
       return;
