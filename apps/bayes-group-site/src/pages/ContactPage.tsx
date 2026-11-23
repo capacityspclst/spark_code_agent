@@ -94,6 +94,12 @@ export default function ContactPage() {
         const wrapper = (input.closest('.field') as HTMLElement | null) || input;
         input.focus({ preventScroll: true });
         scrollBelowHeader(wrapper);
+        // The error summary and messages may still be laying out: scroll again once painted.
+        if (typeof window.requestAnimationFrame === 'function') {
+          window.requestAnimationFrame(() => {
+            window.requestAnimationFrame(() => scrollBelowHeader(wrapper));
+          });
+        }
       }, 0);
       void form;
       return;
