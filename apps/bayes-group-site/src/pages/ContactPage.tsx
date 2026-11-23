@@ -100,6 +100,8 @@ export default function ContactPage() {
             window.requestAnimationFrame(() => scrollBelowHeader(wrapper));
           });
         }
+        window.setTimeout(() => scrollBelowHeader(wrapper), 150);
+        window.setTimeout(() => scrollBelowHeader(wrapper), 400);
       }, 0);
       void form;
       return;
