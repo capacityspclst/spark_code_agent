@@ -1,5 +1,638 @@
 {
-  "verdict": "n/a",
-  "findings": [],
-  "summary": "Lean mode: the validators check the UI (render, styles, accessibility, the whole UI flow); no vision review or polish phase."
+  "verdict": "fail",
+  "summary": "This change only touches documentation. DEPLOYMENT.md now lists exactly the eight prerendered HTML files the build writes, including dist/systems/index.html and dist/engagements/index.html. It names the seven sitemap pages, mentions dist/images/ copied from public/, and leaves the Security headers section unchanged. The built dist/sitemap.xml contains all seven URLs, so the docs and the output agree.\n\nThe headless audits are clean on phone and desktop:\n- axe reports no violations.\n- Lighthouse scores 100 for accessibility and best practices, and 93 for performance.\n- There is no horizontal overflow and no console errors.\n- The primary flow (Home \u2192 Book a consultation \u2192 Contact errors \u2192 success) passed at both viewports, along with the Systems, Engagements, Services, Training, About and 404 screens.\n\nThe only UI gap the audits show is four class names in the rendered markup that no CSS rule matches. I can't confirm from the files provided whether these are intentional hooks or dead styling. Nothing here breaks the primary flow or the required states.",
+  "findings": [
+    {
+      "severity": "high",
+      "source": "polish-target",
+      "requirement": "U1",
+      "screen": "",
+      "issue": "phase-2 fix U1: Form fields and labels when focused or scrolled to (sticky header overlap): After Send message, focus jumps to the first invalid field (Name), but its label and most of the input sit under the sticky header. Only the bottom edge of the focus ring is visible, so users cannot see which field failed. Expected after the fix: In the shared form-field component, scroll the field group's wrapper (label + input), not the bare input. Set scroll-margin-top to header height + 24px (72+24 = 96px on phone and desktop) on the wrapper and on all inputs, selects and textareas. Then call focus({preventScroll:t",
+      "fix": ""
+    },
+    {
+      "severity": "high",
+      "source": "polish-target",
+      "requirement": "U2",
+      "screen": "",
+      "issue": "phase-2 fix U2: Select fields (What can we help with?, Company size): The native chevron sits flush against the right border on phone and desktop, and the selects look different from the text inputs. Expected after the fix: In the shared select style, set appearance:none and padding-right:48px. Add a custom chevron icon (20px, onSurfaceVariant) positioned 16px from the right edge and vertically centered. Keep the same height, radius and outline token as the text inputs.",
+      "fix": ""
+    },
+    {
+      "severity": "high",
+      "source": "polish-target",
+      "requirement": "U3",
+      "screen": "contact form with errors",
+      "issue": "phase-2 fix U3: Form top: missing error summary: With three errors spread down a long form, the phone view gives no overview, and the Message error sits off-screen. Expected after the fix: Above the first field, add an error banner: errorContainer background, onErrorContainer text, 16px padding, 8px radius, 24px bottom margin. Text: 'Please fix 3 fields:' followed by in-page links to each invalid field. Move focus to this banner on a failed submit, instead of to the Name input.",
+      "fix": ""
+    },
+    {
+      "severity": "high",
+      "source": "polish-target",
+      "requirement": "U4",
+      "screen": "contact form with errors",
+      "issue": "phase-2 fix U4: Desktop 'What happens next' aside: The aside scrolls away with the page, leaving the right column empty beside the long form. The reassurance content disappears exactly when errors appear. Expected after the fix: Make the aside column position:sticky with top:96px (header 72 + 24) and align-self:start, so it stays visible beside the form while the user scrolls. Desktop only; keep the stacked layout on phone.",
+      "fix": ""
+    },
+    {
+      "severity": "high",
+      "source": "polish-target",
+      "requirement": "U5",
+      "screen": "",
+      "issue": "phase-2 fix U5: 'Required' pill badges on labels: The outlined pills on Email and Message are visually heavy, and on desktop they look like tiny buttons next to 16px labels. Expected after the fix: In the shared label component, replace the outlined pill with inline text '(required)' in labelMedium, onSurfaceVariant color, 8px left margin, no border.",
+      "fix": ""
+    },
+    {
+      "severity": "low",
+      "file": "src/pages/HomePage.tsx",
+      "issue": "Three Home class names match no CSS rule (style audit 'unmatched'): `home-page`, `examples` and `why-text`. The spec requires the Why text column beside the photo to be vertically centered. If `why-text` was meant to carry that alignment or the 7-column span, it currently does nothing. The audit screenshots suggest a parent rule handles the layout, but the class is dead either way.",
+      "fix": "Either give these classes the intended rules in global.css or remove them from the markup. For example, `.why-text { align-self:center }` if centering relies on it, and `.examples` for the pale section spacing. This keeps 'every class has CSS' true.",
+      "source": "designer",
+      "note": true
+    },
+    {
+      "severity": "low",
+      "file": "src/components/ArchitectureDiagram.tsx",
+      "issue": "The dark variant applies class `arch-dark`, but no CSS rule targets it. The dark diagram colours (navy-raised boxes, #5FC4C4 group labels, teal strokes) are therefore probably set inline or via attributes, and the class is unused. That splits the styling source of truth from the token-driven CSS.",
+      "fix": "Move the dark-variant fills, strokes and label colours into `.arch-dark \u2026` rules using the tokens (`--color-navy-raised`, `--color-accent-light`, `--color-accent`). Alternatively, drop the unused class.",
+      "source": "designer",
+      "note": true
+    },
+    {
+      "severity": "low",
+      "file": "dist/sitemap.xml",
+      "issue": "The sitemap lists /systems and /engagements after /contact. That order differs from the header navigation and from the page order in DESIGN.md and DEPLOYMENT.md (Services, Systems, Training, Engagements, About, Contact). It is still valid, but readers comparing the files will find it inconsistent.",
+      "fix": "Reorder public/sitemap.xml to match the documented page order.",
+      "source": "designer",
+      "note": true
+    },
+    {
+      "severity": "low",
+      "viewport": "desktop",
+      "issue": "The 'FOR GROWING TEAMS' and 'FOR LARGE ORGANIZATIONS' section headers are misaligned with the content blocks below them. The 'FOR GROWING TEAMS' header is left-aligned while the 'FOR LARGE ORGANIZATIONS' header is centered, creating visual inconsistency.",
+      "fix": "Align both section headers consistently (e.g., left-align both or center both) to maintain visual harmony.",
+      "screen": "home hero and credibility strip",
+      "source": "vision",
+      "note": true
+    },
+    {
+      "severity": "low",
+      "viewport": "desktop",
+      "issue": "The 'Enterprise' section has a dark blue background with white text, but the text is not fully aligned with the top of the container. The 'PREMIUM' badge is also slightly misaligned with the text below it.",
+      "fix": "Adjust the padding and alignment of the 'Enterprise' section to ensure all text elements are vertically aligned and the badge is properly positioned.",
+      "screen": "home hero and credibility strip",
+      "source": "vision",
+      "note": true
+    },
+    {
+      "severity": "low",
+      "viewport": "phone",
+      "issue": "The 'WHO WE SERVE' section header is positioned too low on the screen, causing the content below to feel disconnected from the header. This creates a visual break in the flow.",
+      "fix": "Increase the vertical spacing between the 'WHO WE SERVE' header and the content below to improve visual continuity.",
+      "screen": "home hero and credibility strip",
+      "source": "vision",
+      "note": true
+    },
+    {
+      "severity": "low",
+      "viewport": "both",
+      "issue": "The icons in the credibility strip are not consistently sized or spaced. The spacing between the icons and text is inconsistent, which affects the visual harmony of the section.",
+      "fix": "Standardize the icon size and spacing between icons and text to create a more cohesive and professional appearance.",
+      "screen": "home hero and credibility strip",
+      "source": "vision",
+      "note": true
+    },
+    {
+      "severity": "low",
+      "screen": "home hero and credibility strip",
+      "source": "vision",
+      "issue": "visual quality 7/10 on 'home hero and credibility strip' (target 8+, minimum 7): The design is clean and professional, with clear visual hierarchy and consistent typography. It effectively communicates the brand's value proposition and targets the intended audience. However, there are minor inconsistencies in spacing, alignment, and visual hierarchy that prevent it from being truly polished.",
+      "fix": "Address this screen's findings until it looks polished and professional.",
+      "note": true
+    },
+    {
+      "severity": "low",
+      "viewport": "phone",
+      "issue": "The 'Book a consultation' button in the hero section is slightly smaller than the 'See how we build' button, creating a subtle visual imbalance.",
+      "fix": "Ensure both buttons have identical height and padding for visual parity.",
+      "screen": "home who we serve panels",
+      "source": "vision",
+      "note": true
+    },
+    {
+      "severity": "low",
+      "viewport": "desktop",
+      "issue": "The 'Premium' badge in the enterprise section is slightly misaligned with the text below it.",
+      "fix": "Adjust the badge's vertical alignment to sit flush with the text baseline.",
+      "screen": "home who we serve panels",
+      "source": "vision",
+      "note": true
+    },
+    {
+      "severity": "low",
+      "viewport": "desktop",
+      "issue": "Slight misalignment in the 'How we work' step labels; the text 'Assess', 'Design', 'Build', 'Enable' is not perfectly centered under their numbered circles.",
+      "fix": "Adjust the text alignment to be centered under each numbered circle for consistency.",
+      "screen": "home pillar cards and how we work steps",
+      "source": "vision",
+      "note": true
+    },
+    {
+      "severity": "low",
+      "viewport": "desktop",
+      "issue": "The 'How we work' section has inconsistent vertical spacing between the step circles and their descriptions; the spacing between steps 1-2 and 2-3 is slightly different than between 3-4.",
+      "fix": "Standardize the vertical spacing between all step elements for a more uniform rhythm.",
+      "screen": "home pillar cards and how we work steps",
+      "source": "vision",
+      "note": true
+    },
+    {
+      "severity": "low",
+      "viewport": "phone",
+      "issue": "The 'WHY US' section's heading 'Why The Bayes Group' is too large and lacks a proper typographic scale; the sub-headings and body text are not clearly differentiated in size or weight.",
+      "fix": "Implement a proper type scale: use a large, bold heading for the main title, a smaller but still prominent subheading for 'WHY US', and a clear body text size for the descriptions.",
+      "screen": "home testimonial why us and cta band",
+      "source": "vision",
+      "note": true
+    },
+    {
+      "severity": "low",
+      "viewport": "phone",
+      "issue": "The 'WHY US' cards are vertically stacked with inconsistent spacing between them and the image above. The spacing between the image and the cards is too tight for a phone layout.",
+      "fix": "Apply consistent vertical rhythm: increase spacing between the image and the cards, and between each card to improve readability and visual breathing room.",
+      "screen": "home testimonial why us and cta band",
+      "source": "vision",
+      "note": true
+    },
+    {
+      "severity": "low",
+      "viewport": "phone",
+      "issue": "The 'NEXT STEP' CTA at the bottom is not touch-friendly; it's too narrow and lacks sufficient padding around the text, making it hard to tap accurately on a phone.",
+      "fix": "Increase the button width to at least 80% of the screen width, add padding around the text, and ensure it's large enough to be easily tapped.",
+      "screen": "home testimonial why us and cta band",
+      "source": "vision",
+      "note": true
+    },
+    {
+      "severity": "low",
+      "viewport": "desktop",
+      "issue": "The 'WHY US' cards are not properly aligned with the image; the text blocks are misaligned to the left, creating an unbalanced layout.",
+      "fix": "Center-align the text blocks relative to the image or use a grid system to ensure consistent alignment across all cards and the image.",
+      "screen": "home testimonial why us and cta band",
+      "source": "vision",
+      "note": true
+    },
+    {
+      "severity": "low",
+      "viewport": "both",
+      "issue": "The placeholder text 'Placeholder quote for testimonial.' and 'Client name, Title, Company' are visible in both views, which is acceptable for pre-launch but should be replaced with real content before release.",
+      "fix": "Replace placeholder text with real client testimonials before launch.",
+      "screen": "home testimonial why us and cta band",
+      "source": "vision",
+      "note": true
+    },
+    {
+      "severity": "low",
+      "screen": "home testimonial why us and cta band",
+      "source": "vision",
+      "issue": "visual quality 7/10 on 'home testimonial why us and cta band' (target 8+, minimum 7): The design is clean and professional, with strong visual hierarchy and consistent branding. The layout is well-structured for both phone and desktop, with clear grouping and readable typography. However, it lacks polish in key areas like typography scale, spacing consistency, and form design, which prevent it from being truly exceptional.",
+      "fix": "Address this screen's findings until it looks polished and professional.",
+      "note": true
+    },
+    {
+      "severity": "low",
+      "viewport": "both",
+      "issue": "The 'WHY US' section heading is styled as a small uppercase heading but is not visually weighted as a primary section title (e.g., no bolding or larger size compared to the main heading).",
+      "fix": "Apply a stronger visual hierarchy to the 'WHY US' heading, such as bolding or increasing its font size slightly to match the main heading's prominence.",
+      "screen": "footer columns",
+      "source": "vision",
+      "note": true
+    },
+    {
+      "severity": "low",
+      "viewport": "desktop",
+      "issue": "The four feature cards are arranged in a 2x2 grid, but the text alignment and spacing between the cards are not perfectly consistent, especially in the vertical spacing between the second and third card.",
+      "fix": "Adjust vertical spacing between the cards to ensure uniform spacing, and ensure all card elements (icons, titles, descriptions) are aligned consistently.",
+      "screen": "footer columns",
+      "source": "vision",
+      "note": true
+    },
+    {
+      "severity": "low",
+      "viewport": "phone",
+      "issue": "The image on the left in the 'WHY US' section is slightly misaligned vertically with the text content, appearing to sit slightly lower than the text block.",
+      "fix": "Adjust the image's vertical alignment to match the top of the text block or use a consistent baseline alignment for the image and text.",
+      "screen": "footer columns",
+      "source": "vision",
+      "note": true
+    },
+    {
+      "severity": "low",
+      "screen": "footer columns",
+      "source": "vision",
+      "issue": "visual quality 7/10 on 'footer columns' (target 8+, minimum 7): The screen is visually clean and well-structured for a professional services site, with clear typography and consistent spacing. It meets the core requirements for a polished product, though it lacks some advanced polish like subtle animations or refined micro-interactions that would push it to 8 or 9. The desktop layout is appropriately spacious and well-balanced.",
+      "fix": "Address this screen's findings until it looks polished and professional.",
+      "note": true
+    },
+    {
+      "severity": "low",
+      "viewport": "phone",
+      "issue": "The 'Required' badges are small and may be hard to read on smaller screens.",
+      "fix": "Increase the size of the 'Required' badges and ensure sufficient contrast against the background.",
+      "screen": "contact navy page header band with eyebrow h1 lead and email",
+      "source": "vision",
+      "note": true
+    },
+    {
+      "severity": "low",
+      "viewport": "desktop",
+      "issue": "The 'What happens next' section is visually separated but lacks a clear call to action or next step indicator.",
+      "fix": "Add a subtle visual cue or button (e.g., 'Continue' or 'Learn more') to guide users to the next step.",
+      "screen": "contact navy page header band with eyebrow h1 lead and email",
+      "source": "vision",
+      "note": true
+    },
+    {
+      "severity": "low",
+      "viewport": "phone",
+      "issue": "The 'Send message' button is slightly too tall for touch targets on a phone, though still usable.",
+      "fix": "Reduce button height slightly or increase padding to ensure it meets standard touch target guidelines (44px minimum).",
+      "screen": "contact form empty",
+      "source": "vision",
+      "note": true
+    },
+    {
+      "severity": "low",
+      "viewport": "phone",
+      "issue": "The form field labels are slightly too close to the input fields, reducing perceived padding and visual breathing room.",
+      "fix": "Increase vertical spacing between labels and inputs to create more comfortable spacing.",
+      "screen": "contact form empty",
+      "source": "vision",
+      "note": true
+    },
+    {
+      "severity": "low",
+      "viewport": "desktop",
+      "issue": "The 'What happens next' section has a small amount of whitespace above the image, which could be better aligned with the form's top margin.",
+      "fix": "Adjust spacing to ensure consistent vertical rhythm between the form and the next steps section.",
+      "screen": "contact form empty",
+      "source": "vision",
+      "note": true
+    },
+    {
+      "severity": "low",
+      "viewport": "phone",
+      "issue": "Form fields are misaligned and cramped, with inconsistent spacing between labels and inputs. The 'Email' field is visually broken by an error message that overlaps the field border.",
+      "fix": "Realign all form fields to a consistent grid. Increase vertical spacing between fields and ensure error messages are positioned above or to the side of the field without overlapping.",
+      "screen": "contact form with errors",
+      "source": "vision",
+      "note": true
+    },
+    {
+      "severity": "low",
+      "viewport": "phone",
+      "issue": "The 'Send message' button is cut off at the bottom, indicating it's not fully visible or touch-friendly.",
+      "fix": "Ensure the button is fully visible and has adequate height and padding for touch targets.",
+      "screen": "contact form with errors",
+      "source": "vision",
+      "note": true
+    },
+    {
+      "severity": "low",
+      "viewport": "phone",
+      "issue": "Typography lacks a clear type scale. Field labels are inconsistent in size and weight compared to the error messages and button.",
+      "fix": "Establish a type scale: use a larger, bold font for field labels, a smaller font for error messages, and a consistent size for the button. Ensure all text is readable at 390x844.",
+      "screen": "contact form with errors",
+      "source": "vision",
+      "note": true
+    },
+    {
+      "severity": "low",
+      "viewport": "phone",
+      "issue": "Error messages are not grouped with their respective fields. The 'Please enter your name.' error appears above the 'Email' field, which is misleading.",
+      "fix": "Place each error message directly below its corresponding field and ensure it's visually linked to the field (e.g., using the same color or icon).",
+      "screen": "contact form with errors",
+      "source": "vision",
+      "note": true
+    },
+    {
+      "severity": "low",
+      "viewport": "desktop",
+      "issue": "The desktop layout is underutilized. The form occupies only the left side, leaving a large empty space on the right that could be used for context or guidance.",
+      "fix": "Use the right column to display the 'What happens next' section as a visual guide, aligning it with the form to create a balanced, professional layout.",
+      "screen": "contact form with errors",
+      "source": "vision",
+      "note": true
+    },
+    {
+      "severity": "low",
+      "viewport": "both",
+      "issue": "The 'Required' badge is not consistently styled or positioned. It appears in a small, unstyled pill on the 'Email' and 'Message' fields, but not on others.",
+      "fix": "Apply a consistent design to the 'Required' badge across all fields, including size, color, and placement (e.g., to the right of the label).",
+      "screen": "contact form with errors",
+      "source": "vision",
+      "note": true
+    },
+    {
+      "severity": "low",
+      "screen": "contact form with errors",
+      "source": "vision",
+      "issue": "visual quality 6/10 on 'contact form with errors' (target 8+, minimum 7): The contact form is functional but lacks polish. It has clear error states and a primary action, but typography is inconsistent, spacing is cramped, and the desktop layout is underutilized. The form fields are misaligned and lack visual hierarchy, making it feel unprofessional for a premium service.",
+      "fix": "Address this screen's findings until it looks polished and professional.",
+      "note": true
+    },
+    {
+      "severity": "low",
+      "viewport": "phone",
+      "issue": "Form fields are too close to the top and bottom edges, creating a cramped feel. The 'Message' field has insufficient vertical space above and below its error message.",
+      "fix": "Add padding at the top and bottom of the form container. Increase spacing between the message field and its error message to improve readability and reduce visual crowding.",
+      "screen": "contact field focused teal border",
+      "source": "vision",
+      "note": true
+    },
+    {
+      "severity": "low",
+      "viewport": "desktop",
+      "issue": "The form is left-aligned and lacks horizontal breathing room. The 'What happens next' sidebar is visually disconnected from the form, creating an unbalanced layout.",
+      "fix": "Apply consistent horizontal padding to the form container. Add spacing between the form and the sidebar to visually separate them and improve the layout's balance.",
+      "screen": "contact field focused teal border",
+      "source": "vision",
+      "note": true
+    },
+    {
+      "severity": "low",
+      "viewport": "both",
+      "issue": "The 'Required' badges are small and positioned inconsistently relative to the field labels. The error icon is small and lacks visual weight.",
+      "fix": "Increase the size of the 'Required' badges and align them consistently with the labels. Use a larger, more prominent error icon with sufficient padding to draw attention to the error state.",
+      "screen": "contact field focused teal border",
+      "source": "vision",
+      "note": true
+    },
+    {
+      "severity": "low",
+      "viewport": "phone",
+      "issue": "The 'Send message' button is visually heavy but lacks sufficient padding or visual hierarchy to stand out as the primary action.",
+      "fix": "Add subtle shadow or rounded corners to the button to make it feel more tactile. Increase the padding within the button to improve touch targets.",
+      "screen": "contact field focused teal border",
+      "source": "vision",
+      "note": true
+    },
+    {
+      "severity": "low",
+      "screen": "contact field focused teal border",
+      "source": "vision",
+      "issue": "visual quality 7/10 on 'contact field focused teal border' (target 8+, minimum 7): The contact form is visually clean and functional, with consistent typography and spacing. It clearly prioritizes the 'Send message' action and uses appropriate error states. However, it lacks polish in spacing, alignment, and visual hierarchy, and the desktop layout feels cramped and unbalanced.",
+      "fix": "Address this screen's findings until it looks polished and professional.",
+      "note": true
+    },
+    {
+      "severity": "low",
+      "viewport": "phone",
+      "issue": "Form fields are cramped vertically, with insufficient spacing between sections and labels, making it feel dense and hard to scan.",
+      "fix": "Increase vertical spacing between form sections and fields. Use a consistent 16px+ padding and 24px+ spacing between groups.",
+      "screen": "contact form filled in",
+      "source": "vision",
+      "note": true
+    },
+    {
+      "severity": "low",
+      "viewport": "phone",
+      "issue": "The 'Send message' button is too small for touch, and the form is not properly centered or padded within its container, leading to awkward alignment.",
+      "fix": "Increase button size to at least 48px height, add padding around the form container, and center-align the form vertically within the viewport.",
+      "screen": "contact form filled in",
+      "source": "vision",
+      "note": true
+    },
+    {
+      "severity": "low",
+      "viewport": "phone",
+      "issue": "Typography lacks a clear scale: labels and field text are similar in size, and there's no visual hierarchy to distinguish required fields or section headers.",
+      "fix": "Use a larger font size for section headers (e.g., 18px bold), medium for labels (14px), and smaller for placeholder text (12px). Add bold to required indicators.",
+      "screen": "contact form filled in",
+      "source": "vision",
+      "note": true
+    },
+    {
+      "severity": "low",
+      "viewport": "desktop",
+      "issue": "The 'What happens next' sidebar is visually disconnected from the form, and the form fields are not properly aligned with the sidebar's top edge, creating an inconsistent layout.",
+      "fix": "Align the form fields to the left edge of the container, and align the sidebar to the right edge. Ensure both sections share the same top margin and vertical rhythm.",
+      "screen": "contact form filled in",
+      "source": "vision",
+      "note": true
+    },
+    {
+      "severity": "low",
+      "viewport": "desktop",
+      "issue": "The 'What happens next' section lacks a clear visual hierarchy, with no visual separation from the form or clear heading styling.",
+      "fix": "Add a subtle border or background color to the sidebar, and use a larger font size for the heading with a bold weight to make it stand out.",
+      "screen": "contact form filled in",
+      "source": "vision",
+      "note": true
+    },
+    {
+      "severity": "low",
+      "viewport": "phone",
+      "issue": "The 'Required' badge is too small and not visually distinct, making it hard to identify required fields at a glance.",
+      "fix": "Increase the size of the 'Required' badge to 12px, use bold text, and add a subtle border or background color to make it pop.",
+      "screen": "contact form filled in",
+      "source": "vision",
+      "note": true
+    },
+    {
+      "severity": "low",
+      "screen": "contact form filled in",
+      "source": "vision",
+      "issue": "visual quality 7/10 on 'contact form filled in' (target 8+, minimum 7): The contact form is clean and functional, with consistent branding and clear visual hierarchy. It meets basic usability standards for both phone and desktop, but lacks polish in typography, spacing, and visual hierarchy that would elevate it to a premium product. The desktop layout is notably better organized than the phone version, which feels cramped and misaligned.",
+      "fix": "Address this screen's findings until it looks polished and professional.",
+      "note": true
+    },
+    {
+      "severity": "low",
+      "viewport": "phone",
+      "issue": "Form fields are too close to the top and bottom edges, creating cramped vertical spacing that feels unpolished.",
+      "fix": "Add consistent padding above and below the form, and ensure sufficient margin from the screen edges for a more balanced, professional look.",
+      "screen": "contact success",
+      "source": "vision",
+      "note": true
+    },
+    {
+      "severity": "low",
+      "viewport": "phone",
+      "issue": "The 'Required' badges are too small and lack visual weight relative to the form labels, making them easy to miss.",
+      "fix": "Increase badge size and use a bolder or contrasting color to make required fields more prominent.",
+      "screen": "contact success",
+      "source": "vision",
+      "note": true
+    },
+    {
+      "severity": "low",
+      "viewport": "desktop",
+      "issue": "The desktop layout stretches the phone view horizontally without proper scaling or reflow, making the form appear narrow and cramped on the left.",
+      "fix": "Reflow the layout to use the full desktop width, with the form on the left and the 'What happens next' section properly aligned to the right, using a consistent grid.",
+      "screen": "contact success",
+      "source": "vision",
+      "note": true
+    },
+    {
+      "severity": "low",
+      "viewport": "desktop",
+      "issue": "The 'What happens next' section is visually disconnected from the form, lacking a clear visual grouping or separator.",
+      "fix": "Add a subtle divider or visual cue (like a border or background shade) to clearly separate the form from the next steps section.",
+      "screen": "contact success",
+      "source": "vision",
+      "note": true
+    },
+    {
+      "severity": "low",
+      "viewport": "both",
+      "issue": "The 'Thanks' banner is centered but lacks a clear visual hierarchy or emphasis to guide the user's eye to the primary action (next steps).",
+      "fix": "Add a subtle animation or visual weight (e.g., a slight drop shadow or border) to the banner to make it stand out more.",
+      "screen": "contact success",
+      "source": "vision",
+      "note": true
+    },
+    {
+      "severity": "low",
+      "viewport": "phone",
+      "issue": "The form field inputs are not touch-friendly; they are too close to the edges and lack sufficient padding for finger-tap accuracy.",
+      "fix": "Increase padding inside input fields and ensure sufficient margin from the screen edges to make them easier to tap on a phone.",
+      "screen": "contact success",
+      "source": "vision",
+      "note": true
+    },
+    {
+      "severity": "low",
+      "screen": "contact success",
+      "source": "vision",
+      "issue": "visual quality 7/10 on 'contact success' (target 8+, minimum 7): The contact success screen is clean and functional, with good visual hierarchy and consistent spacing. It meets basic usability standards but lacks polish in typography, spacing, and visual guidance for the desktop layout, which feels like a stretched phone view. The primary action is clear, but the empty state guidance is minimal and doesn't fully align with the brand's promise of a seamless, professional experience.",
+      "fix": "Address this screen's findings until it looks polished and professional.",
+      "note": true
+    },
+    {
+      "severity": "low",
+      "viewport": "phone",
+      "issue": "Minor spacing inconsistency: the 'What's included' section text is slightly misaligned vertically relative to the card edges in the 'Jumpstart' card.",
+      "fix": "Adjust vertical alignment of 'What's included' text to match card margins for uniformity.",
+      "screen": "engagements tiers",
+      "source": "vision",
+      "note": true
+    }
+  ],
+  "lighthouse": [
+    {
+      "accessibility": 100,
+      "bestPractices": 100,
+      "performance": 93
+    }
+  ],
+  "vision_scores": [
+    {
+      "screen": "home",
+      "score": 8.0,
+      "summary": "Polished, professional design with strong visual hierarchy and clear primary action. Typography is well-scaled and readable. Spacing and alignment are consistent on both phone and desktop. Color use is intentional with good contrast. Form elements are well-designed with labels above fields. Navigation is intuitive with clear paths. Empty states are not shown here. Desktop layout uses space effectively without stretching phone content. Touch targets are appropriately sized on phone. No browser defaults or layout issues visible."
+    },
+    {
+      "screen": "home hero and credibility strip",
+      "score": 7.0,
+      "summary": "The design is clean and professional, with clear visual hierarchy and consistent typography. It effectively communicates the brand's value proposition and targets the intended audience. However, there are minor inconsistencies in spacing, alignment, and visual hierarchy that prevent it from being truly polished."
+    },
+    {
+      "screen": "home who we serve panels",
+      "score": 8.0,
+      "summary": "Polished, modern, and professional. Strong visual hierarchy, consistent spacing, and clear primary actions. Typography is readable and well-scaled. Desktop layout is spacious and intentional. Touch targets are appropriate for phone. No obvious bugs or unstyled elements."
+    },
+    {
+      "screen": "home systems band with architecture diagram",
+      "score": 8.0,
+      "summary": "Polished, modern design with strong visual hierarchy and clear primary action. Typography is well-scaled and readable. Spacing and alignment are consistent on both phone and desktop. Grouping is effective with clear sections. Color use is intentional and high contrast. Form design is clean, though no forms are present here. Navigation is clear with consistent CTA placement. Empty states are not applicable. Desktop layout uses space effectively without stretching. Touch targets are appropriate. No unstyled browser defaults or layout issues visible."
+    },
+    {
+      "screen": "home pillar cards and how we work steps",
+      "score": 8.0,
+      "summary": "Polished, modern design with clear visual hierarchy and consistent spacing. The desktop layout is spacious and well-structured, while the phone version is touch-friendly and maintains the same visual language. Minor spacing and alignment inconsistencies on desktop are the only notable issues."
+    },
+    {
+      "screen": "home example engagements",
+      "score": 8.0,
+      "summary": "Polished, modern, and highly professional. Visual hierarchy is clear, typography is well-structured, spacing and alignment are consistent, and the layout adapts well to both phone and desktop. The design feels premium and would not look out of place among well-reviewed commercial apps."
+    },
+    {
+      "screen": "home testimonial why us and cta band",
+      "score": 7.0,
+      "summary": "The design is clean and professional, with strong visual hierarchy and consistent branding. The layout is well-structured for both phone and desktop, with clear grouping and readable typography. However, it lacks polish in key areas like typography scale, spacing consistency, and form design, which prevent it from being truly exceptional."
+    },
+    {
+      "screen": "footer three groups brand services company without extra column",
+      "score": 8.0,
+      "summary": "Polished, modern, and professional. The design is clean, well-structured, and responsive. Visual hierarchy is clear with a strong primary action. Typography is readable with a consistent scale. Spacing and alignment are precise on both phone and desktop. The footer is well-organized with clear grouping. Color use is intentional and contrast is sufficient. All elements are touch-friendly on phone and properly spaced on desktop. No browser defaults or layout issues."
+    },
+    {
+      "screen": "footer columns",
+      "score": 7.0,
+      "summary": "The screen is visually clean and well-structured for a professional services site, with clear typography and consistent spacing. It meets the core requirements for a polished product, though it lacks some advanced polish like subtle animations or refined micro-interactions that would push it to 8 or 9. The desktop layout is appropriately spacious and well-balanced."
+    },
+    {
+      "screen": "contact navy page header band with eyebrow h1 lead and email",
+      "score": 8.0,
+      "summary": "Polished, modern contact page with clear visual hierarchy and strong typography. Desktop version effectively uses space with a balanced layout. Form is well-structured with clear labels and required indicators. No critical issues found."
+    },
+    {
+      "screen": "contact form empty",
+      "score": 8.0,
+      "summary": "Polished, modern contact form with clear visual hierarchy and consistent spacing. Strong primary action button and well-structured empty state guide user. Desktop layout is spacious and balanced. Minor spacing tweaks could elevate it to exceptional."
+    },
+    {
+      "screen": "contact form with errors",
+      "score": 6.0,
+      "summary": "The contact form is functional but lacks polish. It has clear error states and a primary action, but typography is inconsistent, spacing is cramped, and the desktop layout is underutilized. The form fields are misaligned and lack visual hierarchy, making it feel unprofessional for a premium service."
+    },
+    {
+      "screen": "contact field focused teal border",
+      "score": 7.0,
+      "summary": "The contact form is visually clean and functional, with consistent typography and spacing. It clearly prioritizes the 'Send message' action and uses appropriate error states. However, it lacks polish in spacing, alignment, and visual hierarchy, and the desktop layout feels cramped and unbalanced."
+    },
+    {
+      "screen": "contact form filled in",
+      "score": 7.0,
+      "summary": "The contact form is clean and functional, with consistent branding and clear visual hierarchy. It meets basic usability standards for both phone and desktop, but lacks polish in typography, spacing, and visual hierarchy that would elevate it to a premium product. The desktop layout is notably better organized than the phone version, which feels cramped and misaligned."
+    },
+    {
+      "screen": "contact success",
+      "score": 7.0,
+      "summary": "The contact success screen is clean and functional, with good visual hierarchy and consistent spacing. It meets basic usability standards but lacks polish in typography, spacing, and visual guidance for the desktop layout, which feels like a stretched phone view. The primary action is clear, but the empty state guidance is minimal and doesn't fully align with the brand's promise of a seamless, professional experience."
+    },
+    {
+      "screen": "systems hero with architecture diagram",
+      "score": 8.0,
+      "summary": "Polished, modern, and highly professional. Visual hierarchy is clear with strong primary action. Typography is well-scaled and readable. Spacing, alignment, and grouping are consistent. Color use is intentional and high-contrast. Form design is clean and touch-friendly. Navigation is intuitive. Empty states are not visible here. Desktop layout is spacious and well-proportioned. No browser defaults or layout issues."
+    },
+    {
+      "screen": "systems hero text left diagram right vertically centered on desktop, diagram below text on phones",
+      "score": 8.0,
+      "summary": "Polished, modern, and highly usable interface that meets professional standards. Strong visual hierarchy, consistent typography and spacing, and clear navigation. The desktop layout is spacious and well-organized, while the phone version is touch-friendly and vertically centered. No critical flaws found."
+    },
+    {
+      "screen": "systems sections",
+      "score": 9.0,
+      "summary": "A polished, professional marketing site with strong visual hierarchy, consistent typography, balanced spacing, and clear navigation. The desktop layout is spacious and well-organized, while the mobile version is touch-friendly and maintains key content. No critical issues found."
+    },
+    {
+      "screen": "systems deliverables and cta",
+      "score": 8.0,
+      "summary": "Polished, modern design with strong visual hierarchy and clear primary action. Typography is well-scaled and readable. Spacing and alignment are consistent on both phone and desktop. Color use is intentional and high contrast. Form elements are well-designed with labels above fields. Navigation is intuitive. Empty states are not shown but the layout guides next steps. Desktop layout uses space effectively without stretching or hugging edges. Touch targets are appropriately sized on phone. No unstyled browser defaults or layout issues visible."
+    },
+    {
+      "screen": "engagements tiers",
+      "score": 8.0,
+      "summary": "Polished, modern design with clear visual hierarchy and consistent spacing. Strong typography and color contrast. Desktop layout is spacious and well-organized. Touch targets are appropriately sized. No major usability issues. Minor spacing inconsistencies in the phone view could be refined."
+    }
+  ],
+  "open_targets": [
+    "U1",
+    "U2",
+    "U3",
+    "U4",
+    "U5"
+  ]
 }

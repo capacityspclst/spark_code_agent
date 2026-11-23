@@ -28,6 +28,20 @@ export default function ContactPage() {
   const [errors, setErrors] = React.useState<Errors>({});
   const [success, setSuccess] = React.useState(false);
   const bannerRef = React.useRef<HTMLDivElement>(null);
+  const summaryRef = React.useRef<HTMLDivElement>(null);
+  const [showSummary, setShowSummary] = React.useState(false);
+
+  const invalidFields = (['name', 'email', 'message'] as FieldKey[]).filter((k) => errors[k]);
+  const FIELD_LABELS: Record<string, string> = { name: 'Name', email: 'Email', message: 'Message' };
+
+  const goToField = (e: React.MouseEvent<HTMLAnchorElement>, key: string) => {
+    e.preventDefault();
+    const input = document.getElementById(key) as HTMLElement | null;
+    if (!input) return;
+    const wrapper = (input.closest('.field') as HTMLElement | null) || input;
+    input.focus({ preventScroll: true });
+    wrapper.scrollIntoView?.({ block: 'start' });
+  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -54,8 +68,14 @@ export default function ContactPage() {
     setErrors(validation);
     if (Object.keys(validation).length > 0) {
       setSuccess(false);
-      const first = (['name', 'email', 'message'] as FieldKey[]).find((k) => validation[k]);
-      if (first) (form.elements.namedItem(first) as HTMLElement | null)?.focus();
+      setShowSummary(true);
+      setTimeout(() => {
+        const banner = summaryRef.current;
+        if (!banner) return;
+        banner.focus({ preventScroll: true });
+        banner.scrollIntoView?.({ block: 'start' });
+      }, 0);
+      void form;
       return;
     }
     const result = await submitContact(values);
@@ -88,14 +108,24 @@ export default function ContactPage() {
             </div>
           )}
           <form noValidate onSubmit={handleSubmit}>
+            {showSummary && invalidFields.length > 0 && (
+              <div className="error-summary" role="alert" tabIndex={-1} ref={summaryRef}>
+                <span>Please fix {invalidFields.length} {invalidFields.length === 1 ? 'field' : 'fields'}:</span>{' '}
+                <ul>
+                  {invalidFields.map((k) => (
+                    <li key={k}><a href={`#${k}`} onClick={(e) => goToField(e, k)}>{FIELD_LABELS[k]}</a></li>
+                  ))}
+                </ul>
+              </div>
+            )}
             <p className="form-note muted">Fields marked Required must be filled in.</p>
             <div className="field">
-              <div className="field-head"><label htmlFor="name">Name</label><span className="required-tag">Required</span></div>
+              <div className="field-head"><label htmlFor="name">Name</label><span className="required-tag">(required)</span></div>
               <input className="form-control" id="name" required aria-required="true" name="name" type="text" autoComplete="name" value={values.name} onChange={handleChange} onBlur={handleBlur} aria-invalid={!!errors.name} aria-describedby={errors.name ? 'name-error' : undefined} />
               {errors.name && <p id="name-error" className="error-message"><AlertIcon />{errors.name}</p>}
             </div>
             <div className="field">
-              <div className="field-head"><label htmlFor="email">Email</label><span className="required-tag">Required</span></div>
+              <div className="field-head"><label htmlFor="email">Email</label><span className="required-tag">(required)</span></div>
               <input className="form-control" id="email" required aria-required="true" name="email" type="email" autoComplete="email" value={values.email} onChange={handleChange} onBlur={handleBlur} aria-invalid={!!errors.email} aria-describedby={errors.email ? 'email-error' : undefined} />
               {errors.email && <p id="email-error" className="error-message"><AlertIcon />{errors.email}</p>}
             </div>
@@ -122,7 +152,7 @@ export default function ContactPage() {
               </select>
             </div>
             <div className="field">
-              <div className="field-head"><label htmlFor="message">Message</label><span className="required-tag">Required</span></div>
+              <div className="field-head"><label htmlFor="message">Message</label><span className="required-tag">(required)</span></div>
               <textarea className="form-control" id="message" required aria-required="true" name="message" value={values.message} onChange={handleChange} onBlur={handleBlur} rows={5} aria-invalid={!!errors.message} aria-describedby={errors.message ? 'message-error' : undefined} />
               {errors.message && <p id="message-error" className="error-message"><AlertIcon />{errors.message}</p>}
             </div>
