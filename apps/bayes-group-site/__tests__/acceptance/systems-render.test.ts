@@ -146,8 +146,17 @@ describe('systems page rendering', () => {
     const main = screen.getByRole('main');
     const h1 = within(main).getByRole('heading', { level: 1 });
     expect(norm(h1.textContent)).toBe('Systems engineering');
-    const hero = ancestorWhere(h1, main, (e) => norm(e.textContent).includes(norm(SYSTEMS_LEAD)));
+    const first = main.querySelector('#agentic');
+    if (!first) throw new Error('No #agentic on /systems');
+    // The hero is the whole top band: climb from the h1 until the parent is main
+    // or would include the first content section.
+    let hero: Element = h1;
+    while (hero.parentElement && hero.parentElement !== main && !hero.parentElement.contains(first)) {
+      hero = hero.parentElement;
+    }
     expect(hero).not.toBe(main);
+    expect(hero.contains(first)).toBe(false);
+    expect(norm(hero.textContent)).toContain(norm(SYSTEMS_LEAD));
     const texts = Array.from(hero.querySelectorAll('svg text')).map((t) => norm(t.textContent));
     expect(texts).toContain('Agent orchestration');
   });

@@ -102,11 +102,13 @@ export default function SystemsPage() {
       {/* Hero */}
       <section className="hero page-hero band-navy" aria-labelledby="systems-hero">
         <DataGridMotif className="band-motif" />
-        <div className="container band-content">
-          <p className="eyebrow">How we build</p>
-          <h1 id="systems-hero">Systems engineering</h1>
-          <p className="lead">{SYSTEMS_LEAD}</p>
-          <div className="hero-diagram">
+        <div className="container band-content systems-hero__grid">
+          <div className="systems-hero__text">
+            <p className="eyebrow">How we build</p>
+            <h1 id="systems-hero">Systems engineering</h1>
+            <p className="lead">{SYSTEMS_LEAD}</p>
+          </div>
+          <div className="systems-hero__diagram">
             <ArchitectureDiagram variant="dark" />
           </div>
         </div>

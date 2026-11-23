@@ -35,6 +35,17 @@ const NAV: Array<[string, string]> = [
   ['Contact', '/contact'],
 ];
 
+// Footer page links after the footer fix: the Services column, then the Company column.
+const FOOTER_LINK_LABELS = [
+  'AI Enablement',
+  'Training',
+  'Custom Development',
+  'Systems engineering',
+  'Engagements',
+  'About',
+  'Contact',
+];
+
 const ROUTES: Array<[string, string, string]> = [
   ['/', 'The Bayes Group | Evidence-driven AI', 'Evidence-driven AI, built for your business.'],
   ['/services', 'Services | The Bayes Group', 'Services'],
@@ -86,7 +97,7 @@ describe.each(ROUTES)('page %s', (path, title, h1Text) => {
     expect(cta.some((a) => a.getAttribute('href') === '/contact')).toBe(true);
   });
 
-  test('footer has the wordmark, line, nav links and copyright', () => {
+  test('footer has the wordmark, line, the two link columns and copyright (no extra nav column)', () => {
     renderAt(path);
     const footer = screen.getByRole('contentinfo');
     expect(footer.querySelector('svg')).not.toBeNull();
@@ -94,10 +105,22 @@ describe.each(ROUTES)('page %s', (path, title, h1Text) => {
     expect(text).toContain('The Bayes Group');
     expect(text).toContain('AI enablement, training and custom development.');
     expect(text).toContain('\u00a9 2026 The Bayes Group');
-    for (const [label, to] of NAV) {
-      const links = within(footer).getAllByRole('link', { name: label, hidden: true });
-      expect(links.some((a) => a.getAttribute('href') === to)).toBe(true);
+    const pageLinks = Array.from(footer.querySelectorAll('a')).filter((a) => {
+      const href = a.getAttribute('href') || '';
+      return !href.startsWith('mailto:') && href !== '/';
+    });
+    const labels = pageLinks.map((a) => norm(a.textContent));
+    if (JSON.stringify(labels) !== JSON.stringify(FOOTER_LINK_LABELS)) {
+      throw new Error(
+        `Footer page links on ${path} should be exactly ${JSON.stringify(FOOTER_LINK_LABELS)}, got ${JSON.stringify(labels)}`,
+      );
     }
+    const hrefOf = (label: string) =>
+      pageLinks.find((a) => norm(a.textContent) === label)!.getAttribute('href');
+    expect(hrefOf('About')).toBe('/about');
+    expect(hrefOf('Contact')).toBe('/contact');
+    expect(hrefOf('Systems engineering')).toBe('/systems');
+    expect(hrefOf('Engagements')).toBe('/engagements');
   });
 });
 

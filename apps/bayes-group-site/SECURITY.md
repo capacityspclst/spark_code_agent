@@ -1,16 +1,16 @@
 # Security assurance: bayes-group-site
 
-Pipeline run `20261115-095357-c357`, 2026-11-15. Generated from the run's recorded results.
+Pipeline run `20261122-155629-34aa`, 2026-11-22. Generated from the run's recorded results.
 
 ## Verdict
 
 No critical or high security findings remain open, and every blocking scanner check passed.
-The run was approved after 10 round(s).
+The run was approved after 4 round(s).
 
 ## What was checked
 
 - **Semgrep** (1.178.0, 1409 vendored rules: security-audit, OWASP Top 10, secrets, injection, XSS, JWT, insecure transport, language packs). Static analysis of the code.
-- **Trivy** (Version: 0.74.0, vulnerability DB 2026-11-15). Known-vulnerable dependencies in lockfiles, committed secrets, and Terraform/Docker/Kubernetes misconfigurations.
+- **Trivy** (Version: 0.74.0, vulnerability DB 2026-11-22). Known-vulnerable dependencies in lockfiles, committed secrets, and Terraform/Docker/Kubernetes misconfigurations.
 - **Suppression check.** `nosemgrep`, `trivy:ignore` and scanner ignore files are rejected.
 - **Security review** by an AI reviewer each round once tests and scanners passed, against a fixed severity rubric, tracking every finding to fixed or open.
 - **Isolation.** All generated code, tests and scanners ran in a sandbox container with no secrets.
@@ -32,23 +32,18 @@ Blocking rules: any secret; high/critical dependency vulnerabilities with a fix 
 
 | ID | Severity | Fixed in | Status | Found in round | File | Issue |
 |---|---|---|---|---|---|---|
-| react-router-v6-cve-medium | medium | code | open | 10 | `package.json` | react-router-dom 6.30.6 contains two known CVEs (information disclosure via client-side constructor execution and open-redirect via backslashes). The application only uses static, hard-coded internal routes, so the vulne |
-| missing-security-headers | medium | deployment | open | 10 | `N/A` | The static site does not emit HTTP security headers (Content-Security-Policy, X-Frame-Options, X-Content-Type-Options, Referrer-Policy, Strict-Transport-Security). Without them browsers may allow loading of unexpected re |
+| react-router-v6-cve-medium | medium | code | open | 4 | `package.json` | react‑router‑dom 6.30.6 contains two known CVEs (information disclosure via client‑side constructor execution and open‑redirect via backslashes). The application only uses static internal routes, so the risk is low but t |
+| missing-security-headers | medium | deployment | open | 4 | `DEPLOYMENT.md` | The static site does not emit essential HTTP security headers (Content‑Security‑Policy, X‑Frame‑Options, X‑Content‑Type‑Options, Referrer‑Policy, Strict‑Transport‑Security). Without them browsers may allow loading of une |
 
 ## Required before go-live (hosting and infrastructure)
 
 These can't be fixed in the app's code; configure them where the app is deployed. DEPLOYMENT.md shows how for the recommended hosts.
 
-- [ ] **medium** missing-security-headers: The static site does not emit HTTP security headers (Content-Security-Policy, X-Frame-Options, X-Content-Type-Options, Referrer-Policy, Strict-Transport-Security). Without them browsers may allow loading of unexpected resources or enable click-jacking. How: Configure the hosting/web server or CDN to send appropriate security headers. Example header values: 
-- Content-Security-Policy: "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self';"
-- X-Frame-Options: SAMEORIGIN
-- X-Content-Type-Options: nosniff
-- Referrer-Policy: no-referrer
-- Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
+- [ ] **medium** missing-security-headers: The static site does not emit essential HTTP security headers (Content‑Security‑Policy, X‑Frame‑Options, X‑Content‑Type‑Options, Referrer‑Policy, Strict‑Transport‑Security). Without them browsers may allow loading of unexpected resources or enable click‑jacking. How: Configure the hosting/web server or CDN to send appropriate security headers. Example values are already documented in DEPLOYMENT.md; ensure they are applied in production.
 
 ## Residual risk in the code (accepted, open)
 
-- **medium** react-router-v6-cve-medium: react-router-dom 6.30.6 contains two known CVEs (information disclosure via client-side constructor execution and open-redirect via backslashes). The application only uses static, hard-coded internal routes, so the vulnerabilities are not currently exploitable, but the library version should be upgraded to a fixed release. Recommended fix: Update the dependency in package.json to a version where the CVEs are fixed (e.g., "react-router-dom": "^7.18.0") and, if necessary, adjust the code to the v7 API. Alternatively, apply any available patch that mitigates the specific CVEs.
+- **medium** react-router-v6-cve-medium: react‑router‑dom 6.30.6 contains two known CVEs (information disclosure via client‑side constructor execution and open‑redirect via backslashes). The application only uses static internal routes, so the risk is low but the vulnerable version remains in the dependency tree. Recommended fix: Upgrade react‑router‑dom to a version where the CVEs are fixed (e.g., ^7.18.0) and update any API changes required by the newer major version.
 
 ## Limits of this assurance
 

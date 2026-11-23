@@ -12,6 +12,7 @@ import {
   COMPANY_SIZE_OPTIONS,
 } from '../lib/contactForm';
 import { CONTACT_EMAIL } from '../content/site';
+import { DataGridMotif } from '../components/Motifs';
 import { AlertIcon, CheckIcon } from '../components/Icons';
 
 type FieldKey = keyof typeof ERROR_MESSAGES;
@@ -68,17 +69,17 @@ export default function ContactPage() {
 
   return (
     <div className="contact-page">
-      <div className="container page-head">
-        <p className="eyebrow">Contact</p>
-        <h1>Book a consultation</h1>
-      </div>
-      <div className="container contact-grid">
-        <div className="contact-info">
+      <section className="page-hero band-navy" aria-labelledby="contact-hero">
+        <DataGridMotif className="band-motif" />
+        <div className="container band-content">
+          <p className="eyebrow">CONTACT</p>
+          <h1 id="contact-hero">Book a consultation</h1>
           <p className="lead">Tell us what you're working on and we'll reply within one business day.</p>
-          <p>
-            Prefer email? <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>
-          </p>
+          <p className="band-email">Prefer email? <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a></p>
         </div>
+      </section>
+      <section className="section contact-section">
+      <div className="container contact-grid">
         <div className="card contact-form-card">
           {success && (
             <div role="status" className="success-banner" tabIndex={-1} ref={bannerRef}>
@@ -139,6 +140,7 @@ export default function ContactPage() {
           </ol>
         </aside>
       </div>
+      </section>
     </div>
   );
 }
