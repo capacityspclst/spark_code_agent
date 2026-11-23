@@ -20,6 +20,19 @@ type Errors = Partial<Record<FieldKey, string>>;
 
 import Photo from '../components/Photo';
 
+// Sticky header (72px) + 24px breathing room: the label and input must stay visible.
+const HEADER_OFFSET = 96;
+
+function scrollBelowHeader(el: HTMLElement) {
+  if (typeof window === 'undefined' || typeof window.scrollTo !== 'function') return;
+  const top = el.getBoundingClientRect().top + window.scrollY - HEADER_OFFSET;
+  try {
+    window.scrollTo(0, Math.max(0, top));
+  } catch {
+    /* jsdom: scrolling is not implemented */
+  }
+}
+
 export default function ContactPage() {
   const { pathname } = useLocation();
   useDocumentTitle(pathname);
@@ -40,7 +53,7 @@ export default function ContactPage() {
     if (!input) return;
     const wrapper = (input.closest('.field') as HTMLElement | null) || input;
     input.focus({ preventScroll: true });
-    wrapper.scrollIntoView?.({ block: 'start' });
+    scrollBelowHeader(wrapper);
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -80,7 +93,7 @@ export default function ContactPage() {
         }
         const wrapper = (input.closest('.field') as HTMLElement | null) || input;
         input.focus({ preventScroll: true });
-        wrapper.scrollIntoView?.({ block: 'start' });
+        scrollBelowHeader(wrapper);
       }, 0);
       void form;
       return;
